@@ -115,6 +115,22 @@ async function main() {
       await call('GET /posts/{id}', 'GET', '/posts/' + (await firstPostId()), null, token)
       await call('GET /posts/{id}/comments', 'GET', '/posts/' + (await firstPostId()) + '/comments', null, token)
     }
+
+    console.log('\n[4] 私信 / 消息中心')
+    await call('GET /messages/unread', 'GET', '/messages/unread', null, token)
+    const center = await call('GET /messages', 'GET', '/messages', null, token)
+    const convos = center.body && center.body.data ? center.body.data.convos || [] : []
+    if (!convos.length) {
+      console.log('         （暂无会话，跳过会话内接口：可先执行 backend/sql/data.sql 导入演示会话）')
+    } else {
+      const cid = convos[0].id
+      await call('GET /messages/{id}', 'GET', '/messages/' + cid, null, token)
+      await call('GET /messages/{id}/messages', 'GET', '/messages/' + cid + '/messages', null, token)
+      await call('POST /messages/{id}/read', 'POST', '/messages/' + cid + '/read', null, token)
+      await call('POST /messages/{id}（发消息）', 'POST', '/messages/' + cid, { content: '冒烟测试消息' }, token)
+    }
+    // 用「自己 vs 演示卖家」发起会话，校验 start 的复用逻辑
+    await call('POST /messages/start', 'POST', '/messages/start', { peerId: 9002, goodsId: 8001, goodsTitle: '九成新机械键盘 87 键' }, token)
   }
 
   console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')

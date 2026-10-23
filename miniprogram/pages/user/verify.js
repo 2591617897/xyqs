@@ -133,6 +133,7 @@ Page({
           nickname: me.nickname,
           avatar: me.avatar,
           schoolId: me.schoolId,
+          schoolName: me.schoolName || '',
           verifyStatus: me.verifyStatus
         })
         self.setData({

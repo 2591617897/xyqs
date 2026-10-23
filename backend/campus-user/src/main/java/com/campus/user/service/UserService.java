@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -147,6 +149,20 @@ public class UserService {
 
     public UserBrief brief(Long userId) {
         return toBrief(requireUser(userId));
+    }
+
+    /**
+     * 批量取用户摘要，供会话列表一次拉齐对端昵称/头像，避免 N+1 调用。
+     */
+    public List<UserBrief> briefs(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = userIds.stream().filter(Objects::nonNull).distinct().limit(200).toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return userMapper.selectBatchIds(ids).stream().map(this::toBrief).toList();
     }
 
     private User requireUser(Long userId) {

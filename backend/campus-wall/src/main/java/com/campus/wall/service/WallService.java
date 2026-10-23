@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,22 +31,25 @@ public class WallService {
 
     private static final String TARGET = "WALL";
     private static final String[] ANON_PREFIX = {"匿名同学", "路过的同学", "一位同学", "神秘同学"};
+    private static final Set<String> CATEGORIES = Set.of("love", "tree", "find", "findp");
 
     private final WallPostMapper postMapper;
     private final WallCommentMapper commentMapper;
     private final LikeMapper likeMapper;
 
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size) {
-        return page(schoolId, userId, page, size, null);
+        return page(schoolId, userId, page, size, null, null);
     }
 
     /**
-     * @param sort null / "new" 按发布时间倒序；"hot" 按点赞数倒序
+     * @param sort     null / "new" 按发布时间倒序；"hot" 按点赞数倒序
+     * @param category 分类过滤：love / tree / find / findp，空则不过滤
      */
-    public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size, String sort) {
+    public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size, String sort, String category) {
         LambdaQueryWrapper<WallPost> q = Wrappers.<WallPost>lambdaQuery()
                 .eq(WallPost::getStatus, 1)
-                .eq(schoolId != null, WallPost::getSchoolId, schoolId);
+                .eq(schoolId != null, WallPost::getSchoolId, schoolId)
+                .eq(StringUtils.hasText(category), WallPost::getCategory, normalizeCategory(category));
         if ("hot".equalsIgnoreCase(sort)) {
             q.orderByDesc(WallPost::getLikeCount).orderByDesc(WallPost::getCreatedAt);
         } else {
@@ -81,6 +85,7 @@ public class WallService {
         post.setSchoolId(UserContext.schoolId());
         post.setContent(req.getContent().trim());
         post.setImages(join(req.getImages()));
+        post.setCategory(normalizeCategory(req.getCategory()));
         post.setStatus(1);
         post.setLikeCount(0);
         post.setCommentCount(0);
@@ -119,15 +124,29 @@ public class WallService {
     }
 
     public List<WallComment> comments(Long postId, Long userId) {
-        List<WallComment> list = commentMapper.selectList(Wrappers.<WallComment>lambdaQuery()
+        List<WallComment> all = commentMapper.selectList(Wrappers.<WallComment>lambdaQuery()
                 .eq(WallComment::getPostId, postId)
                 .orderByAsc(WallComment::getCreatedAt)
-                .last("limit 200"));
-        list.forEach(c -> {
+                .last("limit 500"));
+        // 内存组装成两层树：顶层评论 + 各自的回复
+        Map<Long, List<WallComment>> replyMap = all.stream()
+                .filter(c -> c.getParentId() != null && c.getParentId() > 0)
+                .collect(Collectors.groupingBy(WallComment::getParentId));
+        List<WallComment> top = all.stream()
+                .filter(c -> c.getParentId() == null || c.getParentId() == 0)
+                .toList();
+        for (WallComment c : top) {
             c.setMine(userId != null && userId.equals(c.getUserId()));
             c.setImageList(splitImages(c.getImages()));
-        });
-        return list;
+            List<WallComment> replies = replyMap.getOrDefault(c.getId(), List.of());
+            replies.forEach(r -> {
+                r.setMine(userId != null && userId.equals(r.getUserId()));
+                r.setImageList(splitImages(r.getImages()));
+            });
+            c.setReplies(replies);
+            c.setReplyCount(replies.size());
+        }
+        return top;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -146,8 +165,19 @@ public class WallService {
         WallComment comment = new WallComment();
         comment.setPostId(postId);
         comment.setUserId(userId);
+        comment.setParentId(req.getParentId() == null ? 0L : req.getParentId());
         comment.setContent(content);
         comment.setImages(images);
+        // 回复评论：记录被回复人的匿名昵称快照，供「A 回复 B」展示
+        if (comment.getParentId() > 0) {
+            WallComment parent = commentMapper.selectById(comment.getParentId());
+            if (parent == null || !postId.equals(parent.getPostId())) {
+                throw new BizException("要回复的评论不存在");
+            }
+            comment.setReplyToName(parent.getAnonName());
+        } else {
+            comment.setReplyToName(null);
+        }
         comment.setAnonName(anonName(userId, postId));
         commentMapper.insert(comment);
         postMapper.incrComment(postId, 1);
@@ -169,8 +199,18 @@ public class WallService {
         if (!userId.equals(comment.getUserId())) {
             throw BizException.forbidden("只能删除自己的评论");
         }
+        // 删除顶层评论时，级联删除其下的全部回复
+        int removed = 0;
+        if (comment.getParentId() == null || comment.getParentId() == 0) {
+            List<WallComment> replies = commentMapper.selectList(Wrappers.<WallComment>lambdaQuery()
+                    .eq(WallComment::getParentId, commentId));
+            if (!replies.isEmpty()) {
+                commentMapper.deleteByIds(replies.stream().map(WallComment::getId).toList());
+                removed = replies.size();
+            }
+        }
         commentMapper.deleteById(commentId);
-        postMapper.incrComment(postId, -1);
+        postMapper.incrComment(postId, -(1 + removed));
     }
 
     private List<String> splitImages(String images) {
@@ -195,7 +235,8 @@ public class WallService {
         postMapper.update(null, Wrappers.<WallPost>lambdaUpdate()
                 .eq(WallPost::getId, id)
                 .set(WallPost::getContent, req.getContent().trim())
-                .set(WallPost::getImages, join(req.getImages())));
+                .set(WallPost::getImages, join(req.getImages()))
+                .set(WallPost::getCategory, normalizeCategory(req.getCategory())));
     }
 
     public void delete(Long postId) {
@@ -212,6 +253,11 @@ public class WallService {
     }
 
     // ---------------- 内部方法 ----------------
+
+    /** 分类白名单校验，非法或空值回落到 love（精选表白） */
+    private String normalizeCategory(String category) {
+        return StringUtils.hasText(category) && CATEGORIES.contains(category) ? category : "love";
+    }
 
     private void decorate(WallPost post, Long userId) {
         post.setImageList(StringUtils.hasText(post.getImages())

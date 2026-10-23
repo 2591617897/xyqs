@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary-container": "#740043", "inverse-surface": "#2d3133", "outline": "#6c7a71", "outline-variant": "#bbcabf", "on-primary": "#ffffff", "surface-dim": "#d8dadc", "on-tertiary": "#ffffff", "on-primary-container": "#00422b", "error": "#ba1a1a", "on-secondary-container": "#5c2400", "primary-fixed": "#6ffbbe", "surface-bright": "#f7f9fb", "on-error": "#ffffff", "background": "#f7f9fb", "on-secondary-fixed": "#341100", "secondary": "#9d4300", "secondary-fixed": "#ffdbca", "primary-fixed-dim": "#4edea3", "on-primary-fixed": "#002113", "tertiary-container": "#ff72b1", "tertiary-fixed": "#ffd9e4", "primary": "#006c49", "on-tertiary-fixed-variant": "#8c0053", "on-tertiary-fixed": "#3e0022", "on-secondary": "#ffffff", "surface-variant": "#e0e3e5", "surface-container": "#eceef0", "secondary-container": "#fd761a", "tertiary-fixed-dim": "#ffb0cd", "surface": "#f7f9fb", "primary-container": "#10b981", "on-primary-fixed-variant": "#005236", "on-surface-variant": "#3c4a42", "on-background": "#191c1e", "surface-container-lowest": "#ffffff", "on-surface": "#191c1e", "surface-container-high": "#e6e8ea", "tertiary": "#b4136d", "surface-tint": "#006c49", "secondary-fixed-dim": "#ffb690", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#783200", "surface-container-low": "#f2f4f6", "on-error-container": "#93000a", "inverse-on-surface": "eff1f3", "surface-container-highest": "#e0e3e5", "inverse-primary": "#4edea3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-sm": "0.5rem", "space-xl": "1.5rem", "margin": "0.75rem", "gutter": "0.75rem", "space-xs": "0.25rem", "space-lg": "1rem", "space-md": "0.75rem" }, fontFamily: { "label-lg": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "price-symbol": ["Plus Jakarta Sans"], "price-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"] }, fontSize: { "label-lg": ["14px", { "lineHeight": "18px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "26px", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "price-symbol": ["13px", { "lineHeight": "16px", "fontWeight": "600" }], "price-lg": ["20px", { "lineHeight": "24px", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface text-on-surface font-body-md flex flex-col min-h-screen antialiased"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_12px_rgba(16,185,129,0.06)]"><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="返回" class="w-11 h-11 -ml-1 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container active:scale-95 transition-all" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><h1 class="font-headline-md text-headline-md text-on-surface tracking-tight truncate">Item Detail</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="更多操作" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all"><span class="material-symbols-outlined text-[22px]">share</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-14 pb-safe bg-surface flex-1"><div class="flex flex-col w-full pb-[5.5rem]">
+<!-- Image Carousel Gallery -->
+<div class="relative w-full aspect-[4/3] bg-surface-container overflow-hidden select-none" id="carousel-container">
+<div class="flex h-full w-full transition-transform duration-300 ease-out" id="carousel-track" style="transform: translateX(0%);">
+<div class="w-full h-full shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="A clean top-down desktop setup featuring a sleek silver Apple MacBook Air resting on an ergonomic aluminum cooling stand. Next to it sits an elegant silent dual-mode wireless mouse and original minimalist white charging accessories on a warm light oak desk in a naturally lit college dorm room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqgSnBigDpDTuWUgoUBVxW93yikrmLJKqD-Q2lBKmFrK2Bk2BOd8wEPc8py7ay7tlUsoDrOoh9kJeVDlyx4_PTVKEn-noZCwXAPXSeITuK_y2S_AnZ4LUbwKFBDtpVnyK1FpWXY6glDfM6dVhx6TMcf_X-ECR9TXXEsihEOX4qtQTyg1AZrqMsvbQntoHkGU32dYstGM8KUuDqY-r6faFOxfJK_BNA-KcvmjO9jMrVK7w6BWyZ-wpA"/>
+</div>
+<div class="w-full h-full shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="Close up view of the silver laptop keyboard and crisp Retina screen displaying battery health statistics showing 91 percent maximum capacity, pristine matte keycaps with no shiny oil marks, soft diffused studio light reflecting off the aluminum edge." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBK2K4qm0a1Exdzu9qLvi0jUBwRpXJyN3SNmOCNlsQwsUZrPVv3RBieg2dBZvlK4U5xfNiJ7AER1o05thMNSF33EZOeJ1vt8CcWwABqJKdqOZZ2yWTBJRLyT0okxvQ3_vJVx-DRMo85wtT2CtZJEtJXiy8LbOskTAHnUyY9n3kV0IRgh7DMHGsUXBXDMsK0CUMHyX4GfCIgpVXG18RQZApYrJubTBkr0z-hbMiIPz7HwERcS4-ETAD"/>
+</div>
+<div class="w-full h-full shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="Side profile shot of the slim laptop chassis highlighting clean ports and flawless beveled corners, no dents or scratches, placed beside an anodized brushed aluminum stand on a clean campus study desk." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8xIM0ibRertF9GwBUWqwzKntnjt_6vIuJOVQlxNa-W6ktCmz8GCnhBRMrJ-_UySS3UsPClVHeXijXjO6mJFLo-entaMM3NHmVvqu166of0Vuu1riuHULWnRAQhxGa35xByPLmKYSHuGejDuLu3ZKHS8VUiTepT_Deaq5pPfpU0QhG6LLgspo5XSAJmTdOxHdkX2yjRx9x2WVkNa0om_0Rxk6qSU_wMZkTN4FruadjdQpfzrw4ABEq"/>
+</div>
+<div class="w-full h-full shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="Complete product set neatly arranged inside and alongside the clean original Apple white packaging box, with OEM USB-C power brick, braided magnetic cable, warranty pamphlet, and extra gifts." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZXiD1tyKOhDHsfIUBUxTlROPeQ45a4Ppi_hVw57BWptaj998Uxp_FETSJ4X2L-Gh6-Di_yU2aPNa_zgl9cLySDCN6vNmo_gvCKVvl-1GC1WGCjST3GnlmmRZxm3fSRShbbYb3D2kenk95WbPMpOU9CV34yewDlyg_lNfRthLMFQtMQ6-fibVZ4Zt2iKBiRiCBzLs8uU9GWuI58jxavZWXgntjcIFSVrXR-bHFqxrdW4MQNzXur1pV"/>
+</div>
+</div>
+<!-- Tags Overlay -->
+<div class="absolute top-margin left-margin flex items-center gap-space-xs z-10 pointer-events-none">
+<span class="px-2.5 py-1 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+        95新
+      </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md text-primary font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">storefront</span>
+        支持自提验机
+      </span>
+</div>
+<!-- Page Indicator Capsule -->
+<div class="absolute bottom-margin right-margin z-10 pointer-events-none">
+<span class="px-2.5 py-1 rounded-full bg-inverse-surface/70 backdrop-blur-md text-inverse-on-surface font-label-sm text-label-sm font-medium tracking-wider" id="carousel-counter">
+        1/4
+      </span>
+</div>
+<!-- Swipe Touch Overlay Controls -->
+<button aria-label="上一张" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface-container-lowest/60 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-all opacity-0 hover:opacity-100 focus:opacity-100" onclick="prevSlide()">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button aria-label="下一张" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface-container-lowest/60 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-all opacity-0 hover:opacity-100 focus:opacity-100" onclick="nextSlide()">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<!-- Main Content Body -->
+<div class="px-margin pt-space-md flex flex-col gap-space-md">
+<!-- Price and Title Block Card -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_-2px_rgba(16,185,129,0.05),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-space-sm">
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline gap-1">
+<span class="text-secondary font-price-symbol text-price-symbol font-bold">¥</span>
+<span class="text-secondary font-price-lg text-[28px] leading-none font-bold tracking-tight">1,850</span>
+<span class="ml-2 text-outline line-through font-body-sm text-body-sm">原价 ¥4,299</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">
+          省 ¥2,449
+        </span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface leading-snug">
+        低价出九成新轻薄本，顺手送铝合金散热支架和静音双模鼠标！紫荆宿舍自提爽快学弟学妹可小刀~
+      </h2>
+<div class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-primary">location_on</span>
+<span>北京 · 清华大学 (紫荆园区)</span>
+</div>
+<div class="flex items-center gap-3">
+<span>浏览 462</span>
+<span>想要 19</span>
+</div>
+</div>
+</div>
+<!-- Campus Verified Seller Card -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_-2px_rgba(16,185,129,0.05),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high ring-2 ring-primary/20">
+<img class="w-full h-full object-cover" data-alt="Warm and bright natural portrait photo of a cheerful smiling East Asian female university student wearing a cozy knit sweater in a campus library setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBodWpRWuM2XLR4NSWHV99rBz5R5AH2yJPVfQy8oI6i9x0sUToJuBO9wUuc119s1fq1dYDZkUStUc5Da4b3-aZNbzOCwLxdWOmJxDS3YsurPt2yUXPPuEdfHg3Ou6FSzyxNLSvBD0PBHRiAh1plzBJTpQUfbnAj1fpk6OHnZ5DV8tILc9DpwCkrlDa0bSnU_rLevCA70VjW3O3IgrJuw1xK-wtHCnUCxtZaqsBZCtFN0obKFSWRmyJ5"/>
+</div>
+<span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-lg text-label-lg text-on-surface truncate">林小满</span>
+<span class="px-1.5 py-0.2 rounded bg-primary/10 text-primary font-label-sm text-[10px] leading-tight font-semibold">
+                已实名学生认证
+              </span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm truncate mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-primary">school</span>
+<span class="truncate">清华大学 · 计算机学院</span>
+</div>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface font-label-md text-label-md active:scale-95 transition-all shrink-0">
+          关注
+        </button>
+</div>
+<!-- Seller Metrics Strip -->
+<div class="grid grid-cols-3 gap-2 p-2.5 rounded-lg bg-surface-container-low text-center">
+<div class="flex flex-col items-center justify-center">
+<div class="flex items-center gap-1 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span>信用极好 780</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant mt-0.5">芝麻信用互信</span>
+</div>
+<div class="flex flex-col items-center justify-center">
+<span class="text-on-surface font-label-md text-label-md">&lt;5分钟</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant mt-0.5">平均即刻回复</span>
+</div>
+<div class="flex flex-col items-center justify-center">
+<span class="text-on-surface font-label-md text-label-md">在售 3 · 评价 28</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant mt-0.5">100% 好评度</span>
+</div>
+</div>
+</div>
+<!-- Specifications Table -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_-2px_rgba(16,185,129,0.05),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-3">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-4 rounded-full bg-primary"></span>
+        规格与成色信息
+      </h3>
+<div class="grid grid-cols-1 gap-2.5 font-body-sm text-body-sm">
+<div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-surface-container-low">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+            入手时间
+          </span>
+<span class="font-label-md text-label-md text-on-surface">2023年9月 (开学购入)</span>
+</div>
+<div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-surface-container-low">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">laptop_chromebook</span>
+            使用频率与来源
+          </span>
+<span class="font-label-md text-label-md text-on-surface">实验室备用机自用 · 无拆修</span>
+</div>
+<div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-surface-container-low">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">shield</span>
+            保修状态
+          </span>
+<span class="font-label-md text-label-md text-secondary">官方保修已过 · 支持面交试机</span>
+</div>
+<div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-surface-container-low">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">local_shipping</span>
+            交易方式
+          </span>
+<span class="font-label-md text-label-md text-primary text-right max-w-[60%]">
+            限清华校内自提 (紫荆4号楼下)
+          </span>
+</div>
+</div>
+</div>
+<!-- Detailed Description -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_-2px_rgba(16,185,129,0.05),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-3">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-4 rounded-full bg-primary"></span>
+        宝贝详细描述
+      </h3>
+<div class="space-y-3 font-body-md text-body-md text-on-surface leading-relaxed">
+<p>
+          研究生换了导师配的台式工作站，这台轻薄本平时只在图书馆写过毕业论文和看网课，完全闲置了。成色保护得极好，日常贴膜使用，无任何磕碰掉漆痕迹。
+        </p>
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">battery_charging_full</span>
+            电池效率健康度 91%
+          </div>
+<span class="text-on-surface-variant font-body-sm text-body-sm">
+            循环计数仅 142 次，不插电正常写代码和文字办公仍可续航 8 小时以上。
+          </span>
+</div>
+<p>
+<strong class="font-semibold text-on-surface">随机赠送清单：</strong>
+</p>
+<ul class="list-disc pl-5 space-y-1 text-on-surface-variant font-body-sm text-body-sm">
+<li>原装 35W 双口氮化镓充电头 + 原装编织充电线</li>
+<li>原厂完整包装彩盒 + 购机发票电子截图</li>
+<li>【附赠】价值 ¥129 的铝合金六档可调升降折叠散热支架</li>
+<li>【附赠】罗技轻音无线双模鼠标 (带蓝牙和2.4G接收器)</li>
+</ul>
+<p class="text-on-surface-variant font-body-sm text-body-sm italic pt-1">
+          注：支持校内任意地点当面验机跑分！诚心想要的同校同学欢迎点击下方随时发起沟通~
+        </p>
+</div>
+</div>
+<!-- Campus Safety Notice -->
+<div class="bg-primary/5 rounded-xl p-3.5 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">security</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-label-md text-label-md text-primary">校园同校交易安全提示</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-normal">
+          建议在食堂、宿舍楼前台大厅等人流密集处当面验机交易。警惕脱离平台私下微信转账、货到付款等风险行为。
+        </p>
+</div>
+</div>
+<!-- Campus QA & Discussion Section -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_-2px_rgba(16,185,129,0.05),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-3.5 mb-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-4 rounded-full bg-primary"></span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">校友问答</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">(3条提问)</span>
+</div>
+<button class="font-label-sm text-label-sm text-primary flex items-center gap-0.5 active:opacity-75">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+          向学姐提问
+        </button>
+</div>
+<!-- Question List -->
+<div class="flex flex-col gap-3 font-body-sm text-body-sm">
+<!-- QA Item 1 -->
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-2">
+<div class="flex items-start gap-2">
+<span class="w-5 h-5 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">问</span>
+<div class="flex-1 text-on-surface font-medium">学姐还在吗？支持今天傍晚去紫荆4号楼现场看机通电测试吗？</div>
+</div>
+<div class="flex items-start gap-2 pl-2">
+<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">答</span>
+<div class="flex-1 text-on-surface-variant leading-relaxed">
+              在的呀！今晚7点后我都在寝室，可以带充电器当场测试屏幕和键盘~
+            </div>
+</div>
+<div class="text-right text-[11px] text-outline">15分钟前</div>
+</div>
+<!-- QA Item 2 -->
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-2">
+<div class="flex items-start gap-2">
+<span class="w-5 h-5 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">问</span>
+<div class="flex-1 text-on-surface font-medium">请问轻薄本跑Python日常数据挖掘会卡顿吗？散热支架单出吗？</div>
+</div>
+<div class="flex items-start gap-2 pl-2">
+<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">答</span>
+<div class="flex-1 text-on-surface-variant leading-relaxed">
+              跑常规Jupyter Notebook和平常数据分析很流畅！支架是随电脑打包免费赠送的学弟，不单出哈。
+            </div>
+</div>
+<div class="text-right text-[11px] text-outline">2小时前</div>
+</div>
+<!-- QA Item 3 -->
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-2">
+<div class="flex items-start gap-2">
+<span class="w-5 h-5 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">问</span>
+<div class="flex-1 text-on-surface font-medium">大一软院新生爽快自提，可以小刀50块钱当路费嘛？^_^</div>
+</div>
+<div class="flex items-start gap-2 pl-2">
+<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm text-[11px] font-bold shrink-0">答</span>
+<div class="flex-1 text-on-surface-variant leading-relaxed">
+              软院学弟好！直接点下方“聊一聊”，面交时给你减50带走~
+            </div>
+</div>
+<div class="text-right text-[11px] text-outline">昨天</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Action Dock -->
+<div class="fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+<div class="h-16 px-margin flex items-center justify-between gap-3">
+<!-- Left Quick Action Icons -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="flex flex-col items-center justify-center w-10 text-on-surface-variant active:scale-90 transition-all" id="fav-btn" onclick="toggleFavorite()">
+<span class="material-symbols-outlined text-[22px]" id="fav-icon">favorite_border</span>
+<span class="font-label-sm text-[10px] leading-tight mt-0.5" id="fav-text">收藏</span>
+</button>
+<button class="flex flex-col items-center justify-center w-10 text-on-surface-variant active:scale-90 transition-all" onclick="shareItem()">
+<span class="material-symbols-outlined text-[22px]">share</span>
+<span class="font-label-sm text-[10px] leading-tight mt-0.5">分享</span>
+</button>
+</div>
+<!-- Right Main CTA Buttons -->
+<div class="flex items-center gap-2 flex-1 max-w-[280px]">
+<!-- Chat Button with badge -->
+<button class="relative flex-1 h-11 rounded-full bg-primary/10 text-primary font-label-lg text-label-lg flex items-center justify-center gap-1 active:scale-95 transition-all" onclick="openChat()">
+<span class="material-symbols-outlined text-[19px]">chat_bubble_outline</span>
+<span>聊一聊</span>
+<span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-secondary text-on-secondary font-label-sm text-[9px] font-bold shadow-sm">
+            极速回
+          </span>
+</button>
+<!-- Primary Emerald Buy Button -->
+<button class="flex-1 h-11 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-1 shadow-[0_4px_14px_-2px_rgba(0,108,73,0.4)] active:scale-95 transition-all" onclick="requestPickup()">
+<span class="material-symbols-outlined text-[19px]">handshake</span>
+<span>申请自提</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Interaction Toast / Notification Modal -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-inverse-surface/90 text-inverse-on-surface font-label-md text-label-md shadow-lg pointer-events-none transition-all duration-300 opacity-0 translate-y-2" id="toast">
+    提示信息
+  </div>
+</div>
+<script>
+  let currentSlide = 0;
+  const totalSlides = 4;
+  const track = document.getElementById('carousel-track');
+  const counter = document.getElementById('carousel-counter');
+
+  function updateSlide() {
+    if (track) {
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+    if (counter) {
+      counter.innerText = `${currentSlide + 1}/${totalSlides}`;
+    }
+  }
+
+  function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    updateSlide();
+  }
+
+  function prevSlide() {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    updateSlide();
+  }
+
+  // Touch Swipe for Mobile Carousel
+  const container = document.getElementById('carousel-container');
+  let startX = 0;
+  let endX = 0;
+
+  if (container) {
+    container.addEventListener('touchstart', (e) => {
+      startX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    container.addEventListener('touchend', (e) => {
+      endX = e.changedTouches[0].screenX;
+      if (startX - endX > 45) {
+        nextSlide();
+      } else if (endX - startX > 45) {
+        prevSlide();
+      }
+    }, { passive: true });
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.innerText = msg;
+    toast.classList.remove('opacity-0', 'translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'translate-y-2');
+    }, 2000);
+  }
+
+  let isFavorited = false;
+  function toggleFavorite() {
+    isFavorited = !isFavorited;
+    const icon = document.getElementById('fav-icon');
+    const text = document.getElementById('fav-text');
+    if (isFavorited) {
+      icon.innerText = 'favorite';
+      icon.style.fontVariationSettings = "'FILL' 1";
+      icon.classList.add('text-tertiary');
+      text.innerText = '已收藏';
+      text.classList.add('text-tertiary');
+      showToast('已加入同校二手收藏夹 ❤️');
+    } else {
+      icon.innerText = 'favorite_border';
+      icon.style.fontVariationSettings = "'FILL' 0";
+      icon.classList.remove('text-tertiary');
+      text.innerText = '收藏';
+      text.classList.remove('text-tertiary');
+      showToast('已取消收藏');
+    }
+  }
+
+  function shareItem() {
+    showToast('已复制紫荆二手贴链接，快发给校友吧~');
+  }
+
+  function openChat() {
+    showToast('正在为您连线卖家 林小满...');
+  }
+
+  function requestPickup() {
+    showToast('已发起紫荆公寓自提验机预约申请！');
+  }
+</script></main></body></html>

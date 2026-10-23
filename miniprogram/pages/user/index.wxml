@@ -1,129 +1,222 @@
 <view class="page">
-  <!-- 用户卡片 -->
-  <view class="profile">
-    <view class="row">
-      <!-- 微信规范取头像：用户主动点击 chooseAvatar 按钮授权 -->
-      <button
-        wx:if="{{logged}}"
-        class="avatar-btn"
-        open-type="chooseAvatar"
-        bindchooseavatar="onChooseAvatar"
-      >
-        <image wx:if="{{user && user.avatar}}" class="avatar-xl" src="{{user.avatar}}" mode="aspectFill" />
-        <view wx:else class="avatar-xl">
-          <view class="avatar-default">
+  <!-- ===== 用户信息卡（绿色渐变头部） ===== -->
+  <view class="hero">
+    <view class="hero-top">
+      <view class="school-pill" bindtap="demoEntry" data-name="切换学校">📍 {{user && user.schoolName ? user.schoolName : '大学城校区'}} ▾</view>
+      <view class="hero-title">个人主页</view>
+      <view class="hero-acts">
+        <view class="hero-act" bindtap="goMessages">🔔</view>
+        <view class="hero-act" bindtap="demoEntry" data-name="设置">⚙️</view>
+      </view>
+    </view>
+
+    <!-- 用户卡：精简为基本信息，点击进「个人信息」页查看/修改 -->
+    <view class="user-card" hover-class="card-hover" bindtap="goProfile">
+      <view class="user-row">
+        <view class="user-avatar">
+          <image wx:if="{{user && user.avatar}}" src="{{user.avatar}}" mode="aspectFill" class="avatar-img" />
+          <view wx:else class="avatar-default">
             <view class="ad-head"></view>
             <view class="ad-body"></view>
           </view>
         </view>
-        <view class="avatar-cam">📷</view>
-      </button>
-      <view wx:else class="avatar-xl">
-        <view class="avatar-default">
-          <view class="ad-head"></view>
-          <view class="ad-body"></view>
+
+        <view class="user-info">
+          <view class="user-name-row">
+            <text class="user-name">{{user ? user.nickname : '还没有登录'}}</text>
+            <view class="verify-pill {{user && user.verifyStatus === 2 ? 'ok' : ''}}" catchtap="goVerify">
+              <text class="vp-check">✓</text>
+              <text>{{user && user.verifyStatus === 2 ? '已认证' : '去认证'}}</text>
+            </view>
+          </view>
+          <view class="user-school" wx:if="{{user}}">🎓 {{user.schoolName || '已绑定学校'}}</view>
+          <view class="user-school" wx:else>点击登录，同步你的校园身份</view>
+          <view class="user-verified-line" wx:if="{{user && user.verifyStatus === 2}}">🛡️ 学籍认证已通过</view>
+          <view class="user-verified-line warn" wx:if="{{user && user.verifyStatus === 3}}">⚠️ 认证被驳回，请重新提交</view>
+        </view>
+
+        <view class="user-chev">›</view>
+      </view>
+      <button class="btn btn-white login-btn" wx:if="{{!logged}}" catchtap="login">一键登录</button>
+    </view>
+
+    <!-- 统计条 -->
+    <view class="stat-bar">
+      <view class="stat" bindtap="goMyGoods">
+        <view class="stat-num">38</view>
+        <view class="stat-label">我发布的</view>
+      </view>
+      <view class="stat" bindtap="demoEntry" data-name="已卖出">
+        <view class="stat-num">12</view>
+        <view class="stat-label">已卖出</view>
+      </view>
+      <view class="stat" bindtap="demoEntry" data-name="我的动态">
+        <view class="stat-num">6</view>
+        <view class="stat-label">我的动态</view>
+      </view>
+      <view class="stat" bindtap="goFavorites">
+        <view class="stat-num">156</view>
+        <view class="stat-label">赞与收藏</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 校园信用分 ===== -->
+  <view class="credit-card" bindtap="demoEntry" data-name="信用特权">
+    <view class="credit-top">
+      <view class="credit-title-row">
+        <text class="credit-shield">🛡️</text>
+        <text class="credit-title">校园信用分 785</text>
+        <view class="credit-pill">极好</view>
+      </view>
+      <text class="credit-arrow">信用特权 ›</text>
+    </view>
+    <view class="credit-tags">
+      <text class="credit-tag">✓ 免押金租借</text>
+      <text class="credit-tag">✓ 优先首页推荐</text>
+      <text class="credit-tag">✓ 官方实名担保</text>
+    </view>
+    <view class="credit-star">⭐</view>
+  </view>
+
+  <!-- ===== 我的交易 ===== -->
+  <view class="section">
+    <view class="section-head">
+      <view class="section-bar"></view>
+      <text class="section-title">我的交易</text>
+      <view class="flex1"></view>
+      <text class="section-more" bindtap="openOrders">全部订单 ›</text>
+    </view>
+    <view class="grid4">
+      <view class="grid-item" bindtap="openOrders">
+        <view class="grid-icon gi-orange">🛍️<view class="grid-badge">2</view></view>
+        <view class="grid-label">我买到的</view>
+        <view class="grid-sub">3 件</view>
+      </view>
+      <view class="grid-item" bindtap="demoEntry" data-name="我卖出的">
+        <view class="grid-icon gi-green">🏷️</view>
+        <view class="grid-label">我卖出的</view>
+        <view class="grid-sub">12 单</view>
+      </view>
+      <view class="grid-item" bindtap="goMyGoods">
+        <view class="grid-icon gi-gray">📦</view>
+        <view class="grid-label">在售闲置</view>
+        <view class="grid-sub">{{stats.goods}} 件</view>
+      </view>
+      <view class="grid-item" bindtap="openOrders">
+        <view class="grid-icon gi-blue">✉️<view class="grid-badge">2</view></view>
+        <view class="grid-label">意向单</view>
+        <view class="grid-sub">待发布</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 社交互动 ===== -->
+  <view class="section">
+    <view class="section-head">
+      <view class="section-bar pink"></view>
+      <text class="section-title">社交互动</text>
+      <view class="flex1"></view>
+      <text class="section-more" bindtap="goMessages">校园回声 ›</text>
+    </view>
+    <view class="grid2">
+      <view class="g2-item" bindtap="goMessages">
+        <view class="g2-icon gi-pink">💗</view>
+        <view class="g2-main">
+          <view class="g2-title">发起的表白</view>
+          <view class="g2-sub">2 条表白 · 1 回应</view>
         </view>
       </view>
-      <view class="flex1 ml24">
-        <view class="p-name">{{user ? user.nickname : '还没有登录'}}</view>
-        <view class="p-sub" wx:if="{{user}}">
-          {{user.schoolName ? user.schoolName : (user.schoolId ? '已绑定学校' : '未绑定学校')}}
+      <view class="g2-item" bindtap="goMessages">
+        <view class="g2-icon gi-teal">💬</view>
+        <view class="g2-main">
+          <view class="g2-title">树洞秘语</view>
+          <view class="g2-sub">匿名保护中（4条）</view>
         </view>
-        <view class="p-sub" wx:else>登录后同步你的校园身份</view>
       </view>
-      <view class="verify-badge {{user && user.verifyStatus === 2 ? 'ok' : 'todo'}}" bindtap="goVerify">
-        {{user && user.verifyStatus === 2 ? '已认证' : (user && user.verifyStatus === 1 ? '审核中' : '去认证')}}
+      <view class="g2-item" bindtap="goFavorites">
+        <view class="g2-icon gi-amber">🔖</view>
+        <view class="g2-main">
+          <view class="g2-title">收藏与赞</view>
+          <view class="g2-sub">{{stats.favorites}} 个帖子闲置</view>
+        </view>
+      </view>
+      <view class="g2-item" bindtap="demoEntry" data-name="浏览足迹">
+        <view class="g2-icon gi-slate">🕘</view>
+        <view class="g2-main">
+          <view class="g2-title">浏览足迹</view>
+          <view class="g2-sub">今日已看 24 条</view>
+        </view>
       </view>
     </view>
-
-    <!-- 微信规范取昵称：type="nickname" 由微信输入法提供，不依赖任何授权接口 -->
-    <view class="nick-row" wx:if="{{logged}}">
-      <text class="nick-label">昵称</text>
-      <input
-        class="nick-input"
-        type="nickname"
-        value="{{nicknameDraft}}"
-        placeholder="点击使用微信昵称，或自己输入"
-        placeholder-class="nick-ph"
-        maxlength="20"
-        bindinput="onNicknameInput"
-        bindblur="saveNickname"
-        bindconfirm="saveNickname"
-      />
-    </view>
-
-    <view class="id-row" wx:if="{{user && user.verifyStatus === 2}}">
-      <text class="id-item">学号 {{user.studentNo}}</text>
-      <text class="id-item">姓名 {{user.realName}}</text>
-    </view>
-    <view class="id-row warn" wx:if="{{user && user.verifyStatus === 3}}">
-      <text>认证被驳回：{{user.verifyRemark || '资料不清晰，请重新提交'}}</text>
-    </view>
-
-    <button class="btn btn-primary login-btn" wx:if="{{!logged}}" bindtap="login">一键登录</button>
   </view>
 
-  <!-- 数据 -->
-  <view class="stats">
-    <view class="stat-item" bindtap="goMyGoods">
-      <view class="stat-num">{{stats.goods}}</view>
-      <view class="stat-label">我的闲置</view>
+  <!-- ===== 校园便民 ===== -->
+  <view class="section">
+    <view class="section-head">
+      <view class="section-bar"></view>
+      <text class="section-title">校园便民</text>
+      <view class="flex1"></view>
+      <text class="section-more" bindtap="demoEntry" data-name="校内直通">校内直通 ›</text>
     </view>
-    <view class="stat-line"></view>
-    <view class="stat-item" bindtap="goFavorites">
-      <view class="stat-num">{{stats.favorites}}</view>
-      <view class="stat-label">我的收藏</view>
-    </view>
-    <view class="stat-line"></view>
-    <view class="stat-item" bindtap="openOrders">
-      <view class="stat-num">{{stats.orders}}</view>
-      <view class="stat-label">购买意向</view>
+    <view class="grid4">
+      <view class="grid-item" bindtap="demoEntry" data-name="跑腿互助">
+        <view class="grid-icon gi-green">🏃</view>
+        <view class="grid-label">跑腿互助</view>
+      </view>
+      <view class="grid-item" bindtap="demoEntry" data-name="自取柜租借">
+        <view class="grid-icon gi-gray">🪳</view>
+        <view class="grid-label">自取柜租借</view>
+      </view>
+      <view class="grid-item" bindtap="demoEntry" data-name="校历备忘">
+        <view class="grid-icon gi-gray">📅</view>
+        <view class="grid-label">校历备忘</view>
+      </view>
+      <view class="grid-item" bindtap="demoEntry" data-name="集市入场券">
+        <view class="grid-icon gi-orange">🎟️</view>
+        <view class="grid-label">集市入场券</view>
+      </view>
     </view>
   </view>
 
-  <!-- 菜单 -->
-  <view class="menu card">
-    <view class="menu-item" bindtap="goPublish">
-      <text class="menu-icon">🏷️</text>
-      <text class="menu-text">发布闲置</text>
-      <text class="menu-arrow">›</text>
+  <!-- ===== 账户与服务 ===== -->
+  <view class="section">
+    <view class="section-head">
+      <view class="section-bar dark"></view>
+      <text class="section-title">账户与服务</text>
     </view>
-    <view class="menu-item" bindtap="goVerify">
-      <text class="menu-icon">🎓</text>
-      <text class="menu-text">校园身份认证</text>
-      <text class="menu-tip" wx:if="{{user && user.verifyStatus !== 2}}">必填</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="chooseAvatar">
-      <text class="menu-icon">📷</text>
-      <text class="menu-text">从相册上传头像</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="goMyGoods">
-      <text class="menu-icon">📦</text>
-      <text class="menu-text">我发布的闲置</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="goFavorites">
-      <text class="menu-icon">♥</text>
-      <text class="menu-text">我的收藏</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="openOrders">
-      <text class="menu-icon">🤝</text>
-      <text class="menu-text">收到的意向 / 我的求购</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="about">
-      <text class="menu-icon">ℹ️</text>
-      <text class="menu-text">关于校园趣事</text>
-      <text class="menu-arrow">›</text>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goVerify">
+        <text class="mi-icon">🎓</text>
+        <text class="mi-text">实名学籍认证中心</text>
+        <text class="mi-tip" wx:if="{{user && user.verifyStatus === 2}}">认证有效（至 2026）</text>
+        <text class="mi-tip warn" wx:else>未认证</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" bindtap="goMessages">
+        <text class="mi-icon">🔔</text>
+        <text class="mi-text">消息通知与隐私权限</text>
+        <text class="mi-tip orange">· 即时推送</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" bindtap="demoEntry" data-name="在线客服与反馈">
+        <text class="mi-icon">💬</text>
+        <text class="mi-text">在线客服与反馈</text>
+        <text class="mi-tip">校内值班中</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" bindtap="about">
+        <text class="mi-icon">ℹ️</text>
+        <text class="mi-text">关于校园趣事平台</text>
+        <text class="mi-tip">v2.4.1</text>
+        <text class="mi-arrow">›</text>
+      </view>
     </view>
   </view>
 
-  <view class="logout" wx:if="{{logged}}" bindtap="logout">退出登录</view>
+  <view class="logout" wx:if="{{logged}}" bindtap="logout">⇄ 切换账号 / 退出登录</view>
   <view class="footer-tip" bindlongpress="resetMock">
-    校园趣事 v1.0.0 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
+    校园趣事 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
   </view>
 
   <!-- 意向单弹层 -->

@@ -1,34 +1,47 @@
 <view class="page">
-  <!-- 顶部栏（酷安式） -->
+  <!-- 顶部栏 -->
   <view class="topbar">
+    <view class="school-pill">📍 大学城校区 ▾</view>
     <view class="topbar-title">表白墙</view>
-    <view class="topbar-sub">匿名 · 仅同校可见</view>
-    <view class="compose-entry" bindtap="openCompose">
-      <text class="compose-ph">写下今天想说的话…</text>
-      <text class="compose-btn">发布</text>
+    <view class="bell" bindtap="goMessages">🔔<view class="bell-dot"></view></view>
+  </view>
+
+  <!-- 分类 chips -->
+  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="cat-row">
+      <view
+        class="cat-pill {{cat === item.key ? 'active' : ''}}"
+        wx:for="{{cats}}"
+        wx:key="key"
+        bindtap="switchCat"
+        data-key="{{item.key}}"
+      >{{item.name}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 毕业季 banner（粉色渐变） -->
+  <view class="season">
+    <view class="season-kicker">🎓 GRADUATION ROMANCE SEASON</view>
+    <view class="season-title">毕业季浪漫留言季</view>
+    <view class="season-sub">没说出口的喜欢就趁夏天放飞吧，不留遗憾的青春。</view>
+    <view class="season-foot">
+      <view class="season-avatars"><text>🌸</text><text>🌙</text><text>🍀</text></view>
+      <text class="season-count">已有 1,428 名同学送出</text>
+      <view class="flex1"></view>
+      <view class="season-btn" bindtap="goSeason">我要匿名送花 →</view>
     </view>
   </view>
 
-  <!-- 排序 -->
-  <view class="sort-bar">
-    <view
-      class="sort-item {{sort === 'new' ? 'active' : ''}}"
-      bindtap="switchSort"
-      data-key="new"
-    >最新</view>
-    <view
-      class="sort-item {{sort === 'hot' ? 'active' : ''}}"
-      bindtap="switchSort"
-      data-key="hot"
-    >最热</view>
-    <view class="flex1"></view>
-    <text class="sort-count">共 {{total}} 条心事</text>
+  <!-- 快捷发布入口 -->
+  <view class="compose-entry" bindtap="openCompose">
+    <text class="compose-ph">写下今天想说的话…</text>
+    <text class="compose-btn">匿名发布</text>
   </view>
 
   <!-- 信息流 -->
   <view class="feed">
     <view
-      class="feed-item"
+      class="feed-card {{index === 0 ? 'first' : ''}}"
       wx:for="{{posts}}"
       wx:key="id"
       bindtap="goDetail"
@@ -36,20 +49,31 @@
       hover-class="feed-hover"
       hover-stay-time="60"
     >
+      <view class="card-stripe" wx:if="{{index === 0}}"></view>
+
+      <!-- 作者行 -->
       <view class="feed-user">
         <view class="feed-avatar anon-avatar {{item.avatarClass}}">{{item.avatarEmoji}}</view>
         <view class="feed-user-info">
-          <view class="feed-name">{{item.anonName}}</view>
-          <view class="feed-meta">
-            <text>{{item.timeText}}</text>
-            <text class="feed-device">匿名发布</text>
+          <view class="feed-name-row">
+            <text class="feed-name">{{item.anonName}}</text>
+            <text class="feed-flair">{{item.flair}}</text>
           </view>
+          <view class="feed-meta">{{item.timeText}} · 匿名保护中</view>
         </view>
         <text class="feed-del" wx:if="{{item.mine}}" catchtap="deletePost" data-index="{{index}}">删除</text>
+        <text class="feed-more-btn" wx:else>···</text>
       </view>
 
+      <!-- 标签 -->
+      <view class="feed-tags" wx:if="{{item.tags.length}}">
+        <text class="feed-tag" wx:for="{{item.tags}}" wx:for-item="tg" wx:key="*this">{{tg}}</text>
+      </view>
+
+      <!-- 正文 -->
       <view class="feed-text clamp3">{{item.content}}</view>
 
+      <!-- 图片 -->
       <view class="feed-imgs" wx:if="{{item.imageList.length}}">
         <view
           class="feed-img-wrap {{item.imageList.length === 1 ? 'single' : (item.imageList.length === 2 ? 'double' : '')}}"
@@ -69,24 +93,28 @@
         </view>
       </view>
 
+      <!-- 互动栏 -->
       <view class="feed-actions">
-        <view class="feed-action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
-          <text class="feed-action-icon">👍</text>
-          <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
-        </view>
-        <view class="feed-action ml40" catchtap="goDetail" data-id="{{item.id}}">
-          <text class="feed-action-icon">💬</text>
-          <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
-        </view>
+        <view class="feed-view">👁 {{item.viewCount || 0}}</view>
         <view class="flex1"></view>
-        <text class="feed-more" catchtap="goDetail" data-id="{{item.id}}">详情 ›</text>
+        <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="fa-icon">{{item.liked ? '💗' : '🤍'}}</text>
+          <text>{{item.likeCount || '赞'}}</text>
+        </view>
+        <view class="feed-act" catchtap="goDetail" data-id="{{item.id}}">
+          <text class="fa-icon">💬</text>
+          <text>{{item.commentCount || '评'}}</text>
+        </view>
+        <button class="feed-share" open-type="share" catchtap="noop">
+          <text class="fa-icon">↗</text>
+        </button>
       </view>
     </view>
   </view>
 
   <view class="empty" wx:if="{{!loading && !posts.length}}">
     <text class="empty-icon">{{loadError ? '📡' : '💌'}}</text>
-    <text>{{loadError ? '加载失败，请检查网络或后端服务' : '还没有人写心事，第一个就是你'}}</text>
+    <text>{{loadError ? '加载失败，请检查网络' : '还没有人写心事，第一个就是你'}}</text>
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 
@@ -103,7 +131,7 @@
       </view>
       <textarea
         class="compose-textarea"
-        placeholder="匿名发布，不会展示你的昵称和头像"
+        placeholder="匿名发布，不会展示你的昵称和头像（输入 # 可选分类）"
         placeholder-class="placeholder"
         maxlength="1000"
         value="{{content}}"
@@ -111,6 +139,39 @@
         auto-height
         focus
       />
+
+      <!-- 分类选择：点 chip 直接选，或输入 # 唤起面板 -->
+      <view class="cat-select">
+        <text class="cat-select-label">分类</text>
+        <view class="cat-chips">
+          <view
+            class="cat-chip {{composeCat === item.key ? 'on' : ''}}"
+            wx:for="{{cats}}"
+            wx:key="key"
+            bindtap="chooseCat"
+            data-key="{{item.key}}"
+          >{{item.name}}</view>
+        </view>
+      </view>
+
+      <!-- # 号唤起的分类面板 -->
+      <view class="cat-picker-mask" wx:if="{{showCatPicker}}" bindtap="closeCatPicker">
+        <view class="cat-picker" catchtap="stop">
+          <view class="cat-picker-title">选择一个分类</view>
+          <view
+            class="cat-option"
+            wx:for="{{cats}}"
+            wx:key="key"
+            hover-class="opt-hover"
+            bindtap="pickCatTag"
+            data-key="{{item.key}}"
+          >
+            <text>{{item.tag}}</text>
+            <text class="cat-option-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="row between mt16">
         <view class="row gap12">
           <view class="img-add" wx:if="{{images.length < 3}}" bindtap="chooseImage">＋</view>

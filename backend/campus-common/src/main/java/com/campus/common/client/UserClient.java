@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 /**
  * 用户服务内部接口客户端（公共模块，各业务服务共用）。
@@ -21,4 +24,8 @@ public interface UserClient {
 
     @GetMapping("/{id}")
     R<UserBrief> getBrief(@PathVariable("id") Long id);
+
+    /** 批量摘要，避免列表场景 N+1 */
+    @GetMapping("/briefs")
+    R<List<UserBrief>> getBriefs(@RequestParam("ids") List<Long> ids);
 }

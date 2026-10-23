@@ -14,4 +14,7 @@ public class WallPostReq {
     private String content;
 
     private List<String> images;
+
+    /** 分类：love / tree / find / findp，缺省 love */
+    private String category;
 }

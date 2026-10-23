@@ -9,10 +9,13 @@
  *  - 校园网/局域网 IP 仅供局域网联调
  */
 
-const ACTIVE_ENV = 'dev'
+const ACTIVE_ENV = 'lan'
 
 const ENVS = {
   // 本地开发（开发者工具 + 本机后端）
+  // mock: true 时全站走本地模拟数据（utils/mock.js），无需启动后端
+  // 后端已实现完整（含私信），默认 mock: false 走真实接口；
+  // 只想看界面效果、不想起后端时把它改回 true 即可
   dev: {
     scheme: 'http',
     host: '192.168.0.103',

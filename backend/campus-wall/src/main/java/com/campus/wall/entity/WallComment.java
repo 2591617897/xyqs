@@ -30,6 +30,12 @@ public class WallComment {
     /** 逗号分隔，最多 3 张 */
     private String images;
 
+    /** 父评论 id，0 / null 表示直接评论；>0 表示对某条评论的回复 */
+    private Long parentId;
+
+    /** 被回复人的匿名昵称快照，用于「A 回复 B」展示 */
+    private String replyToName;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
@@ -38,4 +44,12 @@ public class WallComment {
 
     @TableField(exist = false)
     private Boolean mine;
+
+    /** 该评论下的回复列表（仅顶层评论有值） */
+    @TableField(exist = false)
+    private List<WallComment> replies;
+
+    /** 回复总数（可能大于返回的 replies 条数） */
+    @TableField(exist = false)
+    private Integer replyCount;
 }

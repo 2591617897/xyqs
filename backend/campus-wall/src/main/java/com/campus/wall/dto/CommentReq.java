@@ -15,4 +15,7 @@ public class CommentReq {
     /** 最多 3 张图片 */
     @Size(max = 3, message = "最多上传 3 张图片")
     private List<String> images;
+
+    /** 回复的父评论 id，空 / 0 表示直接评论 */
+    private Long parentId;
 }

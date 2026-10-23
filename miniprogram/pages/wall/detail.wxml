@@ -57,6 +57,7 @@
           <text class="c-name">{{item.anonName}}</text>
           <view class="row gap12">
             <text class="muted">{{item.timeText}}</text>
+            <text class="c-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.anonName}}">回复</text>
             <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
           </view>
         </view>
@@ -76,6 +77,43 @@
             data-pindex="{{pindex}}"
             data-url="{{img}}"
           />
+        </view>
+
+        <!-- 楼中楼回复 -->
+        <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
+          <view class="reply-item" wx:for="{{item.expanded ? item.replies : item.replies.slice(0, 5)}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
+            <view class="c-avatar reply-avatar {{rp.avatarClass}}">💬</view>
+            <view class="flex1">
+              <view class="c-head">
+                <text class="c-name">{{rp.anonName}}</text>
+                <view class="row gap12">
+                  <text class="muted">{{rp.timeText}}</text>
+                  <text class="c-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.anonName}}">回复</text>
+                  <text class="c-del" wx:if="{{rp.mine}}" catchtap="deleteReply" data-id="{{rp.id}}">删除</text>
+                </view>
+              </view>
+              <view class="c-text">
+                <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
+              </view>
+              <view class="c-imgs" wx:if="{{rp.imageList.length}}">
+                <image
+                  wx:for="{{rp.imageList}}"
+                  wx:for-item="img"
+                  wx:for-index="imgIndex"
+                  wx:key="*this"
+                  class="c-img"
+                  src="{{img}}"
+                  mode="aspectFill"
+                  catchtap="previewComment"
+                  data-pindex="{{pindex}}"
+                  data-url="{{img}}"
+                />
+              </view>
+            </view>
+          </view>
+          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
+            查看全部 {{item.replyCount}} 条回复 ›
+          </view>
         </view>
       </view>
     </view>
@@ -99,12 +137,18 @@
       <text class="p-tip">最多 3 张</text>
     </view>
 
+    <!-- 回复状态条：回复某人时显示，可取消 -->
+    <view class="reply-bar" wx:if="{{replyTo}}">
+      <text class="reply-bar-text">回复 @{{replyTo.name}}</text>
+      <text class="reply-bar-cancel" catchtap="cancelReply">✕</text>
+    </view>
+
     <view class="input-row">
       <view class="tool" catchtap="chooseCommentImage">🖼</view>
       <view class="tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
       <input
         class="comment-input"
-        placeholder="匿名评论，温柔一点"
+        placeholder="{{replyTo ? '回复 ' + replyTo.name : '匿名评论，温柔一点'}}"
         placeholder-class="placeholder"
         value="{{commentInput}}"
         focus="{{commentFocus}}"

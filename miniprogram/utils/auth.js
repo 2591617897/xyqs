@@ -69,10 +69,23 @@ function ensureVerified() {
   })
 }
 
+/**
+ * 更新本地用户缓存（globalData + storage）。
+ *
+ * 必须以「已有缓存」为基础做合并，而不是整体替换：
+ * 调用方经常只传部分字段（如 id/schoolId/verifyStatus），整体替换会把缓存里已有的
+ * schoolName 等字段冲掉，导致首页「选择学校」与认证学籍信息不一致。
+ *
+ * @param {Object} user 需要写入的字段（可只传部分）
+ * @returns {Object} 合并后的完整用户对象
+ */
 function updateUser(user) {
   const app = getApp()
-  app.globalData.user = user
-  mp.setStorageSync('user', user)
+  const cached = (app && app.globalData && app.globalData.user) || mp.getStorageSync('user') || {}
+  const next = Object.assign({}, cached, user || {})
+  app.globalData.user = next
+  mp.setStorageSync('user', next)
+  return next
 }
 
 /**

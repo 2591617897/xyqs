@@ -19,6 +19,7 @@
         <module>campus-goods</module>
         <module>campus-wall</module>
         <module>campus-post</module>
+        <module>campus-message</module>
     </modules>
 
     <properties>

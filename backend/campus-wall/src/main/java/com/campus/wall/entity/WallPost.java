@@ -34,6 +34,9 @@ public class WallPost {
 
     private String images;
 
+    /** 分类：love 精选表白 / tree 树洞吐槽 / find 寻物启事 / findp 捞人 */
+    private String category;
+
     private Integer likeCount;
 
     private Integer commentCount;

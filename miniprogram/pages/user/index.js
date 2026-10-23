@@ -2,13 +2,11 @@ const http = require('../../utils/request')
 const { mp, toast, timeAgo } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const mock = require('../../utils/mock')
-const upload = require('../../utils/upload')
 
 Page({
   data: {
     user: null,
     logged: false,
-    nicknameDraft: '',
     stats: { goods: 0, favorites: 0, orders: 0 },
     loading: true,
     showOrders: false,
@@ -26,8 +24,7 @@ Page({
 const cached = getApp().globalData.user
 this.setData({
       logged: !!http.getToken(),
-      user: cached,
-      nicknameDraft: cached ? cached.nickname || '' : ''
+      user: cached
     })
     if (http.getToken()) {
       this.loadMe()
@@ -44,14 +41,14 @@ this.setData({
       self.setData({
         user: me,
         logged: true,
-        loading: false,
-        nicknameDraft: me.nickname || ''
+        loading: false
       })
       auth.updateUser({
         id: me.id,
         nickname: me.nickname,
         avatar: me.avatar,
         schoolId: me.schoolId,
+        schoolName: me.schoolName || '',
         verifyStatus: me.verifyStatus
       })
     }).catch(function (err) {
@@ -99,88 +96,22 @@ this.setData({
     })
   },
 
-  /**
-   * 微信取头像：用户主动点击 open-type="chooseAvatar" 按钮
-   * 拿到的是临时路径，必须先上传换成可访问的 URL 再入库
-   */
-  onChooseAvatar: function (e) {
-    const self = this
-    if (!this.data.logged) {
-      this.login()
-      return
-    }
-    const tmpPath = e && e.detail && e.detail.avatarUrl
-    if (!tmpPath) {
-      toast('未获取到头像，请重试')
-      return
-    }
-    mp.showLoading({ title: '上传中', mask: true })
-    upload.uploadImage(tmpPath).then(function (url) {
-      mp.hideLoading()
-      return http.put('/user/me', { avatar: url }, { loading: '保存中' })
-    }).then(function (me) {
-      self.applyMe(me)
-      toast('头像已更新')
-    }).catch(function () {
-      mp.hideLoading()
-    })
-  },
-
-  /** 昵称：type="nickname" 由微信输入法给出候选，用户也可自己输入 */
-  onNicknameInput: function (e) {
-    this.setData({ nicknameDraft: e.detail.value })
-  },
-
-  saveNickname: function () {
-    const self = this
-    const nickname = (this.data.nicknameDraft || '').trim()
-    if (!this.data.logged || !nickname) return
-    if (this.data.user && nickname === this.data.user.nickname) return
-    http.put('/user/me', { nickname: nickname }, { loading: '保存中' }).then(function (me) {
-      self.applyMe(me)
-      toast('昵称已保存')
-    }).catch(function () {
-      // 失败时回滚输入框，避免界面与服务端不一致
-      self.setData({ nicknameDraft: (self.data.user && self.data.user.nickname) || '' })
-    })
+  /** 个人信息：查看与修改昵称/头像/性别/手机号/简介 */
+  goProfile: function () {
+    if (!this.guard()) return
+    mp.navigateTo({ url: '/pages/user/profile' })
   },
 
   /** 统一同步服务端用户信息到页面与本地缓存 */
   applyMe: function (me) {
-    this.setData({ user: me, logged: true, nicknameDraft: me.nickname || '' })
+    this.setData({ user: me, logged: true })
     auth.updateUser({
       id: me.id,
       nickname: me.nickname,
       avatar: me.avatar,
       schoolId: me.schoolId,
+      schoolName: me.schoolName || '',
       verifyStatus: me.verifyStatus
-    })
-  },
-
-  /** 兜底：从相册选一张作为头像（走已有的上传接口） */
-  chooseAvatar: function () {
-    const self = this
-    if (!this.data.logged) {
-      this.login()
-      return
-    }
-    mp.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      success: function (res) {
-        const path = res.tempFilePaths && res.tempFilePaths[0]
-        if (!path) return
-        mp.showLoading({ title: '上传中', mask: true })
-        upload.uploadImage(path).then(function (url) {
-          mp.hideLoading()
-          return http.put('/user/me', { avatar: url }, { loading: '保存中' })
-        }).then(function (me) {
-          self.applyMe(me)
-          toast('头像已更新')
-        }).catch(function () {
-          mp.hideLoading()
-        })
-      }
     })
   },
 
@@ -195,7 +126,6 @@ this.setData({
         self.setData({
           logged: false,
           user: null,
-          nicknameDraft: '',
           stats: { goods: 0, favorites: 0, orders: 0 },
           buyerOrders: [],
           sellerOrders: []
@@ -243,6 +173,16 @@ this.setData({
     auth.ensureVerified().then(function () {
       mp.navigateTo({ url: '/pages/goods/publish' })
     }).catch(function () {})
+  },
+
+  /** 消息中心（私信 / 赞与收藏 / 评论） */
+  goMessages: function () {
+    mp.navigateTo({ url: '/pages/messages/index' })
+  },
+
+  /** 未实现的演示入口统一占位 */
+  demoEntry: function (e) {
+    toast('「' + (e.currentTarget.dataset.name || '该功能') + '」即将上线，敬请期待')
   },
 
   about: function () {

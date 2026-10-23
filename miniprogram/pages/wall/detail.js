@@ -27,6 +27,7 @@ Page({
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
+    replyTo: null,
     showEdit: false,
     editContent: '',
     editImages: [],
@@ -77,6 +78,14 @@ Page({
             c.timeText = timeAgo(c.createdAt)
             c.avatarClass = 'anon-' + ((Math.abs(Number(c.id)) % 8) + 1)
             c.imageList = resolveList(c.imageList)
+            c.expanded = false
+            c.replyCount = c.replyCount || (c.replies || []).length
+            c.replies = (c.replies || []).map(function (r) {
+              r.timeText = timeAgo(r.createdAt)
+              r.avatarClass = 'anon-' + ((Math.abs(Number(r.id)) % 8) + 1)
+              r.imageList = resolveList(r.imageList)
+              return r
+            })
             return c
           })
         })
@@ -128,6 +137,31 @@ Page({
 
   onCommentInput: function (e) {
     this.setData({ commentInput: e.detail.value })
+  },
+
+  /** 点评论 / 回复上的「回复」：进入回复某人的状态 */
+  replyComment: function (e) {
+    const ds = e.currentTarget.dataset
+    this.setData({
+      replyTo: { id: ds.id, name: ds.name },
+      commentFocus: true,
+      showEmoji: false
+    })
+  },
+
+  cancelReply: function () {
+    this.setData({ replyTo: null })
+  },
+
+  /** 展开 / 收起某条评论的全部回复 */
+  toggleReplies: function (e) {
+    const index = e.currentTarget.dataset.index
+    const key = 'comments[' + index + '].expanded'
+    this.setData({ [key]: !this.data.comments[index].expanded })
+  },
+
+  deleteReply: function (e) {
+    this.deleteComment(e)
   },
 
   toggleEmoji: function () {
@@ -184,17 +218,21 @@ Page({
       return upload.uploadImages(images)
     }).then(function (urls) {
       if (images.length) mp.hideLoading()
-      return http.post('/wall/posts/' + self.data.id + '/comments', {
+      const payload = {
         content: content,
         images: urls
-      })
+      }
+      // 回复评论时带上父评论 id
+      if (self.data.replyTo) payload.parentId = self.data.replyTo.id
+      return http.post('/wall/posts/' + self.data.id + '/comments', payload)
     }).then(function () {
       self.setData({
         commentInput: '',
         commentImages: [],
         showEmoji: false,
         commentFocus: false,
-        sending: false
+        sending: false,
+        replyTo: null
       })
       self.loadComments()
       const patch = {}

@@ -86,6 +86,7 @@ public class GoodsService {
         int views = goods.getViewCount() == null ? 0 : goods.getViewCount();
         goods.setViewCount(views + 1);
         fillExtra(goods);
+        fillSellerStats(goods);
         if (userId != null) {
             goods.setLiked(hasLiked(id, userId));
         }
@@ -240,12 +241,35 @@ public class GoodsService {
         goods.setPrice(req.getPrice());
         goods.setOriginalPrice(req.getOriginalPrice());
         goods.setCategoryId(req.getCategoryId() == null ? 6 : req.getCategoryId());
+        goods.setConditionLevel(req.getConditionLevel());
+        goods.setPurchaseTime(trimToNull(req.getPurchaseTime()));
+        goods.setUsageFrequency(trimToNull(req.getUsageFrequency()));
+        goods.setSource(trimToNull(req.getSource()));
+        goods.setWarranty(trimToNull(req.getWarranty()));
+        goods.setSupportTrial(req.getSupportTrial() == null ? 1 : req.getSupportTrial());
         goods.setTradeType(req.getTradeType() == null ? 1 : req.getTradeType());
         goods.setLocation(req.getLocation());
         if (req.getImages() != null) {
             goods.setImages(req.getImages().stream()
                     .filter(StringUtils::hasText).limit(9).collect(Collectors.joining(",")));
         }
+    }
+
+    private String trimToNull(String s) {
+        return StringUtils.hasText(s) ? s.trim() : null;
+    }
+
+    /** 卖家在售/累计发布数，供详情页卖家卡展示（读时统计，不落库） */
+    private void fillSellerStats(Goods goods) {
+        if (goods.getUserId() == null) {
+            return;
+        }
+        Long sale = goodsMapper.selectCount(Wrappers.<Goods>lambdaQuery()
+                .eq(Goods::getUserId, goods.getUserId()).eq(Goods::getStatus, 1));
+        Long total = goodsMapper.selectCount(Wrappers.<Goods>lambdaQuery()
+                .eq(Goods::getUserId, goods.getUserId()));
+        goods.setSellerSaleCount(sale == null ? 0 : sale.intValue());
+        goods.setSellerTotalCount(total == null ? 0 : total.intValue());
     }
 
     private Goods requireOwner(Long id, Long userId) {

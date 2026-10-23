@@ -19,6 +19,7 @@
 │   ├── campus-goods/     :8103  # 二手商品、收藏、购买意向
 │   ├── campus-wall/      :8104  # 匿名表白墙、评论、点赞
 │   ├── campus-post/      :8105  # 频道、帖子、评论、点赞
+│   ├── campus-message/   :8106  # 私信会话、聊天记录、消息中心
 │   └── sql/                     # schema.sql / data.sql
 ├── miniprogram/                 # 微信小程序端
 │   ├── utils/mock.js            # 本地模拟数据层（假后端，可交互）
@@ -181,12 +182,13 @@ mvn -pl campus-user    spring-boot:run     # 8102  ← 图片上传 / 静态资�
 mvn -pl campus-goods   spring-boot:run     # 8103
 mvn -pl campus-wall    spring-boot:run     # 8104
 mvn -pl campus-post    spring-boot:run     # 8105
+mvn -pl campus-message spring-boot:run     # 8106
 mvn -pl campus-gateway spring-boot:run     # 8888 ← 小程序只访问这个
 ```
 
 验证：`curl http://127.0.0.1:8888/api/schools` 应返回学校列表。
 
-更完整的自检（逐条打印 12 个核心接口的状态与错误原因）：
+更完整的自检（逐条打印 23 个核心接口的状态与错误原因，含私信）：
 
 ```bash
 node scripts/api-smoke-test.js

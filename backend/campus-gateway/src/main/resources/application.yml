@@ -40,6 +40,12 @@ spring:
             - Path=/api/posts/**,/api/channels/**
           filters:
             - StripPrefix=1
+        - id: campus-message
+          uri: lb://campus-message
+          predicates:
+            - Path=/api/messages/**
+          filters:
+            - StripPrefix=1
         # 上传后的图片由 user 服务的静态资源映射提供，不做前缀剥离
         - id: campus-file
           uri: lb://campus-user

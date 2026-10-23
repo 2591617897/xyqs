@@ -38,6 +38,24 @@ public class Goods {
     /** 1数码 2图书 3生活 4服饰 5运动 6其他 */
     private Integer categoryId;
 
+    /** 成色: 1全新 2几乎全新 3轻微使用痕迹 4明显使用痕迹，老数据为 null */
+    private Integer conditionLevel;
+
+    /** 入手时间，展示文案如：2023年9月 */
+    private String purchaseTime;
+
+    /** 使用频率：每天使用/经常使用/偶尔使用/几乎没用过 */
+    private String usageFrequency;
+
+    /** 来源渠道：自购自用/朋友赠送/活动奖品/实验室配发/其他 */
+    private String source;
+
+    /** 保修状态：官方保修中/官方保修已过/不确定 */
+    private String warranty;
+
+    /** 是否支持面交试机 0否 1是 */
+    private Integer supportTrial;
+
     /** 逗号分隔的图片地址 */
     private String images;
 
@@ -67,4 +85,12 @@ public class Goods {
 
     @TableField(exist = false)
     private String categoryName;
+
+    /** 卖家实时在售数量（详情页统计，不入库） */
+    @TableField(exist = false)
+    private Integer sellerSaleCount;
+
+    /** 卖家累计发布数量（详情页统计，不入库） */
+    @TableField(exist = false)
+    private Integer sellerTotalCount;
 }

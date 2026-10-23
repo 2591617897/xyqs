@@ -5,12 +5,15 @@
     "pages/wall/index",
     "pages/wall/detail",
     "pages/user/index",
+    "pages/user/profile",
     "pages/goods/detail",
     "pages/goods/publish",
     "pages/post/list",
     "pages/post/detail",
     "pages/post/publish",
-    "pages/user/verify"
+    "pages/user/verify",
+    "pages/messages/index",
+    "pages/chat/index"
   ],
   "window": {
     "backgroundTextStyle": "dark",

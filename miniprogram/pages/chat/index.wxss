@@ -1,0 +1,349 @@
+/* ===== 聊天详情 · 对齐设计稿 Post Detail（IM 演示） ===== */
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f7f9fb;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  padding: 20rpx 24rpx 8rpx;
+}
+.tb-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #191c1e;
+}
+
+/* ---------- 对方信息 ---------- */
+.peer {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 12rpx 24rpx 20rpx;
+}
+.peer-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+.peer-avatar .avatar-default {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.peer-check {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid #ffffff;
+}
+.peer-main {
+  flex: 1;
+  min-width: 0;
+}
+.peer-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.peer-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #191c1e;
+}
+.peer-tag {
+  padding: 2rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.peer-school {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #10b981;
+}
+.peer-acts {
+  display: flex;
+  gap: 14rpx;
+}
+.peer-act {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+}
+
+/* ---------- 宝贝卡片 ---------- */
+.goods-card {
+  margin: 0 24rpx;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(16, 185, 129, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+}
+.gc-cover {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  background: #f2f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  float: left;
+  margin-right: 20rpx;
+}
+.gc-main {
+  overflow: hidden;
+}
+.gc-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+.gc-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #191c1e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gc-status {
+  flex-shrink: 0;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(16, 185, 129, 0.12);
+  color: #006c49;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.gc-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+  margin-top: 10rpx;
+  color: #f97316;
+}
+.gc-symbol {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+.gc-num {
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.gc-talk {
+  margin-left: 16rpx;
+  font-size: 22rpx;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+.gc-cta {
+  clear: both;
+  margin-top: 20rpx;
+  height: 80rpx;
+  border-radius: 999rpx;
+  background: #ffdbca;
+  color: #783200;
+  font-size: 26rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- 安全提示 ---------- */
+.safety {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin: 20rpx 24rpx 0;
+  padding: 18rpx 24rpx;
+  border-radius: 20rpx;
+  background: #eceef0;
+}
+.safety-shield {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+.safety-text {
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #475569;
+}
+
+/* ---------- 消息列表 ---------- */
+.msgs {
+  flex: 1;
+  min-height: 0;
+  padding: 0 24rpx;
+}
+.msg-day {
+  text-align: center;
+  font-size: 22rpx;
+  color: #94a3b8;
+  padding: 24rpx 0;
+}
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+}
+.msg.mine {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.msg-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e6e8ea;
+}
+.msg-body {
+  max-width: 68%;
+  display: flex;
+  flex-direction: column;
+}
+.msg.mine .msg-body {
+  align-items: flex-end;
+}
+.bubble {
+  padding: 22rpx 26rpx;
+  border-radius: 8rpx 32rpx 32rpx 32rpx;
+  background: #ffffff;
+  font-size: 28rpx;
+  line-height: 1.65;
+  color: #191c1e;
+  word-break: break-all;
+  box-shadow: 0 4rpx 16rpx -2rpx rgba(15, 23, 42, 0.04);
+}
+.msg.mine .bubble {
+  background: #10b981;
+  color: #ffffff;
+  border-radius: 32rpx 8rpx 32rpx 32rpx;
+}
+.loc-card {
+  padding: 20rpx 24rpx;
+  border-radius: 8rpx 28rpx 28rpx 28rpx;
+  background: #f2f4f6;
+  border: 1rpx dashed #bbcabf;
+}
+.loc-pin {
+  font-size: 24rpx;
+  color: #006c49;
+  font-weight: 600;
+}
+.msg-time {
+  margin-top: 10rpx;
+  font-size: 20rpx;
+  color: #94a3b8;
+}
+.msg-me {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.msgs-pad {
+  height: 24rpx;
+}
+
+/* ---------- 快捷话术 ---------- */
+.quicks {
+  display: flex;
+  gap: 14rpx;
+  padding: 16rpx 24rpx 8rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.quick-chip {
+  flex-shrink: 0;
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 26rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.quick-chip.amber {
+  background: #fff6e0;
+  color: #b45309;
+}
+.quick-chip.green {
+  background: rgba(16, 185, 129, 0.14);
+  color: #006c49;
+}
+.quick-chip.gray {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ---------- 输入栏 ---------- */
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1rpx solid #f1f5f9;
+}
+.ib-icon {
+  font-size: 36rpx;
+  color: #64748b;
+  flex-shrink: 0;
+}
+.ib-input {
+  flex: 1;
+  height: 80rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+  font-size: 28rpx;
+  color: #191c1e;
+}
+.ph {
+  color: #94a3b8;
+}
+.ib-send {
+  flex-shrink: 0;
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 34rpx;
+  border-radius: 999rpx;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+}

@@ -1,4 +1,4 @@
-/* 自定义底部导航 —— 酷安风格：白底 + 绿色主色 + 中间凸起发布按钮 */
+/* 自定义底部导航 —— 白底 + 绿色主色 + 中间品牌发光凸起发布按钮（对齐设计稿） */
 .tabbar {
   position: fixed;
   left: 0;
@@ -8,8 +8,13 @@
   display: flex;
   align-items: flex-end;
   background: #ffffff;
-  border-top: 1rpx solid #f0f1f3;
-  padding: 10rpx 8rpx calc(8rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #f1f5f9;
+  padding: 10rpx 8rpx calc(10rpx + env(safe-area-inset-bottom));
+}
+
+/* 页面弹层打开时由页面通过 getTabBar().setData({hidden:true}) 隐藏底栏 */
+.tabbar-hidden {
+  display: none;
 }
 
 .tab-item {
@@ -19,6 +24,7 @@
   align-items: center;
   justify-content: flex-end;
   padding: 8rpx 0 6rpx;
+  border-radius: 22rpx;
 }
 
 .tab-hover {
@@ -28,14 +34,15 @@
 .tab-icon {
   font-size: 38rpx;
   line-height: 1;
-  opacity: 0.42;
+  opacity: 0.55;
+  filter: grayscale(0.6);
   transform: scale(0.96);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
 }
 
 .tab-label {
   font-size: 20rpx;
-  color: #9b9ba3;
+  color: #94a3b8;
   margin-top: 6rpx;
   letter-spacing: 0.5rpx;
   transition: color 0.18s ease;
@@ -43,15 +50,16 @@
 
 .tab-item.active .tab-icon {
   opacity: 1;
-  transform: scale(1.04);
+  filter: grayscale(0);
+  transform: scale(1.06);
 }
 
 .tab-item.active .tab-label {
-  color: #11a86b;
-  font-weight: 600;
+  color: #10b981;
+  font-weight: 700;
 }
 
-/* 中间发布按钮 */
+/* 中间发布按钮：品牌绿发光圆钮 */
 .tab-plus {
   flex: 1;
   display: flex;
@@ -59,19 +67,156 @@
   justify-content: center;
 }
 .plus-btn {
-  width: 96rpx;
-  height: 96rpx;
+  width: 104rpx;
+  height: 104rpx;
   border-radius: 50%;
-  background: #11a86b;
+  background: #10b981;
   color: #ffffff;
-  font-size: 54rpx;
+  font-size: 52rpx;
   font-weight: 300;
-  line-height: 88rpx;
+  line-height: 98rpx;
   text-align: center;
-  margin-top: -46rpx;
-  box-shadow: 0 8rpx 20rpx rgba(17, 168, 107, 0.34);
+  box-sizing: content-box;
+  margin-top: -52rpx;
+  box-shadow: 0 16rpx 48rpx -8rpx rgba(16, 185, 129, 0.42), 0 8rpx 20rpx -4rpx rgba(16, 185, 129, 0.25);
   transition: transform 0.12s ease;
 }
 .plus-hover .plus-btn {
   transform: scale(0.94);
+}
+
+/* ===== 发布弹层 ===== */
+.pub-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1100;
+  background: rgba(17, 20, 26, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+.pub-sheet {
+  width: 100%;
+  padding: 24rpx 24rpx 8rpx;
+  box-sizing: border-box;
+}
+.pub-big {
+  position: relative;
+  border-radius: 24rpx;
+  padding: 32rpx 34rpx;
+  background: #11a86b;
+  color: #ffffff;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+.pub-big-head {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.pub-big-title {
+  font-size: 38rpx;
+  font-weight: 700;
+}
+.pub-big-arrow {
+  font-size: 36rpx;
+  opacity: 0.9;
+}
+.pub-big-sub {
+  font-size: 25rpx;
+  opacity: 0.9;
+  margin-top: 12rpx;
+}
+.pub-badge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 8rpx 22rpx;
+  border-radius: 0 24rpx 0 24rpx;
+  background: #ffd54a;
+  color: #7a4d00;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+.pub-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+.pub-deco.d1 { width: 150rpx; height: 150rpx; right: 30rpx; bottom: -50rpx; }
+.pub-deco.d2 { width: 70rpx; height: 70rpx; right: 170rpx; top: -20rpx; }
+.pub-deco.d3 { width: 100rpx; height: 100rpx; right: -20rpx; bottom: -30rpx; }
+
+.pub-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+.pub-half {
+  position: relative;
+  flex: 1;
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx;
+  overflow: hidden;
+}
+.pub-half-head {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+.pub-half-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.pub-half-arrow {
+  font-size: 28rpx;
+  opacity: 0.85;
+}
+.pub-half-sub {
+  font-size: 23rpx;
+  opacity: 0.9;
+  margin-top: 10rpx;
+}
+.pub-amber { background: #ffd54a; color: #6b4a00; }
+.pub-gray { background: #f2f3f5; color: #1a1a1a; }
+.pub-gray .pub-half-sub { color: #6b6b73; opacity: 1; }
+
+.pub-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 20rpx;
+  padding: 30rpx 34rpx;
+  margin-bottom: 20rpx;
+}
+.pub-line-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.pub-line-arrow {
+  font-size: 32rpx;
+  opacity: 0.7;
+}
+.pub-red { background: #ef7d68; color: #ffffff; }
+.pub-plain { background: #f7f8fa; color: #1a1a1a; }
+
+.pub-close {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #1f2329;
+  color: #ffffff;
+  font-size: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8rpx 0 calc(28rpx + env(safe-area-inset-bottom));
+}
+.card-press {
+  opacity: 0.85;
+  transform: scale(0.99);
 }

@@ -58,6 +58,77 @@
   </view>
 
   <view class="card">
+    <view class="h2">规格与成色</view>
+    <view class="muted mt16">选填，但填得越准，同校同学越敢下手</view>
+
+    <view class="field row mt16">
+      <text class="field-label">成色</text>
+      <view class="cat-wrap flex1">
+        <view
+          class="cat-pill {{conditionLevel === item.id ? 'active' : ''}}"
+          wx:for="{{conditionOptions}}"
+          wx:key="id"
+          bindtap="chooseCondition"
+          data-id="{{item.id}}"
+        >{{item.name}}</view>
+      </view>
+    </view>
+
+    <view class="field row">
+      <text class="field-label">入手时间</text>
+      <picker class="flex1 row" mode="date" fields="month" value="{{purchaseMonth}}" bindchange="onPurchaseChange">
+        <text class="field-input {{purchaseTime ? '' : 'field-ph'}}">{{purchaseTime || '选填，如 2023年9月'}}</text>
+        <text wx:if="{{purchaseTime}}" class="pick-clear" catchtap="clearPurchase">✕</text>
+      </picker>
+    </view>
+
+    <view class="field row">
+      <text class="field-label">使用频率</text>
+      <view class="cat-wrap flex1">
+        <view
+          class="cat-pill {{usageFrequency === item ? 'active' : ''}}"
+          wx:for="{{usageOptions}}"
+          wx:key="*this"
+          bindtap="chooseUsage"
+          data-value="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <view class="field row">
+      <text class="field-label">来源</text>
+      <view class="cat-wrap flex1">
+        <view
+          class="cat-pill {{source === item ? 'active' : ''}}"
+          wx:for="{{sourceOptions}}"
+          wx:key="*this"
+          bindtap="chooseSource"
+          data-value="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <view class="field row">
+      <text class="field-label">保修状态</text>
+      <view class="cat-wrap flex1">
+        <view
+          class="cat-pill {{warranty === item ? 'active' : ''}}"
+          wx:for="{{warrantyOptions}}"
+          wx:key="*this"
+          bindtap="chooseWarranty"
+          data-value="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <view class="field row">
+      <text class="field-label">面交试机</text>
+      <text class="muted flex1">支持当面验货，满意再付</text>
+      <switch checked="{{supportTrial === 1}}" bindchange="toggleTrial" color="#0e9a60" />
+    </view>
+  </view>
+
+  <view class="card">
     <view class="h2">商品图片</view>
     <view class="img-grid mt16">
       <view class="img-item" wx:for="{{images}}" wx:key="*this">

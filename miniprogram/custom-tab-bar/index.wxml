@@ -1,4 +1,4 @@
-<view class="tabbar">
+<view class="tabbar {{(hidden || showSheet) ? 'tabbar-hidden' : ''}}">
   <block wx:for="{{list}}" wx:key="key">
     <!-- 中间发布按钮 -->
     <view class="tab-plus" wx:if="{{item.plus}}" bindtap="onPlus" hover-class="plus-hover" hover-stay-time="80">
@@ -17,4 +17,50 @@
       <text class="tab-label">{{item.text}}</text>
     </view>
   </block>
+</view>
+
+<!-- 发布弹层（仿参考图：彩色大卡 + 黑色圆形关闭） -->
+<view class="pub-mask" wx:if="{{showSheet}}" bindtap="closeSheet">
+  <view class="pub-sheet" catchtap="stop">
+    <view class="pub-big" bindtap="goPage" data-url="/pages/post/publish" hover-class="card-press">
+      <view class="pub-big-head">
+        <text class="pub-big-title">发布帖子</text>
+        <text class="pub-big-arrow">›</text>
+      </view>
+      <view class="pub-big-sub">吐槽 · 表白 · 求助</view>
+      <view class="pub-badge">校园创作激励</view>
+      <view class="pub-deco d1"></view>
+      <view class="pub-deco d2"></view>
+    </view>
+
+    <view class="pub-row">
+      <view class="pub-half pub-amber" bindtap="goPage" data-url="/pages/goods/publish" hover-class="card-press">
+        <view class="pub-half-head">
+          <text class="pub-half-title">发布闲置</text>
+          <text class="pub-half-arrow">›</text>
+        </view>
+        <view class="pub-half-sub">出闲置 · 求购宝贝</view>
+        <view class="pub-deco d3"></view>
+      </view>
+      <view class="pub-half pub-gray" bindtap="goPage" data-url="/pages/user/verify" hover-class="card-press">
+        <view class="pub-half-head">
+          <text class="pub-half-title">身份认证</text>
+          <text class="pub-half-arrow">›</text>
+        </view>
+        <view class="pub-half-sub">学号 · 实名 · 学生证</view>
+      </view>
+    </view>
+
+    <view class="pub-line pub-red" bindtap="goTab" data-url="/pages/wall/index" hover-class="card-press">
+      <text class="pub-line-title">写匿名心事</text>
+      <text class="pub-line-arrow">›</text>
+    </view>
+
+    <view class="pub-line pub-plain" bindtap="goTab" data-url="/pages/user/index" hover-class="card-press">
+      <text class="pub-line-title">我的发布与收藏</text>
+      <text class="pub-line-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="pub-close" bindtap="closeSheet">✕</view>
 </view>

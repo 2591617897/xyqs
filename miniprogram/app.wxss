@@ -405,7 +405,7 @@ view, text, button, input, textarea {
   color: #11a86b;
   flex-shrink: 0;
 }
-/* 操作栏 */
+/* 操作栏：平铺图标 + 计数（新参考版式） */
 .feed-actions {
   display: flex;
   align-items: center;
@@ -414,15 +414,16 @@ view, text, button, input, textarea {
   font-size: 24rpx;
 }
 .feed-action {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  padding: 6rpx 0;
+  padding: 10rpx 14rpx;
+  color: #6b6b73;
 }
 .feed-action.liked {
   color: #11a86b;
 }
 .feed-action-icon {
-  font-size: 30rpx;
+  font-size: 28rpx;
   line-height: 1;
 }

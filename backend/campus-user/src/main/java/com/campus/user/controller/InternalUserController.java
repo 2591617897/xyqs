@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 内部接口：只允许服务间调用，网关不路由 /internal/**。
@@ -30,5 +33,11 @@ public class InternalUserController {
     @GetMapping("/{id}")
     public R<UserBrief> get(@PathVariable("id") Long id) {
         return R.ok(userService.brief(id));
+    }
+
+    /** 批量摘要：GET /internal/users/briefs?ids=1,2,3 */
+    @GetMapping("/briefs")
+    public R<List<UserBrief>> briefs(@RequestParam(name = "ids") List<Long> ids) {
+        return R.ok(userService.briefs(ids));
     }
 }

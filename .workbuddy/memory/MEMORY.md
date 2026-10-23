@@ -17,7 +17,7 @@
 - 数据库：`guizhou_campus_fun`，账号 `root`，密码 `123456`
 - MySQL `3306` / Redis `6379` / Nacos `8848`
 - 网关 `8888`（唯一对外入口，路径前缀 `/api`）
-- 服务端口：auth 8101 / user 8102 / goods 8103 / wall 8104 / post 8105
+- 服务端口：auth 8101 / user 8102 / goods 8103 / wall 8104 / post 8105 / message 8106
 - 修改这些参数时必须同步的位置：
   `docker-compose.yml`、`backend/sql/schema.sql`(CREATE DATABASE)、`backend/sql/data.sql`(USE)、
   5 个 `campus-*/src/main/resources/application.yml`、`miniprogram/utils/config.js`(BASE_URL)、README、docs
@@ -38,6 +38,13 @@
   正确做法：先停服务，再 `mvn clean install`
 - 在 WorkBuddy 执行环境里启动服务要 `env -u SERVER__PORT`，否则继承的 `SERVER__PORT=61581`
   会覆盖 `server.port`，所有服务抢同一端口；用户自己的终端/IDEA 无此变量
+- **子模块 jar 是普通 jar，不是 fat jar**：父 POM 只在 `pluginManagement` 声明了
+  spring-boot-maven-plugin，模块里也没写 `<executions>`，`repackage` 不会执行。
+  所以 `java -jar target/xxx.jar` 会报「没有主清单属性」，**必须用 `mvn spring-boot:run` 启动**
+- 改网关 `application.yml` 的路由后**必须重启网关**才生效（配置不是热加载）；
+  判断路由是否生效：`curl /api/xxx` 返回 **404** = 没路由，返回 **401** = 已路由只差登录
+- 演示数据对齐登录身份：`t_user` 里 9001（林小满）的 openid 就是 `config.js` 的 `DEV_OPENID`，
+  开发者工具免真机登录即落到该账号，能看到种子商品/表白/帖子/私信。改种子数据时别破坏这个对应关系
 - **同名 DTO 陷阱**：`campus-common` 与 `campus-user` 各有一个 `LoginOrCreateReq`
   （前者 Feign 契约，后者服务端接收），改字段时**两个都要改**
 - **每个页面必须同时产出 4 个文件**：`.js` / `.wxml` / `.json` / `.wxss`；
@@ -52,3 +59,12 @@
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；
   前端**不要对 id 做 `Number()`**（会丢精度 → 详情 404）。计数类是 `Integer`，仍是数字。
 - 图片：后端存 `./uploads/yyyy/MM/`，返回绝对 URL；前端 `utils/img.js#resolve()` 统一收敛到当前 SERVER
+- **静态资源映射必须用 `Path#toUri()`**：`"file:" + "C:/xxx"` 会得到少一个斜杠的 `file:C:/xxx`，
+  Spring `PathResourceResolver` 解析失败 → 映射**静默失效** → 抛 `NoResourceFoundException` →
+  被兜底 handler 吞成 500 JSON → 前端 `<image>` 显示灰块，**且因 HTTP 200 连 binderror 都不触发**
+- `GlobalExceptionHandler` 的兜底 `@ExceptionHandler(Exception.class)` 会把静态资源 404 误报成 500，
+  已单独处理 `NoResourceFoundException` 返回 404
+- **调试 `<image>` 不显示的正确顺序**：先 `curl -D - -o file <图片URL>` 看 Content-Type 和文件头。
+  `image/png` 才算正常；`application/json` 说明后端没返回图片（别去查微信配置）
+- 首页频道与闲置的关系：**频道是帖子分区，商品不属于任何频道**。选中具体频道时不能混排闲置，
+  否则切频道看到的还是同一批闲置，会被误判成「筛选没生效」

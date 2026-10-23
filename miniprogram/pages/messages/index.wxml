@@ -1,0 +1,145 @@
+<view class="page">
+  <!-- 顶栏 -->
+  <view class="topbar">
+    <view class="tb-left">
+      <view class="tb-back" bindtap="goBack">←</view>
+      <text class="tb-title">私信与消息中心</text>
+    </view>
+    <view class="tb-right">
+      <view class="tb-act" bindtap="markAllRead">✓✓</view>
+      <view class="tb-act" bindtap="onSettings">☰</view>
+    </view>
+  </view>
+
+  <!-- 搜索框 -->
+  <view class="search-wrap">
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索校友昵称、聊天记录或宝贝..." placeholder-class="ph" value="{{keyword}}" bindinput="onSearch" confirm-type="search" />
+      <text class="search-mic">🎙</text>
+    </view>
+  </view>
+
+  <!-- 四大快捷入口 -->
+  <view class="quick">
+    <view class="quick-item" bindtap="onQuick" data-name="赞与收藏">
+      <view class="quick-icon qi-pink">
+        <text>💗</text>
+        <view class="q-badge pink" wx:if="{{summary.likes}}">{{summary.likes}}</view>
+      </view>
+      <text class="quick-label">赞与收藏</text>
+    </view>
+    <view class="quick-item" bindtap="onQuick" data-name="新增粉丝">
+      <view class="quick-icon qi-green">
+        <text>👤</text>
+        <view class="q-badge green" wx:if="{{summary.followers}}">{{summary.followers}}</view>
+      </view>
+      <text class="quick-label">新增粉丝</text>
+    </view>
+    <view class="quick-item" bindtap="onQuick" data-name="评论与@">
+      <view class="quick-icon qi-blue">
+        <text>💬</text>
+        <view class="q-badge orange" wx:if="{{summary.mentions}}">{{summary.mentions}}</view>
+      </view>
+      <text class="quick-label">评论与@</text>
+    </view>
+    <view class="quick-item" bindtap="onQuick" data-name="官方通知">
+      <view class="quick-icon qi-amber">
+        <text>📣</text>
+        <view class="q-badge solid" wx:if="{{summary.notice}}">{{summary.notice}}</view>
+      </view>
+      <text class="quick-label">官方通知</text>
+    </view>
+  </view>
+
+  <!-- 防骗提示 -->
+  <view class="tip" wx:if="{{showTip}}">
+    <view class="tip-icon">🛡️</view>
+    <view class="tip-body">
+      <view class="tip-title">校园面交防骗小贴士</view>
+      <view class="tip-text">面交请优先选择宿舍大厅、主楼或食堂等明亮公共区域，认准实名校友，谨防脱离平台私下转账。</view>
+    </view>
+    <view class="tip-close" bindtap="closeTip">✕</view>
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view class="filter-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="filter-row">
+      <view
+        class="filter-pill {{filter === item.key ? 'active' : ''}}"
+        wx:for="{{filters}}"
+        wx:key="key"
+        bindtap="switchFilter"
+        data-key="{{item.key}}"
+      >
+        <text>{{item.name}}</text>
+        <text class="fp-count" wx:if="{{item.key === 'all'}}">{{convos.length}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 会话列表 -->
+  <view class="convos">
+    <view
+      class="convo"
+      wx:for="{{convos}}"
+      wx:key="id"
+      hover-class="convo-hover"
+      bindtap="goChat"
+      data-id="{{item.id}}"
+      data-name="{{item.peerName}}"
+    >
+      <!-- 头像 -->
+      <view class="c-avatar-wrap">
+        <image wx:if="{{item.peerAvatar}}" class="c-avatar" src="{{item.peerAvatar}}" mode="aspectFill" />
+        <view wx:elif="{{item.official}}" class="c-avatar official">🏫<view class="c-official-check">✓</view></view>
+        <view wx:elif="{{item.anon}}" class="c-avatar anon">✉️</view>
+        <view wx:else class="c-avatar">
+          <view class="avatar-default">
+            <view class="ad-head"></view>
+            <view class="ad-body"></view>
+          </view>
+        </view>
+        <view class="c-online" wx:if="{{item.peerOnline}}"></view>
+      </view>
+
+      <view class="c-main">
+        <view class="c-head">
+          <view class="c-name-row">
+            <text class="c-name">{{item.peerName}}</text>
+            <text class="c-tag {{tag.cls}}" wx:for="{{item.peerTags}}" wx:for-item="tag" wx:key="text">{{tag.text}}</text>
+          </view>
+          <text class="c-time">{{item.timeText}}</text>
+        </view>
+
+        <!-- 关联宝贝卡片 -->
+        <view class="c-goods" wx:if="{{item.goodsCard}}">
+          <view class="cg-cover">{{item.goodsCard.emoji}}</view>
+          <view class="cg-main">
+            <text class="cg-title">{{item.goodsCard.title}}</text>
+            <view class="cg-price"><text class="cg-symbol">¥</text><text class="cg-num">{{item.goodsCard.price}}</text></view>
+          </view>
+          <text class="cg-status">{{item.goodsCard.statusText}}</text>
+        </view>
+
+        <!-- 最新消息 + 未读 -->
+        <view class="c-foot">
+          <text class="c-last {{item.unread ? 'strong' : ''}}">{{item.lastText}}</text>
+          <view class="c-unread" wx:if="{{item.unread}}">{{item.unread}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !convos.length}}">
+    <text class="empty-icon">📭</text>
+    <text>没有符合条件的会话</text>
+  </view>
+
+  <!-- 底部状态 -->
+  <view class="end" wx:if="{{convos.length}}">
+    <view class="end-icon">💬</view>
+    <text class="end-title">已加载全部私信对话</text>
+    <text class="end-sub">友善交流，共筑可信温暖的校园圈子 🌱</text>
+  </view>
+</view>

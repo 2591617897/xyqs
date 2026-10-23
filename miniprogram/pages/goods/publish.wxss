@@ -22,9 +22,14 @@
 }
 
 .title-input {
+  display: block;
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
   font-size: 34rpx;
   font-weight: 700;
-  padding: 8rpx 0 20rpx;
+  color: #1a1a1a;
+  padding: 0;
   border-bottom: 1rpx solid #f0f1f5;
 }
 .desc-input {
@@ -68,6 +73,16 @@
   background: rgba(17, 168, 107, 0.12);
   color: #0e9a60;
   font-weight: 600;
+}
+
+/* 规格与成色：picker 占位色与清除按钮 */
+.field-ph {
+  color: #9b9ba3;
+}
+.pick-clear {
+  font-size: 24rpx;
+  color: #9b9ba3;
+  padding: 12rpx;
 }
 
 .img-grid {

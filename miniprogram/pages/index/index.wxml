@@ -1,6 +1,18 @@
 <view class="page">
-  <!-- 顶部搜索栏 -->
+  <!-- 顶部：学校胶囊 + 搜索 + 通知 + 头像 -->
   <view class="topbar">
+    <view class="school-pill" bindtap="goStatus">
+      <text class="school-name">{{schoolName}}</text>
+      <text class="school-arrow">▾</text>
+    </view>
+    <view class="search-box" bindtap="goSearch">
+      <text class="search-icon">🔍</text>
+      <text class="search-placeholder">搜帖子、闲置好物...</text>
+    </view>
+    <view class="bell-btn" bindtap="goMessages">
+      <text class="bell-icon">🔔</text>
+      <view class="bell-dot" wx:if="{{unread > 0}}"></view>
+    </view>
     <view class="topbar-avatar" bindtap="goStatus">
       <image wx:if="{{user && user.avatar}}" class="topbar-avatar-img" src="{{user.avatar}}" mode="aspectFill" />
       <view wx:else class="avatar-default">
@@ -8,17 +20,12 @@
         <view class="ad-body"></view>
       </view>
     </view>
-    <view class="search-box" bindtap="goSearch">
-      <text class="search-icon">🔍</text>
-      <text class="search-placeholder">搜闲置、帖子、同学</text>
-    </view>
-    <view class="msg-btn" bindtap="goMessages">✉️</view>
   </view>
 
   <!-- 频道导航 -->
   <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false">
     <view class="nav-row">
-      <view class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">推荐</view>
+      <view class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">全部</view>
       <view
         class="nav-item {{channelId === item.id ? 'active' : ''}}"
         wx:for="{{channels}}"
@@ -32,13 +39,26 @@
   <!-- 分类横滑 -->
   <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">
     <view class="cat-row">
-      <view class="cat-pill active" bindtap="goCategory" data-id="">今日热门</view>
+      <view class="cat-pill active" bindtap="goCategory" data-id="">🔥 今日热门</view>
       <view class="cat-pill" wx:for="{{categories}}" wx:key="id" bindtap="goCategory" data-id="{{item.id}}">
-        <text>{{item.icon}}</text>
+        <text class="cat-icon">{{item.icon}}</text>
         <text>{{item.name}}</text>
       </view>
     </view>
   </scroll-view>
+
+  <!-- 运营公告位：跳蚤集市 -->
+  <view class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
+    <view class="announce-icon">🛍️</view>
+    <view class="announce-main">
+      <view class="announce-title-row">
+        <text class="announce-tag">毕业季</text>
+        <text class="announce-title">跳蚤集市已开启</text>
+      </view>
+      <view class="announce-sub">校园闲置交易平台 低价买卖与无忧保障</view>
+    </view>
+    <view class="announce-btn">去逛逛 ›</view>
+  </view>
 
   <!-- 信息流 -->
   <view class="feed">
@@ -52,6 +72,7 @@
       hover-class="feed-hover"
       hover-stay-time="60"
     >
+      <!-- 作者行：头像 + 昵称 + 标签/关注 -->
       <view class="feed-user">
         <view class="feed-avatar">
           <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
@@ -61,28 +82,49 @@
           </view>
         </view>
         <view class="feed-user-info">
-          <view class="feed-name">{{item.authorName}}</view>
+          <view class="feed-name-row">
+            <text class="feed-name">{{item.authorName}}</text>
+          </view>
           <view class="feed-meta">
-            <text>{{item.timeText}}</text>
-            <text class="feed-device">{{item.badgeIcon}} {{item.badge}}</text>
+            <text class="feed-chip {{item.type === 'post' ? 'chip-amber' : 'chip-green'}}">{{item.badge}}</text>
+            <text class="feed-time">{{item.timeText}}</text>
           </view>
         </view>
-        <text class="feed-type" wx:if="{{item.type === 'goods'}}">闲置</text>
+        <text class="feed-status" wx:if="{{item.type === 'goods'}}">闲置中</text>
+        <view class="follow-btn" wx:else catchtap="onFollow">+ 关注</view>
       </view>
 
-      <view class="feed-text clamp3">
-        <text class="feed-title" wx:if="{{item.title}}">{{item.title}}</text>
-        <text>{{item.excerpt}}</text>
+      <!-- 正文主体：单图时右侧缩略图 -->
+      <view class="feed-body {{item.imageList.length === 1 ? 'with-thumb' : ''}}">
+        <view class="feed-body-main">
+          <view class="feed-text clamp3">
+            <text class="feed-topic">#{{item.topic}}</text>
+            <text wx:if="{{item.title}}"> {{item.title}} </text>
+            <text>{{item.excerpt}}</text>
+          </view>
+          <view class="feed-price" wx:if="{{item.type === 'goods'}}">
+            <text class="price-symbol">¥</text>
+            <text class="price-num">{{item.priceText}}</text>
+            <text class="price-origin" wx:if="{{item.originalPriceText}}">¥{{item.originalPriceText}}</text>
+            <text class="feed-loc" wx:if="{{item.location}}">📍 {{item.location}}</text>
+          </view>
+        </view>
+        <image
+          wx:if="{{item.imageList.length === 1}}"
+          class="feed-thumb"
+          src="{{item.imageList[0]}}"
+          mode="aspectFill"
+          lazy-load="{{true}}"
+          catchtap="previewFeed"
+          data-fi="{{index}}"
+          data-url="{{item.imageList[0]}}"
+        />
       </view>
 
-      <view class="feed-price" wx:if="{{item.type === 'goods'}}">
-        <text class="price-symbol">¥</text>{{item.priceText}}
-        <text class="feed-loc" wx:if="{{item.location}}">{{item.location}}</text>
-      </view>
-
-      <view class="feed-imgs" wx:if="{{item.imageList.length}}">
+      <!-- 多图：三列横排，超出显示 +N -->
+      <view class="feed-imgs" wx:if="{{item.imageList.length > 1}}">
         <view
-          class="feed-img-wrap {{item.imageList.length === 1 ? 'single' : (item.imageList.length === 2 ? 'double' : '')}}"
+          class="feed-img-wrap"
           wx:for="{{item.imageList}}"
           wx:for-item="img"
           wx:for-index="ii"
@@ -92,24 +134,43 @@
             class="feed-img"
             src="{{img}}"
             mode="aspectFill"
+            lazy-load="{{true}}"
             catchtap="previewFeed"
             data-fi="{{index}}"
             data-url="{{img}}"
           />
+          <view class="img-more" wx:if="{{ii === 2 && item.imageList.length > 3}}">+{{item.imageList.length - 3}}</view>
         </view>
       </view>
 
-      <view class="feed-actions">
-        <view class="feed-action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
-          <text class="feed-action-icon">👍</text>
-          <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
+      <!-- 附件卡片（如学习资料） -->
+      <view class="attach-card" wx:if="{{item.attachment}}" catchtap="onAttachment">
+        <view class="attach-icon">📄</view>
+        <view class="attach-info">
+          <text class="attach-name ellipsis">{{item.attachment.name}}</text>
+          <text class="attach-meta">{{item.attachment.size}} · 已下载 {{item.attachment.downloads}} 次</text>
         </view>
-        <view class="feed-action ml40" catchtap="goComments" data-type="{{item.type}}" data-id="{{item.id}}">
-          <text class="feed-action-icon">💬</text>
-          <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
+        <text class="attach-down">⬇</text>
+      </view>
+
+      <!-- 底部：浏览数 + 赞/评/分享 -->
+      <view class="feed-actions">
+        <view class="feed-view" wx:if="{{item.viewCount}}">
+          <text class="fa-icon">👁</text>
+          <text>{{item.viewCount}} 浏览</text>
         </view>
         <view class="flex1"></view>
-        <text class="feed-more" catchtap="goDetail" data-type="{{item.type}}" data-id="{{item.id}}">详情 ›</text>
+        <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="fa-icon">{{item.liked ? '💚' : '👍'}}</text>
+          <text wx:if="{{item.likeCount}}">{{item.likeCount}}</text>
+        </view>
+        <view class="feed-act" catchtap="goComments" data-type="{{item.type}}" data-id="{{item.id}}">
+          <text class="fa-icon">💬</text>
+          <text wx:if="{{item.commentCount}}">{{item.commentCount}}</text>
+        </view>
+        <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover">
+          <text class="fa-icon">↗</text>
+        </button>
       </view>
     </view>
   </view>
@@ -120,5 +181,5 @@
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 
-  <view class="list-end" wx:if="{{feed.length && !loading}}">— 已经到底了 —</view>
+  <view class="list-end" wx:if="{{feed.length && !loading}}">已经到底啦，点击右下方「＋」发布你的新动态吧</view>
 </view>

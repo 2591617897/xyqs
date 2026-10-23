@@ -8,9 +8,11 @@ Component({
 
   data: {
     selected: 0,
+    showSheet: false,
+    hidden: false,
     list: [
       { key: 'home', pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
-      { key: 'goods', pagePath: '/pages/goods/list', text: '二手', icon: '🏷️' },
+      { key: 'goods', pagePath: '/pages/goods/list', text: '二手闲置', icon: '🏷️' },
       { key: 'plus', pagePath: '', text: '', icon: '', plus: true },
       { key: 'wall', pagePath: '/pages/wall/index', text: '表白墙', icon: '💌' },
       { key: 'mine', pagePath: '/pages/user/index', text: '我的', icon: '👤' }
@@ -39,19 +41,34 @@ Component({
       })
     },
 
-    /** 中间发布按钮：选择发布类型 */
+    /** 中间发布按钮：弹出彩色发布面板 */
     onPlus: function () {
+      this.setData({ showSheet: true })
+    },
+
+    closeSheet: function () {
+      this.setData({ showSheet: false })
+    },
+
+    stop: function () {},
+
+    /** 发布面板：需校园认证的发布类入口 */
+    goPage: function (e) {
+      const self = this
+      const url = e.currentTarget.dataset.url
+      if (!url) return
       auth.ensureVerified().then(function () {
-        mp.showActionSheet({
-          itemList: ['发布闲置', '发帖子', '写匿名心事'],
-          success: function (res) {
-            if (res.tapIndex === 0) mp.navigateTo({ url: '/pages/goods/publish' })
-            else if (res.tapIndex === 1) mp.navigateTo({ url: '/pages/post/publish' })
-            else if (res.tapIndex === 2) mp.switchTab({ url: '/pages/wall/index' })
-          },
-          fail: function () {}
-        })
+        self.setData({ showSheet: false })
+        mp.navigateTo({ url: url })
       }).catch(function () {})
+    },
+
+    /** 发布面板：tab 页入口，无需认证 */
+    goTab: function (e) {
+      const url = e.currentTarget.dataset.url
+      if (!url) return
+      this.setData({ showSheet: false })
+      mp.switchTab({ url: url })
     }
   }
 })

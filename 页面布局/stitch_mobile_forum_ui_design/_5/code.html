@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary-container": "#740043", "inverse-surface": "#2d3133", "outline": "#6c7a71", "outline-variant": "#bbcabf", "on-primary": "#ffffff", "surface-dim": "#d8dadc", "on-tertiary": "#ffffff", "on-primary-container": "#00422b", "error": "#ba1a1a", "on-secondary-container": "#5c2400", "primary-fixed": "#6ffbbe", "surface-bright": "#f7f9fb", "on-error": "#ffffff", "background": "#f7f9fb", "on-secondary-fixed": "#341100", "secondary": "#9d4300", "secondary-fixed": "#ffdbca", "primary-fixed-dim": "#4edea3", "on-primary-fixed": "#002113", "tertiary-container": "#ff72b1", "tertiary-fixed": "#ffd9e4", "primary": "#006c49", "on-tertiary-fixed-variant": "#8c0053", "on-tertiary-fixed": "#3e0022", "on-secondary": "#ffffff", "surface-variant": "#e0e3e5", "surface-container": "#eceef0", "secondary-container": "#fd761a", "tertiary-fixed-dim": "#ffb0cd", "surface": "#f7f9fb", "primary-container": "#10b981", "on-primary-fixed-variant": "#005236", "on-surface-variant": "#3c4a42", "on-background": "#191c1e", "surface-container-lowest": "#ffffff", "on-surface": "#191c1e", "surface-container-high": "#e6e8ea", "tertiary": "#b4136d", "surface-tint": "#006c49", "secondary-fixed-dim": "#ffb690", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#783200", "surface-container-low": "#f2f4f6", "on-error-container": "#93000a", "inverse-on-surface": "eff1f3", "surface-container-highest": "#e0e3e5", "inverse-primary": "#4edea3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-sm": "0.5rem", "space-xl": "1.5rem", "margin": "0.75rem", "gutter": "0.75rem", "space-xs": "0.25rem", "space-lg": "1rem", "space-md": "0.75rem" }, fontFamily: { "label-lg": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "price-symbol": ["Plus Jakarta Sans"], "price-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"] }, fontSize: { "label-lg": ["14px", { "lineHeight": "18px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "26px", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "price-symbol": ["13px", { "lineHeight": "16px", "fontWeight": "600" }], "price-lg": ["20px", { "lineHeight": "24px", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface text-on-surface font-body-md flex flex-col min-h-screen antialiased"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_12px_rgba(16,185,129,0.06)]"><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0 flex-1"><div class="flex items-center gap-1 bg-surface-container-low px-space-sm py-1 rounded-full shrink-0"><span class="material-symbols-outlined text-[16px] text-outline">location_on</span><span class="font-body-sm text-body-sm text-on-surface-variant font-medium truncate max-w-[80px]">大学城校区</span><span class="material-symbols-outlined text-[14px] text-outline">keyboard_arrow_down</span></div><h1 class="font-headline-md text-headline-md text-on-surface tracking-tight truncate pl-1">Confession Wall</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="通知" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-14 pb-[5.5rem] bg-surface flex-1"><div class="flex flex-col w-full px-margin gap-space-md">
+<!-- Top Campus Category Filters (Horizontal Pill Stream) -->
+<section class="flex items-center gap-space-xs overflow-x-auto py-1 no-scrollbar -mx-margin px-margin">
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary shadow-sm whitespace-nowrap font-label-md text-label-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span>精选表白</span>
+</button>
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high whitespace-nowrap font-label-md text-label-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]">nature_people</span>
+<span>树洞吐槽</span>
+</button>
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high whitespace-nowrap font-label-md text-label-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]">search_check</span>
+<span>寻物招领</span>
+</button>
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high whitespace-nowrap font-label-md text-label-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]">groups</span>
+<span>捞人互助</span>
+</button>
+</section>
+<!-- Campus Seasonal Vibe Banner -->
+<section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-tertiary-fixed via-surface-container-lowest to-primary-fixed-dim/30 p-space-lg shadow-sm">
+<div class="absolute -right-4 -top-6 w-28 h-28 rounded-full bg-tertiary-container/20 blur-2xl pointer-events-none"></div>
+<div class="absolute -left-4 -bottom-6 w-24 h-24 rounded-full bg-primary-container/15 blur-xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-sm">
+<div class="flex items-center gap-1.5 text-tertiary">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span class="font-label-sm text-label-sm font-semibold tracking-wide uppercase">GRADUATION ROMANCE SEASON</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">
+          ✨ 毕业生浪漫留言季
+        </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          说出那些藏在夏天晚风里、不敢当面诉说的秘密
+        </p>
+</div>
+<div class="pt-1 flex items-center justify-between">
+<div class="flex -space-x-2 items-center">
+<div class="w-6 h-6 rounded-full bg-tertiary-container flex items-center justify-center text-[10px] text-on-tertiary font-bold shadow-xs">🌸</div>
+<div class="w-6 h-6 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] text-on-primary-fixed font-bold shadow-xs">💌</div>
+<div class="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] text-on-secondary-fixed font-bold shadow-xs">🍃</div>
+<span class="font-label-sm text-label-sm text-outline pl-3 font-medium">已有 1,428 条匿名投递</span>
+</div>
+<button class="flex items-center gap-1 bg-on-surface text-surface-container-lowest px-3 py-1.5 rounded-full font-label-md text-label-md font-semibold active:scale-95 shadow-sm hover:opacity-90 transition-all" id="quick-post-btn">
+<span>我要匿名投递</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Feed Grid / Staggered Cards Flow -->
+<div class="flex flex-col gap-space-md">
+<!-- Card 1: Anonymous Confession (#捞人 #六教自习室) -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-[0_4px_16px_-2px_rgba(16,185,129,0.06),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-space-sm relative overflow-hidden transition-all duration-200">
+<!-- Romantic top-accent line -->
+<div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-tertiary-fixed via-tertiary to-primary-container"></div>
+<!-- Card Header -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-tertiary-fixed-dim/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">local_florist</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md text-on-surface font-semibold">云朵偷偷喝醉了</span>
+<span class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-container font-label-sm text-label-sm font-medium flex items-center gap-0.5">
+                💌 匿名投递
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">28分钟前 · 来自 iPhone 15</span>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface p-1 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<!-- Tag line -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">#捞人</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-primary font-label-sm text-label-sm font-semibold">#六教自习室</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-outline font-label-sm text-label-sm">#心动瞬间</span>
+</div>
+<!-- Post Body -->
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">
+        今天下午在六教A区三层靠窗穿米白色卫衣戴金丝眼镜的经管学长，你的银色保温杯落在302了，我帮你交到门卫大爷处了！如果你看到的话...能加个微信认识一下嘛 &gt; &lt;
+      </p>
+<!-- Soft Interactive Mini Note -->
+<div class="rounded-xl bg-surface-container-low p-2.5 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]">mark_email_unread</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex-1 truncate">
+          对方若看到本条，可点击申请“认领并交换联系方式”
+        </p>
+</div>
+<!-- Card Footer Actions -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>1,892</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="like-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-outline hover:text-tertiary hover:bg-tertiary-fixed transition-all active:scale-90" data-count="352" data-liked="false">
+<span class="material-symbols-outlined text-[18px] like-icon">favorite</span>
+<span class="font-label-md text-label-md like-label">352</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-label-md text-label-md">48</span>
+</button>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2: Heartwarming post (#树洞暖心) -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-[0_4px_16px_-2px_rgba(16,185,129,0.06),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-space-sm transition-all duration-200">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold font-label-md text-label-md">
+            南湖
+          </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md text-on-surface font-semibold">南湖岛吹风人</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed-dim/40 text-on-primary-container font-label-sm text-label-sm font-medium">
+                🌿 暖心治愈
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">1小时前 · 学生第二食堂</span>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface p-1 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<!-- Tag line -->
+<div class="flex flex-wrap gap-1.5 pt-0.5">
+<span class="px-2 py-0.5 rounded-md bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold">#树洞暖心</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold">#二食堂清真窗口</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-outline font-label-sm text-label-sm">#毕业倒计时</span>
+</div>
+<!-- Post Body -->
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">
+        致食堂二楼清真窗口的打饭阿姨，每次都会特意给多舀一勺牛肉，在异乡求学的四年真的被温暖到了，祝您身体健康！
+      </p>
+<!-- Campus Canteen Photo Visual -->
+<div class="relative w-full h-44 rounded-xl overflow-hidden shadow-xs mt-1">
+<img class="w-full h-full object-cover" data-alt="A warm and nostalgic photo of a university student canteen during lunchtime. Soft natural window lighting illuminates stainless steel food service trays filled with steaming delicious beef stew and vegetables. An amicable middle-aged canteen lady in a clean white apron and chef hat smiles warmly towards the camera. Authentic Gen-Z campus youth documentary photography style with lively warm tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJLS5hSAbJ4pdINnlllI-1yxrFupd50u8ah295MguWAQ1f_9-esZGc-dM4suNg3oyF2gnA1EzZcOL4t2IHg0ACd7E-81_KGWoV9_XYXZC2KAHe1xGfTmtQoJOB4jIuuJ9MqIHWfER-dpOCXNTQghUsPsiWz5ISwT15uG_uKsp-OA5NvB_HuPvntf3sK_h-nL5z1VZEMTKPsE_KVq2qUtlZdhv4HAueAnZRWvdL-VR9LjDO6UPh18Ko"/>
+<div class="absolute bottom-2 left-2 px-2.5 py-1 rounded-full bg-inverse-surface/70 backdrop-blur-md text-surface-container-lowest font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">restaurant</span>
+<span>学生二食堂 · 2F 清真风味</span>
+</div>
+</div>
+<!-- Card Footer Actions -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>1,204</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="like-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-outline hover:text-tertiary transition-all active:scale-90" data-count="218" data-liked="false">
+<span class="material-symbols-outlined text-[18px] like-icon">favorite</span>
+<span class="font-label-md text-label-md like-label">218</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-label-md text-label-md">36</span>
+</button>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3: Campus fun post (#期末破防) -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-[0_4px_16px_-2px_rgba(16,185,129,0.06),0_2px_6px_-1px_rgba(15,23,42,0.04)] flex flex-col gap-space-sm transition-all duration-200">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-bold">
+<span class="material-symbols-outlined text-[20px]">cruelty_free</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md text-on-surface font-semibold">高数不过不改名</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                🐿️ 校园趣事
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">3小时前 · 主教学楼草坪</span>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface p-1 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<!-- Tag line -->
+<div class="flex flex-wrap gap-1.5 pt-0.5">
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">#期末破防</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-primary font-label-sm text-label-sm font-semibold">#校宠大作战</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-outline font-label-sm text-label-sm">#玉米大盗</span>
+</div>
+<!-- Post Body -->
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">
+        在主楼被突然窜出来的松鼠抢走了半截玉米，松鼠同学请你主动归还！！全校通缉这只尾巴蓬松的惯犯，它甚至还跳在银杏树上当着我的面啃！
+      </p>
+<!-- Funny Squirrel Photo Visual -->
+<div class="relative w-full h-48 rounded-xl overflow-hidden shadow-xs mt-1">
+<img class="w-full h-full object-cover" data-alt="A hilarious and candid high-resolution close-up photo of a chubby university campus squirrel perched atop a green lawn near the red brick main campus building. The squirrel holds a golden boiled corn cob with two paws, cheeks stuffed, looking comically guilty straight at the camera. Beautiful depth of field, playful sunlight streaming through campus trees, vivid natural colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUzoyoyn2CaXDHjipmci7mln_eI7C5FspNF54x5mwK4jiUdpytBacamgJYNjENjYcC0O9IX5cYOR9plSpvYpK2Yzw2O3DXE1dH9ZDLs_ZOFCAg_x9n5FP8ocJ99aTl6KxJ1dxCgslVu6CHrGLijXKsrSzp-LVZJQ1BLbEYFcIYJCWGVVcgpn7nZ1XofM__wmxztRwidLw4aNIW3wszyhXSCV3nOxh2ucDycubuBlhU3fmGFleiUSKb"/>
+<div class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm font-bold shadow-sm flex items-center gap-1">
+<span>通缉中 🚨</span>
+</div>
+</div>
+<!-- Card Footer Actions -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>3,510</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="like-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-outline hover:text-tertiary transition-all active:scale-90" data-count="520" data-liked="false">
+<span class="material-symbols-outlined text-[18px] like-icon">favorite</span>
+<span class="font-label-md text-label-md like-label">520</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+<span class="font-label-md text-label-md">89</span>
+</button>
+<button class="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<!-- Interactive Modal Sheet for Publishing Secret (Hidden by default, triggered by CTA) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden items-end justify-center transition-opacity duration-300" id="confession-modal">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-t-3xl p-space-lg flex flex-col gap-space-md shadow-[0_-8px_32px_rgba(0,0,0,0.12)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[24px]">favorite</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">投递匿名心事</span>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline active:scale-90" id="close-modal-btn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-container font-label-sm text-label-sm font-semibold">#捞人寻缘</button>
+<button class="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">#匿名表白</button>
+<button class="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">#毕业寄语</button>
+</div>
+<textarea class="w-full rounded-xl bg-surface-container-low p-3 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container resize-none" placeholder="写下你的校园心事、寻人启事或深夜碎碎念... 系统将自动隐去你的学号与身份信息 ✨" rows="4"></textarea>
+<div class="flex items-center justify-between">
+<label class="flex items-center gap-1.5 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-primary accent-primary" type="checkbox"/>
+<span class="font-label-sm text-label-sm text-outline font-medium">开启阅后即焚防打扰模式</span>
+</label>
+<button class="px-5 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md active:scale-95 transition-transform" id="submit-post-btn">
+          安全投递
+        </button>
+</div>
+</div>
+</div>
+<!-- Micro-interaction Logic -->
+<script>
+    (() => {
+      // Like Toggle Micro-interactions
+      const likeButtons = document.querySelectorAll('.like-btn');
+      likeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const isLiked = btn.getAttribute('data-liked') === 'true';
+          const countSpan = btn.querySelector('.like-label');
+          const iconSpan = btn.querySelector('.like-icon');
+          let count = parseInt(btn.getAttribute('data-count'), 10);
+
+          if (!isLiked) {
+            btn.setAttribute('data-liked', 'true');
+            btn.classList.remove('bg-surface-container', 'text-outline');
+            btn.classList.add('bg-tertiary-fixed', 'text-tertiary');
+            iconSpan.style.fontVariationSettings = "'FILL' 1";
+            countSpan.textContent = count + 1;
+            btn.setAttribute('data-count', (count + 1).toString());
+          } else {
+            btn.setAttribute('data-liked', 'false');
+            btn.classList.add('bg-surface-container', 'text-outline');
+            btn.classList.remove('bg-tertiary-fixed', 'text-tertiary');
+            iconSpan.style.fontVariationSettings = "'FILL' 0";
+            countSpan.textContent = count - 1;
+            btn.setAttribute('data-count', (count - 1).toString());
+          }
+        });
+      });
+
+      // Quick Post Modal logic
+      const postBtn = document.getElementById('quick-post-btn');
+      const modal = document.getElementById('confession-modal');
+      const closeBtn = document.getElementById('close-modal-btn');
+      const submitBtn = document.getElementById('submit-post-btn');
+
+      if (postBtn && modal && closeBtn) {
+        postBtn.addEventListener('click', () => {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        });
+
+        const closeModal = () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        if (submitBtn) {
+          submitBtn.addEventListener('click', () => {
+            submitBtn.textContent = '投递成功 ✨';
+            setTimeout(() => {
+              submitBtn.textContent = '安全投递';
+              closeModal();
+            }, 800);
+          });
+        }
+      }
+    })();
+  </script>
+</div></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-2px_16px_rgba(15,23,42,0.04)]" data-active-classes="text-primary font-bold"><div class="relative flex items-center justify-between h-16 px-space-sm"><a class="flex flex-col items-center justify-center flex-1 h-12 text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">cottage</span><span class="font-label-sm text-label-sm mt-0.5">首页</span></a><a class="flex flex-col items-center justify-center flex-1 h-12 text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95" data-path="marketplace" href="#"><span class="material-symbols-outlined text-[24px]">storefront</span><span class="font-label-sm text-label-sm mt-0.5">二手闲置</span></a><div class="relative flex flex-col items-center justify-center w-16"><a aria-label="发帖或闲置" class="absolute -top-6 flex items-center justify-center w-[54px] h-[54px] rounded-full bg-primary-container text-on-primary shadow-[0_8px_24px_-4px_rgba(16,185,129,0.42),0_4px_10px_-2px_rgba(16,185,129,0.25)] hover:bg-primary active:scale-90 transition-all duration-200 z-10" data-path="publish-flow" href="#"><span class="material-symbols-outlined text-[28px]">add</span></a><span class="font-label-sm text-label-sm text-on-surface-variant mt-7 pointer-events-none opacity-80">发布</span></div><a aria-current="page" class="flex flex-col items-center justify-center flex-1 h-12 transition-all duration-150 active:scale-95 text-primary font-bold" data-path="confession-wall" href="#"><span class="material-symbols-outlined text-[24px]">favorite</span><span class="font-label-sm text-label-sm mt-0.5">表白墙</span></a><a class="flex flex-col items-center justify-center flex-1 h-12 text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95" data-path="user-profile" href="#"><span class="material-symbols-outlined text-[24px]">account_circle</span><span class="font-label-sm text-label-sm mt-0.5">我的</span></a></div></nav></body></html>

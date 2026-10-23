@@ -72,6 +72,23 @@
 | POST | `/posts/{id}/comments` | 评论（需认证）。body：`{content, images[]}`，最多 3 张图，支持只发图 |
 | DELETE | `/posts/{postId}/comments/{id}` | 删除自己的评论（评论数同步 -1） |
 
+## 私信 / 消息中心（campus-message，8106）
+
+全部接口需登录。会话成员固定为 `(userA = 小 id, userB = 大 id)`，
+运行时按当前登录用户判定「我 / 对端」；同一 `用户对 + 商品` 只会有一个会话。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/messages` | 消息中心：`{ summary, convos }`。summary 含 `unreadTotal / likes / mentions / followers / notice`，convos 含对端昵称、身份标签、宝贝卡片快照、最后一条摘要与未读数 |
+| GET | `/messages/unread` | 未读消息总数（首页铃铛角标）`{unread}` |
+| POST | `/messages/start` | 发起或复用会话。入参 `{ peerId, goodsId?, goodsTitle?, goodsPrice?, goodsEmoji?, goodsStatus?, anon?, anonName? }`，返回会话对象 |
+| GET | `/messages/{id}` | 会话详情（含聊天记录，按时间升序），进入即把对方消息标为已读 |
+| POST | `/messages/{id}` | 发消息 `{content, type?}`，type 支持 `text / location / image`，返回更新后的完整聊天记录 |
+| POST | `/messages/{id}/read` | 把整个会话标为已读 |
+| GET | `/messages/{id}/messages` | 只取聊天记录，不触发已读 |
+
+消息对象字段：`{ id, from: 'me'\|'peer', type, content, createdAt }`。
+
 ## 文件上传（campus-user）
 
 | 方法 | 路径 | 说明 |
@@ -85,6 +102,7 @@
 | --- | --- | --- |
 | POST | `/internal/users/login-or-create` | 按 openid 获取或创建用户（auth → user） |
 | GET | `/internal/users/{id}` | 用户简要信息（昵称快照用） |
+| GET | `/internal/users/briefs?ids=1,2,3` | 批量用户摘要（会话列表一次拉齐对端昵称/头像，避免 N+1；旧版本无此接口时自动退化为逐个查询） |
 
 ## 错误码
 

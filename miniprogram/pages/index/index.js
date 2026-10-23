@@ -6,23 +6,75 @@ const { resolveList } = require('../../utils/img')
 Page({
   data: {
     user: null,
-    greeting: '你好',
+    schoolName: '',
     channels: [],
     channelId: '',
     categories: [],
     feed: [],
     loading: true,
     loadError: false,
-    errorMsg: ''
+    errorMsg: '',
+    unread: 0
   },
 
   onShow: function () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
-    this.setData({ user: getApp().globalData.user })
-    this.setGreeting()
+    const user = getApp().globalData.user
+    this.setData({
+      user: user,
+      schoolName: (user && user.schoolName) || '选择学校'
+    })
+    this.syncMe()
     this.loadData()
+    this.loadUnread()
+  },
+
+  /**
+   * 静默对齐首页学校名与认证学籍信息。
+   *
+   * 学校名只有在完成校园认证后才产生，登录接口未必带回，且首页本身感知不到认证状态变化，
+   * 所以每次进首页都静默拉一次 /user/me 校正胶囊文案；失败完全静默，不影响页面其它内容。
+   */
+  syncMe: function () {
+    const self = this
+    if (!http.getToken()) {
+      // 未登录：保持「选择学校」，不做任何提示
+      this.setData({ schoolName: '选择学校' })
+      return
+    }
+    http.get('/user/me', null, { silent: true }).then(function (me) {
+      if (!me) return
+      const merged = auth.updateUser({
+        id: me.id,
+        nickname: me.nickname,
+        avatar: me.avatar,
+        schoolId: me.schoolId,
+        schoolName: me.schoolName || '',
+        verifyStatus: me.verifyStatus
+      })
+      self.setData({
+        user: merged,
+        schoolName: (merged && merged.schoolName) || '选择学校'
+      })
+    }).catch(function () {
+      // 静默失败：保留缓存里的学校名，不打扰首页
+    })
+  },
+
+  /** 铃铛角标：未读私信数，失败静默（未登录/离线时不打搅首页） */
+  loadUnread: function () {
+    const self = this
+    if (!getApp().globalData.user) {
+      this.setData({ unread: 0 })
+      return
+    }
+    http.get('/messages/unread', null, { silent: true }).then(function (res) {
+      self.setData({ unread: (res && res.unread) || 0 })
+    }).catch(function () {
+      self.setData({ unread: 0 })
+    })
   },
 
   onPullDownRefresh: function () {
@@ -31,16 +83,6 @@ Page({
 
   retry: function () {
     this.loadData(true)
-  },
-
-  setGreeting: function () {
-    const h = new Date().getHours()
-    let g = '晚上好'
-    if (h < 5) g = '夜深了'
-    else if (h < 11) g = '早上好'
-    else if (h < 14) g = '中午好'
-    else if (h < 18) g = '下午好'
-    this.setData({ greeting: g })
   },
 
   loadData: function (refresh) {
@@ -59,10 +101,17 @@ Page({
     const postParams = { page: 1, size: 10 }
     if (this.data.channelId) postParams.channelId = this.data.channelId
 
+    // 频道是内容分区，商品（闲置）不属于任何频道。
+    // 只有在「全部」这种聚合入口才把闲置混排进来；
+    // 否则切了频道看到的还是同一批闲置，会让人以为筛选没生效。
+    const goodsTask = this.data.channelId
+      ? Promise.resolve(null)
+      : http.get('/goods', { page: 1, size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods'))
+
     Promise.all([
       http.get('/channels', null, { silent: true }).catch(fail('channels')),
       http.get('/posts', postParams, { silent: true }).catch(fail('posts')),
-      http.get('/goods', { page: 1, size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods')),
+      goodsTask,
       http.get('/goods/categories', null, { silent: true }).catch(fail('categories'))
     ]).then(function (res) {
       const channels = res[0] || []
@@ -84,10 +133,12 @@ Page({
           timeText: timeAgo(p.createdAt),
           createdAt: p.createdAt || '',
           badge: p.channelName || '校园频道',
-          badgeIcon: p.channelIcon || '💬',
+          topic: p.channelName || '校园',
           title: p.title || '',
           excerpt: (p.content || '').replace(/\s+/g, ' '),
           imageList: resolveList(p.imageList),
+          attachment: p.attachment || null,
+          viewCount: p.viewCount || 0,
           liked: !!p.liked,
           likeCount: p.likeCount || 0,
           commentCount: p.commentCount || 0
@@ -105,11 +156,13 @@ Page({
           timeText: timeAgo(g.createdAt),
           createdAt: g.createdAt || '',
           badge: g.tradeType === 1 ? '校内自提' : '支持邮寄',
-          badgeIcon: '🏷️',
+          topic: g.categoryName || '闲置',
           title: g.title || '',
           excerpt: (g.description || '').replace(/\s+/g, ' '),
           priceText: priceText(g.price),
+          originalPriceText: g.originalPrice ? priceText(g.originalPrice) : '',
           location: g.location || '',
+          viewCount: g.viewCount || 0,
           imageList: resolveList(g.imageList),
           categoryName: g.categoryName || '',
           liked: !!g.liked,
@@ -159,8 +212,13 @@ Page({
     this.openGoodsTab('', e.currentTarget.dataset.id)
   },
 
+  /** 公告位：跳蚤集市 → 闲置广场 */
+  onAnnounce: function () {
+    this.openGoodsTab('')
+  },
+
   goMessages: function () {
-    mp.switchTab({ url: '/pages/user/index' })
+    mp.navigateTo({ url: '/pages/messages/index' })
   },
 
   goStatus: function () {
@@ -229,17 +287,23 @@ Page({
     mp.navigateTo({ url: '/pages/post/detail?id=' + id })
   },
 
-  goPublish: function () {
-    auth.ensureVerified().then(function () {
-      mp.showActionSheet({
-        itemList: ['发布闲置', '发帖子', '写匿名心事'],
-        success: function (res) {
-          if (res.tapIndex === 0) mp.navigateTo({ url: '/pages/goods/publish' })
-          else if (res.tapIndex === 1) mp.navigateTo({ url: '/pages/post/publish' })
-          else if (res.tapIndex === 2) mp.switchTab({ url: '/pages/wall/index' })
-        },
-        fail: function () {}
-      })
-    }).catch(function () {})
+  /** 关注按钮：占位交互 */
+  onFollow: function () {
+    toast('关注功能即将上线，先去评论区互动吧')
+  },
+
+  /** 附件卡片：占位交互 */
+  onAttachment: function () {
+    toast('附件下载即将开放')
+  },
+
+  /** 阻止分享按钮的 tap 冒泡到卡片详情跳转 */
+  noop: function () {},
+
+  onShareAppMessage: function () {
+    return {
+      title: '校园趣事 · 校园闲置与圈子社区',
+      path: '/pages/index/index'
+    }
   }
 })

@@ -1,0 +1,99 @@
+<view class="page">
+  <!-- 顶栏 -->
+  <view class="topbar">
+    <view class="tb-left">
+      <view class="tb-back" bindtap="goBack" wx:if="{{false}}"></view>
+      <text class="tb-title">私信</text>
+    </view>
+  </view>
+
+  <!-- 对方信息 -->
+  <view class="peer">
+    <view class="peer-avatar">
+      <view class="avatar-default">
+        <view class="ad-head"></view>
+        <view class="ad-body"></view>
+      </view>
+      <view class="peer-check">✓</view>
+    </view>
+    <view class="peer-main">
+      <view class="peer-name-row">
+        <text class="peer-name">{{peerName}}</text>
+        <text class="peer-tag">卖家</text>
+      </view>
+      <view class="peer-school">🎓 同校同学 · 计算机学院</view>
+    </view>
+    <view class="peer-acts">
+      <view class="peer-act">📞</view>
+      <view class="peer-act">⋯</view>
+    </view>
+  </view>
+
+  <!-- 宝贝卡片 -->
+  <view class="goods-card" wx:if="{{goodsCard}}">
+    <view class="gc-cover">{{goodsCard.emoji}}</view>
+    <view class="gc-main">
+      <view class="gc-title-row">
+        <text class="gc-title">{{goodsCard.title}}</text>
+        <text class="gc-status" wx:if="{{goodsCard.statusText}}">{{goodsCard.statusText}}</text>
+      </view>
+      <view class="gc-price" wx:if="{{goodsCard.price}}">
+        <text class="gc-symbol">¥</text>
+        <text class="gc-num">{{goodsCard.price}}</text>
+        <text class="gc-talk">发宝贝链接</text>
+      </view>
+    </view>
+    <view class="gc-cta" bindtap="onSafety">📮 发起预订 / 小刀还价</view>
+  </view>
+
+  <!-- 安全提示 -->
+  <view class="safety" bindtap="onSafety">
+    <text class="safety-shield">🛡️</text>
+    <text class="safety-text">平台安全提示：同校交易请约定公共场所面交，谨防钓鱼链接</text>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="msgs" scroll-y="true" scroll-into-view="{{scrollInto}}" scroll-with-animation>
+    <view class="msg-day">今天 14:22</view>
+    <view
+      class="msg {{item.from === 'me' ? 'mine' : ''}}"
+      wx:for="{{messages}}"
+      wx:key="id"
+      id="msg-{{item.id}}"
+    >
+      <view class="msg-avatar" wx:if="{{item.from !== 'me'}}">
+        <view class="avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
+        </view>
+      </view>
+      <view class="msg-body">
+        <!-- 地址卡片消息 -->
+        <view class="loc-card" wx:if="{{item.type === 'location'}}">
+          <view class="loc-pin">📍 {{item.content}}</view>
+        </view>
+        <!-- 普通文本 -->
+        <view class="bubble" wx:else>{{item.content}}</view>
+        <view class="msg-time">{{item.timeText}}</view>
+      </view>
+      <view class="msg-me" wx:if="{{item.from === 'me'}}">我</view>
+    </view>
+    <view class="msgs-pad"></view>
+  </scroll-view>
+
+  <!-- 快捷话术 -->
+  <view class="quicks">
+    <view class="quick-chip amber" bindtap="onQuick" data-text="{{quicks[0]}}">🐣 我想小刀 ¥100</view>
+    <view class="quick-chip green" bindtap="onQuick" data-text="{{quicks[1]}}">📍 约定面交时间地点</view>
+    <view class="quick-chip gray" bindtap="onQuick" data-text="{{quicks[2]}}">🏫 发宿舍定位</view>
+  </view>
+
+  <!-- 输入栏 -->
+  <view class="input-bar">
+    <view class="ib-icon">🎙</view>
+    <input class="ib-input" placeholder="发消息给{{peerName}}..." placeholder-class="ph" value="{{draft}}" bindinput="onDraft" bindconfirm="onSend" confirm-type="send" />
+    <view class="ib-icon">😊</view>
+    <view class="ib-icon">⊕</view>
+    <view class="ib-send" bindtap="onSend">发送</view>
+  </view>
+</view>

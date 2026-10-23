@@ -550,6 +550,7 @@ function seed() {
         content:
           '排名分先后：\n1. 三食堂麻辣香锅，阿姨手不抖，加个蛋更香\n2. 二食堂现烤面包，晚上七点后打折\n3. 一食堂手工水饺，荠菜馅是隐藏菜单\n4. 四食堂铁板饭，记得让他少放酱\n5. 教工食堂的汤，学生也能买\n\n欢迎补充，我想把这个列表做成攻略。',
         images: '',
+        viewCount: 455,
         likeCount: 18,
         commentCount: 0,
         status: 1,
@@ -565,6 +566,8 @@ function seed() {
         title: '数分期末复习资料整理（附往年真题）',
         content: '整理了三年的期末真题和错题本，按章节分了文件夹。需要的同学评论区扣 1，我发你网盘链接。',
         images: '',
+        viewCount: 1200,
+        attachment: { name: '宏观经济学_期末必过高分宝典.pdf', size: '4.8 MB', downloads: 328 },
         likeCount: 64,
         commentCount: 0,
         status: 1,
@@ -580,6 +583,7 @@ function seed() {
         title: '失物招领：图书馆三楼捡到一个耳机盒',
         content: '白色充电盒，上面贴了一只小猫贴纸。放在三楼服务台了，失主可以带校园卡去认领。',
         images: '',
+        viewCount: 202,
         likeCount: 7,
         commentCount: 0,
         status: 1,
@@ -595,6 +599,7 @@ function seed() {
         title: '凌晨三点的宿舍楼下，有人在弹吉他',
         content: '弹的是《晴天》，跑调得很认真。我没开窗，就坐在床边听完了整首。',
         images: '',
+        viewCount: 1076,
         likeCount: 45,
         commentCount: 0,
         status: 1,
@@ -610,6 +615,7 @@ function seed() {
         title: '周末羽毛球，缺两个人，馆已订好',
         content: '周六下午两点，风雨操场 3 号场，已经订了两小时。水平业余就行，主要是想凑够四个人双打。',
         images: '',
+        viewCount: 294,
         likeCount: 11,
         commentCount: 0,
         status: 1,
@@ -625,6 +631,7 @@ function seed() {
         title: '搬宿舍出闲置：书架、风扇、收纳箱',
         content: '书架 25，落地扇 40，三个收纳箱打包 30。都在蓝田，能自提最好，价格可以再商量。',
         images: '',
+        viewCount: 248,
         likeCount: 9,
         commentCount: 0,
         status: 1,
@@ -640,6 +647,7 @@ function seed() {
         title: '西区新开的那家咖啡店，学生证打八折',
         content: '手冲意外地不错，座位也安静，适合下午写作业。就是插座只有靠窗那一排有。',
         images: '',
+        viewCount: 547,
         likeCount: 22,
         commentCount: 0,
         status: 1,
@@ -656,6 +664,7 @@ function seed() {
         content:
           '1. 先把真题刷一遍，知道自己差在哪\n2. Word 和 Excel 的函数部分一定要动手做\n3. 选择题靠刷题量，别死记\n4. 考前三天只看错题\n\n两周每天两小时，够用。',
         images: '',
+        viewCount: 915,
         likeCount: 38,
         commentCount: 0,
         status: 1,
@@ -671,6 +680,7 @@ function seed() {
         title: '校车时刻表更新（10 月起执行）',
         content: '紫金港到玉泉的班次调整为每 40 分钟一班，末班车提前到 21:20。具体时刻表贴在候车亭了。',
         images: '',
+        viewCount: 386,
         likeCount: 15,
         commentCount: 0,
         status: 1,
@@ -686,6 +696,7 @@ function seed() {
         title: '有没有人跟我一样，越到期末越想整理房间',
         content: '书没看几页，桌面已经擦了三遍，连抽屉都分类收纳好了。',
         images: '',
+        viewCount: 1214,
         likeCount: 51,
         commentCount: 0,
         status: 1,
@@ -701,6 +712,7 @@ function seed() {
         title: '夜跑招募：每晚九点，操场第三道',
         content: '配速 6 分左右，跑 5 公里。想来的直接来，不用报名，看到一群慢跑的就是我们。',
         images: '',
+        viewCount: 501,
         likeCount: 20,
         commentCount: 0,
         status: 1,
@@ -716,6 +728,7 @@ function seed() {
         title: '食堂阿姨今天多给了我一勺肉，谢谢阿姨',
         content: '就这一勺，让我整个下午都挺开心的。',
         images: '',
+        viewCount: 1720,
         likeCount: 73,
         commentCount: 0,
         status: 1,
@@ -761,7 +774,90 @@ function seed() {
       { targetType: 'GOODS', targetId: 8006, userId: ME_ID },
       { targetType: 'WALL', targetId: 7001, userId: ME_ID },
       { targetType: 'POST', targetId: 6001, userId: ME_ID }
-    ]
+    ],
+
+    // 私信会话（先做前端展示层，后续接 IM 时字段结构不变）
+    convos: [
+      {
+        id: 3001,
+        peerId: 9002,
+        peerName: '陈屿',
+        peerAvatar: '',
+        peerVerified: true,
+        peerOnline: true,
+        peerTags: [{ text: '卖家', cls: 'mint' }, { text: '已认证', cls: 'plain' }],
+        unread: 2,
+        // 会话内关联的宝贝卡片（可为空）
+        goodsCard: { id: 8001, title: '九成新机械键盘 87 键 青轴', price: 129, emoji: '⌨️', statusText: '议价中' },
+        messages: [
+          { id: 1, from: 'peer', type: 'text', content: '同学你好！键盘还在的，配件都在，成色很新～', createdAt: ago(95) },
+          { id: 2, from: 'me', type: 'text', content: '学长好！请问轴体可以现场试打吗？今晚在紫荆四号楼楼下方便面交吗👀', createdAt: ago(90) },
+          { id: 3, from: 'peer', type: 'location', content: '紫荆学生公寓4号楼 · 1层大厅服务台旁', createdAt: ago(85) },
+          { id: 4, from: 'peer', type: 'text', content: '可以的呀！今晚 8 点半后我都在寝室，带电脑当场试打，满意再付～', createdAt: ago(80), unread: true }
+        ]
+      },
+      {
+        id: 3002,
+        peerId: 0,
+        peerName: '匿名纸条 #302号',
+        peerAvatar: '',
+        anon: true,
+        peerTags: [{ text: '表白墙回声', cls: 'pink' }],
+        unread: 1,
+        goodsCard: null,
+        messages: [
+          { id: 1, from: 'peer', type: 'text', content: '“同学你好！看到你在六教302自习室发的捞人贴，那个经管学长我认识，可以帮你递张纸条～”', createdAt: ago(60 * 27) },
+          { id: 2, from: 'me', type: 'text', content: '太感谢啦！麻烦帮我问一下他下周有没有空一起自习😊', createdAt: ago(60 * 26) },
+          { id: 3, from: 'peer', type: 'text', content: '他说是计算机学院的，周三下午常在六教，你可以留意一下～', createdAt: ago(60 * 25), unread: true }
+        ]
+      },
+      {
+        id: 3003,
+        peerId: 9005,
+        peerName: '麦麦学长',
+        peerAvatar: '',
+        peerVerified: false,
+        peerOnline: false,
+        peerTags: [{ text: '热心课代表', cls: 'mint' }, { text: '经管学院', cls: 'plain' }],
+        unread: 0,
+        goodsCard: null,
+        messages: [
+          { id: 1, from: 'me', type: 'text', content: '学长，宏观经济学的期末复习资料方便发我一份吗？🙏', createdAt: ago(60 * 50) },
+          { id: 2, from: 'peer', type: 'text', content: '宏观经济学期末真题汇总已经发到你校内邮箱啦，祝高分通过！✨', createdAt: ago(60 * 49), read: true }
+        ]
+      },
+      {
+        id: 3004,
+        peerId: 9004,
+        peerName: '苏念',
+        peerAvatar: '',
+        peerVerified: false,
+        peerOnline: false,
+        peerTags: [{ text: '买家', cls: 'orange' }],
+        unread: 0,
+        goodsCard: { id: 8015, title: '考研英语历年真题黄皮书', price: 35, emoji: '📚', statusText: '校内自提' },
+        messages: [
+          { id: 1, from: 'peer', type: 'text', content: '学姐今晚8点在紫荆二号楼自提方便吗？带现金还是扫码呢？', createdAt: ago(60 * 72) }
+        ]
+      },
+      {
+        id: 3005,
+        peerId: 0,
+        peerName: '校园趣事小助手',
+        peerAvatar: '',
+        official: true,
+        peerTags: [{ text: '官方认证', cls: 'green' }],
+        unread: 0,
+        goodsCard: null,
+        messages: [
+          { id: 1, from: 'peer', type: 'text', content: '【毕业季集市】恭喜！你发布的闲置已被推荐至今日热门集市展位，快去看看吧～', createdAt: ago(60 * 24 * 3) },
+          { id: 2, from: 'peer', type: 'text', content: '校园面交防骗提醒：请优先选择宿舍大厅、食堂等明亮公共区域，认准实名校友，谨防私下转账。', createdAt: ago(60 * 24 * 3 - 5) }
+        ]
+      }
+    ],
+
+    // 消息中心快捷入口角标（赞与收藏 / 新增粉丝 / 评论与@ / 官方通知）
+    msgSummary: { likes: 18, followers: 2, mentions: 5, notice: '市集' }
   }
 }
 
@@ -776,6 +872,16 @@ function load() {
     cached = null
   }
   db = cached && cached.goods ? cached : seed()
+  // 轻量迁移：旧版本地种子没有帖子浏览数/附件字段，补齐以免首页展示缺失
+  if (db.posts && db.posts.length && db.posts[0].viewCount === undefined) {
+    db.posts.forEach(function (p) {
+      p.viewCount = p.id === 6002 ? 1200 : (p.likeCount || 0) * 23 + 41
+      if (p.id === 6002 && !p.attachment) {
+        p.attachment = { name: '宏观经济学_期末必过高分宝典.pdf', size: '4.8 MB', downloads: 328 }
+      }
+    })
+    save()
+  }
   if (!cached || !cached.goods) save()
   return db
 }
@@ -1583,7 +1689,182 @@ function route(method, url, data) {
     if (s.length === 4 && s[2] === 'comments' && M === 'DELETE') return ok(deletePostComment(s[1], s[3]))
   }
 
+  // 私信与消息中心（前端演示层）
+  if (s[0] === 'messages') {
+    if (s.length === 2 && M === 'GET' && s[1] === 'unread') return ok({ unread: unreadTotal() })
+    if (s.length === 2 && M === 'POST' && s[1] === 'start') return ok(startConvo(q))
+    if (s.length === 3 && M === 'POST' && s[2] === 'read') return ok(convoRead(s[1]))
+    if (s.length === 3 && M === 'GET' && s[2] === 'messages') return ok({ messages: (convoRaw(s[1]) || {}).messages || [] })
+    if (s.length === 1 && M === 'GET') return ok(messageList())
+    if (s.length === 2 && M === 'GET') return ok(convoDetail(s[1]))
+    if (s.length === 2 && M === 'POST') return ok(sendMessage(s[1], q))
+  }
+
   return err(404, '模拟数据未覆盖该接口：' + M + ' ' + path)
+}
+
+/* ============================ 私信与消息中心 ============================ */
+
+/** 会话列表（含快捷入口角标），按最新消息时间倒序 */
+function messageList() {
+  const d = load()
+  const list = (d.convos || []).map(function (c) {
+    const last = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null
+    return {
+      id: c.id,
+      peerName: c.peerName,
+      peerAvatar: c.peerAvatar,
+      anon: !!c.anon,
+      official: !!c.official,
+      peerOnline: !!c.peerOnline,
+      peerVerified: !!c.peerVerified,
+      peerTags: c.peerTags || [],
+      unread: c.unread || 0,
+      goodsCard: c.goodsCard || null,
+      lastText: last ? last.content : '',
+      lastFrom: last ? last.from : '',
+      lastTime: last ? last.createdAt : ''
+    }
+  }).sort(function (a, b) {
+    return a.lastTime < b.lastTime ? 1 : -1
+  })
+  return { summary: d.msgSummary || { likes: 0, followers: 0, mentions: 0, notice: '' }, convos: list }
+}
+
+/** 取原始会话对象（不清零未读） */
+function convoRaw(id) {
+  const d = load()
+  return (d.convos || []).filter(function (x) {
+    return String(x.id) === String(id)
+  })[0]
+}
+
+/** 未读总数 */
+function unreadTotal() {
+  const d = load()
+  return (d.convos || []).reduce(function (n, c) {
+    return n + (c.unread || 0)
+  }, 0)
+}
+
+/** 标记单个会话已读 */
+function convoRead(id) {
+  const c = convoRaw(id)
+  if (c) {
+    c.unread = 0
+    ;(c.messages || []).forEach(function (m) { m.unread = false; m.read = true })
+    save()
+  }
+  return null
+}
+
+/**
+ * 发起（或复用）会话：按 peerId + goodsId 匹配已有会话，没有就新建。
+ * 与后端 POST /messages/start 行为保持一致。
+ */
+function startConvo(q) {
+  const d = load()
+  const peerId = q.peerId ? String(q.peerId) : ''
+  const goodsId = q.goodsId ? String(q.goodsId) : ''
+  let c = null
+  if (peerId) {
+    c = (d.convos || []).filter(function (x) {
+      if (String(x.peerId || '') !== peerId) return false
+      const gid = x.goodsCard ? String(x.goodsCard.id || '') : ''
+      return gid === goodsId
+    })[0]
+  }
+  if (!c) {
+    c = {
+      id: nextId(),
+      peerId: q.peerId || 0,
+      peerName: '同学',
+      peerAvatar: '',
+      anon: false,
+      peerVerified: false,
+      peerOnline: false,
+      peerTags: [],
+      unread: 0,
+      goodsCard: goodsId ? {
+        id: q.goodsId,
+        title: q.goodsTitle || '',
+        price: q.goodsPrice || '',
+        emoji: q.goodsEmoji || '🛍️',
+        statusText: q.goodsStatus === 2 ? '已售出' : (q.goodsStatus === 0 ? '已下架' : '在售中')
+      } : null,
+      messages: []
+    }
+    d.convos = d.convos || []
+    d.convos.unshift(c)
+    save()
+  }
+  return {
+    id: c.id,
+    peerId: c.peerId,
+    peerName: c.peerName,
+    goodsCard: c.goodsCard || null,
+    messages: c.messages || []
+  }
+}
+
+/** 会话详情：进入后清零未读 */
+function convoDetail(id) {
+  const d = load()
+  const c = (d.convos || []).filter(function (x) {
+    return String(x.id) === String(id)
+  })[0]
+  if (!c) throw { code: 404, msg: '会话不存在或已删除' }
+  c.unread = 0
+  c.messages.forEach(function (m) {
+    m.unread = false
+    m.read = true
+  })
+  save()
+  return {
+    id: c.id,
+    peerName: c.peerName,
+    peerAvatar: c.peerAvatar,
+    anon: !!c.anon,
+    official: !!c.official,
+    peerTags: c.peerTags || [],
+    goodsCard: c.goodsCard || null,
+    messages: c.messages
+  }
+}
+
+/** 发送消息：追加我方消息并模拟对方自动回复 */
+function sendMessage(id, q) {
+  requireLogin()
+  const d = load()
+  const c = (d.convos || []).filter(function (x) {
+    return String(x.id) === String(id)
+  })[0]
+  if (!c) throw { code: 404, msg: '会话不存在或已删除' }
+  const content = String(q.content || '').trim()
+  if (!content) throw { code: 400, msg: '消息内容不能为空' }
+
+  c.messages.push({ id: nextId(), from: 'me', type: 'text', content: content, createdAt: fmt(new Date()) })
+
+  // 简单的自动回复，营造真实聊天感
+  const replies = [
+    '收到收到，稍等我下课回你详细说～',
+    '好的呀，那就这么说定啦！',
+    '嗯嗯，可以的，到时候面交再细聊 👌',
+    '哈哈好嘞，有问题随时找我～'
+  ]
+  setTimeout(function () {
+    c.messages.push({
+      id: nextId(),
+      from: 'peer',
+      type: 'text',
+      content: replies[Math.floor(Math.random() * replies.length)],
+      createdAt: fmt(new Date())
+    })
+    save()
+  }, 1200)
+
+  save()
+  return { messages: c.messages }
 }
 
 /**

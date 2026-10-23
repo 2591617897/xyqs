@@ -1,56 +1,149 @@
 <view class="page" wx:if="{{goods}}">
-  <!-- 图片 -->
-  <swiper wx:if="{{goods.imageList.length}}" class="gallery" indicator-dots="true" circular="true" indicator-active-color="#ffffff">
-    <swiper-item wx:for="{{goods.imageList}}" wx:key="*this">
-      <image class="gallery-img" src="{{item}}" mode="aspectFill" bindtap="preview" data-url="{{item}}" />
-    </swiper-item>
-  </swiper>
-  <view wx:else class="gallery gallery-empty">{{goods.emoji}}</view>
+  <!-- 图片轮播：顶部通栏 4:3 + 角标 + 计数胶囊 -->
+  <view class="gallery-wrap">
+    <swiper
+      wx:if="{{goods.imageList.length}}"
+      class="gallery"
+      circular="true"
+      bindchange="onGalleryChange"
+    >
+      <swiper-item wx:for="{{goods.imageList}}" wx:key="*this">
+        <image class="gallery-img" src="{{item}}" mode="aspectFill" bindtap="preview" data-url="{{item}}" />
+      </swiper-item>
+    </swiper>
+    <view wx:else class="gallery gallery-empty">
+      <text class="gallery-emoji">{{goods.emoji}}</text>
+    </view>
 
-  <!-- 主信息 -->
-  <view class="main-card">
-    <view class="price-row">
-      <view class="price big"><text class="price-symbol">¥</text>{{goods.priceText}}</view>
-      <text class="origin" wx:if="{{goods.originalPrice}}">原价 ¥{{goods.originalPrice}}</text>
-      <view class="flex1"></view>
-      <text class="muted">{{goods.viewCount}} 次浏览</text>
+    <!-- 左上角标签浮层 -->
+    <view class="gallery-tags" wx:if="{{goods.imageList.length}}">
+      <view class="gallery-tag mint">
+        <text class="gt-check">✓</text>
+        <text>{{goods.categoryName || '闲置'}}</text>
+      </view>
+      <view class="gallery-tag ghost" wx:if="{{goods.tradeType === 1}}">🏫 支持自提验机</view>
     </view>
-    <view class="title">{{goods.title}}</view>
-    <view class="row wrap gap12 mt16">
-      <text class="tag tag-brand">{{goods.categoryName}}</text>
-      <text class="tag">{{goods.tradeType === 1 ? '校内自提' : '支持邮寄'}}</text>
-      <text class="tag" wx:if="{{goods.location}}">📍 {{goods.location}}</text>
-      <text class="tag tag-warn" wx:if="{{goods.status === 2}}">已售出</text>
-      <text class="tag" wx:if="{{goods.status === 0}}">已下架</text>
-    </view>
+
+    <!-- 右下角计数胶囊 -->
+    <view class="gallery-counter" wx:if="{{goods.imageList.length}}">{{galleryIndex}}/{{goods.imageList.length}}</view>
   </view>
 
-  <!-- 卖家 -->
-  <view class="card seller">
-    <image wx:if="{{goods.sellerAvatar}}" class="avatar-lg" src="{{goods.sellerAvatar}}" mode="aspectFill" />
-    <view wx:else class="avatar-lg">
-      <view class="avatar-default">
-        <view class="ad-head"></view>
-        <view class="ad-body"></view>
+  <view class="body">
+    <!-- 价格与标题卡 -->
+    <view class="card">
+      <view class="price-row">
+        <view class="price-main">
+          <text class="price-symbol">¥</text>
+          <text class="price-num">{{goods.priceText}}</text>
+          <text class="price-origin" wx:if="{{goods.originalPrice}}">原价 ¥{{goods.originalPrice}}</text>
+        </view>
+        <view class="save-pill" wx:if="{{goods.saveText}}">{{goods.saveText}}</view>
+      </view>
+      <view class="g-title">{{goods.title}}</view>
+      <view class="g-meta">
+        <view class="g-loc">📍 {{goods.location || '校内交易'}}</view>
+        <view class="g-stats">
+          <text>浏览 {{goods.viewCount || 0}}</text>
+          <text class="g-stat-gap">想要 {{goods.likeCount || 0}}</text>
+        </view>
       </view>
     </view>
-    <view class="flex1 ml20">
-      <view class="h2">{{goods.sellerName}}</view>
-      <view class="muted mt8">发布于 {{goods.timeText}} · 同校交易更安心</view>
+
+    <!-- 卖家卡 -->
+    <view class="card">
+      <view class="seller-row">
+        <view class="seller-avatar-wrap">
+          <image wx:if="{{goods.sellerAvatar}}" class="seller-avatar" src="{{goods.sellerAvatar}}" mode="aspectFill" />
+          <view wx:else class="seller-avatar">
+            <view class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
+          </view>
+          <view class="seller-check">✓</view>
+        </view>
+        <view class="seller-info">
+          <view class="seller-name-row">
+            <text class="seller-name">{{goods.sellerName}}</text>
+            <text class="seller-verified">已实名学生认证</text>
+          </view>
+          <view class="seller-school">🎓 {{goods.schoolName || '同校同学'}} · 发布于 {{goods.timeText}}</view>
+        </view>
+        <view class="follow-btn" catchtap="onFollow">关注</view>
+      </view>
+      <view class="seller-metrics">
+        <view class="metric">
+          <view class="metric-top brand">{{goods.sellerMeta[0].icon}} {{goods.sellerMeta[0].top}}</view>
+          <view class="metric-sub">{{goods.sellerMeta[0].sub}}</view>
+        </view>
+        <view class="metric">
+          <view class="metric-top">{{goods.sellerMeta[1].top}}</view>
+          <view class="metric-sub">{{goods.sellerMeta[1].sub}}</view>
+        </view>
+        <view class="metric">
+          <view class="metric-top">{{goods.sellerMeta[2].top}}</view>
+          <view class="metric-sub">{{goods.sellerMeta[2].sub}}</view>
+        </view>
+      </view>
     </view>
-  </view>
 
-  <!-- 描述 -->
-  <view class="card">
-    <view class="h2">宝贝描述</view>
-    <view class="desc mt16">{{goods.description || '卖家很懒，什么都没写～'}}</view>
-  </view>
+    <!-- 规格与成色 -->
+    <view class="card">
+      <view class="card-head">
+        <view class="head-bar"></view>
+        <text class="head-title">规格与成色信息</text>
+      </view>
+      <view class="spec-list">
+        <view class="spec-item" wx:for="{{goods.specs}}" wx:key="label">
+          <view class="spec-label">{{item.icon}} {{item.label}}</view>
+          <view class="spec-value {{item.warn ? 'warn' : ''}} {{item.brand ? 'brand' : ''}}">{{item.value}}</view>
+        </view>
+      </view>
+    </view>
 
-  <view class="card tip-card">
-    <view class="h2">交易提醒</view>
-    <view class="tip-item">· 建议在校内公共区域当面交易，先验货再付款</view>
-    <view class="tip-item">· 平台仅提供信息撮合，请勿提前转账</view>
-    <view class="tip-item">· 遇到可疑情况可在「我的-帮助与反馈」举报</view>
+    <!-- 宝贝详细描述 -->
+    <view class="card">
+      <view class="card-head">
+        <view class="head-bar"></view>
+        <text class="head-title">宝贝详细描述</text>
+      </view>
+      <view class="desc">{{goods.description || '卖家很懒，什么都没写～'}}</view>
+      <view class="desc-note" wx:if="{{goods.tradeType === 1}}">支持校内任意地点当面验货！诚心想要的同校同学欢迎点击下方随时发起沟通～</view>
+    </view>
+
+    <!-- 安全提示 -->
+    <view class="safety">
+      <text class="safety-icon">🛡️</text>
+      <view class="safety-body">
+        <view class="safety-title">校园同校交易安全提示</view>
+        <view class="safety-text">建议在食堂、宿舍楼前台大厅等人流密集处当面验货交易。警惕脱离平台私下微信转账、货到付款等风险行为。</view>
+      </view>
+    </view>
+
+    <!-- 校友问答 -->
+    <view class="card qa-card">
+      <view class="card-head between">
+        <view class="row">
+          <view class="head-bar"></view>
+          <text class="head-title">校友问答</text>
+          <text class="qa-count">（{{goods.qaList.length}}条提问）</text>
+        </view>
+        <view class="qa-ask" bindtap="goChat">✏️ 向TA提问</view>
+      </view>
+      <view class="qa-list">
+        <view class="qa-item" wx:for="{{goods.qaList}}" wx:key="q">
+          <view class="qa-row">
+            <view class="qa-badge q">问</view>
+            <view class="qa-text">{{item.q}}</view>
+          </view>
+          <view class="qa-row indent">
+            <view class="qa-badge a">答</view>
+            <view class="qa-text sub">{{item.a}}</view>
+          </view>
+          <view class="qa-time">{{item.time}}</view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="bottom-space"></view>
@@ -64,13 +157,23 @@
       <button class="btn btn-ghost btn-sm" bindtap="removeGoods">删除</button>
     </block>
     <block wx:else>
-      <view class="like-btn" bindtap="toggleLike">
-        <text class="like-icon {{liked ? 'liked' : ''}}">{{liked ? '♥' : '♡'}}</text>
-        <text class="like-text">{{goods.likeCount || 0}}</text>
+      <view class="bar-act" bindtap="toggleLike">
+        <text class="bar-act-icon {{liked ? 'liked' : ''}}">{{liked ? '♥' : '♡'}}</text>
+        <text class="bar-act-text">{{liked ? '已收藏' : '收藏'}}</text>
       </view>
-      <button class="btn btn-primary flex1" bindtap="openOrder">
-        {{goods.status === 1 ? '我想要 · 联系卖家' : (goods.status === 2 ? '该商品已售出' : '该商品已下架')}}
+      <button class="bar-act" open-type="share" hover-class="none">
+        <text class="bar-act-icon">↗</text>
+        <text class="bar-act-text">分享</text>
       </button>
+      <view class="bar-cta">
+        <view class="cta-chat" bindtap="goChat">
+          <text>💬 聊一聊</text>
+          <view class="cta-badge">极速回</view>
+        </view>
+        <view class="cta-buy" bindtap="openOrder">
+          <text>{{goods.status === 1 ? '申请自提' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
+        </view>
+      </view>
     </block>
   </view>
 
@@ -78,14 +181,14 @@
   <view class="mask" wx:if="{{showOrder}}" bindtap="closeOrder">
     <view class="sheet" catchtap="stop">
       <view class="sheet-head">
-        <text class="h2">联系卖家</text>
+        <text class="h2">申请自提 · 联系卖家</text>
         <text class="sheet-close" bindtap="closeOrder">✕</text>
       </view>
       <view class="sheet-goods">
         <view class="sheet-cover">{{goods.emoji}}</view>
         <view class="flex1">
           <view class="clamp2 sheet-title">{{goods.title}}</view>
-          <view class="price mt8"><text class="price-symbol">¥</text>{{goods.priceText}}</view>
+          <view class="sheet-price"><text class="price-symbol">¥</text>{{goods.priceText}}</view>
         </view>
       </view>
       <input class="sheet-input" placeholder="留个联系方式（QQ / 微信 / 手机号）" placeholder-class="placeholder" value="{{contact}}" bindinput="onContact" />
@@ -103,6 +206,6 @@
 
 <view class="empty" wx:elif="{{!goods}}">
   <text class="empty-icon">📦</text>
-  <text>{{loadError ? '加载失败，请检查网络或后端服务' : '商品不存在或已下架'}}</text>
+  <text>{{loadError ? '加载失败，请检查网络' : '商品不存在或已下架'}}</text>
   <view class="btn btn-ghost btn-sm retry-btn" bindtap="retry" wx:if="{{loadError}}">重新加载</view>
 </view>
