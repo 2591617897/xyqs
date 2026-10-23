@@ -168,3 +168,11 @@
   margin-top: 28rpx;
   display: inline-block;
 }
+
+.more-btn {
+  font-size: 34rpx;
+  color: #9ca3af;
+  letter-spacing: 2rpx;
+  padding: 0 12rpx;
+  line-height: 1;
+}

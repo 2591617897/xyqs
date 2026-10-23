@@ -45,5 +45,5 @@
     </view>
   </view>
 
-  <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">发布</button>
+  <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">{{isEdit ? '保存修改' : '发布'}}</button>
 </view>

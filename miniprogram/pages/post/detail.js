@@ -93,6 +93,23 @@ Page({
     })
   },
 
+  /* ---------- 自己的帖子：编辑 / 删除 ---------- */
+  openMore: function () {
+    const self = this
+    if (!this.data.post || !this.data.post.mine) return
+    mp.showActionSheet({
+      itemList: ['编辑帖子', '删除帖子'],
+      success: function (res) {
+        if (res.tapIndex === 0) self.goEdit()
+        else if (res.tapIndex === 1) self.deletePost()
+      }
+    })
+  },
+
+  goEdit: function () {
+    mp.navigateTo({ url: '/pages/post/publish?id=' + this.postId })
+  },
+
   deletePost: function () {
     const self = this
     mp.showModal({

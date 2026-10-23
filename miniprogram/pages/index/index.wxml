@@ -82,7 +82,7 @@
 
   <view class="empty" wx:if="{{!loading && !goods.length}}">
     <text class="empty-icon">{{loadError ? '📡' : '🛍️'}}</text>
-    <text>{{loadError ? '加载失败，请检查网络或后端服务' : '还没有闲置，去发布第一件吧'}}</text>
+    <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '还没有闲置，去发布第一件吧'}}</text>
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 

@@ -61,6 +61,7 @@
 | GET | `/posts?channelId&page&size&schoolId` | 🔓 帖子列表（含 `channelName / channelIcon / imageList`） |
 | POST | `/posts` | 发帖（需认证）。body：`{channelId, title, content, images[]}` |
 | GET | `/posts/{id}` | 🔓 详情 |
+| PUT | `/posts/{id}` | 编辑自己的帖子（需认证）。body：`{channelId, title, content, images[]}` |
 | DELETE | `/posts/{id}` | 删除自己的帖子 |
 | POST | `/posts/{id}/like` | 点赞 / 取消 |
 | GET | `/posts/{id}/comments` | 评论列表 |

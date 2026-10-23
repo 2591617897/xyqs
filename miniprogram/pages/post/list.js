@@ -92,7 +92,7 @@ Page({
     const self = this
     auth.ensureVerified().then(function () {
       const preset = self.data.channelId || (self.data.channels.length ? self.data.channels[0].id : '')
-      mp.navigateTo({ url: '/pages/post/publish?id=' + preset })
+      mp.navigateTo({ url: '/pages/post/publish?channelId=' + preset })
     }).catch(function () {})
   }
 })

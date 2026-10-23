@@ -44,31 +44,48 @@ Page({
   loadData: function (refresh) {
     const self = this
     if (refresh) this.setData({ loading: true })
+
+    // 三个接口分别兜底：任一失败不影响其余模块渲染
+    let firstError = ''
+    const fail = function (name) {
+      return function (err) {
+        if (!firstError && err && err.msg) firstError = err.msg
+        console.error('[index] ' + name + ' 加载失败：', err)
+        return null
+      }
+    }
+
     Promise.all([
-      http.get('/goods', { size: 4, sort: 'latest' }, { silent: true }),
-      http.get('/posts', { size: 3 }, { silent: true }),
-      http.get('/goods/categories', null, { silent: true })
+      http.get('/goods', { size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods')),
+      http.get('/posts', { size: 3 }, { silent: true }).catch(fail('posts')),
+      http.get('/goods/categories', null, { silent: true }).catch(fail('categories'))
     ]).then(function (res) {
-      const goods = (res[0].records || []).map(function (item) {
+      const goodsRes = res[0] || { records: [] }
+      const postsRes = res[1] || { records: [] }
+      const okCount = res.filter(function (x) {
+        return !!x
+      }).length
+
+      const goods = (goodsRes.records || []).map(function (item) {
         item.timeText = timeAgo(item.createdAt)
         item.priceText = priceText(item.price)
         item.emoji = categoryEmoji(item.categoryId)
         return item
       })
-      const posts = (res[1].records || []).map(function (item) {
+      const posts = (postsRes.records || []).map(function (item) {
         item.timeText = timeAgo(item.createdAt)
         item.avatarText = (item.authorName || '校').substring(0, 1)
         return item
       })
+
       self.setData({
         goods: goods,
         posts: posts,
         categories: res[2] || [],
         loading: false,
-        loadError: false
+        loadError: okCount === 0,
+        errorMsg: okCount === 0 ? (firstError || '加载失败，请检查后端服务') : ''
       })
-    }).catch(function () {
-      self.setData({ loading: false, loadError: true })
     }).then(function () {
       mp.stopPullDownRefresh()
     })

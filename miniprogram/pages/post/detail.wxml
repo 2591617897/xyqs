@@ -5,7 +5,7 @@
         <text>{{post.channelIcon}}</text>
         <text class="channel-name">{{post.channelName}}</text>
       </view>
-      <text class="del-btn" wx:if="{{post.mine}}" bindtap="deletePost">删除</text>
+      <view class="more-btn" wx:if="{{post.mine}}" catchtap="openMore">···</view>
     </view>
 
     <view class="title">{{post.title}}</view>

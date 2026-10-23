@@ -117,29 +117,49 @@ function request(options) {
       timeout: timeout,
       success: function (res) {
         finish()
-        const body = res.data || {}
+        let body = res.data
+        // 兼容个别环境下响应体未被自动解析的情况
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body)
+          } catch (e) {
+            body = null
+          }
+        }
 
-        if (res.statusCode === 401 || body.code === 401) {
+        if (res.statusCode === 401 || (body && body.code === 401)) {
           authExpired(silent)
           reject(makeError(401, '未登录'))
           return
         }
         if (res.statusCode === 403) {
-          if (!silent) toast(body.msg || '没有权限执行该操作')
-          reject(makeError(403, body.msg || '无权限'))
+          console.error('[api] 403', method, url, body)
+          if (!silent) toast((body && body.msg) || '没有权限执行该操作')
+          reject(makeError(403, (body && body.msg) || '无权限'))
           return
         }
         if (res.statusCode >= 500) {
-          if (!silent) toast(body.msg || '服务器开小差了，请稍后重试')
-          reject(makeError(res.statusCode, body.msg || '服务器异常'))
+          console.error('[api] ' + res.statusCode, method, url, body)
+          if (!silent) toast((body && body.msg) || '服务器开小差了，请稍后重试')
+          reject(makeError(res.statusCode, (body && body.msg) || '服务器异常'))
           return
         }
+
+        if (!body || typeof body !== 'object') {
+          console.error('[api] 响应不是合法 JSON', method, url, res.statusCode, res.data)
+          if (!silent) toast('接口返回格式异常')
+          reject(makeError(500, '响应格式异常'))
+          return
+        }
+
         if (body.code === 0) {
           resolve(body.data)
           return
         }
+
+        // 业务失败：把后端 msg 透传出来，便于定位（数据库/参数/权限等）
+        console.error('[api] 业务失败', method, url, 'code=' + body.code, body.msg)
         if (body.code === undefined) {
-          // 网关或未按约定返回（例如 404 页面）
           if (!silent) toast('接口不存在或服务未启动')
           reject(makeError(res.statusCode || 500, '响应格式异常'))
           return

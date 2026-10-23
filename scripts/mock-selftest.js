@@ -143,6 +143,19 @@ const pc = call('POST', '/posts/' + newPost.data + '/comments', { content: '沙�
 check('评论成功', pc.code === 0)
 check('评论数 1', call('GET', '/posts/' + newPost.data).data.commentCount === 1)
 check('发帖缺标题被拦', call('POST', '/posts', { channelId: 2004, title: '', content: 'x' }).code === 400)
+const editPost = call('PUT', '/posts/' + newPost.data, {
+  channelId: 2002,
+  title: '改过的标题',
+  content: '改过的正文',
+  images: []
+})
+check('编辑自己的帖子', editPost.code === 0, editPost)
+const pd2 = call('GET', '/posts/' + newPost.data).data
+check('帖子标题已更新', pd2.title === '改过的标题')
+check('帖子正文已更新', pd2.content === '改过的正文')
+check('帖子频道已更新', pd2.channelId === 2002)
+check('编辑他人帖子被拒', call('PUT', '/posts/6002', { channelId: 2002, title: 'x', content: 'y' }).code === 403)
+check('编辑缺标题被拒', call('PUT', '/posts/' + newPost.data, { channelId: 2002, title: '  ', content: 'y' }).code === 400)
 check('删除自己的帖子', call('DELETE', '/posts/' + newPost.data).code === 0)
 
 console.log('\n[9] 用户 / 认证')

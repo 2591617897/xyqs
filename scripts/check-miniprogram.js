@@ -111,6 +111,26 @@ function main() {
     }
   }
 
+  // 自定义 tabBar
+  if (app.tabBar && app.tabBar.custom) {
+    const dir = path.join(ROOT, 'custom-tab-bar')
+    ;['index.js', 'index.json', 'index.wxml', 'index.wxss'].forEach(function (f) {
+      if (!exists(path.join(dir, f))) {
+        errors.push('自定义 tabBar 缺少文件：custom-tab-bar/' + f)
+      }
+    })
+    const cj = path.join(dir, 'index.json')
+    if (exists(cj)) {
+      try {
+        if (!readJson(cj).component) {
+          errors.push('custom-tab-bar/index.json 缺少 "component": true')
+        }
+      } catch (e) {
+        errors.push('custom-tab-bar/index.json 解析失败：' + e.message)
+      }
+    }
+  }
+
   report(pages.length)
 }
 

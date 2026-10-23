@@ -101,8 +101,34 @@ public class PostService {
         return post.getId();
     }
 
-    public void delete(Long id) {
-        Long userId = UserContext.requireUserId();
+    /**
+     * 编辑自己的帖子（作者、发布时间、点赞评论数保持不变）。
+     */
+    public void update(Long id, PostReq req) {
+        Long userId = UserContext.requireVerifiedUserId();
+        Post post = postMapper.selectById(id);
+        if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
+            throw BizException.notFound("帖子不存在或已删除");
+        }
+        if (!userId.equals(post.getUserId())) {
+            throw BizException.forbidden("只能编辑自己发布的帖子");
+        }
+        Channel channel = channelMapper.selectById(req.getChannelId());
+        if (channel == null) {
+            throw new BizException("频道不存在");
+        }
+        // 用 UpdateWrapper 显式 set，保证清空图片能写回 null
+        postMapper.update(null, Wrappers.<Post>lambdaUpdate()
+                .eq(Post::getId, id)
+                .set(Post::getChannelId, req.getChannelId())
+                .set(Post::getTitle, req.getTitle().trim())
+                .set(Post::getContent, req.getContent().trim())
+                .set(Post::getImages, req.getImages() == null ? null
+                        : req.getImages().stream().filter(StringUtils::hasText)
+                        .limit(9).collect(Collectors.joining(","))));
+    }
+
+    public void delete(Long id) {        Long userId = UserContext.requireUserId();
         Post post = postMapper.selectById(id);
         if (post == null) {
             throw BizException.notFound("帖子不存在");

@@ -1364,6 +1364,28 @@ function createPost(q) {
   return post.id
 }
 
+/** 编辑自己的帖子 */
+function updatePost(id, q) {
+  const p = requireVerified()
+  const post = db.posts.filter(function (x) {
+    return x.id === Number(id)
+  })[0]
+  if (!post || post.status !== 1) throw { code: 404, msg: '帖子不存在或已删除' }
+  if (post.userId !== p.id) throw { code: 403, msg: '只能编辑自己发布的帖子' }
+
+  const channel = channelOf(q.channelId)
+  if (!channel) throw { code: 400, msg: '频道不存在' }
+  if (!q.title || !String(q.title).trim()) throw { code: 400, msg: '请填写标题' }
+  if (!q.content || !String(q.content).trim()) throw { code: 400, msg: '正文不能为空' }
+
+  post.channelId = channel.id
+  post.title = String(q.title).trim()
+  post.content = String(q.content).trim()
+  post.images = (q.images || []).slice(0, 9).join(',')
+  save()
+  return null
+}
+
 function deletePost(id) {
   const p = requireLogin()
   const post = db.posts.filter(function (x) {
@@ -1520,6 +1542,7 @@ function route(method, url, data) {
     if (s.length === 1 && M === 'GET') return ok(queryPosts(q))
     if (s.length === 1 && M === 'POST') return ok(createPost(q))
     if (s.length === 2 && M === 'GET') return ok(postDetail(s[1]))
+    if (s.length === 2 && M === 'PUT') return ok(updatePost(s[1], q))
     if (s.length === 2 && M === 'DELETE') return ok(deletePost(s[1]))
     if (s[2] === 'like' && M === 'POST') return ok(toggleLike('POST', s[1]))
     if (s[2] === 'comments' && M === 'GET') return ok(postComments(s[1]))
