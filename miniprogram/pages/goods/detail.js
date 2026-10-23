@@ -34,12 +34,17 @@ Page({
       g.emoji = categoryEmoji(g.categoryId)
       g.imageList = resolveList(g.imageList)
       const me = getApp().globalData.user
+      const isOwner = !!(me && g.userId && String(me.id) === String(g.userId))
+      // 头像快照可能落后于最新资料，自己的商品用本地头像兜底
+      if (isOwner && !g.sellerAvatar && me.avatar) {
+        g.sellerAvatar = me.avatar
+      }
       self.setData({
         goods: g,
         loading: false,
         loadError: false,
         liked: !!g.liked,
-        isOwner: !!(me && g.userId && String(me.id) === String(g.userId))
+        isOwner: isOwner
       })
       mp.setNavigationBarTitle({ title: g.title })
     }).catch(function (err) {

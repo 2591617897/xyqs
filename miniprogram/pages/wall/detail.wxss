@@ -196,7 +196,7 @@
   flex-shrink: 0;
 }
 .send-btn.active {
-  color: #ff5a76;
+  color: #0e9a60;
 }
 
 /* 待发送图片 */

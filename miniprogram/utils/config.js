@@ -10,7 +10,7 @@ const ENVS = {
   // 本地开发（开发者工具 + 本机后端）
   dev: {
     scheme: 'http',
-    host: '127.0.0.1',
+    host: '192.168.0.2',
     port: 8888,
     mock: false
   },

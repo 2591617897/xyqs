@@ -28,7 +28,12 @@
   <!-- 卖家 -->
   <view class="card seller">
     <image wx:if="{{goods.sellerAvatar}}" class="avatar-lg" src="{{goods.sellerAvatar}}" mode="aspectFill" />
-    <view wx:else class="avatar-lg seller-ph">{{goods.sellerName}}</view>
+    <view wx:else class="avatar-lg">
+      <view class="avatar-default">
+        <view class="ad-head"></view>
+        <view class="ad-body"></view>
+      </view>
+    </view>
     <view class="flex1 ml20">
       <view class="h2">{{goods.sellerName}}</view>
       <view class="muted mt8">发布于 {{goods.timeText}} · 同校交易更安心</view>

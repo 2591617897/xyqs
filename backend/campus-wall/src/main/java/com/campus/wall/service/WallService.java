@@ -1,5 +1,6 @@
 package com.campus.wall.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
@@ -35,11 +36,22 @@ public class WallService {
     private final LikeMapper likeMapper;
 
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size) {
-        Page<WallPost> p = postMapper.selectPage(new Page<>(page, size),
-                Wrappers.<WallPost>lambdaQuery()
-                        .eq(WallPost::getStatus, 1)
-                        .eq(schoolId != null, WallPost::getSchoolId, schoolId)
-                        .orderByDesc(WallPost::getCreatedAt));
+        return page(schoolId, userId, page, size, null);
+    }
+
+    /**
+     * @param sort null / "new" 按发布时间倒序；"hot" 按点赞数倒序
+     */
+    public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size, String sort) {
+        LambdaQueryWrapper<WallPost> q = Wrappers.<WallPost>lambdaQuery()
+                .eq(WallPost::getStatus, 1)
+                .eq(schoolId != null, WallPost::getSchoolId, schoolId);
+        if ("hot".equalsIgnoreCase(sort)) {
+            q.orderByDesc(WallPost::getLikeCount).orderByDesc(WallPost::getCreatedAt);
+        } else {
+            q.orderByDesc(WallPost::getCreatedAt);
+        }
+        Page<WallPost> p = postMapper.selectPage(new Page<>(page, size), q);
         Set<Long> liked = likedIds(p.getRecords().stream().map(WallPost::getId).toList(), userId);
         p.getRecords().forEach(post -> {
             decorate(post, userId);

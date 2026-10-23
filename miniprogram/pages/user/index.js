@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { mp, toast, timeAgo } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const mock = require('../../utils/mock')
+const upload = require('../../utils/upload')
 
 Page({
   data: {
@@ -18,7 +19,7 @@ Page({
 
   onShow: function () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 3 })
+      this.getTabBar().setData({ selected: 4 })
     }
     mp.setNavigationBarTitle({ title: '我的' })
     const cached = getApp().globalData.user
@@ -85,6 +86,72 @@ Page({
       toast('登录成功')
     }).catch(function () {
       toast('登录失败，请重试')
+    })
+  },
+
+  /**
+   * 头像按钮授权：open-type="getUserInfo" 触发，拿到 QQ/微信 真实头像与昵称
+   */
+  onGetUserInfo: function (e) {
+    const self = this
+    const info = e && e.detail && e.detail.userInfo
+    if (!info) {
+      toast('未获取到 QQ 资料，请重试')
+      return
+    }
+    const avatar = info.avatarUrl || ''
+    if (!avatar) {
+      toast('未获取到头像，请换个方式重试')
+      return
+    }
+    http.put('/user/me', {
+      nickname: info.nickName || undefined,
+      avatar: avatar,
+      gender: typeof info.gender === 'number' ? info.gender : 0
+    }, { loading: '同步中' }).then(function (me) {
+      self.setData({ user: me })
+      auth.updateUser({
+        id: me.id,
+        nickname: me.nickname,
+        avatar: me.avatar,
+        schoolId: me.schoolId,
+        verifyStatus: me.verifyStatus
+      })
+      toast('头像已同步')
+    }).catch(function () {})
+  },
+
+  /** 兜底：从相册选一张作为头像（走已有的上传接口） */
+  chooseAvatar: function () {
+    const self = this
+    if (!this.data.logged) {
+      this.login()
+      return
+    }
+    mp.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      success: function (res) {
+        const path = res.tempFilePaths && res.tempFilePaths[0]
+        if (!path) return
+        mp.showLoading({ title: '上传中', mask: true })
+        upload.uploadImage(path).then(function (url) {
+          mp.hideLoading()
+          return http.put('/user/me', { avatar: url }, { loading: '保存中' })
+        }).then(function (me) {
+          self.setData({ user: me })
+          auth.updateUser({
+            id: me.id,
+            nickname: me.nickname,
+            avatar: me.avatar,
+            schoolId: me.schoolId,
+            verifyStatus: me.verifyStatus
+          })
+          toast('头像已更新')
+        }).catch(function () {
+          mp.hideLoading()
+        })
+      }
     })
   },
 

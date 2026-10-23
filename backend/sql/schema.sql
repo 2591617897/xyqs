@@ -153,7 +153,15 @@ CREATE TABLE IF NOT EXISTS t_post_comment (
   user_id    BIGINT       NOT NULL,
   user_name  VARCHAR(64)  DEFAULT NULL,
   user_avatar VARCHAR(255) DEFAULT NULL,
-  content    VARCHAR(500) NOT NULL,
+  content    VARCHAR(500) NOT NULL DEFAULT '',
+  images     VARCHAR(1000)         DEFAULT NULL COMMENT '逗号分隔，最多 3 张',
   created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
   KEY idx_post (post_id)
 ) COMMENT '帖子评论';
+
+-- ============================================================
+-- 升级脚本：已建过的库补充后加的字段
+-- MySQL 不支持 ADD COLUMN IF NOT EXISTS，重复执行报 duplicate column 可忽略
+-- ============================================================
+-- ALTER TABLE t_post_comment ADD COLUMN images VARCHAR(1000) DEFAULT NULL COMMENT '逗号分隔，最多 3 张' AFTER content;
+-- ALTER TABLE t_wall_comment ADD COLUMN images VARCHAR(1000) DEFAULT NULL COMMENT '逗号分隔，最多 3 张' AFTER content;

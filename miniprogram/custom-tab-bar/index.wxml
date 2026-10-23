@@ -1,18 +1,20 @@
 <view class="tabbar">
-  <view
-    class="tab-item {{selected === index ? 'active' : ''}}"
-    wx:for="{{list}}"
-    wx:key="pagePath"
-    data-index="{{index}}"
-    data-path="{{item.pagePath}}"
-    bindtap="switchTab"
-    hover-class="tab-hover"
-    hover-stay-time="80"
-  >
-    <view class="tab-indicator" wx:if="{{selected === index}}"></view>
-    <view class="tab-icon-wrap">
-      <text class="tab-icon">{{item.icon}}</text>
+  <block wx:for="{{list}}" wx:key="key">
+    <!-- 中间发布按钮 -->
+    <view class="tab-plus" wx:if="{{item.plus}}" bindtap="onPlus" hover-class="plus-hover" hover-stay-time="80">
+      <view class="plus-btn">＋</view>
     </view>
-    <text class="tab-label">{{item.text}}</text>
-  </view>
+    <!-- 普通 tab -->
+    <view
+      wx:else
+      class="tab-item {{selected === index ? 'active' : ''}}"
+      data-index="{{index}}"
+      bindtap="onTap"
+      hover-class="tab-hover"
+      hover-stay-time="80"
+    >
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-label">{{item.text}}</text>
+    </view>
+  </block>
 </view>

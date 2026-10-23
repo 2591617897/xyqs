@@ -10,6 +10,8 @@ Page({
     page: 1,
     size: 10,
     hasMore: true,
+    total: 0,
+    sort: 'new',
     loading: false,
     loadError: false,
     showCompose: false,
@@ -25,7 +27,7 @@ Page({
 
   onShow: function () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 })
+      this.getTabBar().setData({ selected: 3 })
     }
     // 从详情页返回时同步点赞数 / 评论数 / 编辑结果
     if (mp.getStorageSync('needRefreshWall')) {
@@ -50,12 +52,17 @@ Page({
     if (!reset && !this.data.hasMore) return
     if (reset) this.setData({ page: 1, hasMore: true })
     this.setData({ loading: true })
-    http.get('/wall/posts', { page: this.data.page, size: this.data.size }, { silent: true })
+    http.get('/wall/posts', {
+      page: this.data.page,
+      size: this.data.size,
+      sort: this.data.sort
+    }, { silent: true })
       .then(function (res) {
         const records = (res.records || []).map(decorate)
         self.setData({
           posts: reset ? records : self.data.posts.concat(records),
           page: self.data.page + 1,
+          total: res.total || (reset ? records.length : self.data.total + records.length),
           hasMore: res.hasMore,
           loading: false,
           loadError: false
@@ -66,6 +73,13 @@ Page({
         self.setData({ loading: false, loadError: true })
         mp.stopPullDownRefresh()
       })
+  },
+
+  switchSort: function (e) {
+    const key = e.currentTarget.dataset.key
+    if (key === this.data.sort) return
+    this.setData({ sort: key })
+    this.load(true)
   },
 
   /* ---------- 浏览 ---------- */

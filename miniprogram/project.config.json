@@ -1,6 +1,6 @@
 {
 	"compileType": "miniprogram",
-	"appid": "请替换为你的 QQ 小程序 AppID",
+	"appid": "1112280220",
 	"projectname": "campus-fun",
 	"description": "校园趣事 · 同校二手 / 匿名表白墙 / 校园频道",
 	"setting": {
@@ -18,7 +18,7 @@
 		"prefetch": false
 	},
 	"libVersion": "1.10.0",
-	"qqappid": "1108100302",
+	"qqappid": "1112280220",
 	"scripts": {
 		"beforeCompile": "",
 		"beforePreview": "",

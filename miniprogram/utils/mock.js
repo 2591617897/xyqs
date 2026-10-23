@@ -1166,7 +1166,13 @@ function queryWall(q) {
   const list = db.wallPosts.filter(function (p) {
     return p.status === 1
   })
-  list.sort(byTimeDesc)
+  if (q.sort === 'hot') {
+    list.sort(function (a, b) {
+      return (b.likeCount || 0) - (a.likeCount || 0)
+    })
+  } else {
+    list.sort(byTimeDesc)
+  }
   return paginate(list.map(decorateWall), q)
 }
 
@@ -1406,30 +1412,57 @@ function postComments(id) {
     .map(function (c) {
       const copy = Object.assign({}, c)
       copy.mine = db.session && c.userId === db.profile.id
+      copy.imageList = c.images ? String(c.images).split(',').filter(Boolean) : []
       return copy
     })
 }
 
 function addPostComment(id, q) {
   const p = requireVerified()
-  if (!q.content || !String(q.content).trim()) throw { code: 400, msg: '评论不能为空' }
   const post = db.posts.filter(function (x) {
     return x.id === Number(id)
   })[0]
   if (!post || post.status !== 1) throw { code: 404, msg: '帖子不存在' }
+
+  const content = q.content ? String(q.content).trim() : ''
+  const images = (q.images || []).slice(0, 3).join(',')
+  if (!content && !images) throw { code: 400, msg: '说点什么，或者配张图吧' }
+
   const comment = {
     id: nextId(),
     postId: post.id,
     userId: p.id,
     userName: p.nickname,
     userAvatar: p.avatar,
-    content: String(q.content).trim(),
+    content: content,
+    images: images,
+    imageList: images ? images.split(',') : [],
     createdAt: fmt(new Date())
   }
   db.postComments.push(comment)
   post.commentCount = (post.commentCount || 0) + 1
   save()
   return comment.id
+}
+
+/** 删除自己的帖子评论 */
+function deletePostComment(postId, commentId) {
+  const p = requireLogin()
+  const comment = db.postComments.filter(function (c) {
+    return c.id === Number(commentId) && c.postId === Number(postId)
+  })[0]
+  if (!comment) throw { code: 404, msg: '评论不存在或已删除' }
+  if (comment.userId !== p.id) throw { code: 403, msg: '只能删除自己的评论' }
+
+  db.postComments = db.postComments.filter(function (c) {
+    return c.id !== comment.id
+  })
+  const post = db.posts.filter(function (x) {
+    return x.id === Number(postId)
+  })[0]
+  if (post) post.commentCount = Math.max(0, (post.commentCount || 0) - 1)
+  save()
+  return null
 }
 
 /* ---------- 通用点赞 ---------- */
@@ -1545,8 +1578,9 @@ function route(method, url, data) {
     if (s.length === 2 && M === 'PUT') return ok(updatePost(s[1], q))
     if (s.length === 2 && M === 'DELETE') return ok(deletePost(s[1]))
     if (s[2] === 'like' && M === 'POST') return ok(toggleLike('POST', s[1]))
-    if (s[2] === 'comments' && M === 'GET') return ok(postComments(s[1]))
-    if (s[2] === 'comments' && M === 'POST') return ok(addPostComment(s[1], q))
+    if (s.length === 3 && s[2] === 'comments' && M === 'GET') return ok(postComments(s[1]))
+    if (s.length === 3 && s[2] === 'comments' && M === 'POST') return ok(addPostComment(s[1], q))
+    if (s.length === 4 && s[2] === 'comments' && M === 'DELETE') return ok(deletePostComment(s[1], s[3]))
   }
 
   return err(404, '模拟数据未覆盖该接口：' + M + ' ' + path)

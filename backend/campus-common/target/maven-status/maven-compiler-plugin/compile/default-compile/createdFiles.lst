@@ -10,6 +10,7 @@ com\campus\common\security\SecurityAutoConfig.class
 com\campus\common\social\Like.class
 com\campus\common\api\R.class
 com\campus\common\mybatis\MybatisPlusConfig$1.class
+com\campus\common\config\JacksonConfig.class
 com\campus\common\api\R$Page.class
 com\campus\common\client\dto\UserBrief.class
 com\campus\common\exception\BizException.class

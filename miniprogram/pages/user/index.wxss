@@ -1,40 +1,74 @@
 .page {
-  /* 给自定义 tabBar 留出空间 */
-  padding: 0 24rpx calc(180rpx + env(safe-area-inset-bottom));
+  /* 给自定义 tabBar 留出空间；头部渐变通栏铺满 */
+  padding: 0 0 calc(180rpx + env(safe-area-inset-bottom));
+  background: #f5f6f8;
 }
 
 /* 用户卡片 */
 .profile {
-  margin: 24rpx 0 0;
-  padding: 36rpx 32rpx 32rpx;
-  border-radius: 28rpx;
-  background: linear-gradient(150deg, #fff2ec 0%, #ffeef3 100%);
+  margin: 0;
+  padding: 40rpx 32rpx 36rpx;
+  background: linear-gradient(135deg, #17c07c 0%, #11a86b 55%, #0e9a60 100%);
 }
 .avatar-xl {
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.28);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 头像授权按钮：开放能力 getUserInfo */
+.avatar-btn {
+  position: relative;
+  width: 128rpx;
+  height: 128rpx;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.avatar-btn::after {
+  border: none;
+}
+.avatar-cam {
+  position: absolute;
+  right: -2rpx;
+  bottom: -2rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2rpx 10rpx rgba(31, 35, 41, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
 }
 .avatar-ph {
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 44rpx;
-  color: #ff8a65;
+  color: #17c07c;
   font-weight: 600;
 }
 .ml24 {
   margin-left: 24rpx;
 }
 .p-name {
-  font-size: 38rpx;
+  font-size: 40rpx;
   font-weight: 700;
+  color: #ffffff;
 }
 .p-sub {
   font-size: 24rpx;
-  color: #a08a94;
+  color: rgba(255, 255, 255, 0.82);
   margin-top: 8rpx;
 }
 .verify-badge {
@@ -44,26 +78,27 @@
   flex-shrink: 0;
 }
 .verify-badge.ok {
-  background: rgba(46, 196, 182, 0.16);
-  color: #14a89b;
+  background: #ffffff;
+  color: #0e9a60;
+  font-weight: 600;
 }
 .verify-badge.todo {
-  background: rgba(255, 90, 118, 0.16);
-  color: #ff5a76;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 .id-row {
   display: flex;
   gap: 24rpx;
   margin-top: 24rpx;
   padding-top: 22rpx;
-  border-top: 1rpx solid rgba(255, 138, 101, 0.2);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.24);
 }
 .id-item {
   font-size: 23rpx;
-  color: #a08a94;
+  color: rgba(255, 255, 255, 0.85);
 }
 .id-row.warn {
-  color: #d97706;
+  color: #fff3cd;
   font-size: 23rpx;
 }
 .login-btn {
@@ -74,11 +109,10 @@
 .stats {
   display: flex;
   align-items: center;
-  margin-top: 20rpx;
+  margin: 20rpx 24rpx 0;
   background: #ffffff;
-  border-radius: 24rpx;
+  border-radius: 20rpx;
   padding: 28rpx 0;
-  box-shadow: 0 6rpx 22rpx rgba(31, 35, 41, 0.05);
 }
 .stat-item {
   flex: 1;
@@ -102,7 +136,7 @@
 
 /* 菜单 */
 .menu {
-  margin-top: 20rpx;
+  margin: 20rpx 24rpx 0;
   padding: 8rpx 28rpx;
 }
 .menu-item {
@@ -126,8 +160,8 @@
 }
 .menu-tip {
   font-size: 21rpx;
-  color: #ff5a76;
-  background: rgba(255, 90, 118, 0.1);
+  color: #0e9a60;
+  background: rgba(17, 168, 107, 0.1);
   padding: 4rpx 12rpx;
   border-radius: 999rpx;
 }
@@ -213,7 +247,7 @@
 .order-contact {
   margin-top: 10rpx;
   font-size: 24rpx;
-  color: #14a89b;
+  color: #0e9a60;
 }
 .order-msg {
   margin-top: 10rpx;

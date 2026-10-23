@@ -65,8 +65,8 @@
   color: #5b6170;
 }
 .cat-pill.active {
-  background: rgba(255, 107, 87, 0.12);
-  color: #ff5a76;
+  background: rgba(17, 168, 107, 0.12);
+  color: #0e9a60;
   font-weight: 600;
 }
 

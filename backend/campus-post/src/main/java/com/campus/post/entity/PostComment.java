@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @TableName("t_post_comment")
@@ -26,8 +27,14 @@ public class PostComment {
 
     private String content;
 
+    /** 逗号分隔，最多 3 张 */
+    private String images;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
+
+    @TableField(exist = false)
+    private List<String> imageList;
 
     @TableField(exist = false)
     private Boolean mine;

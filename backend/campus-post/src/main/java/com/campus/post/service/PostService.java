@@ -169,21 +169,31 @@ public class PostService {
                 .eq(PostComment::getPostId, postId)
                 .orderByAsc(PostComment::getCreatedAt)
                 .last("limit 300"));
-        list.forEach(c -> c.setMine(userId != null && userId.equals(c.getUserId())));
+        list.forEach(c -> {
+            c.setMine(userId != null && userId.equals(c.getUserId()));
+            c.setImageList(splitImages(c.getImages()));
+        });
         return list;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long addComment(Long postId, String content) {
+    public Long addComment(Long postId, String content, List<String> images) {
         Long userId = UserContext.requireVerifiedUserId();
         Post post = postMapper.selectById(postId);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
             throw BizException.notFound("帖子不存在");
         }
+        String text = content == null ? "" : content.trim();
+        String imgs = join(images);
+        // 支持「只发图不写字」的评论
+        if (!StringUtils.hasText(text) && !StringUtils.hasText(imgs)) {
+            throw new BizException("说点什么，或者配张图吧");
+        }
         PostComment comment = new PostComment();
         comment.setPostId(postId);
         comment.setUserId(userId);
-        comment.setContent(content.trim());
+        comment.setContent(text);
+        comment.setImages(imgs);
         try {
             R<UserBrief> res = userClient.getBrief(userId);
             if (res != null && res.getData() != null) {
@@ -197,7 +207,23 @@ public class PostService {
         commentMapper.insert(comment);
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
+        comment.setImageList(splitImages(imgs));
         return comment.getId();
+    }
+
+    /** 删除自己的评论 */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteComment(Long postId, Long commentId) {
+        Long userId = UserContext.requireUserId();
+        PostComment comment = commentMapper.selectById(commentId);
+        if (comment == null || !postId.equals(comment.getPostId())) {
+            throw BizException.notFound("评论不存在或已删除");
+        }
+        if (!userId.equals(comment.getUserId())) {
+            throw BizException.forbidden("只能删除自己的评论");
+        }
+        commentMapper.deleteById(commentId);
+        postMapper.incrComment(postId, -1);
     }
 
     // ---------------- 内部方法 ----------------
@@ -253,5 +279,18 @@ public class PostService {
                         .eq(Like::getUserId, userId)
                         .in(Like::getTargetId, postIds))
                 .stream().map(Like::getTargetId).collect(Collectors.toSet());
+    }
+
+    private List<String> splitImages(String images) {
+        return StringUtils.hasText(images)
+                ? Arrays.stream(images.split(",")).filter(StringUtils::hasText).toList()
+                : List.of();
+    }
+
+    private String join(List<String> images) {
+        if (images == null || images.isEmpty()) {
+            return null;
+        }
+        return images.stream().filter(StringUtils::hasText).limit(3).collect(Collectors.joining(","));
     }
 }

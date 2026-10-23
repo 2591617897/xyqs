@@ -1,65 +1,85 @@
 <view class="page">
-  <!-- 头部 -->
-  <view class="wall-hero">
-    <view class="hero-title">匿名表白墙</view>
-    <view class="hero-sub">心事可以说，名字不用留 · 仅同校可见</view>
+  <!-- 顶部栏（酷安式） -->
+  <view class="topbar">
+    <view class="topbar-title">表白墙</view>
+    <view class="topbar-sub">匿名 · 仅同校可见</view>
     <view class="compose-entry" bindtap="openCompose">
-      <text class="compose-icon">✍️</text>
       <text class="compose-ph">写下今天想说的话…</text>
       <text class="compose-btn">发布</text>
     </view>
   </view>
 
-  <!-- 列表：整卡可点，进入详情 -->
-  <view class="wall-list">
+  <!-- 排序 -->
+  <view class="sort-bar">
     <view
-      class="wall-card"
+      class="sort-item {{sort === 'new' ? 'active' : ''}}"
+      bindtap="switchSort"
+      data-key="new"
+    >最新</view>
+    <view
+      class="sort-item {{sort === 'hot' ? 'active' : ''}}"
+      bindtap="switchSort"
+      data-key="hot"
+    >最热</view>
+    <view class="flex1"></view>
+    <text class="sort-count">共 {{total}} 条心事</text>
+  </view>
+
+  <!-- 信息流 -->
+  <view class="feed">
+    <view
+      class="feed-item"
       wx:for="{{posts}}"
       wx:key="id"
       bindtap="goDetail"
       data-id="{{item.id}}"
-      hover-class="card-hover"
+      hover-class="feed-hover"
       hover-stay-time="60"
     >
-      <view class="between">
-        <view class="row gap12">
-          <view class="anon-avatar {{item.avatarClass}}">{{item.avatarEmoji}}</view>
-          <view>
-            <view class="anon-name">{{item.anonName}}</view>
-            <view class="muted">{{item.timeText}}</view>
+      <view class="feed-user">
+        <view class="feed-avatar anon-avatar {{item.avatarClass}}">{{item.avatarEmoji}}</view>
+        <view class="feed-user-info">
+          <view class="feed-name">{{item.anonName}}</view>
+          <view class="feed-meta">
+            <text>{{item.timeText}}</text>
+            <text class="feed-device">匿名发布</text>
           </view>
         </view>
-        <text class="del-btn" wx:if="{{item.mine}}" catchtap="deletePost" data-index="{{index}}">删除</text>
+        <text class="feed-del" wx:if="{{item.mine}}" catchtap="deletePost" data-index="{{index}}">删除</text>
       </view>
 
-      <view class="wall-content">{{item.content}}</view>
+      <view class="feed-text clamp3">{{item.content}}</view>
 
-      <view class="wall-imgs" wx:if="{{item.imageList.length}}">
-        <image
+      <view class="feed-imgs" wx:if="{{item.imageList.length}}">
+        <view
+          class="feed-img-wrap {{item.imageList.length === 1 ? 'single' : (item.imageList.length === 2 ? 'double' : '')}}"
           wx:for="{{item.imageList}}"
           wx:for-item="img"
-          wx:for-index="imgIndex"
+          wx:for-index="ii"
           wx:key="*this"
-          class="wall-img"
-          src="{{img}}"
-          mode="aspectFill"
-          catchtap="preview"
-          data-index="{{index}}"
-          data-url="{{img}}"
-        />
+        >
+          <image
+            class="feed-img"
+            src="{{img}}"
+            mode="aspectFill"
+            catchtap="preview"
+            data-index="{{index}}"
+            data-url="{{img}}"
+          />
+        </view>
       </view>
 
-      <view class="wall-actions">
-        <view class="action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
-          <text class="act-icon">{{item.liked ? '♥' : '♡'}}</text>
+      <view class="feed-actions">
+        <view class="feed-action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="feed-action-icon">👍</text>
           <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
         </view>
-        <view class="action" catchtap="goDetail" data-id="{{item.id}}">
-          <text class="act-icon">💬</text>
+        <view class="feed-action ml40" catchtap="goDetail" data-id="{{item.id}}">
+          <text class="feed-action-icon">💬</text>
           <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
         </view>
         <view class="flex1"></view>
-        <text class="detail-hint">查看详情 ›</text>
+        <text class="feed-more" catchtap="goDetail" data-id="{{item.id}}">详情 ›</text>
       </view>
     </view>
   </view>
@@ -70,8 +90,8 @@
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 
-  <view class="list-tip" wx:if="{{posts.length}}">
-    {{loading ? '加载中…' : (hasMore ? '上拉看更多心事' : '— 到底啦 —')}}
+  <view class="list-end" wx:if="{{posts.length}}">
+    {{loading ? '加载中…' : (hasMore ? '上拉看更多心事' : '— 已经到底了 —')}}
   </view>
 
   <!-- 发布弹层 -->

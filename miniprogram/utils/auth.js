@@ -45,6 +45,8 @@ function ensureLogin(force) {
   if (pending) return pending
   pending = doLogin().then(function (user) {
     pending = null
+    // 已授权过 QQ/微信 的情况下顺手补齐头像，不阻塞返回
+    syncProfileQuietly(user)
     return user
   }).catch(function (err) {
     pending = null
@@ -71,4 +73,68 @@ function updateUser(user) {
   mp.setStorageSync('user', user)
 }
 
-module.exports = { ensureLogin, ensureVerified, updateUser, doLogin }
+/**
+ * 静默获取 QQ / 微信 用户资料。
+ * 已授权过才会返回真实头像；未授权或返回默认灰头像时 resolve(null)。
+ */
+function getQQProfile() {
+  return new Promise(function (resolve) {
+    if (typeof mp.getUserInfo !== 'function') {
+      resolve(null)
+      return
+    }
+    mp.getUserInfo({
+      withCredentials: false,
+      success: function (res) {
+        const info = (res && res.userInfo) || {}
+        const avatar = info.avatarUrl || ''
+        if (!avatar || avatar.indexOf('default') >= 0) {
+          resolve(null)
+          return
+        }
+        resolve({
+          nickname: info.nickName || '',
+          avatar: avatar,
+          gender: typeof info.gender === 'number' ? info.gender : 0
+        })
+      },
+      fail: function () {
+        resolve(null)
+      }
+    })
+  })
+}
+
+/**
+ * 登录后静默补齐头像/昵称（仅当本地还没有头像时执行一次）。
+ * 不阻塞登录流程，失败静默忽略。
+ */
+function syncProfileQuietly(user) {
+  if (!user || user.avatar) return
+  getQQProfile().then(function (profile) {
+    if (!profile) return null
+    return http.put('/user/me', {
+      nickname: profile.nickname || undefined,
+      avatar: profile.avatar,
+      gender: profile.gender
+    }, { silent: true }).then(function (me) {
+      updateUser({
+        id: me.id,
+        nickname: me.nickname,
+        avatar: me.avatar,
+        schoolId: me.schoolId,
+        verifyStatus: me.verifyStatus
+      })
+      return me
+    })
+  }).catch(function () {})
+}
+
+module.exports = {
+  ensureLogin,
+  ensureVerified,
+  updateUser,
+  doLogin,
+  getQQProfile,
+  syncProfileQuietly
+}

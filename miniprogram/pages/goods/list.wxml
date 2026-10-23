@@ -53,8 +53,21 @@
   <view class="goods-grid">
     <view class="goods-card" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
       <view class="goods-cover">
-        <image wx:if="{{item.imageList.length}}" class="cover-img" src="{{item.imageList[0]}}" mode="aspectFill" />
-        <view wx:else class="cover-empty">{{item.emoji}}</view>
+        <image
+          wx:if="{{item.imageList.length && !item.imgFailed}}"
+          class="cover-img"
+          src="{{item.imageList[0]}}"
+          mode="aspectFill"
+          binderror="onImgError"
+          data-index="{{index}}"
+        />
+        <view wx:else class="cover-empty">
+          <view class="ce-icon">
+            <view class="ce-sun"></view>
+            <view class="ce-hill"></view>
+          </view>
+          <text class="ce-text">{{item.categoryName || '闲置'}}</text>
+        </view>
         <view class="cover-status" wx:if="{{item.status !== 1}}">{{item.status === 2 ? '已售出' : '已下架'}}</view>
         <view class="cover-tag" wx:elif="{{item.tradeType === 1}}">自提</view>
       </view>

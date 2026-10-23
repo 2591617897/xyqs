@@ -6,7 +6,7 @@ const { resolveList } = require('../../utils/img')
 Page({
   data: {
     channels: [],
-    channelId: 0,
+    channelId: '',
     list: [],
     page: 1,
     size: 10,
@@ -80,14 +80,32 @@ Page({
   },
 
   switchChannel: function (e) {
-    const id = Number(e.currentTarget.dataset.id) || 0
-    if (id === this.data.channelId) return
+    // 雪花 ID 以字符串透传，不做 Number 转换（会丢精度）
+    const id = e.currentTarget.dataset.id || ''
+    if (String(id) === String(this.data.channelId)) return
     this.setData({ channelId: id })
     this.load(true)
   },
 
   goDetail: function (e) {
     mp.navigateTo({ url: '/pages/post/detail?id=' + e.currentTarget.dataset.id })
+  },
+
+  /* 列表内点赞：不跳转，直接改状态 */
+  toggleLike: function (e) {
+    const self = this
+    const index = e.currentTarget.dataset.index
+    const post = this.data.list[index]
+    if (!post) return
+    auth.ensureLogin().then(function () {
+      return http.post('/posts/' + post.id + '/like')
+    }).then(function (liked) {
+      const key = 'list[' + index + ']'
+      const patch = {}
+      patch[key + '.liked'] = liked
+      patch[key + '.likeCount'] = Math.max(0, (post.likeCount || 0) + (liked ? 1 : -1))
+      self.setData(patch)
+    }).catch(function () {})
   },
 
   goPublish: function () {

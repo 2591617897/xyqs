@@ -27,7 +27,7 @@
 │   ├── pages/wall/index         # 匿名表白墙
 │   ├── pages/post/*            # 频道帖列表 / 详情 / 发帖
 │   └── pages/user/*            # 我的 / 校园身份认证
-├── scripts/mock-selftest.js     # 模拟数据层自测（69 条断言）
+├── scripts/mock-selftest.js     # 模拟数据层自测（96 条断言）
 ├── docs/architecture.md         # 架构设计与关键取舍
 ├── docs/api.md                  # 接口文档
 └── docker-compose.yml           # MySQL + Redis + Nacos
@@ -86,6 +86,15 @@ const ENVS = {
 
 页面级状态：**加载中**、**空态**（区分「没数据」与「加载失败」）、**提交中**（按钮 loading + 遮罩，防重复提交）。
 
+### 关于 ID：统一用字符串
+
+雪花 ID 是 19 位 Long，**超出 JS 安全整数范围**（`2^53-1` ≈ 9.007e15）。
+若以数字返回，小程序 `JSON.parse` 会在末位舍入，表现为「列表有数据，点详情 404」。
+
+后端已在 `campus-common` 的 `JacksonConfig` 里把所有 `Long/long` 序列化为字符串；
+前端拿到后**按字符串透传**（拼 URL、写 dataset），不要 `Number()` 转换。
+点赞数、评论数等计数是 `Integer`，仍是数字，可正常参与运算。
+
 ### 图片上传
 
 发布商品 / 发帖 / 表白 / 评论配图时，选完图片**先上传再提交**：
@@ -98,11 +107,27 @@ qq.chooseImage → POST /api/upload (multipart) → 拿到绝对 URL → 随业�
 
 > 换域名时改 `campus.upload.base-url`（或环境变量 `UPLOAD_BASE_URL`）即可，无需动前端。
 
+### 视觉风格（酷安式信息流）
+
+整体参照酷安的版式与调色做了 1:1 还原并做了美化：
+
+| 元素 | 取值 |
+| --- | --- |
+| 主色 / 强调色 | `#11a86b`（深一点用 `#0e9a60`，亮一点用 `#17c07c`） |
+| 页面背景 | `#f5f6f8`，内容区白底 `#ffffff`，分割线 `#f0f1f3` |
+| 价格色 | `#ff4d4f`（保留电商红，与主色区分） |
+| 信息流 | `.feed-item` 白底通栏、卡片之间 1rpx 细线分隔（不用阴影） |
+| 导航 | 频道/分类横滑 + 选中态绿色下划线指示条 |
+| 底部导航 | 5 项自定义 tabBar，中间绿色圆形凸起「＋」发布按钮 |
+
+`app.wxss` 里集中了设计变量与 `.feed-*` 信息流类（作者行 / 正文 / 九宫格 / 热评 / 操作栏），
+各页面直接复用，改一处即可全站生效。
+
 ### 底部导航栏
 
 使用**自定义 tabBar**（`app.json` 中 `tabBar.custom = true` + `custom-tab-bar/` 组件）：
-浮起式圆角白底、选中态胶囊高亮 + 顶部指示条 + 缩放过渡；`flex: 1` 均分适配各屏宽，
-底部用 `env(safe-area-inset-bottom)` 适配全面屏，tab 页内容区同步预留高度避免遮挡。
+白底 + 绿色主色，共 5 项，中间为绿色圆形凸起「＋」发布按钮，点击弹出「发闲置 / 写表白 / 发帖」动作面板；
+`flex: 1` 均分适配各屏宽，底部用 `env(safe-area-inset-bottom)` 适配全面屏，tab 页内容区同步预留高度避免遮挡。
 
 ### 可选：纯前端演示（模拟数据）
 

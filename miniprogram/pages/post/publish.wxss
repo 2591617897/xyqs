@@ -15,8 +15,8 @@
   color: #5b6170;
 }
 .channel-pill.active {
-  background: rgba(46, 196, 182, 0.14);
-  color: #14a89b;
+  background: rgba(17, 168, 107, 0.12);
+  color: #0e9a60;
   font-weight: 600;
 }
 

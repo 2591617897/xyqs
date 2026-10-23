@@ -39,7 +39,7 @@
 }
 .s-btn {
   font-size: 27rpx;
-  color: #ff5a76;
+  color: #0e9a60;
   font-weight: 600;
 }
 
@@ -66,8 +66,8 @@
   color: #5b6170;
 }
 .cat-chip.active {
-  background: rgba(255, 107, 87, 0.12);
-  color: #ff5a76;
+  background: rgba(17, 168, 107, 0.12);
+  color: #0e9a60;
   font-weight: 600;
 }
 .cat-emoji {
@@ -116,15 +116,6 @@
   width: 100%;
   height: 100%;
   display: block;
-}
-.cover-empty {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 64rpx;
-  background: linear-gradient(135deg, #f8f9fd 0%, #eef1f8 100%);
 }
 .cover-tag {
   position: absolute;

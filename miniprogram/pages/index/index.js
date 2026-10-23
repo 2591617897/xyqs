@@ -1,17 +1,19 @@
 const http = require('../../utils/request')
-const { timeAgo, priceText, mp, categoryEmoji } = require('../../utils/util')
+const { timeAgo, priceText, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
-    greeting: '你好',
     user: null,
-    goods: [],
-    posts: [],
+    greeting: '你好',
+    channels: [],
+    channelId: '',
     categories: [],
+    feed: [],
     loading: true,
-    loadError: false
+    loadError: false,
+    errorMsg: ''
   },
 
   onShow: function () {
@@ -21,7 +23,6 @@ Page({
     this.setData({ user: getApp().globalData.user })
     this.setGreeting()
     this.loadData()
-    mp.setNavigationBarTitle({ title: '校园趣事' })
   },
 
   onPullDownRefresh: function () {
@@ -46,7 +47,6 @@ Page({
     const self = this
     if (refresh) this.setData({ loading: true })
 
-    // 三个接口分别兜底：任一失败不影响其余模块渲染
     let firstError = ''
     const fail = function (name) {
       return function (err) {
@@ -56,34 +56,77 @@ Page({
       }
     }
 
+    const postParams = { page: 1, size: 10 }
+    if (this.data.channelId) postParams.channelId = this.data.channelId
+
     Promise.all([
-      http.get('/goods', { size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods')),
-      http.get('/posts', { size: 3 }, { silent: true }).catch(fail('posts')),
+      http.get('/channels', null, { silent: true }).catch(fail('channels')),
+      http.get('/posts', postParams, { silent: true }).catch(fail('posts')),
+      http.get('/goods', { page: 1, size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods')),
       http.get('/goods/categories', null, { silent: true }).catch(fail('categories'))
     ]).then(function (res) {
-      const goodsRes = res[0] || { records: [] }
+      const channels = res[0] || []
       const postsRes = res[1] || { records: [] }
+      const goodsRes = res[2] || { records: [] }
+      const categories = res[3] || []
       const okCount = res.filter(function (x) {
         return !!x
       }).length
 
-      const goods = (goodsRes.records || []).map(function (item) {
-        item.timeText = timeAgo(item.createdAt)
-        item.priceText = priceText(item.price)
-        item.emoji = categoryEmoji(item.categoryId)
-        item.imageList = resolveList(item.imageList)
-        return item
+      const posts = (postsRes.records || []).map(function (p) {
+        return {
+          type: 'post',
+          key: 'post-' + p.id,
+          id: p.id,
+          authorName: p.authorName || '校园用户',
+          avatar: p.authorAvatar || '',
+          avatarText: (p.authorName || '校').substring(0, 1),
+          timeText: timeAgo(p.createdAt),
+          createdAt: p.createdAt || '',
+          badge: p.channelName || '校园频道',
+          badgeIcon: p.channelIcon || '💬',
+          title: p.title || '',
+          excerpt: (p.content || '').replace(/\s+/g, ' '),
+          imageList: resolveList(p.imageList),
+          liked: !!p.liked,
+          likeCount: p.likeCount || 0,
+          commentCount: p.commentCount || 0
+        }
       })
-      const posts = (postsRes.records || []).map(function (item) {
-        item.timeText = timeAgo(item.createdAt)
-        item.avatarText = (item.authorName || '校').substring(0, 1)
-        return item
+
+      const goods = (goodsRes.records || []).map(function (g) {
+        return {
+          type: 'goods',
+          key: 'goods-' + g.id,
+          id: g.id,
+          authorName: g.sellerName || '校园用户',
+          avatar: g.sellerAvatar || '',
+          avatarText: (g.sellerName || '校').substring(0, 1),
+          timeText: timeAgo(g.createdAt),
+          createdAt: g.createdAt || '',
+          badge: g.tradeType === 1 ? '校内自提' : '支持邮寄',
+          badgeIcon: '🏷️',
+          title: g.title || '',
+          excerpt: (g.description || '').replace(/\s+/g, ' '),
+          priceText: priceText(g.price),
+          location: g.location || '',
+          imageList: resolveList(g.imageList),
+          categoryName: g.categoryName || '',
+          liked: !!g.liked,
+          likeCount: g.likeCount || 0,
+          commentCount: 0
+        }
+      })
+
+      // 帖子与闲置按发布时间混排，形成信息流
+      const feed = posts.concat(goods).sort(function (a, b) {
+        return (b.createdAt || '').localeCompare(a.createdAt || '')
       })
 
       self.setData({
-        goods: goods,
-        posts: posts,
-        categories: res[2] || [],
+        channels: channels,
+        categories: categories,
+        feed: feed,
         loading: false,
         loadError: okCount === 0,
         errorMsg: okCount === 0 ? (firstError || '加载失败，请检查后端服务') : ''
@@ -93,16 +136,31 @@ Page({
     })
   },
 
-  goSearch: function () {
-    this.openGoodsTab('')
+  /* ---------- 顶部导航 ---------- */
+  switchChannel: function (e) {
+    const id = e.currentTarget.dataset.id || ''
+    if (String(id) === String(this.data.channelId)) return
+    this.setData({ channelId: id, feed: [], loading: true })
+    this.loadData()
   },
 
-  /** 统一切到二手 tab，并指定展示模式 */
   openGoodsTab: function (mode, categoryId) {
     const app = getApp()
     if (app.globalData) app.globalData.goodsMode = mode || ''
     if (categoryId) mp.setStorageSync('pendingCategory', categoryId)
     mp.switchTab({ url: '/pages/goods/list' })
+  },
+
+  goSearch: function () {
+    this.openGoodsTab('')
+  },
+
+  goCategory: function (e) {
+    this.openGoodsTab('', e.currentTarget.dataset.id)
+  },
+
+  goMessages: function () {
+    mp.switchTab({ url: '/pages/user/index' })
   },
 
   goStatus: function () {
@@ -113,44 +171,75 @@ Page({
       return
     }
     if (!user) {
-      // 未登录：先静默登录，再看是否需要认证
       auth.ensureLogin().then(function (u) {
         self.setData({ user: u })
-        if (u.verifyStatus === 2) {
-          mp.switchTab({ url: '/pages/user/index' })
-        } else {
-          mp.navigateTo({ url: '/pages/user/verify' })
-        }
+        if (u.verifyStatus === 2) mp.switchTab({ url: '/pages/user/index' })
+        else mp.navigateTo({ url: '/pages/user/verify' })
       }).catch(function () {})
       return
     }
     mp.navigateTo({ url: '/pages/user/verify' })
   },
 
-  goGoodsList: function (e) {
+  /* ---------- 信息流交互 ---------- */
+  goDetail: function (e) {
+    const type = e.currentTarget.dataset.type
     const id = e.currentTarget.dataset.id
-    this.openGoodsTab('', id ? Number(id) : 0)
+    const url = type === 'goods'
+      ? '/pages/goods/detail?id=' + id
+      : '/pages/post/detail?id=' + id
+    mp.navigateTo({ url: url })
   },
 
-  goGoodsDetail: function (e) {
-    mp.navigateTo({ url: '/pages/goods/detail?id=' + e.currentTarget.dataset.id })
+  previewFeed: function (e) {
+    const fi = e.currentTarget.dataset.fi
+    const item = this.data.feed[fi]
+    if (!item || !item.imageList.length) return
+    mp.previewImage({
+      current: e.currentTarget.dataset.url,
+      urls: item.imageList
+    })
+  },
+
+  toggleLike: function (e) {
+    const self = this
+    const index = e.currentTarget.dataset.index
+    const item = this.data.feed[index]
+    if (!item) return
+    auth.ensureLogin().then(function () {
+      const url = item.type === 'goods'
+        ? '/goods/' + item.id + '/like'
+        : '/posts/' + item.id + '/like'
+      return http.post(url)
+    }).then(function (liked) {
+      const patch = {}
+      patch['feed[' + index + '].liked'] = liked
+      patch['feed[' + index + '].likeCount'] = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
+      self.setData(patch)
+    }).catch(function () {})
+  },
+
+  goComments: function (e) {
+    const type = e.currentTarget.dataset.type
+    const id = e.currentTarget.dataset.id
+    if (type === 'goods') {
+      mp.navigateTo({ url: '/pages/goods/detail?id=' + id })
+      return
+    }
+    mp.navigateTo({ url: '/pages/post/detail?id=' + id })
   },
 
   goPublish: function () {
     auth.ensureVerified().then(function () {
-      mp.navigateTo({ url: '/pages/goods/publish' })
+      mp.showActionSheet({
+        itemList: ['发布闲置', '发帖子', '写匿名心事'],
+        success: function (res) {
+          if (res.tapIndex === 0) mp.navigateTo({ url: '/pages/goods/publish' })
+          else if (res.tapIndex === 1) mp.navigateTo({ url: '/pages/post/publish' })
+          else if (res.tapIndex === 2) mp.switchTab({ url: '/pages/wall/index' })
+        },
+        fail: function () {}
+      })
     }).catch(function () {})
-  },
-
-  goWall: function () {
-    mp.switchTab({ url: '/pages/wall/index' })
-  },
-
-  goPosts: function () {
-    mp.navigateTo({ url: '/pages/post/list' })
-  },
-
-  goPostDetail: function (e) {
-    mp.navigateTo({ url: '/pages/post/detail?id=' + e.currentTarget.dataset.id })
   }
 })

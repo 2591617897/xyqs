@@ -1,7 +1,16 @@
 const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const upload = require('../../utils/upload')
 const { resolveList } = require('../../utils/img')
+
+const EMOJIS = [
+  '😀', '😃', '😄', '😁', '😊', '🥰', '😍', '😘',
+  '😜', '🤪', '😳', '🥺', '😭', '😅', '😴', '🤔',
+  '🙃', '😇', '🤗', '😎', '🥳', '😤', '😱', '🤯',
+  '👍', '👏', '🙏', '💪', '🤝', '✌️', '👀', '🎉',
+  '❤️', '💔', '💌', '🌙', '⭐', '🌸', '🍀', '🌈'
+]
 
 Page({
   data: {
@@ -10,7 +19,12 @@ Page({
     loadError: false,
     liked: false,
     comments: [],
+    commentSort: 'default',
     commentInput: '',
+    commentImages: [],
+    commentFocus: false,
+    showEmoji: false,
+    emojiList: EMOJIS,
     sending: false
   },
 
@@ -24,33 +38,48 @@ Page({
     const self = this
     http.get('/posts/' + this.postId, null, { silent: true }).then(function (post) {
       post.timeText = timeAgo(post.createdAt)
-      post.avatarText = (post.authorName || '校').substring(0, 1)
       post.imageList = resolveList(post.imageList)
-      self.setData({ post: post, loading: false, liked: !!post.liked })
+      // 头像快照可能落后于最新资料，自己的帖子用本地头像兜底
+      const me = getApp().globalData.user
+      if (post.mine && !post.authorAvatar && me && me.avatar) {
+        post.authorAvatar = me.avatar
+      }
+      self.setData({ post: post, loading: false, loadError: false, liked: !!post.liked })
       mp.setNavigationBarTitle({ title: post.channelName || '帖子详情' })
-    }).catch(function () {
-      self.setData({ loading: false, loadError: true })
+    }).catch(function (err) {
+      self.setData({ loading: false, loadError: !(err && err.code === 404) })
     })
-  },
-
-  retry: function () {
-    this.load()
-    this.loadComments()
   },
 
   loadComments: function () {
     const self = this
     http.get('/posts/' + this.postId + '/comments', null, { silent: true }).then(function (list) {
-      self.setData({
-        comments: (list || []).map(function (c) {
-          c.timeText = timeAgo(c.createdAt)
-          c.avatarText = (c.userName || '校').substring(0, 1)
-          return c
-        })
+      const arr = (list || []).map(function (c) {
+        c.timeText = timeAgo(c.createdAt)
+        c.imageList = resolveList(c.imageList)
+        return c
       })
+      if (self.data.commentSort === 'newest') arr.reverse()
+      self.setData({ comments: arr })
     }).catch(function () {})
   },
 
+  retry: function () {
+    this.setData({ loading: true, loadError: false })
+    this.load()
+    this.loadComments()
+  },
+
+  /* ---------- 评论排序 ---------- */
+  switchSort: function (e) {
+    const sort = e.currentTarget.dataset.sort
+    if (sort === this.data.commentSort) return
+    const list = this.data.comments.slice()
+    if (sort === 'newest') list.reverse()
+    this.setData({ commentSort: sort, comments: list })
+  },
+
+  /* ---------- 点赞 ---------- */
   toggleLike: function () {
     const self = this
     const post = this.data.post
@@ -63,28 +92,112 @@ Page({
     }).catch(function () {})
   },
 
+  /* ---------- 评论 ---------- */
+  focusInput: function () {
+    this.setData({ commentFocus: true, showEmoji: false })
+  },
+
+  onInputBlur: function () {
+    this.setData({ commentFocus: false })
+  },
+
   onCommentInput: function (e) {
     this.setData({ commentInput: e.detail.value })
   },
 
+  toggleEmoji: function () {
+    this.setData({ showEmoji: !this.data.showEmoji, commentFocus: false })
+  },
+
+  addEmoji: function (e) {
+    const next = this.data.commentInput + e.currentTarget.dataset.emoji
+    if (next.length > 500) {
+      toast('评论最多 500 字')
+      return
+    }
+    this.setData({ commentInput: next })
+  },
+
+  chooseCommentImage: function () {
+    const self = this
+    const rest = 3 - this.data.commentImages.length
+    if (rest <= 0) {
+      toast('最多 3 张图片')
+      return
+    }
+    mp.chooseImage({
+      count: rest,
+      sizeType: ['compressed'],
+      success: function (res) {
+        self.setData({
+          commentImages: self.data.commentImages.concat(res.tempFilePaths),
+          showEmoji: false
+        })
+      }
+    })
+  },
+
+  removeCommentImage: function (e) {
+    const list = this.data.commentImages.slice()
+    list.splice(e.currentTarget.dataset.index, 1)
+    this.setData({ commentImages: list })
+  },
+
   sendComment: function () {
     const self = this
-    if (!this.data.commentInput.trim()) {
-      toast('写点内容吧')
+    const content = this.data.commentInput.trim()
+    const images = this.data.commentImages
+    if (!content && !images.length) {
+      toast('说点什么，或者配张图吧')
       return
     }
     if (this.data.sending) return
     this.setData({ sending: true })
+    if (images.length) mp.showLoading({ title: '上传图片中', mask: true })
     auth.ensureVerified().then(function () {
-      return http.post('/posts/' + self.postId + '/comments', { content: self.data.commentInput.trim() })
+      return upload.uploadImages(images)
+    }).then(function (urls) {
+      if (images.length) mp.hideLoading()
+      return http.post('/posts/' + self.postId + '/comments', {
+        content: content,
+        images: urls
+      })
     }).then(function () {
-      self.setData({ commentInput: '', sending: false })
+      self.setData({
+        commentInput: '',
+        commentImages: [],
+        showEmoji: false,
+        commentFocus: false,
+        sending: false
+      })
       self.loadComments()
+      mp.setStorageSync('needRefreshPosts', 1)
       const post = self.data.post
       post.commentCount = (post.commentCount || 0) + 1
       self.setData({ post: post })
     }).catch(function () {
       self.setData({ sending: false })
+      mp.hideLoading()
+    })
+  },
+
+  deleteComment: function (e) {
+    const self = this
+    const id = e.currentTarget.dataset.id
+    mp.showModal({
+      title: '删除这条评论？',
+      content: '删除后不可恢复',
+      confirmColor: '#ff4d4f',
+      success: function (res) {
+        if (!res.confirm) return
+        http.del('/posts/' + self.postId + '/comments/' + id).then(function () {
+          toast('已删除')
+          self.loadComments()
+          const post = self.data.post
+          post.commentCount = Math.max(0, (post.commentCount || 0) - 1)
+          self.setData({ post: post })
+        }).catch(function () {})
+      }
     })
   },
 
@@ -93,6 +206,11 @@ Page({
       current: e.currentTarget.dataset.url,
       urls: this.data.post.imageList || []
     })
+  },
+
+  previewCommentImage: function (e) {
+    const url = e.currentTarget.dataset.url
+    mp.previewImage({ current: url, urls: [url] })
   },
 
   /* ---------- 自己的帖子：编辑 / 删除 ---------- */
@@ -122,6 +240,7 @@ Page({
         if (!res.confirm) return
         http.del('/posts/' + self.postId).then(function () {
           toast('已删除')
+          mp.setStorageSync('needRefreshPosts', 1)
           setTimeout(function () {
             mp.navigateBack()
           }, 600)

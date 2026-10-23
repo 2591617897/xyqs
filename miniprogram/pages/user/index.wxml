@@ -2,8 +2,22 @@
   <!-- 用户卡片 -->
   <view class="profile">
     <view class="row">
-      <image wx:if="{{user && user.avatar}}" class="avatar-xl" src="{{user.avatar}}" mode="aspectFill" />
-      <view wx:else class="avatar-xl avatar-ph">{{user ? '我' : '?'}}</view>
+      <button wx:if="{{logged}}" class="avatar-btn" open-type="getUserInfo" bindgetuserinfo="onGetUserInfo">
+        <image wx:if="{{user && user.avatar}}" class="avatar-xl" src="{{user.avatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-xl">
+          <view class="avatar-default">
+            <view class="ad-head"></view>
+            <view class="ad-body"></view>
+          </view>
+        </view>
+        <view class="avatar-cam">📷</view>
+      </button>
+      <view wx:else class="avatar-xl">
+        <view class="avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
+        </view>
+      </view>
       <view class="flex1 ml24">
         <view class="p-name">{{user ? user.nickname : '还没有登录'}}</view>
         <view class="p-sub" wx:if="{{user}}">
@@ -56,6 +70,11 @@
       <text class="menu-icon">🎓</text>
       <text class="menu-text">校园身份认证</text>
       <text class="menu-tip" wx:if="{{user && user.verifyStatus !== 2}}">必填</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="chooseAvatar">
+      <text class="menu-icon">📷</text>
+      <text class="menu-text">从相册设置头像</text>
       <text class="menu-arrow">›</text>
     </view>
     <view class="menu-item" bindtap="goMyGoods">

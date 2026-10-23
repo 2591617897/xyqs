@@ -60,9 +60,10 @@ Page({
   },
 
   pickSchool: function (e) {
-    const id = Number(e.currentTarget.dataset.id)
+    // id 统一按字符串比较，避免雪花 ID 精度丢失
+    const id = e.currentTarget.dataset.id
     const school = this.data.schools.filter(function (s) {
-      return s.id === id
+      return String(s.id) === String(id)
     })[0]
     if (!school) return
     this.setData({

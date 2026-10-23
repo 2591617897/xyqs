@@ -1,13 +1,19 @@
 <view class="page">
-  <!-- 频道 -->
-  <scroll-view class="channel-scroll" scroll-x="true" show-scrollbar="false">
-    <view class="channel-row">
-      <view class="channel-chip {{channelId === 0 ? 'active' : ''}}" bindtap="switchChannel" data-id="0">
+  <!-- 顶部栏 -->
+  <view class="topbar">
+    <view class="topbar-title">校园频道</view>
+    <view class="topbar-sub">同校同学都在聊什么</view>
+  </view>
+
+  <!-- 频道导航 -->
+  <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="nav-row">
+      <view class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">
         <text>🌟</text>
         <text>全部</text>
       </view>
       <view
-        class="channel-chip {{channelId === item.id ? 'active' : ''}}"
+        class="nav-item {{channelId === item.id ? 'active' : ''}}"
         wx:for="{{channels}}"
         wx:key="id"
         bindtap="switchChannel"
@@ -19,41 +25,62 @@
     </view>
   </scroll-view>
 
-  <!-- 帖子 -->
-  <view class="post-list">
-    <view class="post-card" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
-      <view class="row between">
-        <view class="channel-line">
-          <text class="channel-icon">{{item.channelIcon}}</text>
-          <text class="channel-name">{{item.channelName}}</text>
+  <!-- 信息流 -->
+  <view class="feed">
+    <view
+      class="feed-item"
+      wx:for="{{list}}"
+      wx:key="id"
+      bindtap="goDetail"
+      data-id="{{item.id}}"
+      hover-class="feed-hover"
+      hover-stay-time="60"
+    >
+      <view class="feed-user">
+        <view class="feed-avatar">
+          <image wx:if="{{item.authorAvatar}}" class="feed-avatar-img" src="{{item.authorAvatar}}" mode="aspectFill" />
+          <view wx:else class="avatar-default">
+            <view class="ad-head"></view>
+            <view class="ad-body"></view>
+          </view>
         </view>
-        <text class="muted">{{item.timeText}}</text>
+        <view class="feed-user-info">
+          <view class="feed-name">{{item.authorName}}</view>
+          <view class="feed-meta">
+            <text>{{item.timeText}}</text>
+            <text class="feed-device">{{item.channelIcon}} {{item.channelName}}</text>
+          </view>
+        </view>
       </view>
 
-      <view class="post-title">{{item.title}}</view>
-      <view class="post-excerpt clamp2">{{item.excerpt}}</view>
+      <view class="feed-text clamp3">
+        <text class="feed-title">{{item.title}}</text>
+        <text wx:if="{{item.excerpt}}">{{item.excerpt}}</text>
+      </view>
 
-      <view class="post-imgs" wx:if="{{item.imageList.length}}">
-        <image
+      <view class="feed-imgs" wx:if="{{item.imageList.length}}">
+        <view
+          class="feed-img-wrap {{item.imageList.length === 1 ? 'single' : (item.imageList.length === 2 ? 'double' : '')}}"
           wx:for="{{item.imageList}}"
           wx:for-item="img"
+          wx:for-index="ii"
           wx:key="*this"
-          class="post-img"
-          src="{{img}}"
-          mode="aspectFill"
-        />
+        >
+          <image class="feed-img" src="{{img}}" mode="aspectFill" />
+        </view>
       </view>
 
-      <view class="post-foot">
-        <view class="row gap12">
-          <image wx:if="{{item.authorAvatar}}" class="author-avatar" src="{{item.authorAvatar}}" mode="aspectFill" />
-          <view wx:else class="author-avatar author-ph">{{item.avatarText}}</view>
-          <text class="author-name">{{item.authorName}}</text>
+      <view class="feed-actions">
+        <view class="feed-action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="feed-action-icon">👍</text>
+          <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
         </view>
-        <view class="row gap24">
-          <text class="muted">♡ {{item.likeCount}}</text>
-          <text class="muted">💬 {{item.commentCount}}</text>
+        <view class="feed-action ml40" catchtap="goDetail" data-id="{{item.id}}">
+          <text class="feed-action-icon">💬</text>
+          <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
         </view>
+        <view class="flex1"></view>
+        <text class="feed-more" catchtap="goDetail" data-id="{{item.id}}">详情 ›</text>
       </view>
     </view>
   </view>
@@ -64,8 +91,8 @@
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 
-  <view class="list-tip" wx:if="{{list.length}}">
-    {{loading ? '加载中…' : (hasMore ? '上拉加载更多' : '— 到底啦 —')}}
+  <view class="list-end" wx:if="{{list.length}}">
+    {{loading ? '加载中…' : (hasMore ? '上拉加载更多' : '— 已经到底了 —')}}
   </view>
 
   <view class="fab" bindtap="goPublish">＋</view>

@@ -1,125 +1,124 @@
 <view class="page">
-  <!-- 顶部问候 -->
-  <view class="hero">
-    <view class="between">
-      <view class="flex1">
-        <view class="hero-hi">{{greeting}}，{{user ? user.nickname : '同学'}}</view>
-        <view class="hero-sub">{{user && user.verifyStatus === 2 ? '同校的闲置和心事都在这里' : '完成校园认证，解锁同校圈子'}}</view>
-      </view>
-      <view class="status-chip {{user && user.verifyStatus === 2 ? 'chip-ok' : 'chip-todo'}}" bindtap="goStatus">
-        {{user ? (user.verifyStatus === 2 ? '已认证' : '待认证') : '未登录'}}
+  <!-- 顶部搜索栏 -->
+  <view class="topbar">
+    <view class="topbar-avatar" bindtap="goStatus">
+      <image wx:if="{{user && user.avatar}}" class="topbar-avatar-img" src="{{user.avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-default">
+        <view class="ad-head"></view>
+        <view class="ad-body"></view>
       </view>
     </view>
-
-    <view class="search" bindtap="goSearch">
+    <view class="search-box" bindtap="goSearch">
       <text class="search-icon">🔍</text>
-      <text class="search-ph">搜闲置：自行车 / 显示器 / 考研资料</text>
+      <text class="search-placeholder">搜闲置、帖子、同学</text>
     </view>
+    <view class="msg-btn" bindtap="goMessages">✉️</view>
   </view>
 
-  <!-- 快捷入口 -->
-  <view class="quick-card">
-    <view class="quick-item" bindtap="goPublish">
-      <view class="quick-icon q1">🏷️</view>
-      <text class="quick-label">发布闲置</text>
+  <!-- 频道导航 -->
+  <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="nav-row">
+      <view class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">推荐</view>
+      <view
+        class="nav-item {{channelId === item.id ? 'active' : ''}}"
+        wx:for="{{channels}}"
+        wx:key="id"
+        bindtap="switchChannel"
+        data-id="{{item.id}}"
+      >{{item.name}}</view>
     </view>
-    <view class="quick-item" bindtap="goWall">
-      <view class="quick-icon q2">💌</view>
-      <text class="quick-label">匿名表白</text>
-    </view>
-    <view class="quick-item" bindtap="goPosts">
-      <view class="quick-icon q3">💬</view>
-      <text class="quick-label">校园频道</text>
-    </view>
-    <view class="quick-item" bindtap="goGoodsList">
-      <view class="quick-icon q4">♻️</view>
-      <text class="quick-label">二手市场</text>
-    </view>
-  </view>
+  </scroll-view>
 
-  <!-- 分类 -->
-  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false" wx:if="{{categories.length}}">
+  <!-- 分类横滑 -->
+  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">
     <view class="cat-row">
-      <view class="cat-chip" bindtap="goGoodsList">
-        <text>全部</text>
-      </view>
-      <view class="cat-chip" wx:for="{{categories}}" wx:key="id" bindtap="goGoodsList" data-id="{{item.id}}">
-        <text class="cat-emoji">{{item.icon}}</text>
+      <view class="cat-pill active" bindtap="goCategory" data-id="">今日热门</view>
+      <view class="cat-pill" wx:for="{{categories}}" wx:key="id" bindtap="goCategory" data-id="{{item.id}}">
+        <text>{{item.icon}}</text>
         <text>{{item.name}}</text>
       </view>
     </view>
   </scroll-view>
 
-  <!-- 最新闲置 -->
-  <view class="section-head">
-    <view class="row gap8">
-      <text class="h2">最新闲置</text>
-      <text class="tag tag-brand">同校</text>
+  <!-- 信息流 -->
+  <view class="feed">
+    <view
+      class="feed-item"
+      wx:for="{{feed}}"
+      wx:key="key"
+      bindtap="goDetail"
+      data-type="{{item.type}}"
+      data-id="{{item.id}}"
+      hover-class="feed-hover"
+      hover-stay-time="60"
+    >
+      <view class="feed-user">
+        <view class="feed-avatar">
+          <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+          <view wx:else class="avatar-default">
+            <view class="ad-head"></view>
+            <view class="ad-body"></view>
+          </view>
+        </view>
+        <view class="feed-user-info">
+          <view class="feed-name">{{item.authorName}}</view>
+          <view class="feed-meta">
+            <text>{{item.timeText}}</text>
+            <text class="feed-device">{{item.badgeIcon}} {{item.badge}}</text>
+          </view>
+        </view>
+        <text class="feed-type" wx:if="{{item.type === 'goods'}}">闲置</text>
+      </view>
+
+      <view class="feed-text clamp3">
+        <text class="feed-title" wx:if="{{item.title}}">{{item.title}}</text>
+        <text>{{item.excerpt}}</text>
+      </view>
+
+      <view class="feed-price" wx:if="{{item.type === 'goods'}}">
+        <text class="price-symbol">¥</text>{{item.priceText}}
+        <text class="feed-loc" wx:if="{{item.location}}">{{item.location}}</text>
+      </view>
+
+      <view class="feed-imgs" wx:if="{{item.imageList.length}}">
+        <view
+          class="feed-img-wrap {{item.imageList.length === 1 ? 'single' : (item.imageList.length === 2 ? 'double' : '')}}"
+          wx:for="{{item.imageList}}"
+          wx:for-item="img"
+          wx:for-index="ii"
+          wx:key="*this"
+        >
+          <image
+            class="feed-img"
+            src="{{img}}"
+            mode="aspectFill"
+            catchtap="previewFeed"
+            data-fi="{{index}}"
+            data-url="{{img}}"
+          />
+        </view>
+      </view>
+
+      <view class="feed-actions">
+        <view class="feed-action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="feed-action-icon">👍</text>
+          <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
+        </view>
+        <view class="feed-action ml40" catchtap="goComments" data-type="{{item.type}}" data-id="{{item.id}}">
+          <text class="feed-action-icon">💬</text>
+          <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
+        </view>
+        <view class="flex1"></view>
+        <text class="feed-more" catchtap="goDetail" data-type="{{item.type}}" data-id="{{item.id}}">详情 ›</text>
+      </view>
     </view>
-    <view class="more" bindtap="goGoodsList">全部 ›</view>
   </view>
 
-  <view class="goods-grid">
-    <view class="goods-card" wx:for="{{goods}}" wx:key="id" bindtap="goGoodsDetail" data-id="{{item.id}}">
-      <view class="goods-cover">
-        <image wx:if="{{item.imageList.length}}" class="cover-img" src="{{item.imageList[0]}}" mode="aspectFill" />
-        <view wx:else class="cover-empty">{{item.emoji}}</view>
-        <view class="cover-tag" wx:if="{{item.tradeType === 1}}">自提</view>
-      </view>
-      <view class="goods-body">
-        <view class="goods-title clamp2">{{item.title}}</view>
-        <view class="between mt8">
-          <view class="price"><text class="price-symbol">¥</text>{{item.priceText}}</view>
-          <text class="muted">{{item.timeText}}</text>
-        </view>
-        <view class="row gap8 mt8">
-          <text class="tag">{{item.categoryName}}</text>
-          <text class="muted ellipsis flex1">{{item.location || '校内交易'}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view class="empty" wx:if="{{!loading && !goods.length}}">
-    <text class="empty-icon">{{loadError ? '📡' : '🛍️'}}</text>
-    <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '还没有闲置，去发布第一件吧'}}</text>
+  <view class="empty" wx:if="{{!loading && !feed.length}}">
+    <text class="empty-icon">{{loadError ? '📡' : '📭'}}</text>
+    <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '这个频道还没有内容，去发第一条吧'}}</text>
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 
-  <!-- 校园热帖 -->
-  <view class="section-head">
-    <view class="row gap8">
-      <text class="h2">校园热帖</text>
-      <text class="tag tag-mint">频道</text>
-    </view>
-    <view class="more" bindtap="goPosts">更多 ›</view>
-  </view>
-
-  <view class="post-list">
-    <view class="post-card" wx:for="{{posts}}" wx:key="id" bindtap="goPostDetail" data-id="{{item.id}}">
-      <view class="row gap8">
-        <text class="post-channel">{{item.channelIcon}} {{item.channelName}}</text>
-        <text class="muted">{{item.timeText}}</text>
-      </view>
-      <view class="post-title clamp2">{{item.title}}</view>
-      <view class="row between mt12">
-        <view class="row gap8">
-          <image wx:if="{{item.authorAvatar}}" class="mini-avatar" src="{{item.authorAvatar}}" mode="aspectFill" />
-          <view wx:else class="mini-avatar mini-avatar-text">{{item.avatarText}}</view>
-          <text class="muted">{{item.authorName}}</text>
-        </view>
-        <view class="row gap16">
-          <text class="muted">👍 {{item.likeCount}}</text>
-          <text class="muted">💬 {{item.commentCount}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view class="empty" wx:if="{{!loading && !posts.length}}">
-    <text class="empty-icon">💬</text>
-    <text>{{loadError ? '内容加载失败，请下拉刷新重试' : '频道还很安静，来发第一帖'}}</text>
-  </view>
-
-  <view class="footer-tip">— 校园趣事 · 只在同校之间流转 —</view>
+  <view class="list-end" wx:if="{{feed.length && !loading}}">— 已经到底了 —</view>
 </view>

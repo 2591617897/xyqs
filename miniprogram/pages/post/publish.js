@@ -20,7 +20,7 @@ Page({
   onLoad: function (options) {
     const self = this
     const postId = options && options.id
-    const presetChannel = Number(options && options.channelId) || 0
+    const presetChannel = (options && options.channelId) || ''
 
     if (postId) {
       this.setData({ id: postId, isEdit: true })
@@ -47,7 +47,7 @@ Page({
       self.setData({
         channels: channels,
         loading: false,
-        channelId: presetChannel || (channels.length ? channels[0].id : 0)
+        channelId: presetChannel || (channels.length ? channels[0].id : '')
       })
     }).catch(function () {
       self.setData({ loading: false })
@@ -62,7 +62,8 @@ Page({
   },
 
   chooseChannel: function (e) {
-    this.setData({ channelId: Number(e.currentTarget.dataset.id) })
+    // 雪花 ID 保持字符串，转 Number 会丢精度
+    this.setData({ channelId: e.currentTarget.dataset.id })
   },
 
   chooseImage: function () {

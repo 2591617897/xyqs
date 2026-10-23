@@ -34,7 +34,7 @@
 .intro-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #14a89b;
+  color: #0e9a60;
   margin-bottom: 10rpx;
 }
 .intro-item {
@@ -91,7 +91,7 @@
 .upload-del {
   margin-top: 12rpx;
   font-size: 23rpx;
-  color: #ff5a76;
+  color: #0e9a60;
 }
 
 .submit {
@@ -151,7 +151,7 @@
   color: #1f2329;
 }
 .school-check {
-  color: #14a89b;
+  color: #0e9a60;
   font-size: 30rpx;
   font-weight: 700;
 }

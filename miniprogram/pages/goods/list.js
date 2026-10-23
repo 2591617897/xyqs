@@ -138,6 +138,15 @@ Page({
     this.load(true)
   },
 
+  /** 封面图加载失败时回退到占位图 */
+  onImgError: function (e) {
+    const index = e.currentTarget.dataset.index
+    if (index === undefined || index === null) return
+    const patch = {}
+    patch['list[' + index + '].imgFailed'] = true
+    this.setData(patch)
+  },
+
   onSearchInput: function (e) {
     this.setData({ keyword: e.detail.value })
   },

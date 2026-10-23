@@ -1,79 +1,145 @@
 <view class="page" wx:if="{{post}}">
+  <!-- 作者栏 -->
+  <view class="author-bar">
+    <view class="ab-avatar">
+      <image wx:if="{{post.authorAvatar}}" class="ab-avatar-img" src="{{post.authorAvatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-default">
+        <view class="ad-head"></view>
+        <view class="ad-body"></view>
+      </view>
+    </view>
+    <view class="ab-info">
+      <view class="ab-name">{{post.authorName}}</view>
+      <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
+    </view>
+    <view class="ab-btn" wx:if="{{post.mine}}" catchtap="openMore">管理</view>
+    <view class="ab-btn ghost" wx:else>同校</view>
+  </view>
+
+  <!-- 正文 -->
   <view class="article">
-    <view class="row between">
-      <view class="channel-line">
-        <text>{{post.channelIcon}}</text>
-        <text class="channel-name">{{post.channelName}}</text>
-      </view>
-      <view class="more-btn" wx:if="{{post.mine}}" catchtap="openMore">···</view>
-    </view>
+    <view class="article-title" wx:if="{{post.title}}">{{post.title}}</view>
+    <view class="article-content">{{post.content}}</view>
 
-    <view class="title">{{post.title}}</view>
-
-    <view class="author-row">
-      <image wx:if="{{post.authorAvatar}}" class="author-avatar" src="{{post.authorAvatar}}" mode="aspectFill" />
-      <view wx:else class="author-avatar author-ph">{{post.avatarText}}</view>
-      <view class="flex1">
-        <view class="author-name">{{post.authorName}}</view>
-        <view class="muted">{{post.timeText}}</view>
-      </view>
-      <text class="tag tag-mint">同校</text>
-    </view>
-
-    <view class="content">{{post.content}}</view>
-
-    <view class="imgs" wx:if="{{post.imageList.length}}">
+    <view class="article-imgs" wx:if="{{post.imageList.length}}">
       <image
         wx:for="{{post.imageList}}"
         wx:key="*this"
-        class="img"
+        class="article-img"
         src="{{item}}"
         mode="widthFix"
         bindtap="previewImage"
         data-url="{{item}}"
       />
     </view>
+  </view>
 
-    <view class="like-row">
-      <view class="like-btn {{liked ? 'liked' : ''}}" bindtap="toggleLike">
-        <text class="heart">{{liked ? '♥' : '♡'}}</text>
-        <text>{{post.likeCount || 0}}</text>
-      </view>
+  <!-- 评论头 -->
+  <view class="comment-head">
+    <text class="ch-count">共 {{comments.length}} 回复</text>
+    <view class="ch-sorts">
+      <text class="ch-sort {{commentSort === 'default' ? 'on' : ''}}" bindtap="switchSort" data-sort="default">默认</text>
+      <text class="ch-sort {{commentSort === 'newest' ? 'on' : ''}}" bindtap="switchSort" data-sort="newest">最新</text>
     </view>
   </view>
 
-  <!-- 评论 -->
-  <view class="comment-card">
-    <view class="h2">评论 {{comments.length}}</view>
+  <!-- 评论列表 -->
+  <view class="comment-list">
     <view class="comment-item" wx:for="{{comments}}" wx:key="id">
-      <image wx:if="{{item.userAvatar}}" class="c-avatar" src="{{item.userAvatar}}" mode="aspectFill" />
-      <view wx:else class="c-avatar c-ph">{{item.avatarText}}</view>
-      <view class="flex1">
-        <view class="between">
-          <text class="c-name">{{item.userName}}</text>
-          <text class="muted">{{item.timeText}}</text>
+      <view class="ci-avatar">
+        <image wx:if="{{item.userAvatar}}" class="ci-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
         </view>
-        <view class="c-text">{{item.content}}</view>
+      </view>
+      <view class="ci-body">
+        <view class="ci-name">{{item.userName || '校园用户'}}</view>
+        <view class="ci-text" wx:if="{{item.content}}">{{item.content}}</view>
+
+        <view class="ci-imgs" wx:if="{{item.imageList.length}}">
+          <image
+            wx:for="{{item.imageList}}"
+            wx:for-item="img"
+            wx:key="*this"
+            class="ci-img"
+            src="{{img}}"
+            mode="aspectFill"
+            catchtap="previewCommentImage"
+            data-url="{{img}}"
+          />
+        </view>
+
+        <view class="ci-foot">
+          <text class="ci-time">{{item.timeText}}</text>
+          <view class="flex1"></view>
+          <text class="ci-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+        </view>
       </view>
     </view>
-    <view class="empty" wx:if="{{!comments.length}}" style="padding: 60rpx 0;">
-      <text>还没有评论，来抢沙发</text>
+
+    <view class="comment-empty" wx:if="{{!comments.length}}">
+      <text class="empty-icon">💬</text>
+      <text>还没有回复，来抢沙发</text>
     </view>
+
+    <view class="list-end" wx:if="{{comments.length}}">— 已经到底了 —</view>
   </view>
 
   <view class="bottom-space"></view>
 
-  <view class="comment-bar">
-    <input
-      class="comment-input"
-      placeholder="友善发言，理性讨论"
-      placeholder-class="placeholder"
-      value="{{commentInput}}"
-      bindinput="onCommentInput"
-      confirm-type="send"
-      bindconfirm="sendComment"
-    />
-    <view class="send-btn" bindtap="sendComment">发送</view>
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <!-- 待发送配图 -->
+    <view class="pending-imgs" wx:if="{{commentImages.length}}">
+      <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
+        <image class="p-thumb" src="{{item}}" mode="aspectFill" />
+        <view class="p-del" catchtap="removeCommentImage" data-index="{{index}}">✕</view>
+      </view>
+      <text class="p-tip">最多 3 张</text>
+    </view>
+
+    <view class="bb-row">
+      <view class="bb-input-wrap">
+        <input
+          class="bb-input"
+          placeholder="写评论…"
+          placeholder-class="bb-placeholder"
+          value="{{commentInput}}"
+          focus="{{commentFocus}}"
+          maxlength="500"
+          confirm-type="send"
+          bindinput="onCommentInput"
+          bindconfirm="sendComment"
+          bindfocus="focusInput"
+          bindblur="onInputBlur"
+        />
+      </view>
+      <view class="bb-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
+      <view class="bb-tool" catchtap="chooseCommentImage">🖼</view>
+      <view class="bb-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发送</view>
+      <view class="bb-action {{liked ? 'on' : ''}}" catchtap="toggleLike">
+        <text class="bb-icon">👍</text>
+        <text class="bb-num">{{post.likeCount || 0}}</text>
+      </view>
+      <view class="bb-action" catchtap="focusInput">
+        <text class="bb-icon">💬</text>
+        <text class="bb-num">{{post.commentCount || 0}}</text>
+      </view>
+    </view>
+
+    <!-- 表情面板 -->
+    <view class="emoji-panel" wx:if="{{showEmoji}}">
+      <view class="emoji-grid">
+        <view
+          class="emoji-item"
+          wx:for="{{emojiList}}"
+          wx:key="*this"
+          catchtap="addEmoji"
+          data-emoji="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
   </view>
 </view>
 

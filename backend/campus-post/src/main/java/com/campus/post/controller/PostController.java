@@ -8,7 +8,6 @@ import com.campus.post.entity.Post;
 import com.campus.post.entity.PostComment;
 import com.campus.post.service.PostService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -80,14 +79,24 @@ public class PostController {
 
     @PostMapping("/posts/{id}/comments")
     public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid ContentReq req) {
-        return R.ok(postService.addComment(id, req.getContent()));
+        return R.ok(postService.addComment(id, req.getContent(), req.getImages()));
+    }
+
+    /** 删除自己的评论 */
+    @DeleteMapping("/posts/{postId}/comments/{id}")
+    public R<Void> deleteComment(@PathVariable("postId") Long postId, @PathVariable("id") Long id) {
+        postService.deleteComment(postId, id);
+        return R.ok();
     }
 
     @Data
     public static class ContentReq {
 
-        @NotBlank(message = "评论不能为空")
         @Size(max = 500, message = "评论不超过 500 字")
         private String content;
+
+        /** 评论配图，最多 3 张 */
+        @Size(max = 3, message = "评论最多 3 张图")
+        private List<String> images;
     }
 }

@@ -32,9 +32,10 @@ public class WallController {
     @GetMapping
     public R<R.Page<WallPost>> page(@RequestParam(required = false, name = "schoolId") Long schoolId,
                                     @RequestParam(defaultValue = "1", name = "page") long page,
-                                    @RequestParam(defaultValue = "10", name = "size") long size) {
+                                    @RequestParam(defaultValue = "10", name = "size") long size,
+                                    @RequestParam(required = false, name = "sort") String sort) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
-        return R.ok(wallService.page(scope, UserContext.userId(), page, size));
+        return R.ok(wallService.page(scope, UserContext.userId(), page, size, sort));
     }
 
     @PostMapping

@@ -5,6 +5,10 @@
 - 统一响应：`{ "code": 0, "msg": "ok", "data": ... }`，`code != 0` 即失败（401 未登录 / 403 未认证 / 404 不存在）
 - 分页响应：`{ records: [], total, page, size, hasMore }`
 
+> **ID 一律是字符串**。雪花 ID 为 19 位 Long，超出 JavaScript 安全整数范围（2^53-1），
+> 后端已全局把 `Long/long` 序列化为字符串，前端请按字符串透传，**不要 `Number()` 转换**，否则会丢精度导致查不到数据。
+> 计数类字段（点赞数、评论数、浏览量）是 `Integer`，仍为数字。
+
 ## 认证 / 学校（campus-auth）
 
 | 方法 | 路径 | 说明 |
@@ -41,7 +45,7 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/wall/posts?page&size&schoolId` | 🔓 列表（同校优先，返回 `anonName / anonAvatar / liked / mine`） |
+| GET | `/wall/posts?page&size&schoolId&sort` | 🔓 列表（同校优先，返回 `anonName / anonAvatar / liked / mine`）。`sort=hot` 按点赞数倒序，默认按时间倒序 |
 | POST | `/wall/posts` | 发布（需认证）。body：`{content, images[]}` |
 | GET | `/wall/posts/{id}` | 🔓 详情 |
 | PUT | `/wall/posts/{id}` | 编辑自己的表白（需认证）。body：`{content, images[]}`，匿名昵称与发布时间不变 |
@@ -64,8 +68,9 @@
 | PUT | `/posts/{id}` | 编辑自己的帖子（需认证）。body：`{channelId, title, content, images[]}` |
 | DELETE | `/posts/{id}` | 删除自己的帖子 |
 | POST | `/posts/{id}/like` | 点赞 / 取消 |
-| GET | `/posts/{id}/comments` | 评论列表 |
-| POST | `/posts/{id}/comments` | 评论（需认证）。body：`{content}` |
+| GET | `/posts/{id}/comments` | 评论列表（含 `imageList`、`mine`） |
+| POST | `/posts/{id}/comments` | 评论（需认证）。body：`{content, images[]}`，最多 3 张图，支持只发图 |
+| DELETE | `/posts/{postId}/comments/{id}` | 删除自己的评论（评论数同步 -1） |
 
 ## 文件上传（campus-user）
 

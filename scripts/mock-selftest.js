@@ -93,6 +93,13 @@ check('发布成功', wallNew.code === 0)
 const wallList2 = call('GET', '/wall/posts', { page: 1, size: 1 })
 check('最新一条在最前', wallList2.data.records[0].id === wallNew.data)
 check('mine 标记', wallList2.data.records[0].mine === true)
+const wallHot = call('GET', '/wall/posts', { page: 1, size: 4, sort: 'hot' })
+check(
+  '最热排序生效',
+  wallHot.data.records[0].likeCount >= wallHot.data.records[1].likeCount &&
+    wallHot.data.records[1].likeCount >= wallHot.data.records[2].likeCount,
+  wallHot.data.records.map((r) => r.likeCount).join(',')
+)
 const wc = call('POST', '/wall/posts/' + wallNew.data + '/comments', { content: '第一次评论' })
 check('评论成功', wc.code === 0)
 check('评论数 +1', call('GET', '/wall/posts/' + wallNew.data).data.commentCount === 1)
@@ -142,6 +149,17 @@ check('详情带 authorName', pd.data.authorName === '林小满')
 const pc = call('POST', '/posts/' + newPost.data + '/comments', { content: '沙发' })
 check('评论成功', pc.code === 0)
 check('评论数 1', call('GET', '/posts/' + newPost.data).data.commentCount === 1)
+const pcImg = call('POST', '/posts/' + newPost.data + '/comments', {
+  content: '',
+  images: ['http://x/1.jpg']
+})
+check('只发图也能评论', pcImg.code === 0)
+check('评论带图片', call('GET', '/posts/' + newPost.data + '/comments')
+  .data.filter((c) => c.id === pcImg.data)[0].imageList.length === 1)
+check('空评论被拦', call('POST', '/posts/' + newPost.data + '/comments', { content: ' ', images: [] }).code === 400)
+check('删除自己的帖子评论', call('DELETE', '/posts/' + newPost.data + '/comments/' + pcImg.data).code === 0)
+check('删评论后计数 -1', call('GET', '/posts/' + newPost.data).data.commentCount === 1)
+check('删他人帖子评论被拒', call('DELETE', '/posts/' + newPost.data + '/comments/9001').code === 404)
 check('发帖缺标题被拦', call('POST', '/posts', { channelId: 2004, title: '', content: 'x' }).code === 400)
 const editPost = call('PUT', '/posts/' + newPost.data, {
   channelId: 2002,

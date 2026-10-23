@@ -1,4 +1,4 @@
-/* 自定义底部导航栏 —— 与页面珊瑚橙视觉统一 */
+/* 自定义底部导航 —— 酷安风格：白底 + 绿色主色 + 中间凸起发布按钮 */
 .tabbar {
   position: fixed;
   left: 0;
@@ -8,76 +8,70 @@
   display: flex;
   align-items: flex-end;
   background: #ffffff;
-  border-radius: 32rpx 32rpx 0 0;
-  box-shadow: 0 -10rpx 34rpx rgba(31, 35, 41, 0.09);
-  padding: 12rpx 12rpx calc(10rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #f0f1f3;
+  padding: 10rpx 8rpx calc(8rpx + env(safe-area-inset-bottom));
 }
 
 .tab-item {
-  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding: 10rpx 0 6rpx;
-  transition: transform 0.18s ease;
+  padding: 8rpx 0 6rpx;
 }
 
 .tab-hover {
   opacity: 0.7;
 }
 
-/* 选中态顶部指示条 */
-.tab-indicator {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  margin-left: -18rpx;
-  width: 36rpx;
-  height: 6rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(90deg, #ff8a65 0%, #ff5a76 100%);
-}
-
-.tab-icon-wrap {
-  width: 68rpx;
-  height: 68rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.18s ease, transform 0.18s ease;
-}
-
 .tab-icon {
-  font-size: 34rpx;
+  font-size: 38rpx;
   line-height: 1;
-  opacity: 0.45;
-  transform: scale(0.94);
+  opacity: 0.42;
+  transform: scale(0.96);
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .tab-label {
   font-size: 20rpx;
-  color: #9aa0aa;
-  margin-top: 2rpx;
+  color: #9b9ba3;
+  margin-top: 6rpx;
   letter-spacing: 0.5rpx;
   transition: color 0.18s ease;
 }
 
-/* 选中 */
-.tab-item.active .tab-icon-wrap {
-  background: rgba(255, 107, 87, 0.1);
-  transform: translateY(-2rpx);
-}
-
 .tab-item.active .tab-icon {
   opacity: 1;
-  transform: scale(1.06);
+  transform: scale(1.04);
 }
 
 .tab-item.active .tab-label {
-  color: #ff5a57;
+  color: #11a86b;
   font-weight: 600;
+}
+
+/* 中间发布按钮 */
+.tab-plus {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.plus-btn {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #11a86b;
+  color: #ffffff;
+  font-size: 54rpx;
+  font-weight: 300;
+  line-height: 88rpx;
+  text-align: center;
+  margin-top: -46rpx;
+  box-shadow: 0 8rpx 20rpx rgba(17, 168, 107, 0.34);
+  transition: transform 0.12s ease;
+}
+.plus-hover .plus-btn {
+  transform: scale(0.94);
 }
