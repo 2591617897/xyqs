@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -39,6 +40,16 @@ public class GlobalExceptionHandler {
     public R<Void> handleNoResource(NoResourceFoundException e) {
         log.warn("静态资源不存在: {}", e.getResourcePath());
         return R.fail(404, "资源不存在");
+    }
+
+    /**
+     * 上传文件超过 multipart 上限。不单独处理会被兜底分支吞成 500「服务器开小差了」，
+     * 用户完全看不出是图片太大（真机原图很容易超 5MB）。
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public R<Void> handleTooLarge(MaxUploadSizeExceededException e) {
+        log.warn("上传文件超过大小限制: {}", e.getMessage());
+        return R.fail(400, "图片太大，请换一张或截图后重试");
     }
 
     @ExceptionHandler(Exception.class)

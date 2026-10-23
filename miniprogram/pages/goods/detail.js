@@ -51,6 +51,7 @@ Page({
       g.priceText = priceText(g.price)
       g.emoji = categoryEmoji(g.categoryId)
       g.imageList = resolveList(g.imageList)
+      g.imgFailed = []
       const me = getApp().globalData.user
       const isOwner = !!(me && g.userId && String(me.id) === String(g.userId))
       // 头像快照可能落后于最新资料，自己的商品用本地头像兜底
@@ -157,6 +158,20 @@ Page({
     const urls = this.data.goods.imageList || []
     if (!urls.length) return
     mp.previewImage({ current: e.currentTarget.dataset.url, urls: urls })
+  },
+
+  /** 轮播图加载失败：该张降级为分类图标，避免白块 */
+  onImgError: function (e) {
+    const index = e.currentTarget.dataset.index
+    if (index === undefined || index === null) return
+    const patch = {}
+    patch['goods.imgFailed[' + index + ']'] = true
+    this.setData(patch)
+  },
+
+  /** 卖家头像加载失败：回退默认头像 */
+  onAvatarError: function () {
+    this.setData({ 'goods.sellerAvatar': '' })
   },
 
   /** 轮播计数胶囊 1/N */
@@ -345,11 +360,18 @@ Page({
 
   replyComment: function (e) {
     const ds = e.currentTarget.dataset
+    // 先置 false 再置 true：刚发过评论时输入框往往仍处于聚焦态，
+    // 直接设 true 不会产生 false→true 跳变，WeChat 不会重新弹键盘。
+    // 延迟一帧再聚焦，避免「点了回复却输入不了」。
     this.setData({
       replyTo: { id: ds.id, name: ds.name },
-      commentFocus: true,
+      commentFocus: false,
       showEmoji: false
     })
+    const self = this
+    setTimeout(function () {
+      self.setData({ commentFocus: true })
+    }, 150)
   },
 
   cancelReply: function () {
@@ -374,7 +396,10 @@ Page({
       toast('说点什么，或者配张图吧')
       return
     }
-    if (this.data.sending) return
+    if (this.data.sending) {
+      toast('正在发送，请稍候')
+      return
+    }
     this.setData({ sending: true })
     if (images.length) mp.showLoading({ title: '上传图片中', mask: true })
     auth.ensureVerified().then(function () {

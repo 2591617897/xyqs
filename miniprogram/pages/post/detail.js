@@ -92,11 +92,15 @@ Page({
   /* ---------- 楼中楼回复 ---------- */
   replyComment: function (e) {
     const ds = e.currentTarget.dataset
-    this.setData({
-      replyTo: { id: ds.id, name: ds.name },
-      commentFocus: true,
-      showEmoji: false
-    })
+    const replyTo = { id: ds.id, name: ds.name }
+    // 先置 false 再置 true：刚发过评论时输入框往往仍处于聚焦态，
+    // 直接设 true 不会产生 false→true 跳变，WeChat 不会重新弹键盘，
+    // 表现为「点了回复却输入不了」。延迟一帧再聚焦，稳。
+    this.setData({ replyTo: replyTo, commentFocus: false, showEmoji: false })
+    const self = this
+    setTimeout(function () {
+      self.setData({ commentFocus: true })
+    }, 150)
   },
 
   cancelReply: function () {
@@ -185,7 +189,10 @@ Page({
       toast('说点什么，或者配张图吧')
       return
     }
-    if (this.data.sending) return
+    if (this.data.sending) {
+      toast('正在发送，请稍候')
+      return
+    }
     this.setData({ sending: true })
     if (images.length) mp.showLoading({ title: '上传图片中', mask: true })
     auth.ensureVerified().then(function () {

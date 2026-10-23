@@ -173,6 +173,10 @@ Page({
       toast('给闲置起个标题吧')
       return
     }
+    if (!d.images.length) {
+      toast('至少上传一张图片吧')
+      return
+    }
     const price = Number(d.price)
     if (!price || price <= 0) {
       toast('填一个靠谱的价格')

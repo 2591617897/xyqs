@@ -133,6 +133,7 @@
 
   <view class="card">
     <view class="h2">商品图片</view>
+    <view class="muted mt16">至少上传 1 张，首张作为列表封面，最多 9 张</view>
     <view class="img-grid mt16">
       <view class="img-item" wx:for="{{images}}" wx:key="*this">
         <image class="img-thumb" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" />

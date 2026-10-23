@@ -71,3 +71,8 @@
   `image/png` 才算正常；`application/json` 说明后端没返回图片（别去查微信配置）
 - 首页频道与闲置的关系：**频道是帖子分区，商品不属于任何频道**。选中具体频道时不能混排闲置，
   否则切频道看到的还是同一批闲置，会被误判成「筛选没生效」
+- **浏览范围（本校/本市）**：storage key `feedScope`（utils/scope.js 统一读写，首页/我的页/表白墙共用）；
+  列表接口 `GET /posts`、`GET /wall/posts` 支持 `scope=school|city` + `city`（缺省=用户学校所在市），
+  市域聚合依据 `t_school.city`（province/city/district 三列，district 见 migration-20261024-school-district.sql）。
+  位置信息 API：`GET /auth/geo/city?lat&lng`（腾讯位置服务逆地理，key 走 `QQMAP_KEY`，
+  未配置返回 available=false，前端必须回退学校所在市）。组件 `components/scope-sheet` 是切换弹层。

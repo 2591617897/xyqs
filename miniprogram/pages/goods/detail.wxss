@@ -23,12 +23,25 @@
 }
 .gallery-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 24rpx;
   background: linear-gradient(135deg, #f7f9fc 0%, #eaeef7 100%);
 }
 .gallery-emoji {
   font-size: 140rpx;
+}
+.gallery-img-failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 120rpx;
+  background: linear-gradient(135deg, #f7f9fc 0%, #eaeef7 100%);
+}
+.gallery-empty-tip {
+  font-size: 24rpx;
+  color: #94a3b8;
 }
 .gallery-tags {
   position: absolute;
@@ -511,13 +524,62 @@
   overflow: hidden;
   box-shadow: 0 8rpx 28rpx -4rpx rgba(0, 108, 73, 0.4);
 }
-.owner-tag {
-  font-size: 26rpx;
+/* 卖家管理操作条：状态胶囊 + 右侧操作按钮 */
+.owner-status {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  height: 64rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
   font-weight: 600;
-  color: #006c49;
-  background: rgba(0, 108, 73, 0.08);
-  padding: 14rpx 24rpx;
-  border-radius: 16rpx;
+  flex-shrink: 0;
+  background: rgba(14, 154, 96, 0.1);
+  color: #0e9a60;
+}
+.owner-status.sold {
+  background: rgba(249, 115, 22, 0.1);
+  color: #ea6a0a;
+}
+.owner-status.off {
+  background: #eef1f5;
+  color: #64748b;
+}
+.status-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+.owner-acts {
+  display: flex;
+  gap: 14rpx;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 64rpx;
+  margin: 0;
+  padding: 0 26rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #f2f4f6;
+  color: #191c1e;
+  font-size: 24rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.act-btn::after {
+  border: none;
+}
+.act-btn.act-danger {
+  background: rgba(255, 77, 79, 0.08);
+  color: #e23a3c;
 }
 
 /* ---------- 弹层 ---------- */

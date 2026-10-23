@@ -24,40 +24,102 @@ function uploadImage(filePath) {
   if (USE_MOCK) return Promise.resolve(filePath)
   if (isServerUrl(filePath)) return Promise.resolve(filePath)
 
-  return new Promise(function (resolve, reject) {
-    mp.uploadFile({
-      url: UPLOAD_URL,
-      filePath: filePath,
-      name: 'file',
-      timeout: 30000,
-      header: {
-        Authorization: 'Bearer ' + (http.getToken() || '')
-      },
-      success: function (res) {
-        let body = res.data
-        if (typeof body === 'string') {
-          try {
-            body = JSON.parse(body)
-          } catch (e) {
-            body = {}
+  // 服务端 multipart 上限 5MB：真机照片（尤其是原图）很容易超限，
+  // 超限时 Spring 直接抛 MaxUploadSizeExceeded → 网关包成 500「服务器开小差了」，
+  // 用户侧看起来就是「发图片失败」。先本地压缩再上传，从根上避开。
+  return shrinkIfNeeded(filePath).then(function (path) {
+    return new Promise(function (resolve, reject) {
+      mp.uploadFile({
+        url: UPLOAD_URL,
+        filePath: path,
+        name: 'file',
+        timeout: 60000,
+        header: {
+          Authorization: 'Bearer ' + (http.getToken() || '')
+        },
+        success: function (res) {
+          let body = res.data
+          if (typeof body === 'string') {
+            try {
+              body = JSON.parse(body)
+            } catch (e) {
+              body = {}
+            }
           }
+          if (res.statusCode === 401 || (body && body.code === 401)) {
+            http.cleanLogin()
+            toast('登录已失效，请重新登录')
+            reject({ code: 401, msg: '未登录' })
+            return
+          }
+          if (body && body.code === 0 && body.data && body.data.url) {
+            resolve(body.data.url)
+            return
+          }
+          if (res.statusCode >= 500) {
+            toast('图片上传失败：可能是图片超过 5MB，请换一张或截图后重试')
+            reject({ code: 500, msg: '上传失败（图片可能超过 5MB）' })
+            return
+          }
+          toast((body && body.msg) || '图片上传失败')
+          reject({ code: (body && body.code) || 500, msg: (body && body.msg) || '上传失败' })
+        },
+        fail: function () {
+          toast('图片上传失败，请检查网络')
+          reject({ code: -1, msg: 'upload fail' })
         }
-        if (res.statusCode === 401 || (body && body.code === 401)) {
-          http.cleanLogin()
-          toast('登录已失效，请重新登录')
-          reject({ code: 401, msg: '未登录' })
-          return
+      })
+    })
+  })
+}
+
+/** 超过 4MB 的图片先本地压缩（质量逐级下调），控制在服务端 5MB 上限以内 */
+function shrinkIfNeeded(filePath) {
+  return fileSize(filePath).then(function (size) {
+    if (!size || size <= 4 * 1024 * 1024) return filePath
+    return compressChain(filePath, [80, 60, 40])
+  })
+}
+
+function fileSize(filePath) {
+  return new Promise(function (resolve) {
+    try {
+      mp.getFileSystemManager().stat({
+        path: filePath,
+        success: function (res) {
+          resolve(res.stats ? res.stats.size : 0)
+        },
+        fail: function () {
+          resolve(0)
         }
-        if (body && body.code === 0 && body.data && body.data.url) {
-          resolve(body.data.url)
-          return
-        }
-        toast((body && body.msg) || '图片上传失败')
-        reject({ code: (body && body.code) || 500, msg: (body && body.msg) || '上传失败' })
+      })
+    } catch (e) {
+      resolve(0)
+    }
+  })
+}
+
+/** 按质量梯度反复压缩，直到 < 4MB 或梯度用完 */
+function compressChain(filePath, qualities) {
+  if (!qualities.length) return Promise.resolve(filePath)
+  const quality = qualities[0]
+  return new Promise(function (resolve) {
+    mp.compressImage({
+      src: filePath,
+      quality: quality,
+      success: function (res) {
+        const next = res.compressedFilePath || res.tempFilePath || filePath
+        fileSize(next).then(function (size) {
+          if (size && size <= 4 * 1024 * 1024) {
+            resolve(next)
+          } else {
+            resolve(compressChain(next, qualities.slice(1)))
+          }
+        })
       },
       fail: function () {
-        toast('图片上传失败，请检查网络')
-        reject({ code: -1, msg: 'upload fail' })
+        // 压缩不可用（低版本基础库等）：放弃压缩，走原文件让服务端报错
+        resolve(filePath)
       }
     })
   })

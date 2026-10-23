@@ -226,6 +226,11 @@ public class GoodsService {
             if (parent == null || !goodsId.equals(parent.getGoodsId())) {
                 throw new BizException("要回复的评论不存在");
             }
+            // 楼中楼拍平：对二级回复再回复时，挂到其顶层评论下。
+            // 否则会生成三级评论，而列表只组装两层树，三级永远不显示。
+            if (parent.getParentId() != null && parent.getParentId() > 0) {
+                comment.setParentId(parent.getParentId());
+            }
             comment.setReplyToName(StringUtils.hasText(parent.getUserName()) ? parent.getUserName() : "校园用户");
         }
         comment.setContent(text);

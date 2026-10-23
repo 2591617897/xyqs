@@ -8,11 +8,13 @@
       bindchange="onGalleryChange"
     >
       <swiper-item wx:for="{{goods.imageList}}" wx:key="*this">
-        <image class="gallery-img" src="{{item}}" mode="aspectFill" bindtap="preview" data-url="{{item}}" />
+        <view wx:if="{{goods.imgFailed[index]}}" class="gallery-img gallery-img-failed">{{goods.emoji}}</view>
+        <image wx:else class="gallery-img" src="{{item}}" mode="aspectFill" bindtap="preview" data-url="{{item}}" binderror="onImgError" data-index="{{index}}" />
       </swiper-item>
     </swiper>
     <view wx:else class="gallery gallery-empty">
       <text class="gallery-emoji">{{goods.emoji}}</text>
+      <text class="gallery-empty-tip">卖家没有上传图片，可以私聊向 TA 看图</text>
     </view>
 
     <!-- 左上角标签浮层 -->
@@ -53,7 +55,7 @@
     <view class="card">
       <view class="seller-row">
         <view class="seller-avatar-wrap">
-          <image wx:if="{{goods.sellerAvatar}}" class="seller-avatar" src="{{goods.sellerAvatar}}" mode="aspectFill" />
+          <image wx:if="{{goods.sellerAvatar}}" class="seller-avatar" src="{{goods.sellerAvatar}}" mode="aspectFill" binderror="onAvatarError" />
           <view wx:else class="seller-avatar">
             <view class="avatar-default">
               <view class="ad-head"></view>
@@ -267,10 +269,15 @@
   <!-- 底部操作栏 -->
   <view class="bottom-bar">
     <block wx:if="{{isOwner}}">
-      <view class="owner-tag">{{goods.status === 1 ? '在售中' : (goods.status === 2 ? '已售出' : '已下架')}}</view>
-      <button class="btn btn-plain btn-sm" bindtap="goEdit">编辑</button>
-      <button class="btn btn-plain btn-sm" bindtap="toggleStatus">{{goods.status === 1 ? '下架' : '上架'}}</button>
-      <button class="btn btn-ghost btn-sm" bindtap="removeGoods">删除</button>
+      <view class="owner-status {{goods.status === 1 ? 'on' : (goods.status === 2 ? 'sold' : 'off')}}">
+        <view class="status-dot"></view>
+        <text>{{goods.status === 1 ? '在售中' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
+      </view>
+      <view class="owner-acts">
+        <button class="act-btn" bindtap="goEdit">编辑</button>
+        <button class="act-btn" bindtap="toggleStatus">{{goods.status === 1 ? '下架' : '上架'}}</button>
+        <button class="act-btn act-danger" bindtap="removeGoods">删除</button>
+      </view>
     </block>
     <block wx:else>
       <view class="bar-act" bindtap="toggleLike">

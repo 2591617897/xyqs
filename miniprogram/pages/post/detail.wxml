@@ -45,7 +45,7 @@
 
   <!-- 评论列表 -->
   <view class="comment-list">
-    <view class="comment-item" wx:for="{{comments}}" wx:key="id">
+    <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="cindex">
       <view class="ci-avatar">
         <image wx:if="{{item.userAvatar}}" class="ci-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
         <view wx:else class="avatar-default">
@@ -100,7 +100,7 @@
               </view>
             </view>
           </view>
-          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{index}}">
+          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{cindex}}">
             查看全部 {{item.replyCount}} 条回复 ›
           </view>
         </view>
