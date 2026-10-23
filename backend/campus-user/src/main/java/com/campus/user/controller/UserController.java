@@ -2,6 +2,7 @@ package com.campus.user.controller;
 
 import com.campus.common.api.R;
 import com.campus.common.security.UserContext;
+import com.campus.user.dto.ProfileVO;
 import com.campus.user.dto.UpdateProfileReq;
 import com.campus.user.dto.UserVO;
 import com.campus.user.dto.VerifyReq;
@@ -10,6 +11,7 @@ import com.campus.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +28,15 @@ public class UserController {
     @GetMapping("/me")
     public R<UserVO> me() {
         return R.ok(userService.me(UserContext.requireUserId()));
+    }
+
+    /**
+     * 公开主页（网关精确放行，未登录可访问）。
+     * 有 token 时网关会注入身份，用于判定 following / isSelf。
+     */
+    @GetMapping("/{userId}/profile")
+    public R<ProfileVO> profile(@PathVariable("userId") Long userId) {
+        return R.ok(userService.profile(userId, UserContext.userId()));
     }
 
     @PutMapping("/me")

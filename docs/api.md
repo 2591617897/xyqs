@@ -20,15 +20,46 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/user/me` | 我的资料（学号、姓名已打码，含 schoolName / verifyStatus / verifyRemark） |
+| GET | `/user/me` | 我的资料（学号、姓名已打码，含 schoolName / verifyStatus / verifyRemark，新增 `fansCount / followCount` 计数字段，供「我的」页展示） |
 | PUT | `/user/me` | 修改昵称、头像、性别、手机、简介 |
 | POST | `/user/verify` | 提交校园认证。body：`{schoolId, studentNo, realName, verifyImg}` → `{verifyStatus, token, message}`（token 需替换本地） |
+| GET | `/user/{userId}/profile` | 🔓 他人公开主页资料与统计（见下方「关注 / 粉丝与个人主页」）。被封禁/不存在返回 404「用户不存在或已被封禁」 |
+| POST | `/user/follow/{userId}` | 关注（需登录）。幂等：已关注直接成功不重复计数。返回 `{following:true, fansCount}` |
+| DELETE | `/user/follow/{userId}` | 取消关注（需登录）。未关注也返回成功。返回 `{following:false, fansCount}` |
+| GET | `/user/follow/status?userId=` | 当前用户对目标的关注状态，`data` 为布尔值（true=已关注；未登录返回 `false`，不报 401） |
+
+### 关注 / 粉丝与个人主页
+
+关注错误码：关注自己 400「不能关注自己」；目标不存在/被封禁（status=0）404「对方不存在或已被封禁」；未登录调 POST/DELETE 401。
+
+`GET /user/{userId}/profile` 响应 `data`（ProfileVO，不含 phone / studentNo / realName / verifyImg 等敏感字段）：
+
+```json
+{
+  "id": "9002",                 // 字符串（雪花 ID）
+  "nickname": "陈屿",
+  "avatar": "http://127.0.0.1:8888/uploads/...",
+  "bio": "计算机学院，出闲置回消息很快",
+  "schoolId": "1005",           // 字符串
+  "schoolName": "浙江大学",
+  "verifyStatus": 2,            // 0未认证 1审核中 2已认证 3驳回
+  "fansCount": 12,              // 粉丝数（数字）
+  "followCount": 5,             // 关注数（数字）
+  "following": false,           // 当前登录用户是否已关注；未登录/本人 = false
+  "isSelf": false,              // 是否本人主页
+  "goodsSaleCount": 2,          // 闲置在售数（内部接口聚合）
+  "goodsTotalCount": 4,         // 闲置累计发布数（内部接口聚合）
+  "postCount": 3                // 帖子数（内部接口聚合）
+}
+```
+
+前端徽章规则：`verifyStatus === 2` → 「✓ 已认证」，否则「未认证」。
 
 ## 二手商品（campus-goods）
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/goods` | 🔓 列表。参数：`keyword, categoryId, sort(latest/price_asc/price_desc/hot), page, size, schoolId` |
+| GET | `/goods` | 🔓 列表。参数：`keyword, categoryId, sort(latest/price_asc/price_desc/hot), page, size, schoolId, userId`。**传 `userId` 时返回该作者全部状态商品**（0下架/1在售/2已售出，前端渲染状态标签），忽略学校范围与默认 `status=1` 过滤；不传时行为不变 |
 | GET | `/goods/categories` | 🔓 分类：数码/图书/生活/服饰/运动/其他 |
 | GET | `/goods/{id}` | 🔓 详情（自动 +1 浏览量，登录时返回 `liked`；含规格字段 `conditionLevel/purchaseTime/usageFrequency/source/warranty/supportTrial` 与卖家统计 `sellerSaleCount/sellerTotalCount`） |
 | POST | `/goods` | 发布（需认证）。body：`{title, description, price, originalPrice, categoryId, conditionLevel, purchaseTime, usageFrequency, source, warranty, supportTrial, images[], tradeType, location}` |
@@ -64,7 +95,7 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/channels?schoolId` | 🔓 频道列表（全平台 + 本校），带 `postCount` |
-| GET | `/posts?channelId&page&size&schoolId` | 🔓 帖子列表（含 `channelName / channelIcon / imageList`） |
+| GET | `/posts?channelId&page&size&schoolId&userId` | 🔓 帖子列表（含 `channelName / channelIcon / imageList`）。**传 `userId` 时只返回该作者 `status=1` 帖子**，忽略学校范围，按时间倒序；不传时行为不变 |
 | POST | `/posts` | 发帖（需认证）。body：`{channelId, title, content, images[]}` |
 | GET | `/posts/{id}` | 🔓 详情 |
 | PUT | `/posts/{id}` | 编辑自己的帖子（需认证）。body：`{channelId, title, content, images[]}` |
@@ -105,6 +136,8 @@
 | POST | `/internal/users/login-or-create` | 按 openid 获取或创建用户（auth → user） |
 | GET | `/internal/users/{id}` | 用户简要信息（昵称快照用） |
 | GET | `/internal/users/briefs?ids=1,2,3` | 批量用户摘要（会话列表一次拉齐对端昵称/头像，避免 N+1；旧版本无此接口时自动退化为逐个查询） |
+| GET | `/internal/goods/count?userId=&status=` | campus-goods：按作者计商品数，`status` 可选（不传=全部，已物理删除的不计）。供个人主页「闲置在售/累计发布」聚合 |
+| GET | `/internal/posts/count?userId=` | campus-post：该作者 `status=1` 帖子数。供个人主页「帖子数」聚合 |
 
 ## 错误码
 

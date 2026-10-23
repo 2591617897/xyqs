@@ -105,6 +105,23 @@ function seed() {
       createdAt: ago(60 * 24 * 40)
     },
 
+    // 演示用户资料（公开主页 / 关注关系用；9001 为当前登录账号，资料以 profile 为准）
+    users: [
+      { id: 9001, nickname: '林小满', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '浙大在读，喜欢逛食堂和拍照', status: 1 },
+      { id: 9002, nickname: '陈屿', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '计算机学院，出闲置回消息很快', status: 1 },
+      { id: 9003, nickname: '周小舟', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '经管学院，考研资料出出出', status: 1 },
+      { id: 9004, nickname: '苏念', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '经管学院，喜欢图书馆靠窗位', status: 1 },
+      { id: 9005, nickname: '阿泽', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '体育学院，夜跑爱好者', status: 1 },
+      { id: 9006, nickname: '李知夏', avatar: '', schoolId: SCHOOL_ID, verifyStatus: 2, bio: '人文学院，食堂测评博主', status: 1 }
+    ],
+
+    // 初始关注关系（followerId 关注 followeeId）
+    follows: [
+      { id: 5001, followerId: 9001, followeeId: 9002, createdAt: ago(60 * 24 * 3) },
+      { id: 5002, followerId: 9003, followeeId: 9001, createdAt: ago(60 * 24 * 2) },
+      { id: 5003, followerId: 9005, followeeId: 9001, createdAt: ago(60 * 24) }
+    ],
+
     schools: [
       { id: 1001, name: '清华大学', province: '北京', city: '北京', district: '海淀区', sort: 100 },
       { id: 1002, name: '北京大学', province: '北京', city: '北京', district: '海淀区', sort: 99 },
@@ -976,6 +993,16 @@ function load() {
     })
     save()
   }
+  // 轻量迁移：旧版本地种子没有用户资料/关注关系，补齐以免主页与关注功能不可用
+  const fresh = seed()
+  if (!db.users) {
+    db.users = fresh.users
+    save()
+  }
+  if (!db.follows) {
+    db.follows = fresh.follows
+    save()
+  }
   if (!cached || !cached.goods) save()
   return db
 }
@@ -1017,6 +1044,102 @@ function requireVerified() {
   const p = requireLogin()
   if (p.verifyStatus !== 2) throw { code: 403, msg: '请先完成校园身份认证后再发布内容' }
   return p
+}
+
+/* ============================ 关注关系 / 公开主页 ============================ */
+
+/** 取用户资料：本人以 profile 为准（资料编辑后实时生效），其余查 db.users */
+function findUser(id) {
+  const uid = Number(id)
+  if (uid === db.profile.id) return db.profile
+  return (db.users || []).filter(function (u) {
+    return u.id === uid
+  })[0]
+}
+
+function hasFollow(followerId, followeeId) {
+  return (db.follows || []).some(function (f) {
+    return f.followerId === followerId && f.followeeId === followeeId
+  })
+}
+
+/** 粉丝数（实时统计，与后端 t_user 计数器语义一致） */
+function countFans(userId) {
+  return (db.follows || []).filter(function (f) {
+    return f.followeeId === userId
+  }).length
+}
+
+/** 关注数 */
+function countFollow(userId) {
+  return (db.follows || []).filter(function (f) {
+    return f.followerId === userId
+  }).length
+}
+
+/** 该作者商品数（status 可空 = 全部；已物理删除的不计） */
+function countGoodsByUser(userId, status) {
+  return db.goods.filter(function (g) {
+    return g.userId === userId && (status === undefined || status === null || g.status === status)
+  }).length
+}
+
+/** 该作者 status=1 帖子数 */
+function countPostsByUser(userId) {
+  return db.posts.filter(function (p) {
+    return p.userId === userId && p.status === 1
+  }).length
+}
+
+/** 公开主页 VO（未登录可访问；用户缺失或 status=0 → 404） */
+function profileVO(id) {
+  const uid = Number(id)
+  const u = findUser(uid)
+  if (!u || u.status === 0) throw { code: 404, msg: '用户不存在或已被封禁' }
+  const me = db.session ? db.profile : null
+  const isSelf = !!me && me.id === uid
+  return {
+    id: u.id,
+    nickname: u.nickname,
+    avatar: u.avatar,
+    bio: u.bio || '',
+    schoolId: u.schoolId,
+    schoolName: u.schoolId ? schoolName(u.schoolId) : '',
+    verifyStatus: u.verifyStatus,
+    fansCount: countFans(uid),
+    followCount: countFollow(uid),
+    following: !!me && !isSelf && hasFollow(me.id, uid),
+    isSelf: isSelf,
+    goodsSaleCount: countGoodsByUser(uid, 1),
+    goodsTotalCount: countGoodsByUser(uid, null),
+    postCount: countPostsByUser(uid)
+  }
+}
+
+/** 关注（幂等：已关注不重复计数） */
+function doFollow(followeeId) {
+  const p = requireLogin()
+  const targetId = Number(followeeId)
+  if (p.id === targetId) throw { code: 400, msg: '不能关注自己' }
+  const u = findUser(targetId)
+  if (!u || u.status === 0) throw { code: 404, msg: '对方不存在或已被封禁' }
+  if (!hasFollow(p.id, targetId)) {
+    db.follows.push({ id: nextId(), followerId: p.id, followeeId: targetId, createdAt: fmt(new Date()) })
+    save()
+  }
+  return { following: true, fansCount: countFans(targetId) }
+}
+
+/** 取消关注（幂等：未关注也返回成功） */
+function doUnfollow(followeeId) {
+  const p = requireLogin()
+  const targetId = Number(followeeId)
+  if (p.id === targetId) throw { code: 400, msg: '不能关注自己' }
+  db.follows = (db.follows || []).filter(function (f) {
+    return !(f.followerId === p.id && f.followeeId === targetId)
+  })
+  save()
+  return { following: false, fansCount: countFans(targetId) }
 }
 
 /* ============================ 装饰器 ============================ */
@@ -1170,6 +1293,8 @@ function meVO() {
     verifyStatus: p.verifyStatus,
     verifyRemark: p.verifyRemark,
     verifyImg: '',
+    fansCount: countFans(p.id),
+    followCount: countFollow(p.id),
     createdAt: p.createdAt
   }
 }
@@ -1192,13 +1317,21 @@ function submitVerify(q) {
 }
 
 function queryGoods(q) {
-  let list = db.goods.filter(function (g) {
-    return g.status === 1
-  })
-  if (q.schoolId) {
-    list = list.filter(function (g) {
-      return g.schoolId === Number(q.schoolId)
+  let list
+  if (q.userId) {
+    // 个人主页场景：该作者全部状态商品（忽略学校范围与默认在售过滤），与后端 userId 分支一致
+    list = db.goods.filter(function (g) {
+      return g.userId === Number(q.userId)
     })
+  } else {
+    list = db.goods.filter(function (g) {
+      return g.status === 1
+    })
+    if (q.schoolId) {
+      list = list.filter(function (g) {
+        return g.schoolId === Number(q.schoolId)
+      })
+    }
   }
   if (q.categoryId) {
     list = list.filter(function (g) {
@@ -1611,13 +1744,21 @@ function channels() {
 }
 
 function queryPosts(q) {
-  let list = filterByScope(db.posts, q).filter(function (p) {
-    return p.status === 1
-  })
-  if (q.channelId) {
-    list = list.filter(function (p) {
-      return p.channelId === Number(q.channelId)
+  let list
+  if (q.userId) {
+    // 个人主页场景：该作者 status=1 帖子（忽略学校/频道范围），与后端 userId 分支一致
+    list = db.posts.filter(function (p) {
+      return p.userId === Number(q.userId) && p.status === 1
     })
+  } else {
+    list = filterByScope(db.posts, q).filter(function (p) {
+      return p.status === 1
+    })
+    if (q.channelId) {
+      list = list.filter(function (p) {
+        return p.channelId === Number(q.channelId)
+      })
+    }
   }
   // sort=hot：按点赞倒序（首页最热帖子）
   list.sort(q.sort === 'hot' ? byLikeDesc : byTimeDesc)
@@ -1954,10 +2095,28 @@ function toggleLike(type, id) {
 /* ============================ 路由分发 ============================ */
 
 function route(method, url, data) {
-  const path = String(url || '').split('?')[0]
+  const raw = String(url || '')
+  const qIdx = raw.indexOf('?')
+  const path = qIdx >= 0 ? raw.substring(0, qIdx) : raw
+  // 查询参数：URL 上的 query 与 data 合并（data 优先），
+  // 兼容「/user/follow/status?userId=9002」与「http.get(url, {userId})」两种调用姿势
+  let q = data || {}
+  if (qIdx >= 0) {
+    const params = {}
+    raw
+      .substring(qIdx + 1)
+      .split('&')
+      .forEach(function (kv) {
+        if (!kv) return
+        const pair = kv.split('=')
+        const k = decodeURIComponent(pair[0])
+        const v = pair.length > 1 ? decodeURIComponent(pair.slice(1).join('=')) : ''
+        if (k) params[k] = v
+      })
+    q = Object.assign({}, params, q)
+  }
   const s = path.split('/').filter(Boolean)
   const M = String(method || 'GET').toUpperCase()
-  const q = data || {}
   load()
 
   // 登录 / 学校 / 位置
@@ -1991,6 +2150,18 @@ function route(method, url, data) {
       return ok(meVO())
     }
     if (s[1] === 'verify' && M === 'POST') return submitVerify(q)
+    // 关注状态（公开；未登录 following=false，不报 401）。
+    // 与后端契约一致：data 为布尔值（R<Boolean>），true = 已关注
+    if (s[1] === 'follow' && s[2] === 'status' && M === 'GET') {
+      const targetId = Number(q.userId)
+      const me = db.session ? db.profile : null
+      return ok(!!me && !isNaN(targetId) && hasFollow(me.id, targetId))
+    }
+    // 关注 / 取消关注（需登录）
+    if (s[1] === 'follow' && s.length === 3 && M === 'POST') return ok(doFollow(s[2]))
+    if (s[1] === 'follow' && s.length === 3 && M === 'DELETE') return ok(doUnfollow(s[2]))
+    // 公开主页（未登录可访问；用户缺失或 status=0 → 404）
+    if (s.length === 3 && s[2] === 'profile' && M === 'GET') return ok(profileVO(s[1]))
   }
 
   // 二手商品

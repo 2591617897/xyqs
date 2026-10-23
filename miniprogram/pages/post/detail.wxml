@@ -1,14 +1,14 @@
 <view class="page" wx:if="{{post}}">
-  <!-- 作者栏 -->
+  <!-- 作者栏：头像 + 昵称点击进个人主页（catchtap 阻止冒泡；右上「同校」保持静态标签） -->
   <view class="author-bar">
-    <view class="ab-avatar">
+    <view class="ab-avatar" catchtap="goUserSpace">
       <image wx:if="{{post.authorAvatar}}" class="ab-avatar-img" src="{{post.authorAvatar}}" mode="aspectFill" />
       <view wx:else class="avatar-default">
         <view class="ad-head"></view>
         <view class="ad-body"></view>
       </view>
     </view>
-    <view class="ab-info">
+    <view class="ab-info" catchtap="goUserSpace">
       <view class="ab-name">{{post.authorName}}</view>
       <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
     </view>

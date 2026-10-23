@@ -1,9 +1,13 @@
 package com.campus.user.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
+import com.campus.user.client.GoodsCountClient;
+import com.campus.user.client.PostCountClient;
 import com.campus.user.dto.LoginOrCreateReq;
+import com.campus.user.dto.ProfileVO;
 import com.campus.user.dto.SchoolRegion;
 import com.campus.user.dto.UpdateProfileReq;
 import com.campus.user.dto.UserBrief;
@@ -13,6 +17,7 @@ import com.campus.user.dto.VerifyResp;
 import com.campus.user.entity.User;
 import com.campus.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +27,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserMapper userMapper;
     private final JwtService jwtService;
+    private final FollowService followService;
+    private final GoodsCountClient goodsCountClient;
+    private final PostCountClient postCountClient;
 
     @Value("${campus.verify.auto-approve:true}")
     private boolean autoApprove;
@@ -99,7 +108,40 @@ public class UserService {
         vo.setVerifyStatus(user.getVerifyStatus());
         vo.setVerifyRemark(user.getVerifyRemark());
         vo.setVerifyImg(user.getVerifyImg());
+        vo.setFansCount(nz(user.getFansCount()));
+        vo.setFollowCount(nz(user.getFollowCount()));
         vo.setCreatedAt(user.getCreatedAt());
+        return vo;
+    }
+
+    /**
+     * 公开主页资料与统计（未登录可访问，viewerId 为空）。
+     * 被封禁 / 不存在统一 404；敏感字段（手机号/学号/真实姓名/认证照片）不返回；
+     * 跨服务计数（闲置/帖子）走 Feign 聚合，失败降级 0 并打 warn，不打崩主页。
+     */
+    public ProfileVO profile(Long userId, Long viewerId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || (user.getStatus() != null && user.getStatus() == 0)) {
+            throw BizException.notFound("用户不存在或已被封禁");
+        }
+        ProfileVO vo = new ProfileVO();
+        vo.setId(user.getId());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        vo.setBio(user.getBio());
+        vo.setSchoolId(user.getSchoolId());
+        vo.setSchoolName(user.getSchoolId() == null ? null : userMapper.selectSchoolName(user.getSchoolId()));
+        vo.setVerifyStatus(user.getVerifyStatus());
+        vo.setFansCount(nz(user.getFansCount()));
+        vo.setFollowCount(nz(user.getFollowCount()));
+        boolean isSelf = viewerId != null && viewerId.equals(userId);
+        vo.setIsSelf(isSelf);
+        // 未登录 / 本人 → false
+        vo.setFollowing(!isSelf && followService.status(viewerId, userId));
+        // 跨服务计数聚合：Feign 失败降级 0 + warn 日志，主页整体不 500
+        vo.setGoodsSaleCount(goodsCount(userId, 1));
+        vo.setGoodsTotalCount(goodsCount(userId, null));
+        vo.setPostCount(postCount(userId));
         return vo;
     }
 
@@ -180,6 +222,37 @@ public class UserService {
             throw BizException.notFound("用户不存在");
         }
         return user;
+    }
+
+    /** 闲置计数聚合（status 可空 = 全部）；Feign 失败降级 0 并打 warn */
+    private int goodsCount(Long userId, Integer status) {
+        try {
+            R<Long> res = goodsCountClient.count(userId, status);
+            if (res != null && res.getData() != null && res.getData() > 0) {
+                return res.getData().intValue();
+            }
+        } catch (Exception e) {
+            log.warn("聚合闲置计数失败 userId={}, status={}: {}", userId, status, e.getMessage());
+        }
+        return 0;
+    }
+
+    /** 帖子计数聚合；Feign 失败降级 0 并打 warn */
+    private int postCount(Long userId) {
+        try {
+            R<Long> res = postCountClient.count(userId);
+            if (res != null && res.getData() != null && res.getData() > 0) {
+                return res.getData().intValue();
+            }
+        } catch (Exception e) {
+            log.warn("聚合帖子计数失败 userId={}: {}", userId, e.getMessage());
+        }
+        return 0;
+    }
+
+    /** 计数字段兜底：历史行 / 空值统一为 0 */
+    private int nz(Integer v) {
+        return v == null ? 0 : v;
     }
 
     private UserBrief toBrief(User user) {

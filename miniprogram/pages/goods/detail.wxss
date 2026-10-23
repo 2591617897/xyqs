@@ -232,10 +232,16 @@
   flex-shrink: 0;
   padding: 12rpx 32rpx;
   border-radius: 999rpx;
-  background: #f1f5f9;
-  color: #191c1e;
+  background: #11a86b;
+  color: #ffffff;
   font-size: 26rpx;
   font-weight: 600;
+}
+
+/* 已关注：幽灵样式，再次点击取消 */
+.follow-btn.on {
+  background: #f1f5f9;
+  color: #64748b;
 }
 .seller-metrics {
   display: flex;

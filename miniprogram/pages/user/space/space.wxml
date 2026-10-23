@@ -1,0 +1,147 @@
+<view class="page" wx:if="{{!notFound}}">
+  <!-- 头部卡：绿色渐变，沿用「我的」页 hero 视觉 -->
+  <view class="hero" wx:if="{{profile}}">
+    <view class="user-row">
+      <view class="user-avatar">
+        <image wx:if="{{profile.avatar}}" class="avatar-img" src="{{profile.avatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-img avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
+        </view>
+      </view>
+      <view class="user-info">
+        <view class="user-name-row">
+          <text class="user-name">{{profile.nickname}}</text>
+          <view class="verify-pill {{profile.verifyStatus === 2 ? 'ok' : ''}}">
+            <text>{{profile.verifyStatus === 2 ? '✓ 已认证' : '未认证'}}</text>
+          </view>
+        </view>
+        <view class="user-school">🎓 {{profile.schoolName || '同校同学'}}</view>
+        <view class="user-bio" wx:if="{{profile.bio}}">{{profile.bio}}</view>
+      </view>
+      <view class="follow-btn {{following ? 'on' : ''}}" wx:if="{{!profile.isSelf}}" catchtap="onFollowTap">
+        {{following ? '已关注' : '+ 关注'}}
+      </view>
+      <view class="follow-btn ghost" wx:else catchtap="goEditProfile">编辑资料</view>
+    </view>
+    <view class="stat-bar">
+      <view class="stat">
+        <view class="stat-num">{{profile.followCount}}</view>
+        <view class="stat-label">关注</view>
+      </view>
+      <view class="stat">
+        <view class="stat-num">{{profile.fansCount}}</view>
+        <view class="stat-label">粉丝</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab：帖子 / 闲置 -->
+  <view class="tabs">
+    <view class="tab {{tab === 'post' ? 'active' : ''}}" data-tab="post" bindtap="switchTab">帖子</view>
+    <view class="tab {{tab === 'goods' ? 'active' : ''}}" data-tab="goods" bindtap="switchTab">闲置</view>
+  </view>
+
+  <!-- 帖子列表 -->
+  <block wx:if="{{tab === 'post'}}">
+    <view class="feed">
+      <view
+        class="feed-item"
+        wx:for="{{posts}}"
+        wx:key="key"
+        catchtap="goPostDetail"
+        data-id="{{item.id}}"
+        hover-class="feed-hover"
+        hover-stay-time="60"
+      >
+        <view class="feed-user">
+          <view class="feed-avatar">
+            <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
+          </view>
+          <view class="feed-user-info">
+            <view class="feed-name">{{item.authorName}}</view>
+            <view class="feed-meta">
+              <text class="feed-chip chip-amber">{{item.badge}}</text>
+              <text class="feed-time">{{item.timeText}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="feed-text clamp2">{{item.title}} {{item.excerpt}}</view>
+        <view class="feed-imgs" wx:if="{{item.imageList.length > 1}}">
+          <view class="feed-img-wrap" wx:for="{{item.imageList}}" wx:for-item="img" wx:for-index="ii" wx:key="*this">
+            <image class="feed-img" src="{{img}}" mode="aspectFill" />
+            <view class="img-more" wx:if="{{ii === 2 && item.imageList.length > 3}}">+{{item.imageList.length - 3}}</view>
+          </view>
+        </view>
+        <view class="feed-actions">
+          <view class="feed-view">
+            <text class="fa-icon">👍</text>
+            <text>{{item.likeText}}</text>
+          </view>
+          <view class="feed-act">
+            <text class="fa-icon">💬</text>
+            <text>{{item.commentText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{!postsLoading && !posts.length}}">
+      <text class="empty-icon">📭</text>
+      <text>还没有发布内容</text>
+    </view>
+    <view class="list-end" wx:if="{{posts.length && postsDone}}">已经到底啦</view>
+  </block>
+
+  <!-- 闲置列表 -->
+  <block wx:elif="{{tab === 'goods'}}">
+    <view class="goods-list">
+      <view
+        class="goods-item"
+        wx:for="{{goods}}"
+        wx:key="key"
+        catchtap="goGoodsDetail"
+        data-id="{{item.id}}"
+        hover-class="feed-hover"
+        hover-stay-time="60"
+      >
+        <view class="gi-cover">
+          <image wx:if="{{item.imageList.length}}" class="gi-img" src="{{item.imageList[0]}}" mode="aspectFill" />
+          <view wx:else class="gi-img gi-img-empty">📦</view>
+          <view class="gi-status {{item.statusClass}}">{{item.statusText}}</view>
+        </view>
+        <view class="gi-info">
+          <view class="gi-title">{{item.title}}</view>
+          <view class="gi-price">
+            <text class="price-symbol">¥</text>
+            <text class="price-num">{{item.priceText}}</text>
+          </view>
+          <view class="gi-meta">
+            <text>{{item.timeText}}</text>
+            <text wx:if="{{item.location}}"> · 📍 {{item.location}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{!goodsLoading && !goods.length}}">
+      <text class="empty-icon">📭</text>
+      <text>还没有发布内容</text>
+    </view>
+    <view class="list-end" wx:if="{{goods.length && goodsDone}}">已经到底啦</view>
+  </block>
+
+  <!-- 加载中 -->
+  <view class="loading-hero" wx:if="{{(tab === 'post' ? postsLoading : goodsLoading) && !notFound}}">
+    <view class="loading-block"></view>
+    <text class="loading-text">加载中…</text>
+  </view>
+</view>
+
+<!-- 用户不存在或已被封禁 -->
+<view class="empty" wx:if="{{notFound}}">
+  <text class="empty-icon">🚫</text>
+  <text>用户不存在或已被封禁</text>
+</view>

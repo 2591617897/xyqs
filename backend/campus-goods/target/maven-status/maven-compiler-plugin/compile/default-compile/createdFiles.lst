@@ -7,6 +7,7 @@ com\campus\goods\dto\GoodsOrderReq.class
 com\campus\goods\entity\GoodsComment.class
 com\campus\goods\controller\GoodsController$CommentReq.class
 com\campus\goods\service\GoodsService.class
+com\campus\goods\controller\InternalGoodsController.class
 com\campus\goods\entity\GoodsOrder.class
 com\campus\goods\controller\GoodsController.class
 com\campus\goods\dto\GoodsReq.class

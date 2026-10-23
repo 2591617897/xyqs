@@ -141,11 +141,11 @@
           <view class="g2-sub">{{stats.favorites}} 个帖子闲置</view>
         </view>
       </view>
-      <view class="g2-item" bindtap="demoEntry" data-name="浏览足迹">
-        <view class="g2-icon gi-slate">🕘</view>
+      <view class="g2-item" bindtap="goMyFollows">
+        <view class="g2-icon gi-pink">👥</view>
         <view class="g2-main">
-          <view class="g2-title">浏览足迹</view>
-          <view class="g2-sub">今日已看 24 条</view>
+          <view class="g2-title">我的关注</view>
+          <view class="g2-sub">{{followCount}} 关注 · {{fansCount}} 粉丝</view>
         </view>
       </view>
     </view>

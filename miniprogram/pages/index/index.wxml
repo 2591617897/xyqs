@@ -63,14 +63,14 @@
     </view>
 
     <view class="hot-user">
-      <view class="hot-avatar">
+      <view class="hot-avatar" catchtap="goUserSpace" data-id="{{hotPost.authorId}}">
         <image wx:if="{{hotPost.avatar}}" class="hot-avatar-img" src="{{hotPost.avatar}}" mode="aspectFill" />
         <view wx:else class="avatar-default">
           <view class="ad-head"></view>
           <view class="ad-body"></view>
         </view>
       </view>
-      <view class="flex1">
+      <view class="flex1" catchtap="goUserSpace" data-id="{{hotPost.authorId}}">
         <text class="hot-name">{{hotPost.authorName}}</text>
         <text class="hot-meta">{{hotPost.badge}} · {{hotPost.timeText}}</text>
       </view>
@@ -123,16 +123,16 @@
       hover-class="feed-hover"
       hover-stay-time="60"
     >
-      <!-- 作者行：头像 + 昵称 + 标签/关注 -->
+      <!-- 作者行：头像 + 昵称 + 标签/关注（头像与昵称区 catchtap 阻止冒泡到卡片详情跳转） -->
       <view class="feed-user">
-        <view class="feed-avatar">
+        <view class="feed-avatar" catchtap="goUserSpace" data-id="{{item.authorId}}">
           <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
           <view wx:else class="avatar-default">
             <view class="ad-head"></view>
             <view class="ad-body"></view>
           </view>
         </view>
-        <view class="feed-user-info">
+        <view class="feed-user-info" catchtap="goUserSpace" data-id="{{item.authorId}}">
           <view class="feed-name-row">
             <text class="feed-name">{{item.authorName}}</text>
           </view>
@@ -142,7 +142,9 @@
           </view>
         </view>
         <text class="feed-status" wx:if="{{item.type === 'goods'}}">闲置中</text>
-        <view class="follow-btn" wx:else catchtap="onFollow">+ 关注</view>
+        <view class="follow-btn" wx:else catchtap="onFollow" data-id="{{item.authorId}}">
+          {{followedAuthors[item.authorId].following ? '已关注' : '+ 关注'}}
+        </view>
       </view>
 
       <!-- 正文主体：单图时右侧缩略图 -->

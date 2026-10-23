@@ -36,12 +36,28 @@ CREATE TABLE IF NOT EXISTS t_user (
   verify_img    VARCHAR(255) DEFAULT NULL COMMENT '学生证/校园卡照片',
   verify_remark VARCHAR(255) DEFAULT NULL COMMENT '驳回原因',
   bio           VARCHAR(255) DEFAULT NULL,
+  fans_count    INT          NOT NULL DEFAULT 0 COMMENT '粉丝数（关注关系计数器，与 t_follow 对账见 R19）',
+  follow_count  INT          NOT NULL DEFAULT 0 COMMENT '关注数（关注关系计数器）',
   status        TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0封禁',
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_platform_openid (platform, openid),
   KEY idx_school (school_id, verify_status)
 ) COMMENT '用户';
+
+-- 关注关系（关注/粉丝）
+-- uk_pair：幂等 + 防重复关注；idx_followee：粉丝列表/粉丝计数；idx_follower：关注列表/关注计数。
+-- 计数维护：关注/取消在同一事务内更新被关注者 fans_count 与关注者 follow_count，
+-- UPDATE 用 greatest(x + delta, 0) 防负数；历史数据漂移对账脚本为 P2（R19）。
+CREATE TABLE IF NOT EXISTS t_follow (
+  id          BIGINT      NOT NULL PRIMARY KEY COMMENT '雪花ID',
+  follower_id BIGINT      NOT NULL COMMENT '关注者（谁发起关注）',
+  followee_id BIGINT      NOT NULL COMMENT '被关注者',
+  created_at  DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
+  UNIQUE KEY uk_pair (follower_id, followee_id),
+  KEY idx_followee (followee_id, created_at),
+  KEY idx_follower (follower_id, created_at)
+) COMMENT '关注关系';
 
 -- 二手商品
 CREATE TABLE IF NOT EXISTS t_goods (

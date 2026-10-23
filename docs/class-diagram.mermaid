@@ -1,0 +1,116 @@
+%% 关注 / 粉丝与个人主页 · 类图
+%% 来源：docs/DESIGN-关注粉丝与个人主页.md 3
+classDiagram
+    direction LR
+
+    class Follow {
+        +Long id
+        +Long followerId
+        +Long followeeId
+        +LocalDateTime createdAt
+    }
+
+    class User {
+        +Long id
+        +String platform
+        +String openid
+        +String nickname
+        +String avatar
+        +Long schoolId
+        +Integer verifyStatus
+        +Integer status
+        +String bio
+        +Integer fansCount
+        +Integer followCount
+    }
+
+    class FollowMapper {
+        +int countByFollower(Long followerId)
+        +int countByFollowee(Long followeeId)
+        +int countPair(Long followerId, Long followeeId)
+    }
+
+    class UserMapper {
+        +int incrFans(Long id, int delta)
+        +int incrFollow(Long id, int delta)
+        +String selectSchoolName(Long schoolId)
+    }
+
+    class FollowService {
+        +FollowResp follow(Long followerId, Long followeeId)
+        +FollowResp unfollow(Long followerId, Long followeeId)
+        +boolean status(Long followerId, Long followeeId)
+    }
+
+    class UserService {
+        +ProfileVO profile(Long userId, Long viewerId)
+        +UserVO me(Long userId)
+        +List~UserBrief~ briefs(List~Long~ userIds)
+    }
+
+    class FollowController {
+        +R~FollowResp~ follow(Long userId)
+        +R~FollowResp~ unfollow(Long userId)
+        +R~Boolean~ status(Long userId)
+    }
+
+    class UserController {
+        +R~ProfileVO~ profile(Long userId)
+        +R~UserVO~ me()
+    }
+
+    class FollowResp {
+        +Boolean following
+        +Integer fansCount
+    }
+
+    class ProfileVO {
+        +Long id
+        +String nickname
+        +String avatar
+        +String bio
+        +Long schoolId
+        +String schoolName
+        +Integer verifyStatus
+        +Integer fansCount
+        +Integer followCount
+        +Boolean following
+        +Boolean isSelf
+        +Integer goodsSaleCount
+        +Integer goodsTotalCount
+        +Integer postCount
+    }
+
+    class GoodsCountClient {
+        <<interface>>
+        +R~Long~ count(Long userId, Integer status)
+    }
+
+    class PostCountClient {
+        <<interface>>
+        +R~Long~ count(Long userId)
+    }
+
+    class InternalGoodsController {
+        +R~Long~ count(Long userId, Integer status)
+    }
+
+    class InternalPostController {
+        +R~Long~ count(Long userId)
+    }
+
+    FollowMapper --|> BaseMapper : 继承
+    UserMapper --|> BaseMapper : 继承
+    FollowMapper --> Follow : 操作
+    UserMapper --> User : 操作
+    FollowService --> FollowMapper : 使用
+    FollowService --> UserMapper : 计数更新
+    FollowService ..> FollowResp : 返回
+    UserService --> UserMapper : 使用
+    UserService --> GoodsCountClient : Feign
+    UserService --> PostCountClient : Feign
+    UserService ..> ProfileVO : 返回
+    FollowController --> FollowService : 调用
+    UserController --> UserService : 调用
+    GoodsCountClient ..> InternalGoodsController : HTTP /internal/goods/count
+    PostCountClient ..> InternalPostController : HTTP /internal/posts/count

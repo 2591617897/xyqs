@@ -74,6 +74,32 @@ public class PostService {
         return pageInternal(channelId, null, city, page, size, userId, null);
     }
 
+    /**
+     * 个人主页：按作者分页（status=1，按时间倒序）。
+     * 复用 decorate / channelMap / likedIds，返回结构与信息流一致。
+     */
+    public R.Page<Post> pageByUser(Long userId, long page, long size, Long viewerId) {
+        Page<Post> p = postMapper.selectPage(new Page<>(page, size), Wrappers.<Post>lambdaQuery()
+                .eq(Post::getUserId, userId)
+                .eq(Post::getStatus, 1)
+                .orderByDesc(Post::getCreatedAt));
+        Map<Long, Channel> channelMap = channelMap(p.getRecords());
+        Set<Long> liked = likedIds(p.getRecords().stream().map(Post::getId).toList(), viewerId);
+        p.getRecords().forEach(post -> {
+            decorate(post, channelMap, viewerId);
+            post.setLiked(liked.contains(post.getId()));
+        });
+        return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
+    }
+
+    /** 内部计数：该作者 status=1 帖子数（供个人主页聚合，campus-user Feign 调用） */
+    public long countByUser(Long userId) {
+        Long cnt = postMapper.selectCount(Wrappers.<Post>lambdaQuery()
+                .eq(Post::getUserId, userId)
+                .eq(Post::getStatus, 1));
+        return cnt == null ? 0 : cnt;
+    }
+
     private R.Page<Post> pageInternal(Long channelId, Long schoolId, String city,
                                       long page, long size, Long userId, String sort) {
         List<Long> citySchoolIds = null;

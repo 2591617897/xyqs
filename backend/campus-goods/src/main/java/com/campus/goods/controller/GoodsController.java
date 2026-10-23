@@ -31,16 +31,21 @@ public class GoodsController {
 
     private final GoodsService goodsService;
 
-    /** 商品列表（未登录也可浏览） */
+    /**
+     * 商品列表（未登录也可浏览）。
+     * userId：个人主页按作者过滤，返回该作者全部状态商品（0下架/1在售/2已售出），
+     * 不加 status=1 与学校范围过滤；不传时行为与现状完全一致。
+     */
     @GetMapping
     public R<R.Page<Goods>> page(@RequestParam(required = false, name = "keyword") String keyword,
                                  @RequestParam(required = false, name = "categoryId") Integer categoryId,
                                  @RequestParam(required = false, defaultValue = "latest", name = "sort") String sort,
                                  @RequestParam(defaultValue = "1", name = "page") long page,
                                  @RequestParam(defaultValue = "10", name = "size") long size,
-                                 @RequestParam(required = false, name = "schoolId") Long schoolId) {
+                                 @RequestParam(required = false, name = "schoolId") Long schoolId,
+                                 @RequestParam(required = false, name = "userId") Long userId) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
-        return R.ok(goodsService.page(keyword, categoryId, sort, page, size, scope));
+        return R.ok(goodsService.page(keyword, categoryId, sort, page, size, scope, userId));
     }
 
     @GetMapping("/categories")

@@ -48,6 +48,12 @@ public class User {
 
     private String bio;
 
+    /** 粉丝数（关注关系计数器，greatest 防负数） */
+    private Integer fansCount;
+
+    /** 关注数（关注关系计数器，greatest 防负数） */
+    private Integer followCount;
+
     private Integer status;
 
     @TableField(fill = FieldFill.INSERT)

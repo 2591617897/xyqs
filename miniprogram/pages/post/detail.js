@@ -80,6 +80,13 @@ Page({
     this.loadComments()
   },
 
+  /** 作者栏跳转：进对方个人主页（catchtap 已阻止冒泡） */
+  goUserSpace: function () {
+    const post = this.data.post
+    if (!post || !post.userId) return
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + post.userId })
+  },
+
   /* ---------- 评论排序 ---------- */
   switchSort: function (e) {
     const sort = e.currentTarget.dataset.sort

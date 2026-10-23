@@ -54,7 +54,7 @@
     <!-- 卖家卡 -->
     <view class="card">
       <view class="seller-row">
-        <view class="seller-avatar-wrap">
+        <view class="seller-avatar-wrap" catchtap="goUserSpace">
           <image wx:if="{{goods.sellerAvatar}}" class="seller-avatar" src="{{goods.sellerAvatar}}" mode="aspectFill" binderror="onAvatarError" />
           <view wx:else class="seller-avatar">
             <view class="avatar-default">
@@ -64,14 +64,14 @@
           </view>
           <view class="seller-check">✓</view>
         </view>
-        <view class="seller-info">
+        <view class="seller-info" catchtap="goUserSpace">
           <view class="seller-name-row">
             <text class="seller-name">{{goods.sellerName}}</text>
             <text class="seller-verified">已实名学生认证</text>
           </view>
           <view class="seller-school">🎓 {{goods.schoolName || '同校同学'}} · 发布于 {{goods.timeText}}</view>
         </view>
-        <view class="follow-btn" catchtap="onFollow">关注</view>
+        <view class="follow-btn {{following ? 'on' : ''}}" wx:if="{{!isOwner}}" catchtap="onFollow">{{following ? '已关注' : '关注'}}</view>
       </view>
       <view class="seller-metrics">
         <view class="metric" wx:for="{{goods.sellerMeta}}" wx:key="top">

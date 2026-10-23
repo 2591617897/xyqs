@@ -16,6 +16,9 @@ Page({
     scopeShow: false,
     geoCity: null,
     stats: { goods: 0, favorites: 0, orders: 0 },
+    // 关注 / 粉丝数（来自 /user/me）
+    fansCount: 0,
+    followCount: 0,
     loading: true,
     showOrders: false,
     orderRole: 'buyer',
@@ -94,7 +97,9 @@ Page({
       self.setData({
         user: me,
         logged: true,
-        loading: false
+        loading: false,
+        fansCount: me.fansCount || 0,
+        followCount: me.followCount || 0
       })
       auth.updateUser({
         id: me.id,
@@ -184,6 +189,8 @@ Page({
           logged: false,
           user: null,
           stats: { goods: 0, favorites: 0, orders: 0 },
+          fansCount: 0,
+          followCount: 0,
           buyerOrders: [],
           sellerOrders: []
         })
@@ -210,6 +217,20 @@ Page({
     if (!this.guard()) return
     getApp().globalData.goodsMode = 'fav'
     mp.switchTab({ url: '/pages/goods/list' })
+  },
+
+  /**
+   * 「我的关注」入口：P0 先跳自己的个人主页（isSelf 显示「编辑资料」），
+   * P1 关注/粉丝列表页（pages/user/follows）上线后再替换。
+   */
+  goMyFollows: function () {
+    if (!this.guard()) return
+    const user = this.data.user || getApp().globalData.user
+    if (!user || !user.id) {
+      toast('还没有登录，请先登录')
+      return
+    }
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + user.id })
   },
 
   openOrders: function () {

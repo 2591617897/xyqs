@@ -90,6 +90,9 @@ async function main() {
   await call('GET /posts', 'GET', '/posts?page=1&size=2')
   await call('GET /channels', 'GET', '/channels')
   await call('GET /wall/posts', 'GET', '/wall/posts?page=1&size=2')
+  // 关注 / 粉丝与个人主页：公开读（不带 token 也不应 401）
+  await call('GET /user/{id}/profile', 'GET', '/user/9002/profile')
+  await call('GET /user/follow/status', 'GET', '/user/follow/status?userId=9002')
 
   console.log('\n[2] 登录')
   const login = await call('POST /auth/login', 'POST', '/auth/login', {
@@ -106,6 +109,14 @@ async function main() {
     await call('GET /goods/mine', 'GET', '/goods/mine', null, token)
     await call('GET /goods/favorites', 'GET', '/goods/favorites', null, token)
     await call('GET /goods/orders/mine', 'GET', '/goods/orders/mine?role=buyer', null, token)
+    // 关注 / 粉丝与个人主页：状态查询 + 关注 + 取消（保持幂等，可重复执行）
+    await call('GET /user/follow/status', 'GET', '/user/follow/status?userId=9002', null, token)
+    await call('POST /user/follow/{id}', 'POST', '/user/follow/9002', null, token)
+    await call('POST /user/follow/{id}（幂等）', 'POST', '/user/follow/9002', null, token)
+    await call('DELETE /user/follow/{id}', 'DELETE', '/user/follow/9002', null, token)
+    // 列表按作者过滤（个人主页内容聚合）
+    await call('GET /posts?userId=', 'GET', '/posts?userId=9002&page=1&size=2', null, token)
+    await call('GET /goods?userId=', 'GET', '/goods?userId=9002&page=1&size=2', null, token)
 
     const detail = await call('GET /goods/{id}', 'GET', '/goods/' + (await firstGoodsId()), null, token)
     if (detail.body && detail.body.data) {

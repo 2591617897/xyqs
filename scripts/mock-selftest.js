@@ -197,5 +197,66 @@ call('POST', '/auth/login', {})
 check('仍是我发布的数据', call('GET', '/goods/mine').data.length === 2)
 check('认证状态保留', call('GET', '/user/me').data.verifyStatus === 2)
 
+console.log('\n[12] 关注 / 粉丝与个人主页')
+// 未登录：主页可读、状态为 false、写操作 401
+mock.logout()
+const anonStatus = call('GET', '/user/follow/status?userId=9002')
+check('未登录关注状态为 false', anonStatus.code === 0 && anonStatus.data === false, anonStatus)
+const anonProfile = call('GET', '/user/9002/profile')
+check('未登录可访问公开主页', anonProfile.code === 0 && anonProfile.data.nickname === '陈屿')
+check('未登录 following=false', anonProfile.data.following === false)
+check('未登录 isSelf=false', anonProfile.data.isSelf === false)
+check(
+  '主页不含敏感字段',
+  anonProfile.data.phone === undefined &&
+    anonProfile.data.studentNo === undefined &&
+    anonProfile.data.realName === undefined,
+  anonProfile.data
+)
+check('主页 404（不存在的用户）', call('GET', '/user/9999/profile').code === 404)
+check('未登录关注被拦（401）', call('POST', '/user/follow/9002').code === 401)
+check('未登录取消关注被拦（401）', call('DELETE', '/user/follow/9002').code === 401)
+
+// 登录后：me 带计数、主页关系态
+call('POST', '/auth/login', {})
+const meVO = call('GET', '/user/me')
+check('me 带 fansCount/followCount', typeof meVO.data.fansCount === 'number' && typeof meVO.data.followCount === 'number', meVO.data)
+check('我的粉丝数=2（初始 9003/9005→9001）', meVO.data.fansCount === 2, meVO.data.fansCount)
+check('我的关注数=1（初始 9001→9002）', meVO.data.followCount === 1, meVO.data.followCount)
+const selfProfile = call('GET', '/user/9001/profile')
+check('本人主页 isSelf=true', selfProfile.data.isSelf === true)
+check('本人主页 following=false', selfProfile.data.following === false)
+
+// 关注 9003：计数联动 + 幂等
+const fansBefore = call('GET', '/user/9003/profile').data.fansCount
+const followed = call('POST', '/user/follow/9003')
+check('关注成功', followed.code === 0 && followed.data.following === true && followed.data.fansCount === fansBefore + 1, followed.data)
+check('重复关注幂等（计数不涨）', call('POST', '/user/follow/9003').data.fansCount === fansBefore + 1)
+check('我的关注数 +1', call('GET', '/user/me').data.followCount === 2)
+check('关注状态为 true', call('GET', '/user/follow/status?userId=9003').data === true)
+const p3 = call('GET', '/user/9003/profile')
+check('主页 following=true', p3.data.following === true)
+check('主页 fansCount 已 +1', p3.data.fansCount === fansBefore + 1)
+
+// 取消关注：计数 -1 + 幂等
+const unfollowed = call('DELETE', '/user/follow/9003')
+check('取消关注成功', unfollowed.code === 0 && unfollowed.data.following === false && unfollowed.data.fansCount === fansBefore, unfollowed.data)
+check('未关注再取消仍成功（幂等）', call('DELETE', '/user/follow/9003').code === 0)
+check('我的关注数回到 1', call('GET', '/user/me').data.followCount === 1)
+check('取消后状态为 false', call('GET', '/user/follow/status?userId=9003').data === false)
+
+// 业务校验
+check('关注自己被拦（400）', call('POST', '/user/follow/9001').code === 400)
+check('关注不存在的用户（404）', call('POST', '/user/follow/9999').code === 404)
+
+// 列表按作者过滤 + 主页计数与列表一致
+const userPosts = call('GET', '/posts', { userId: 9002, page: 1, size: 10 })
+check('该作者帖子分页结构完整', userPosts.code === 0 && typeof userPosts.data.total === 'number' && typeof userPosts.data.hasMore === 'boolean')
+check('该作者帖子全部属于该作者', userPosts.data.records.every((p) => p.userId === 9002))
+const userGoods = call('GET', '/goods', { userId: 9002, page: 1, size: 10 })
+check('该作者商品全部属于该作者', userGoods.data.records.every((g) => g.userId === 9002))
+check('主页帖子数与列表一致', call('GET', '/user/9002/profile').data.postCount === userPosts.data.total)
+check('主页在售数与列表一致', call('GET', '/user/9002/profile').data.goodsSaleCount === userGoods.data.records.filter((g) => g.status === 1).length)
+
 console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
 process.exit(fail ? 1 : 0)

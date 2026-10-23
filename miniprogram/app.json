@@ -6,6 +6,7 @@
     "pages/wall/detail",
     "pages/user/index",
     "pages/user/profile",
+    "pages/user/space/space",
     "pages/goods/detail",
     "pages/goods/publish",
     "pages/post/list",

@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, priceText, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
+const followMod = require('../../utils/follow')
 const { resolveList } = require('../../utils/img')
 
 Page({
@@ -23,7 +24,10 @@ Page({
     errorMsg: '',
     unread: 0,
     hotPost: null,
-    hotComment: null
+    hotComment: null,
+    // 信息流关注态：{ [authorId]: {following, loading} }。
+    // 列表没有批量关注状态接口，关注态只在本页内存中维护，刷新后重置（允许不持久化）
+    followedAuthors: {}
   },
 
   onShow: function () {
@@ -145,6 +149,7 @@ Page({
           type: 'post',
           key: 'post-' + p.id,
           id: p.id,
+          authorId: p.userId,
           authorName: p.authorName || '校园用户',
           avatar: p.authorAvatar || '',
           avatarText: (p.authorName || '校').substring(0, 1),
@@ -171,6 +176,7 @@ Page({
           type: 'goods',
           key: 'goods-' + g.id,
           id: g.id,
+          authorId: g.userId,
           authorName: g.sellerName || '校园用户',
           avatar: g.sellerAvatar || '',
           avatarText: (g.sellerName || '校').substring(0, 1),
@@ -218,6 +224,7 @@ Page({
       }
       const hotPost = {
         id: hot.id,
+        authorId: hot.userId,
         authorName: hot.authorName || '校园用户',
         avatar: hot.authorAvatar || '',
         timeText: timeAgo(hot.createdAt),
@@ -406,9 +413,39 @@ Page({
     mp.navigateTo({ url: '/pages/post/detail?id=' + id })
   },
 
-  /** 关注按钮：占位交互 */
-  onFollow: function () {
-    toast('关注功能即将上线，先去评论区互动吧')
+  /** 作者行跳转：进对方个人主页（catchtap 已阻止冒泡到卡片详情跳转） */
+  goUserSpace: function (e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + id })
+  },
+
+  /**
+   * 首页「+ 关注」：真实关注 / 取消（乐观更新 + 防重复点击）。
+   * 列表无批量关注状态接口，关注态仅维护在本页 followedAuthors 内存中，
+   * 下拉刷新/重进页面会重置（设计文档 T05 允许列表态不持久化）。
+   */
+  onFollow: function (e) {
+    const authorId = e.currentTarget.dataset.id
+    if (!authorId) return
+    const self = this
+    const cur = this.data.followedAuthors[authorId] || { following: false, loading: false }
+    if (cur.loading) return
+    const next = !cur.following
+    const patch = {}
+    patch['followedAuthors[' + authorId + ']'] = { following: next, loading: true }
+    this.setData(patch)
+    followMod.toggle(authorId, cur.following).then(function (res) {
+      const map = self.data.followedAuthors
+      map[authorId] = { following: !!res.following, loading: false }
+      self.setData({ followedAuthors: map })
+    }).catch(function () {
+      // 回滚到操作前状态
+      const map = self.data.followedAuthors
+      map[authorId] = { following: cur.following, loading: false }
+      self.setData({ followedAuthors: map })
+      toast('操作失败，请重试')
+    })
   },
 
   /** 附件卡片：占位交互 */

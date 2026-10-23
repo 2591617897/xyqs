@@ -47,5 +47,11 @@ public class UserVO {
 
     private String verifyImg;
 
+    /** 粉丝数（「我的」页展示，Integer 保持数字） */
+    private Integer fansCount;
+
+    /** 关注数（「我的」页展示，Integer 保持数字） */
+    private Integer followCount;
+
     private LocalDateTime createdAt;
 }

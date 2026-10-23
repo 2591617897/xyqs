@@ -1,0 +1,67 @@
+%% 关注 / 取消关注（含幂等、自关注校验、封禁校验、乐观更新）
+%% 来源：docs/DESIGN-关注粉丝与个人主页.md 4.1
+sequenceDiagram
+    participant MP as 小程序 space 页
+    participant GW as campus-gateway
+    participant FC as FollowController
+    participant FS as FollowService
+    participant FM as FollowMapper
+    participant UM as UserMapper
+
+    MP->>MP: 乐观更新：按钮切换 + 粉丝数 ±1（followLoading 防重复点击）
+    MP->>GW: POST /api/user/follow/{userId}（Bearer token）
+    GW->>GW: AuthGlobalFilter 校验 JWT，注入 X-User-Id
+    GW->>FC: 转发 /user/follow/{userId}
+    FC->>FS: follow(followerId, followeeId)
+    FS->>FS: followerId = followeeId → 400 不能关注自己
+    FS->>UM: selectById(followeeId)
+    UM-->>FS: User
+    FS->>FS: 不存在或 status=0 → 404 对方不存在或已被封禁
+    FS->>FM: countPair(followerId, followeeId)
+    FM-->>FS: 0（首次） / 1（已关注，幂等跳过计数）
+    alt 首次关注
+        FS->>FM: insert(t_follow)（uk_pair 冲突则按已关注处理）
+        FS->>UM: incrFans(followeeId, +1)
+        FS->>UM: incrFollow(followerId, +1)
+    end
+    FS-->>FC: FollowResp{following:true, fansCount}
+    FC-->>MP: {code:0, data:{following, fansCount}}
+    MP->>MP: 以服务端 fansCount 校正；失败则回滚并 toast「操作失败，请重试」
+    Note over MP,UM: DELETE /user/follow/{userId} 同构：delete 关系行 + 两条计数 -1；未关注也返回成功
+
+%% 个人主页加载（未登录可访问 + 跨服务计数聚合）
+%% 来源：docs/DESIGN-关注粉丝与个人主页.md 4.2
+sequenceDiagram
+    participant MP as 小程序 space 页
+    participant GW as campus-gateway
+    participant UC as UserController
+    participant US as UserService
+    participant UM as UserMapper
+    participant GC as GoodsCountClient
+    participant PC as PostCountClient
+    participant GS as campus-goods
+    participant PS as campus-post
+
+    MP->>GW: GET /api/user/{userId}/profile（可无 token）
+    GW->>GW: 精确匹配 ^/api/user/\d+/profile$ → 公开读放行（有 token 则注入 X-User-Id）
+    GW->>UC: 转发
+    UC->>US: profile(userId, UserContext.userId())
+    US->>UM: selectById(userId)
+    UM-->>US: User
+    US->>US: 不存在或 status=0 → 404 用户不存在或已被封禁
+    US->>FM2: countPair(viewerId, userId) → following（未登录/本人 = false）
+    US->>GC: GET /internal/goods/count?userId=&status=1
+    GC->>GS: Feign（lb://campus-goods）
+    GS-->>US: 在售数
+    US->>GC: GET /internal/goods/count?userId=
+    GS-->>US: 累计发布数
+    US->>PC: GET /internal/posts/count?userId=
+    PS-->>US: 帖子数
+    Note over US: Feign 异常 → 计数降级 0 + warn 日志，不抛错
+    US-->>MP: ProfileVO（Long 已全局序列化为字符串）
+    MP->>GW: GET /api/posts?userId={userId}&page=1&size=10
+    GW->>PS: 分页（只看该作者 status=1）
+    PS-->>MP: {records,total,page,size,hasMore}
+    MP->>GW: GET /api/goods?userId={userId}&page=1&size=10
+    GW->>GS: 分页（该作者全部状态）
+    GS-->>MP: {records,total,page,size,hasMore}

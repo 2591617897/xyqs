@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, priceText, mp, categoryEmoji, conditionText, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
+const followMod = require('../../utils/follow')
 const { resolveList } = require('../../utils/img')
 
 const EMOJIS = [
@@ -19,6 +20,8 @@ Page({
     loadError: false,
     isOwner: false,
     liked: false,
+    following: false,
+    followLoading: false,
     galleryIndex: 1,
     showOrder: false,
     message: '',
@@ -107,6 +110,12 @@ Page({
       })
       mp.setNavigationBarTitle({ title: g.title })
       self.loadComments()
+      // 非本人且有卖家 id：静默拉关注状态初始化按钮文案（未登录返回 false，不打扰）
+      if (!isOwner && g.userId) {
+        http.get('/user/follow/status?userId=' + g.userId, null, { silent: true }).then(function (res) {
+          self.setData({ following: !!res })
+        }).catch(function () {})
+      }
     }).catch(function (err) {
       const notFound = err && err.code === 404
       self.setData({ loading: false, loadError: !notFound })
@@ -451,8 +460,30 @@ Page({
     mp.previewImage({ current: url, urls: [url] })
   },
 
-  /** 关注卖家：占位交互 */
+  /** 卖家卡跳转：进对方个人主页（catchtap 已阻止冒泡） */
+  goUserSpace: function () {
+    const g = this.data.goods
+    if (!g || !g.userId) return
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + g.userId })
+  },
+
+  /**
+   * 关注 / 取消关注卖家（乐观更新 + followLoading 防重复点击，失败回滚）。
+   */
   onFollow: function () {
-    toast('关注功能即将上线，先「聊一聊」吧')
+    if (this.data.followLoading) return
+    const self = this
+    const g = this.data.goods
+    if (!g || !g.userId) return
+    const prev = this.data.following
+    const next = !prev
+    this.setData({ followLoading: true, following: next })
+    followMod.toggle(g.userId, prev).then(function (res) {
+      self.setData({ followLoading: false, following: !!res.following })
+      toast(next ? '已关注' : '已取消关注')
+    }).catch(function () {
+      self.setData({ followLoading: false, following: prev })
+      toast('操作失败，请重试')
+    })
   }
 })

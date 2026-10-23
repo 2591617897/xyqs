@@ -22,12 +22,16 @@ import reactor.core.publisher.Mono;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * 全局鉴权过滤器：
  * 1. 白名单直接放行（登录、学校字典、内容只读接口）
- * 2. 其余请求必须携带有效 JWT
- * 3. 校验通过后把身份写入下游 Header，并清除客户端伪造的同名 Header
+ * 2. 公开读放行：GET /api/user/{userId}/profile 与 GET /api/user/follow/status
+ *    （精确路径匹配，不放宽 /api/user 前缀，避免误开 /user/me 等私域接口）
+ * 3. 其余请求必须携带有效 JWT
+ * 4. 校验通过后把身份写入下游 Header，并清除客户端伪造的同名 Header
+ *    （公开读接口若带了有效 token，同样会注入身份，供「是否已关注」判定）
  */
 @Slf4j
 @Component
@@ -40,6 +44,11 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels");
     /** 这些前缀虽然是 GET，但属于「我的」私域数据，必须登录 */
     private static final List<String> PRIVATE_HINTS = List.of("/mine", "/orders", "/favorite");
+    /**
+     * 公开个人主页：GET /api/user/{userId}/profile（userId 为纯数字）。
+     * 只放行精确匹配，不放宽 /api/user 前缀——否则 /user/me 等私域接口会被误开。
+     */
+    private static final Pattern PUBLIC_PROFILE = Pattern.compile("^/api/user/\\d+/profile$");
 
     private final SecretKey key;
 
@@ -55,9 +64,13 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         String method = request.getMethod() == null ? "GET" : request.getMethod().name();
 
         boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith);
-        boolean publicRead = "GET".equals(method)
+        // 公开读：GET /api/user/{数字}/profile 与 GET /api/user/follow/status（精确匹配，全等）
+        boolean publicProfile = "GET".equals(method) && PUBLIC_PROFILE.matcher(path).matches();
+        boolean publicFollowStatus = "GET".equals(method) && "/api/user/follow/status".equals(path);
+        boolean publicRead = publicProfile || publicFollowStatus
+                || ("GET".equals(method)
                 && PUBLIC_READ_PREFIX.stream().anyMatch(path::startsWith)
-                && PRIVATE_HINTS.stream().noneMatch(path::contains);
+                && PRIVATE_HINTS.stream().noneMatch(path::contains));
 
         Claims claims = null;
         String token = resolveToken(request);

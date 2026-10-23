@@ -1,6 +1,7 @@
 com\campus\post\entity\Channel.class
 com\campus\post\mapper\ChannelMapper.class
 com\campus\post\mapper\PostMapper.class
+com\campus\post\controller\InternalPostController.class
 com\campus\post\service\PostService.class
 com\campus\post\controller\PostController.class
 com\campus\post\PostApplication.class

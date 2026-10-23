@@ -57,17 +57,28 @@ public class GoodsService {
         return CATEGORIES;
     }
 
+    /**
+     * 商品分页。
+     * userId 非空（个人主页场景）：返回该作者全部状态商品，不加 status=1 与学校范围过滤；
+     * userId 为空：行为与现状完全一致（在售 + 学校范围 + 排序）。
+     */
     public R.Page<Goods> page(String keyword, Integer categoryId, String sort,
-                              long page, long size, Long schoolId) {
-        LambdaQueryWrapper<Goods> w = Wrappers.<Goods>lambdaQuery().eq(Goods::getStatus, 1);
+                              long page, long size, Long schoolId, Long userId) {
+        LambdaQueryWrapper<Goods> w = Wrappers.<Goods>lambdaQuery();
+        if (userId != null) {
+            // 个人主页：作者全部状态（前端渲染状态标签）
+            w.eq(Goods::getUserId, userId);
+        } else {
+            w.eq(Goods::getStatus, 1);
+            if (schoolId != null && schoolId > 0) {
+                w.eq(Goods::getSchoolId, schoolId);
+            }
+        }
         if (StringUtils.hasText(keyword)) {
             w.and(q -> q.like(Goods::getTitle, keyword).or().like(Goods::getDescription, keyword));
         }
         if (categoryId != null && categoryId > 0) {
             w.eq(Goods::getCategoryId, categoryId);
-        }
-        if (schoolId != null && schoolId > 0) {
-            w.eq(Goods::getSchoolId, schoolId);
         }
         switch (sort == null ? "latest" : sort) {
             case "price_asc" -> w.orderByAsc(Goods::getPrice);
@@ -78,6 +89,17 @@ public class GoodsService {
         Page<Goods> p = goodsMapper.selectPage(new Page<>(page, size), w);
         p.getRecords().forEach(this::fillExtra);
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
+    }
+
+    /**
+     * 内部计数：该作者商品数（status 可空 = 全部；已物理删除的不计）。
+     * 供个人主页「闲置在售 / 累计发布」聚合，campus-user Feign 调用。
+     */
+    public long countByUser(Long userId, Integer status) {
+        Long cnt = goodsMapper.selectCount(Wrappers.<Goods>lambdaQuery()
+                .eq(Goods::getUserId, userId)
+                .eq(status != null, Goods::getStatus, status));
+        return cnt == null ? 0 : cnt;
     }
 
     public Goods detail(Long id, Long userId) {

@@ -39,15 +39,21 @@ public class PostController {
      * 帖子分页。
      * scope=school（默认）：本校帖子；scope=city：city 指定城市（缺省取用户学校所在市）下所有高校的帖子。
      * sort=hot：按点赞数倒序（首页「最热帖子」用）。
+     * userId：个人主页按作者过滤，只返回该作者 status=1 的帖子（忽略 school/city 范围）。
      */
     @GetMapping("/posts")
     public R<R.Page<Post>> page(@RequestParam(required = false, name = "channelId") Long channelId,
                                 @RequestParam(required = false, name = "schoolId") Long schoolId,
                                 @RequestParam(required = false, name = "scope") String scope,
                                 @RequestParam(required = false, name = "city") String city,
+                                @RequestParam(required = false, name = "userId") Long userId,
                                 @RequestParam(defaultValue = "1", name = "page") long page,
                                 @RequestParam(defaultValue = "10", name = "size") long size,
                                 @RequestParam(required = false, name = "sort") String sort) {
+        // 个人主页：按作者过滤，跳过 school/city 范围逻辑
+        if (userId != null) {
+            return R.ok(postService.pageByUser(userId, page, size, UserContext.userId()));
+        }
         Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
         if ("city".equalsIgnoreCase(scope)) {
             String targetCity = city != null && !city.isBlank() ? city : postService.cityOfSchool(schoolScope);
