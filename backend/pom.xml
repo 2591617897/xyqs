@@ -102,5 +102,25 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <!--
+              关键：Spring 6 / Spring Boot 3 依赖 -parameters 反射获取方法参数名。
+              本项目没有继承 spring-boot-starter-parent，必须手动开启，
+              否则所有 @RequestParam / @PathVariable 都会报
+              "Name for argument of type [...] not specified"。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <parameters>true</parameters>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

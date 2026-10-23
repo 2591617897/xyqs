@@ -47,17 +47,33 @@
 
 ## 小程序端：接口模式
 
-前端所有请求都经过 `utils/request.js`，在 `utils/config.js` 里用 `USE_MOCK` 一键切换：
+**所有服务器地址集中在 `miniprogram/utils/config.js`，改一处全局生效。**
 
 ```js
-module.exports = {
-  USE_MOCK: false,                           // false = 真实后端（默认）；true = 本地模拟数据
-  BASE_URL: 'http://127.0.0.1:8888/api',
-  TIMEOUT: 15000
+const ACTIVE_ENV = 'dev'          // 切环境只改这一行
+
+const ENVS = {
+  dev:  { scheme: 'http',  host: '127.0.0.1',     port: 8888, mock: false },
+  lan:  { scheme: 'http',  host: '192.168.1.100', port: 8888, mock: false },  // 真机预览用局域网 IP
+  prod: { scheme: 'https', host: 'api.example.com', port: '',  mock: false }
 }
 ```
 
-**默认已接入真实后端**，需要先按「快速启动」把网关和 5 个服务跑起来。
+由此自动派生，不需要在别处再写地址：
+
+| 变量 | 值 | 用在哪 |
+| --- | --- | --- |
+| `SERVER` | `http://127.0.0.1:8888` | 图片地址收敛 |
+| `BASE_URL` | `SERVER + /api` | 所有接口请求 |
+| `UPLOAD_URL` | `SERVER + /api/upload` | 图片上传 |
+| `USE_MOCK` | `env.mock` | 是否走本地模拟数据 |
+| `TIMEOUT` | 15000 | 请求超时 |
+
+图片地址由 `utils/img.js` 的 `resolve()` 统一收敛：后端返回的 `/uploads/xxx` 或历史旧域名，
+都会被改写成当前 `SERVER`——**换域名时历史图片也能跟着切**，不用改数据库。
+
+> 后端侧对应的图片域名是 `campus.upload.base-url`（默认 `http://127.0.0.1:8888`），
+> 部署时用环境变量 `UPLOAD_BASE_URL` 覆盖即可。
 
 ### 错误处理约定
 
@@ -66,9 +82,9 @@ module.exports = {
 | 401 未登录 / token 过期 | 自动清本地登录态，提示「登录已失效」，页面保留公开内容 |
 | 403 未认证 / 无权限 | 提示后端返回的具体原因（如「请先完成校园身份认证」） |
 | 404 资源不存在 | 详情页显示「已删除/不见了」+ 返回入口，不弹错误 |
-| 5xx / 网络异常 / 超时 | 列表页显示错误态 + 「重新加载」按钮；详情页显示重试 |
+| 5xx / 网络异常 / 超时 | 列表页显示错误态 + 「重新加载」，并**展示后端返回的 msg** |
 
-页面级状态：**加载中**（列表为骨架/尾部提示，详情为转圈）、**空态**（区分「没数据」与「加载失败」）、**提交中**（按钮 loading + 遮罩，防重复提交）。
+页面级状态：**加载中**、**空态**（区分「没数据」与「加载失败」）、**提交中**（按钮 loading + 遮罩，防重复提交）。
 
 ### 图片上传
 
@@ -144,6 +160,18 @@ mvn -pl campus-gateway spring-boot:run     # 8888 ← 小程序只访问这个
 ```
 
 验证：`curl http://127.0.0.1:8888/api/schools` 应返回学校列表。
+
+更完整的自检（逐条打印 12 个核心接口的状态与错误原因）：
+
+```bash
+node scripts/api-smoke-test.js
+# ========== 通过 12 / 失败 0 ==========
+```
+
+> **常见坑：接口返回 400 "Name for argument of type [...] not specified"**
+> 说明后端没有以 `-parameters` 编译。父 POM 已开启该参数，所有 `@RequestParam/@PathVariable`
+> 也已显式写死参数名；改完后必须 **先停服务 → `mvn clean install` → 再启动**，
+> 增量编译或旧进程都不会生效。
 
 ### 3. 跑小程序（连接真实接口）
 

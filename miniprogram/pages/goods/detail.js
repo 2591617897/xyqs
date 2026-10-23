@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, priceText, mp, categoryEmoji, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -31,6 +32,7 @@ Page({
       g.timeText = timeAgo(g.createdAt)
       g.priceText = priceText(g.price)
       g.emoji = categoryEmoji(g.categoryId)
+      g.imageList = resolveList(g.imageList)
       const me = getApp().globalData.user
       self.setData({
         goods: g,

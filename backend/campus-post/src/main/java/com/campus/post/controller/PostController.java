@@ -31,16 +31,16 @@ public class PostController {
 
     /** 频道列表（全平台频道 + 本校频道） */
     @GetMapping("/channels")
-    public R<List<Channel>> channels(@RequestParam(required = false) Long schoolId) {
+    public R<List<Channel>> channels(@RequestParam(required = false, name = "schoolId") Long schoolId) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
         return R.ok(postService.channels(scope));
     }
 
     @GetMapping("/posts")
-    public R<R.Page<Post>> page(@RequestParam(required = false) Long channelId,
-                                @RequestParam(required = false) Long schoolId,
-                                @RequestParam(defaultValue = "1") long page,
-                                @RequestParam(defaultValue = "10") long size) {
+    public R<R.Page<Post>> page(@RequestParam(required = false, name = "channelId") Long channelId,
+                                @RequestParam(required = false, name = "schoolId") Long schoolId,
+                                @RequestParam(defaultValue = "1", name = "page") long page,
+                                @RequestParam(defaultValue = "10", name = "size") long size) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
         return R.ok(postService.page(channelId, scope, page, size, UserContext.userId()));
     }
@@ -51,35 +51,35 @@ public class PostController {
     }
 
     @GetMapping("/posts/{id}")
-    public R<Post> detail(@PathVariable Long id) {
+    public R<Post> detail(@PathVariable("id") Long id) {
         return R.ok(postService.detail(id, UserContext.userId()));
     }
 
     @DeleteMapping("/posts/{id}")
-    public R<Void> delete(@PathVariable Long id) {
+    public R<Void> delete(@PathVariable("id") Long id) {
         postService.delete(id);
         return R.ok();
     }
 
     /** 编辑自己的帖子 */
     @PutMapping("/posts/{id}")
-    public R<Void> update(@PathVariable Long id, @RequestBody @Valid PostReq req) {
+    public R<Void> update(@PathVariable("id") Long id, @RequestBody @Valid PostReq req) {
         postService.update(id, req);
         return R.ok();
     }
 
     @PostMapping("/posts/{id}/like")
-    public R<Boolean> like(@PathVariable Long id) {
+    public R<Boolean> like(@PathVariable("id") Long id) {
         return R.ok(postService.toggleLike(id, UserContext.requireUserId()));
     }
 
     @GetMapping("/posts/{id}/comments")
-    public R<List<PostComment>> comments(@PathVariable Long id) {
+    public R<List<PostComment>> comments(@PathVariable("id") Long id) {
         return R.ok(postService.comments(id, UserContext.userId()));
     }
 
     @PostMapping("/posts/{id}/comments")
-    public R<Long> comment(@PathVariable Long id, @RequestBody @Valid ContentReq req) {
+    public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid ContentReq req) {
         return R.ok(postService.addComment(id, req.getContent()));
     }
 

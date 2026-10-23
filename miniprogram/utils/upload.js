@@ -1,4 +1,4 @@
-const { BASE_URL, USE_MOCK } = require('./config')
+const { UPLOAD_URL, USE_MOCK } = require('./config')
 const { mp, toast } = require('./util')
 const http = require('./request')
 
@@ -26,7 +26,7 @@ function uploadImage(filePath) {
 
   return new Promise(function (resolve, reject) {
     mp.uploadFile({
-      url: BASE_URL + '/upload',
+      url: UPLOAD_URL,
       filePath: filePath,
       name: 'file',
       timeout: 30000,

@@ -30,9 +30,9 @@ public class WallController {
 
     /** 表白墙列表（未登录可浏览，登录后返回点赞/本人标记） */
     @GetMapping
-    public R<R.Page<WallPost>> page(@RequestParam(required = false) Long schoolId,
-                                    @RequestParam(defaultValue = "1") long page,
-                                    @RequestParam(defaultValue = "10") long size) {
+    public R<R.Page<WallPost>> page(@RequestParam(required = false, name = "schoolId") Long schoolId,
+                                    @RequestParam(defaultValue = "1", name = "page") long page,
+                                    @RequestParam(defaultValue = "10", name = "size") long size) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
         return R.ok(wallService.page(scope, UserContext.userId(), page, size));
     }
@@ -43,41 +43,41 @@ public class WallController {
     }
 
     @GetMapping("/{id}")
-    public R<WallPost> detail(@PathVariable Long id) {
+    public R<WallPost> detail(@PathVariable("id") Long id) {
         return R.ok(wallService.detail(id, UserContext.userId()));
     }
 
     /** 编辑自己的表白 */
     @PutMapping("/{id}")
-    public R<Void> update(@PathVariable Long id, @RequestBody @Valid WallPostReq req) {
+    public R<Void> update(@PathVariable("id") Long id, @RequestBody @Valid WallPostReq req) {
         wallService.update(id, req);
         return R.ok();
     }
 
     @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
+    public R<Void> delete(@PathVariable("id") Long id) {
         wallService.delete(id);
         return R.ok();
     }
 
     @PostMapping("/{id}/like")
-    public R<Boolean> like(@PathVariable Long id) {
+    public R<Boolean> like(@PathVariable("id") Long id) {
         return R.ok(wallService.toggleLike(id, UserContext.requireUserId()));
     }
 
     @GetMapping("/{id}/comments")
-    public R<List<WallComment>> comments(@PathVariable Long id) {
+    public R<List<WallComment>> comments(@PathVariable("id") Long id) {
         return R.ok(wallService.comments(id, UserContext.userId()));
     }
 
     @PostMapping("/{id}/comments")
-    public R<Long> comment(@PathVariable Long id, @RequestBody @Valid CommentReq req) {
+    public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid CommentReq req) {
         return R.ok(wallService.addComment(id, req));
     }
 
     /** 删除自己的评论 */
     @DeleteMapping("/{postId}/comments/{id}")
-    public R<Void> deleteComment(@PathVariable Long postId, @PathVariable Long id) {
+    public R<Void> deleteComment(@PathVariable("postId") Long postId, @PathVariable("id") Long id) {
         wallService.deleteComment(postId, id);
         return R.ok();
     }

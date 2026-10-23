@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -194,5 +195,6 @@ function decorate(item) {
   item.timeText = timeAgo(item.createdAt)
   item.avatarClass = 'anon-' + (item.anonAvatar || 1)
   item.avatarEmoji = ['🌸', '🌙', '🍀', '⭐', '🐳', '🍑', '🌿', '☁️'][(item.anonAvatar || 1) - 1]
+  item.imageList = resolveList(item.imageList)
   return item
 }

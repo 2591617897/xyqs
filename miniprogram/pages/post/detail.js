@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -24,6 +25,7 @@ Page({
     http.get('/posts/' + this.postId, null, { silent: true }).then(function (post) {
       post.timeText = timeAgo(post.createdAt)
       post.avatarText = (post.authorName || '校').substring(0, 1)
+      post.imageList = resolveList(post.imageList)
       self.setData({ post: post, loading: false, liked: !!post.liked })
       mp.setNavigationBarTitle({ title: post.channelName || '帖子详情' })
     }).catch(function () {

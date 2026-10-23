@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -51,7 +52,7 @@ Page({
         price: g.price === null || g.price === undefined ? '' : String(g.price),
         originalPrice: g.originalPrice === null || g.originalPrice === undefined ? '' : String(g.originalPrice),
         categoryId: g.categoryId || 6,
-        images: (g.imageList || []).slice(0, 9),
+        images: resolveList(g.imageList).slice(0, 9),
         tradeType: g.tradeType || 1,
         location: g.location || ''
       })

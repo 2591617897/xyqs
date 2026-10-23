@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, priceText, mp, categoryEmoji, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -179,5 +180,6 @@ function decorate(item) {
   item.timeText = timeAgo(item.createdAt)
   item.priceText = priceText(item.price)
   item.emoji = categoryEmoji(item.categoryId)
+  item.imageList = resolveList(item.imageList)
   return item
 }

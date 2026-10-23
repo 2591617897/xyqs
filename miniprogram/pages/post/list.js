@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -57,6 +58,7 @@ Page({
         p.timeText = timeAgo(p.createdAt)
         p.avatarText = (p.authorName || '校').substring(0, 1)
         p.excerpt = (p.content || '').replace(/\s+/g, ' ')
+        p.imageList = resolveList(p.imageList)
         return p
       })
       self.setData({

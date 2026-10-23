@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, priceText, mp, categoryEmoji } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -70,6 +71,7 @@ Page({
         item.timeText = timeAgo(item.createdAt)
         item.priceText = priceText(item.price)
         item.emoji = categoryEmoji(item.categoryId)
+        item.imageList = resolveList(item.imageList)
         return item
       })
       const posts = (postsRes.records || []).map(function (item) {

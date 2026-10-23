@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
+const { resolveList } = require('../../utils/img')
 
 const AVATAR_EMOJI = ['🌸', '🌙', '🍀', '⭐', '🐳', '🍑', '🌿', '☁️']
 
@@ -75,7 +76,7 @@ Page({
           comments: (list || []).map(function (c) {
             c.timeText = timeAgo(c.createdAt)
             c.avatarClass = 'anon-' + ((Math.abs(Number(c.id)) % 8) + 1)
-            c.imageList = c.imageList || []
+            c.imageList = resolveList(c.imageList)
             return c
           })
         })
@@ -337,5 +338,6 @@ function decorate(post) {
   post.timeText = timeAgo(post.createdAt)
   post.avatarClass = 'anon-' + (post.anonAvatar || 1)
   post.avatarEmoji = AVATAR_EMOJI[(post.anonAvatar || 1) - 1] || '💌'
+  post.imageList = resolveList(post.imageList)
   return post
 }

@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
+const { resolveList } = require('../../utils/img')
 
 Page({
   data: {
@@ -39,7 +40,7 @@ Page({
             channelId: post.channelId,
             title: post.title || '',
             content: post.content || '',
-            images: (post.imageList || []).slice(0, 9)
+            images: resolveList(post.imageList).slice(0, 9)
           })
         })
       }

@@ -10,12 +10,17 @@
   5 个 `campus-*/src/main/resources/application.yml`、`miniprogram/utils/config.js`(BASE_URL)、README、docs
 
 ## 工程约定
-- 小程序端默认 `USE_MOCK = true`（`miniprogram/utils/config.js`），不依赖后端即可演示
+- 小程序端默认 `USE_MOCK = false`（`miniprogram/utils/config.js`，环境化配置：改 `ACTIVE_ENV` 或 `host/port` 即可，`SERVER/BASE_URL/UPLOAD_URL` 自动派生）
+- **后端父 POM 必须保留 maven-compiler-plugin 的 `-parameters`**：本项目未继承 `spring-boot-starter-parent`，
+  缺了它所有 `@RequestParam/@PathVariable` 会报 "Name for argument ... not specified"（全站 400）。
+  已在该 POM 显式开启，且 controller 注解也写死了 name（双保险）
+- 改后端代码后必须 **停服务 → `mvn clean install` → 重启**；`clean` 报"Failed to delete target"说明进程还在跑
 - **每个页面必须同时产出 4 个文件**：`.js` / `.wxml` / `.json` / `.wxss`；
   `.json` 里显式写 `"usingComponents": {}`——缺 json 会导致整页白屏并报
   `Cannot read properties of undefined (reading "usingComponents")`
 - 校验命令：
   - `node scripts/check-miniprogram.js`（页面结构完整性）
-  - `node scripts/mock-selftest.js`（模拟数据层 69 条断言）
-- 改了 `target/` 以外的配置后需 `mvn clean`，否则 `target/classes` 里的旧配置可能被误用
+  - `node scripts/mock-selftest.js`（模拟数据层 89 条断言）
+  - `node scripts/api-smoke-test.js`（后端 12 个核心接口连通性）
 - 统一响应 `{code,msg,data}`，`code=0` 成功；401 未登录 / 403 未认证 / 404 不存在
+- 图片：后端存 `./uploads/yyyy/MM/`，返回绝对 URL；前端 `utils/img.js#resolve()` 统一收敛到当前 SERVER

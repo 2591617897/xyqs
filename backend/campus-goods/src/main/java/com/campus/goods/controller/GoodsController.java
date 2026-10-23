@@ -30,12 +30,12 @@ public class GoodsController {
 
     /** 商品列表（未登录也可浏览） */
     @GetMapping
-    public R<R.Page<Goods>> page(@RequestParam(required = false) String keyword,
-                                 @RequestParam(required = false) Integer categoryId,
-                                 @RequestParam(required = false, defaultValue = "latest") String sort,
-                                 @RequestParam(defaultValue = "1") long page,
-                                 @RequestParam(defaultValue = "10") long size,
-                                 @RequestParam(required = false) Long schoolId) {
+    public R<R.Page<Goods>> page(@RequestParam(required = false, name = "keyword") String keyword,
+                                 @RequestParam(required = false, name = "categoryId") Integer categoryId,
+                                 @RequestParam(required = false, defaultValue = "latest", name = "sort") String sort,
+                                 @RequestParam(defaultValue = "1", name = "page") long page,
+                                 @RequestParam(defaultValue = "10", name = "size") long size,
+                                 @RequestParam(required = false, name = "schoolId") Long schoolId) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
         return R.ok(goodsService.page(keyword, categoryId, sort, page, size, scope));
     }
@@ -47,7 +47,7 @@ public class GoodsController {
 
     /** 我发布的商品 */
     @GetMapping("/mine")
-    public R<List<Goods>> mine(@RequestParam(required = false) Integer status) {
+    public R<List<Goods>> mine(@RequestParam(required = false, name = "status") Integer status) {
         return R.ok(goodsService.mine(UserContext.requireUserId(), status));
     }
 
@@ -59,12 +59,12 @@ public class GoodsController {
 
     /** 我的购买 / 售卖意向 */
     @GetMapping("/orders/mine")
-    public R<List<GoodsOrder>> orders(@RequestParam(defaultValue = "buyer") String role) {
+    public R<List<GoodsOrder>> orders(@RequestParam(defaultValue = "buyer", name = "role") String role) {
         return R.ok(goodsService.myOrders(UserContext.requireUserId(), role));
     }
 
     @GetMapping("/{id}")
-    public R<Goods> detail(@PathVariable Long id) {
+    public R<Goods> detail(@PathVariable("id") Long id) {
         return R.ok(goodsService.detail(id, UserContext.userId()));
     }
 
@@ -74,32 +74,32 @@ public class GoodsController {
     }
 
     @PutMapping("/{id}")
-    public R<Void> update(@PathVariable Long id, @RequestBody @Valid GoodsReq req) {
+    public R<Void> update(@PathVariable("id") Long id, @RequestBody @Valid GoodsReq req) {
         goodsService.update(id, req);
         return R.ok();
     }
 
     /** 0 下架 / 1 重新上架 / 2 标记已售出 */
     @PostMapping("/{id}/status")
-    public R<Void> changeStatus(@PathVariable Long id, @RequestParam Integer status) {
+    public R<Void> changeStatus(@PathVariable("id") Long id, @RequestParam Integer status) {
         goodsService.changeStatus(id, status);
         return R.ok();
     }
 
     @DeleteMapping("/{id}")
-    public R<Void> delete(@PathVariable Long id) {
+    public R<Void> delete(@PathVariable("id") Long id) {
         goodsService.delete(id);
         return R.ok();
     }
 
     @PostMapping("/{id}/like")
-    public R<Boolean> like(@PathVariable Long id) {
+    public R<Boolean> like(@PathVariable("id") Long id) {
         return R.ok(goodsService.toggleLike(id, UserContext.requireUserId()));
     }
 
     /** 提交购买意向（联系卖家） */
     @PostMapping("/{id}/order")
-    public R<Long> order(@PathVariable Long id, @RequestBody @Valid GoodsOrderReq req) {
+    public R<Long> order(@PathVariable("id") Long id, @RequestBody @Valid GoodsOrderReq req) {
         return R.ok(goodsService.createOrder(id, req));
     }
 }

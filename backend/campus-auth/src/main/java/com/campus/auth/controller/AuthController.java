@@ -28,7 +28,7 @@ public class AuthController {
 
     /** 学校字典，注册时必选 */
     @GetMapping("/schools")
-    public R<List<School>> schools(@RequestParam(required = false) String keyword) {
+    public R<List<School>> schools(@RequestParam(required = false, name = "keyword") String keyword) {
         return R.ok(authService.schools(keyword));
     }
 }
