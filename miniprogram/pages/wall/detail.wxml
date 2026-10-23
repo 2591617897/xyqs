@@ -1,0 +1,176 @@
+<view class="page" wx:if="{{post}}">
+  <!-- 正文 -->
+  <view class="article">
+    <view class="between">
+      <view class="row gap12">
+        <view class="anon-avatar {{post.avatarClass}}">{{post.avatarEmoji}}</view>
+        <view>
+          <view class="anon-name">{{post.anonName}}</view>
+          <view class="muted">{{post.timeText}}</view>
+        </view>
+      </view>
+      <view class="more-btn" wx:if="{{post.mine}}" catchtap="openMore">···</view>
+    </view>
+
+    <view class="content">{{post.content}}</view>
+
+    <view class="imgs" wx:if="{{post.imageList.length}}">
+      <image
+        wx:for="{{post.imageList}}"
+        wx:key="*this"
+        class="img"
+        src="{{item}}"
+        mode="widthFix"
+        bindtap="preview"
+        data-url="{{item}}"
+      />
+    </view>
+
+    <view class="meta">
+      <text class="tag" wx:if="{{post.mine}}">我发布的</text>
+      <text class="muted">仅同校可见 · 匿名展示</text>
+    </view>
+
+    <view class="actions">
+      <view class="action {{post.liked ? 'liked' : ''}}" catchtap="toggleLike">
+        <text class="act-icon">{{post.liked ? '♥' : '♡'}}</text>
+        <text>{{post.likeCount ? post.likeCount : '点赞'}}</text>
+      </view>
+      <view class="action" bindtap="focusInput">
+        <text class="act-icon">💬</text>
+        <text>{{post.commentCount ? post.commentCount : '评论'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评论区 -->
+  <view class="comment-section">
+    <view class="section-head">
+      <text class="section-title">全部评论</text>
+      <text class="section-count">{{comments.length}}</text>
+    </view>
+
+    <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="pindex">
+      <view class="c-avatar {{item.avatarClass}}">💬</view>
+      <view class="flex1">
+        <view class="c-head">
+          <text class="c-name">{{item.anonName}}</text>
+          <view class="row gap12">
+            <text class="muted">{{item.timeText}}</text>
+            <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+          </view>
+        </view>
+
+        <view class="c-text" wx:if="{{item.content}}">{{item.content}}</view>
+
+        <view class="c-imgs" wx:if="{{item.imageList.length}}">
+          <image
+            wx:for="{{item.imageList}}"
+            wx:for-item="img"
+            wx:for-index="imgIndex"
+            wx:key="*this"
+            class="c-img"
+            src="{{img}}"
+            mode="aspectFill"
+            catchtap="previewComment"
+            data-pindex="{{pindex}}"
+            data-url="{{img}}"
+          />
+        </view>
+      </view>
+    </view>
+
+    <view class="comment-empty" wx:if="{{!comments.length}}">
+      <text class="empty-icon">💬</text>
+      <text>还没有评论，做第一个温柔的人</text>
+    </view>
+  </view>
+
+  <view class="bottom-space"></view>
+
+  <!-- 底部输入栏 -->
+  <view class="comment-bar">
+    <!-- 已选图片 -->
+    <view class="pending-imgs" wx:if="{{commentImages.length}}">
+      <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
+        <image class="p-thumb" src="{{item}}" mode="aspectFill" />
+        <view class="p-del" catchtap="removeCommentImage" data-index="{{index}}">✕</view>
+      </view>
+      <text class="p-tip">最多 3 张</text>
+    </view>
+
+    <view class="input-row">
+      <view class="tool" catchtap="chooseCommentImage">🖼</view>
+      <view class="tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
+      <input
+        class="comment-input"
+        placeholder="匿名评论，温柔一点"
+        placeholder-class="placeholder"
+        value="{{commentInput}}"
+        focus="{{commentFocus}}"
+        maxlength="500"
+        confirm-type="send"
+        bindinput="onCommentInput"
+        bindconfirm="sendComment"
+        bindfocus="focusInput"
+        bindblur="onInputBlur"
+        adjust-position="{{true}}"
+      />
+      <view class="send-btn {{commentInput || commentImages.length ? 'active' : ''}}" bindtap="sendComment">发送</view>
+    </view>
+
+    <!-- 表情面板 -->
+    <view class="emoji-panel" wx:if="{{showEmoji}}">
+      <view class="emoji-grid">
+        <view
+          class="emoji-item"
+          wx:for="{{emojiList}}"
+          wx:key="*this"
+          catchtap="addEmoji"
+          data-emoji="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 编辑弹层 -->
+  <view class="mask" wx:if="{{showEdit}}" bindtap="closeEdit">
+    <view class="sheet" catchtap="stop">
+      <view class="between">
+        <text class="h2">编辑这条心事</text>
+        <text class="sheet-close" bindtap="closeEdit">✕</text>
+      </view>
+
+      <textarea
+        class="edit-textarea"
+        placeholder="想说的话，改一改也可以"
+        placeholder-class="placeholder"
+        maxlength="1000"
+        value="{{editContent}}"
+        bindinput="onEditContent"
+        auto-height
+      />
+
+      <view class="row between mt16">
+        <view class="row gap12">
+          <view class="img-add" wx:if="{{editImages.length < 3}}" bindtap="chooseEditImage">＋</view>
+          <view class="img-item" wx:for="{{editImages}}" wx:key="*this">
+            <image class="img-thumb" src="{{item}}" mode="aspectFill" />
+            <view class="img-del" catchtap="removeEditImage" data-index="{{index}}">✕</view>
+          </view>
+        </view>
+        <text class="muted">{{editContent.length}}/1000</text>
+      </view>
+
+      <button class="btn btn-primary mt24" loading="{{saving}}" bindtap="saveEdit">保存修改</button>
+      <view class="sheet-note">发布时间与匿名昵称不会变化</view>
+    </view>
+  </view>
+</view>
+
+<view class="empty" wx:elif="{{!loading}}">
+  <text class="empty-icon">{{loadError ? '📡' : '💌'}}</text>
+  <text>{{loadError ? '加载失败，请检查网络或后端服务' : '这条表白不见了'}}</text>
+  <view class="btn btn-ghost btn-sm back-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
+  <view class="btn btn-plain btn-sm back-btn" wx:else bindtap="goBack">回到表白墙</view>
+</view>

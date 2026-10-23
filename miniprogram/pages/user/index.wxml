@@ -1,0 +1,132 @@
+<view class="page">
+  <!-- 用户卡片 -->
+  <view class="profile">
+    <view class="row">
+      <image wx:if="{{user && user.avatar}}" class="avatar-xl" src="{{user.avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-xl avatar-ph">{{user ? '我' : '?'}}</view>
+      <view class="flex1 ml24">
+        <view class="p-name">{{user ? user.nickname : '还没有登录'}}</view>
+        <view class="p-sub" wx:if="{{user}}">
+          {{user.schoolName ? user.schoolName : (user.schoolId ? '已绑定学校' : '未绑定学校')}}
+        </view>
+        <view class="p-sub" wx:else>登录后同步你的校园身份</view>
+      </view>
+      <view class="verify-badge {{user && user.verifyStatus === 2 ? 'ok' : 'todo'}}" bindtap="goVerify">
+        {{user && user.verifyStatus === 2 ? '已认证' : (user && user.verifyStatus === 1 ? '审核中' : '去认证')}}
+      </view>
+    </view>
+
+    <view class="id-row" wx:if="{{user && user.verifyStatus === 2}}">
+      <text class="id-item">学号 {{user.studentNo}}</text>
+      <text class="id-item">姓名 {{user.realName}}</text>
+    </view>
+    <view class="id-row warn" wx:if="{{user && user.verifyStatus === 3}}">
+      <text>认证被驳回：{{user.verifyRemark || '资料不清晰，请重新提交'}}</text>
+    </view>
+
+    <button class="btn btn-primary login-btn" wx:if="{{!logged}}" bindtap="login">一键登录</button>
+  </view>
+
+  <!-- 数据 -->
+  <view class="stats">
+    <view class="stat-item" bindtap="goMyGoods">
+      <view class="stat-num">{{stats.goods}}</view>
+      <view class="stat-label">我的闲置</view>
+    </view>
+    <view class="stat-line"></view>
+    <view class="stat-item" bindtap="goFavorites">
+      <view class="stat-num">{{stats.favorites}}</view>
+      <view class="stat-label">我的收藏</view>
+    </view>
+    <view class="stat-line"></view>
+    <view class="stat-item" bindtap="openOrders">
+      <view class="stat-num">{{stats.orders}}</view>
+      <view class="stat-label">购买意向</view>
+    </view>
+  </view>
+
+  <!-- 菜单 -->
+  <view class="menu card">
+    <view class="menu-item" bindtap="goPublish">
+      <text class="menu-icon">🏷️</text>
+      <text class="menu-text">发布闲置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goVerify">
+      <text class="menu-icon">🎓</text>
+      <text class="menu-text">校园身份认证</text>
+      <text class="menu-tip" wx:if="{{user && user.verifyStatus !== 2}}">必填</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goMyGoods">
+      <text class="menu-icon">📦</text>
+      <text class="menu-text">我发布的闲置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goFavorites">
+      <text class="menu-icon">♥</text>
+      <text class="menu-text">我的收藏</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="openOrders">
+      <text class="menu-icon">🤝</text>
+      <text class="menu-text">收到的意向 / 我的求购</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="about">
+      <text class="menu-icon">ℹ️</text>
+      <text class="menu-text">关于校园趣事</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="logout" wx:if="{{logged}}" bindtap="logout">退出登录</view>
+  <view class="footer-tip" bindlongpress="resetMock">
+    校园趣事 v1.0.0 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
+  </view>
+
+  <!-- 意向单弹层 -->
+  <view class="mask" wx:if="{{showOrders}}" bindtap="closeOrders">
+    <view class="sheet" catchtap="stop">
+      <view class="between">
+        <text class="h2">购买意向</text>
+        <text class="sheet-close" bindtap="closeOrders">✕</text>
+      </view>
+
+      <view class="seg mt16">
+        <view class="seg-item {{orderRole === 'buyer' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="buyer">我要求购的</view>
+        <view class="seg-item {{orderRole === 'seller' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="seller">别人想买我的</view>
+      </view>
+
+      <scroll-view class="order-scroll" scroll-y="true">
+        <block wx:if="{{orderRole === 'buyer'}}">
+          <view class="order-item" wx:for="{{buyerOrders}}" wx:key="id">
+            <view class="between">
+              <text class="order-title ellipsis flex1">{{item.goodsTitle || '商品'}}</text>
+              <text class="tag">{{item.statusText}}</text>
+            </view>
+            <view class="muted mt8">{{item.timeText}} · 联系方式 {{item.contact}}</view>
+            <view class="order-msg" wx:if="{{item.message}}">“{{item.message}}”</view>
+          </view>
+          <view class="empty" wx:if="{{!buyerOrders.length}}" style="padding: 60rpx 0;">
+            <text>还没有求购记录</text>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="order-item" wx:for="{{sellerOrders}}" wx:key="id">
+            <view class="between">
+              <text class="order-title ellipsis flex1">{{item.goodsTitle || '商品'}}</text>
+              <text class="tag tag-mint">{{item.statusText}}</text>
+            </view>
+            <view class="muted mt8">{{item.timeText}} · {{item.buyerName}}</view>
+            <view class="order-contact">联系他：{{item.contact}}</view>
+            <view class="order-msg" wx:if="{{item.message}}">“{{item.message}}”</view>
+          </view>
+          <view class="empty" wx:if="{{!sellerOrders.length}}" style="padding: 60rpx 0;">
+            <text>还没有人联系你</text>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+  </view>
+</view>

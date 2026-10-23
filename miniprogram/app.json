@@ -1,0 +1,48 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/goods/list",
+    "pages/wall/index",
+    "pages/wall/detail",
+    "pages/user/index",
+    "pages/goods/detail",
+    "pages/goods/publish",
+    "pages/post/list",
+    "pages/post/detail",
+    "pages/post/publish",
+    "pages/user/verify"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTitleText": "校园趣事",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F7FB"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8A8F99",
+    "selectedColor": "#FF6B57",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "发现"
+      },
+      {
+        "pagePath": "pages/goods/list",
+        "text": "二手"
+      },
+      {
+        "pagePath": "pages/wall/index",
+        "text": "表白墙"
+      },
+      {
+        "pagePath": "pages/user/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

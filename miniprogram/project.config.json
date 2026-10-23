@@ -1,0 +1,28 @@
+{
+	"compileType": "miniprogram",
+	"appid": "请替换为你的 QQ 小程序 AppID",
+	"projectname": "campus-fun",
+	"description": "校园趣事 · 同校二手 / 匿名表白墙 / 校园频道",
+	"setting": {
+		"urlCheck": false,
+		"es6": true,
+		"enhance": true,
+		"postcss": true,
+		"minified": true,
+		"newFeature": true,
+		"nodeModules": true,
+		"autoAudits": false,
+		"uploadWithSourceMap": true,
+		"uglifyFileName": true,
+		"remoteDebugLogEnable": false,
+		"prefetch": false
+	},
+	"libVersion": "1.10.0",
+	"qqappid": "1108100302",
+	"scripts": {
+		"beforeCompile": "",
+		"beforePreview": "",
+		"beforeUpload": ""
+	},
+	"condition": {}
+}

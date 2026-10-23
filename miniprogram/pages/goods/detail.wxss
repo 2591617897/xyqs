@@ -1,0 +1,244 @@
+.page {
+  padding-bottom: 40rpx;
+}
+
+/* 图片 */
+.gallery {
+  width: 100%;
+  height: 560rpx;
+  background: #eef1f8;
+}
+.gallery-img {
+  width: 100%;
+  height: 100%;
+}
+.gallery-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 140rpx;
+  background: linear-gradient(135deg, #f8f9fd 0%, #eef1f8 100%);
+}
+
+/* 主信息 */
+.main-card {
+  margin: -28rpx 24rpx 0;
+  position: relative;
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 32rpx;
+  box-shadow: 0 10rpx 30rpx rgba(31, 35, 41, 0.07);
+}
+.price-row {
+  display: flex;
+  align-items: baseline;
+}
+.price.big {
+  font-size: 52rpx;
+  color: #ff4d4f;
+}
+.origin {
+  font-size: 24rpx;
+  color: #b6bbc6;
+  text-decoration: line-through;
+  margin-left: 16rpx;
+}
+.title {
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-top: 16rpx;
+}
+
+/* 卖家 */
+.seller {
+  display: flex;
+  align-items: center;
+  margin: 20rpx 24rpx 0;
+}
+.seller-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f2f8;
+  color: #8b8f99;
+  font-size: 36rpx;
+}
+.ml20 {
+  margin-left: 20rpx;
+}
+
+/* 通用卡片间距 */
+.card {
+  margin: 20rpx 24rpx 0;
+}
+.desc {
+  font-size: 29rpx;
+  line-height: 1.8;
+  color: #3f4653;
+  white-space: pre-wrap;
+}
+.tip-card {
+  background: #fffaf6;
+}
+.tip-item {
+  font-size: 24rpx;
+  color: #a08b7d;
+  line-height: 1.9;
+  margin-top: 8rpx;
+}
+
+.bottom-space {
+  height: 160rpx;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -6rpx 24rpx rgba(31, 35, 41, 0.06);
+  z-index: 30;
+}
+.like-btn {
+  width: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.like-icon {
+  font-size: 40rpx;
+  color: #b6bbc6;
+  line-height: 1;
+}
+.like-icon.liked {
+  color: #ff4d4f;
+}
+.like-text {
+  font-size: 20rpx;
+  color: #9ca3af;
+  margin-top: 4rpx;
+}
+
+/* 弹层 */
+.mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(17, 20, 26, 0.45);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+}
+.sheet {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-close {
+  font-size: 32rpx;
+  color: #9ca3af;
+  padding: 0 8rpx;
+}
+.sheet-goods {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  background: #f7f8fc;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-top: 24rpx;
+}
+.sheet-cover {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 16rpx;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+}
+.sheet-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.sheet-input {
+  height: 92rpx;
+  background: #f4f5f9;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  margin-top: 24rpx;
+}
+.sheet-textarea {
+  width: 100%;
+  height: 160rpx;
+  background: #f4f5f9;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  margin-top: 20rpx;
+}
+.sheet-note {
+  text-align: center;
+  font-size: 22rpx;
+  color: #b6bbc6;
+  margin-top: 16rpx;
+}
+
+/* 加载 / 错误态 */
+.loading-hero {
+  padding: 220rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+.loading-block {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 6rpx solid #f0f1f5;
+  border-top-color: #ff8a65;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.loading-text {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+.retry-btn {
+  margin-top: 28rpx;
+  display: inline-block;
+}
+
+/* 自己发布的商品 */
+.owner-tag {
+  font-size: 22rpx;
+  color: #8b8f99;
+  background: #f4f5f9;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}

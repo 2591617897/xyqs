@@ -1,0 +1,223 @@
+/* ===== 校园趣事 · 全局样式 ===== */
+page {
+  background: #f6f7fb;
+  color: #1f2329;
+  font-size: 28rpx;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+view, text, button, input, textarea {
+  box-sizing: border-box;
+}
+
+.container {
+  padding: 24rpx 24rpx 40rpx;
+}
+
+/* 布局 */
+.row { display: flex; align-items: center; }
+.between { display: flex; align-items: center; justify-content: space-between; }
+.center { display: flex; align-items: center; justify-content: center; }
+.col { display: flex; flex-direction: column; }
+.flex1 { flex: 1; min-width: 0; }
+.wrap { flex-wrap: wrap; }
+.gap8 { gap: 8rpx; }
+.gap12 { gap: 12rpx; }
+.gap16 { gap: 16rpx; }
+.mt8 { margin-top: 8rpx; }
+.mt12 { margin-top: 12rpx; }
+.mt16 { margin-top: 16rpx; }
+.mt24 { margin-top: 24rpx; }
+
+/* 卡片 */
+.card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 6rpx 24rpx rgba(31, 35, 41, 0.05);
+}
+.card + .card { margin-top: 20rpx; }
+.card-flat {
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+/* 文字 */
+.h1 { font-size: 40rpx; font-weight: 700; letter-spacing: -0.5rpx; }
+.h2 { font-size: 32rpx; font-weight: 600; }
+.sub { font-size: 26rpx; color: #6b7280; }
+.muted { font-size: 24rpx; color: #9ca3af; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 价格 */
+.price { color: #ff4d4f; font-weight: 700; }
+.price-symbol { font-size: 24rpx; margin-right: 2rpx; }
+
+/* 按钮 */
+.btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+  padding: 0 40rpx;
+}
+.btn::after { border: none; }
+.btn-primary {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff5a76 100%);
+  color: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(255, 90, 118, 0.28);
+}
+.btn-ghost {
+  background: #fff;
+  color: #ff5a76;
+  border: 2rpx solid rgba(255, 90, 118, 0.35);
+}
+.btn-plain {
+  background: #f2f3f7;
+  color: #4b5563;
+}
+.btn-sm {
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 26rpx;
+  border-radius: 32rpx;
+  padding: 0 28rpx;
+}
+
+/* 标签 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: 22rpx;
+  font-size: 22rpx;
+  background: #f2f3f7;
+  color: #6b7280;
+}
+.tag-brand {
+  background: rgba(255, 107, 87, 0.1);
+  color: #ff5a76;
+}
+.tag-mint {
+  background: rgba(46, 196, 182, 0.12);
+  color: #14a89b;
+}
+.tag-warn {
+  background: rgba(245, 165, 36, 0.14);
+  color: #d97706;
+}
+
+/* 头像 */
+.avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #eef0f5;
+  flex-shrink: 0;
+}
+.avatar-lg {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+}
+
+/* 匿名头像色块 */
+.anon-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+.anon-1 { background: #ffe8e3; }
+.anon-2 { background: #e6f7f5; }
+.anon-3 { background: #eae8ff; }
+.anon-4 { background: #fff4dd; }
+.anon-5 { background: #e8f1ff; }
+.anon-6 { background: #fdeaf3; }
+.anon-7 { background: #ecf7e6; }
+.anon-8 { background: #f0eef7; }
+
+/* 分割线 */
+.divider {
+  height: 1rpx;
+  background: #f0f1f5;
+  margin: 20rpx 0;
+}
+
+/* 空态 */
+.empty {
+  padding: 120rpx 40rpx;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 26rpx;
+}
+.empty-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 16rpx;
+  opacity: 0.55;
+}
+
+/* 悬浮按钮 */
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 60rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff5a76 100%);
+  color: #fff;
+  font-size: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 28rpx rgba(255, 90, 118, 0.36);
+  z-index: 20;
+}
+
+/* 表单 */
+.field {
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid #f0f1f5;
+}
+.field:last-child { border-bottom: none; }
+.field-label {
+  font-size: 26rpx;
+  color: #6b7280;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+.field-input {
+  flex: 1;
+  font-size: 30rpx;
+  text-align: right;
+  color: #1f2329;
+}
+.textarea {
+  width: 100%;
+  min-height: 220rpx;
+  font-size: 30rpx;
+  line-height: 1.7;
+  color: #1f2329;
+}
+.placeholder { color: #c2c6cf; }
+
+/* 底部安全区 */
+.safe-bottom { padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }

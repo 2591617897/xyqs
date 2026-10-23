@@ -1,0 +1,9 @@
+com\campus\wall\entity\WallComment.class
+com\campus\wall\mapper\WallPostMapper.class
+com\campus\wall\service\WallService.class
+com\campus\wall\controller\WallController.class
+com\campus\wall\dto\CommentReq.class
+com\campus\wall\mapper\WallCommentMapper.class
+com\campus\wall\WallApplication.class
+com\campus\wall\entity\WallPost.class
+com\campus\wall\dto\WallPostReq.class

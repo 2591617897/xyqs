@@ -1,0 +1,78 @@
+.page {
+  padding: 24rpx 24rpx calc(40rpx + env(safe-area-inset-bottom));
+}
+
+.channel-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+.channel-pill {
+  padding: 14rpx 24rpx;
+  border-radius: 999rpx;
+  background: #f4f5f9;
+  font-size: 25rpx;
+  color: #5b6170;
+}
+.channel-pill.active {
+  background: rgba(46, 196, 182, 0.14);
+  color: #14a89b;
+  font-weight: 600;
+}
+
+.title-input {
+  font-size: 34rpx;
+  font-weight: 700;
+  padding: 8rpx 0 20rpx;
+  border-bottom: 1rpx solid #f0f1f5;
+}
+.content-input {
+  margin-top: 20rpx;
+  min-height: 360rpx;
+}
+
+.img-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.img-item {
+  position: relative;
+  width: 156rpx;
+  height: 156rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+.img-thumb {
+  width: 100%;
+  height: 100%;
+}
+.img-del {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(17, 20, 26, 0.55);
+  color: #fff;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 0 16rpx;
+}
+.img-add {
+  width: 156rpx;
+  height: 156rpx;
+  border-radius: 16rpx;
+  background: #f7f8fc;
+  border: 2rpx dashed #dfe3ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  color: #b6bbc6;
+}
+.submit {
+  margin-top: 36rpx;
+}

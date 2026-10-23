@@ -1,0 +1,9 @@
+{
+  "desc": "关于本文件的更多信息，请参考文档 https://q.qq.com/wiki/develop/miniprogram/frame/sitemap.html",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

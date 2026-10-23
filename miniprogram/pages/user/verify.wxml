@@ -1,0 +1,101 @@
+<view class="page">
+  <!-- 已认证 -->
+  <view class="done-wrap" wx:if="{{done}}">
+    <view class="done-icon">{{doneStatus === 1 ? '⏳' : '🎓'}}</view>
+    <view class="done-title">{{doneStatus === 1 ? '认证审核中' : (alreadyVerified ? '你已完成校园认证' : '认证成功')}}</view>
+    <view class="done-sub">{{doneStatus === 1 ? '预计 1 个工作日内完成审核，通过后即可发布' : '现在可以发布闲置、发帖和写匿名心事了'}}</view>
+    <button class="btn btn-primary done-btn" bindtap="goBack">{{doneStatus === 1 ? '先去逛逛' : '开始逛逛'}}</button>
+  </view>
+
+  <block wx:else>
+    <!-- 说明 -->
+    <view class="intro">
+      <view class="intro-title">为什么需要认证？</view>
+      <view class="intro-item">· 只有同校同学才能发布和交易，减少陌生人骚扰</view>
+      <view class="intro-item">· 学号仅用于校验收，公开展示时会打码</view>
+      <view class="intro-item">· 认证信息加密存储，不会展示给其他用户</view>
+    </view>
+
+    <view class="card">
+      <view class="field row" bindtap="openPicker">
+        <text class="field-label">所在学校</text>
+        <view class="flex1 school-value {{schoolName ? '' : 'placeholder'}}">{{schoolName || '请选择学校'}}</view>
+        <text class="arrow">›</text>
+      </view>
+
+      <view class="field row">
+        <text class="field-label">学号</text>
+        <input
+          class="field-input"
+          placeholder="请输入学号"
+          placeholder-class="placeholder"
+          maxlength="20"
+          value="{{studentNo}}"
+          data-field="studentNo"
+          bindinput="onInput"
+        />
+      </view>
+
+      <view class="field row">
+        <text class="field-label">真实姓名</text>
+        <input
+          class="field-input"
+          placeholder="与学生证一致"
+          placeholder-class="placeholder"
+          maxlength="20"
+          value="{{realName}}"
+          data-field="realName"
+          bindinput="onInput"
+        />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="h2">学生证 / 校园卡照片</view>
+      <view class="muted mt8">请确保姓名、学号清晰可见，仅用于人工审核</view>
+      <view class="upload-area mt16">
+        <view class="upload-preview" wx:if="{{verifyImg}}">
+          <image class="upload-img" src="{{verifyImg}}" mode="aspectFill" bindtap="chooseImage" />
+          <view class="upload-del" bindtap="removeImage">重新上传</view>
+        </view>
+        <view class="upload-btn" wx:else bindtap="chooseImage">
+          <text class="upload-plus">＋</text>
+          <text class="upload-text">上传照片</text>
+        </view>
+      </view>
+    </view>
+
+    <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">提交认证</button>
+    <view class="agree">提交即表示同意《校园趣事社区规范》与《隐私政策》</view>
+  </block>
+
+  <!-- 学校选择弹层 -->
+  <view class="mask" wx:if="{{showPicker}}" bindtap="closePicker">
+    <view class="sheet" catchtap="stop">
+      <view class="between">
+        <text class="h2">选择学校</text>
+        <text class="sheet-close" bindtap="closePicker">✕</text>
+      </view>
+      <input
+        class="search"
+        placeholder="搜索学校名称 / 城市"
+        placeholder-class="placeholder"
+        value="{{keyword}}"
+        bindinput="onKeyword"
+        focus
+      />
+      <scroll-view class="school-scroll" scroll-y="true">
+        <view class="school-item" wx:for="{{filtered}}" wx:key="id" bindtap="pickSchool" data-id="{{item.id}}">
+          <view class="flex1">
+            <view class="school-name">{{item.name}}</view>
+            <view class="muted">{{item.province}} · {{item.city}}</view>
+          </view>
+          <text class="school-check" wx:if="{{schoolId === item.id}}">✓</text>
+        </view>
+        <view class="empty" wx:if="{{!filtered.length}}" style="padding: 60rpx 0;">
+          <text>没找到这所学校，可联系管理员添加</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

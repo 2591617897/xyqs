@@ -1,0 +1,108 @@
+<view class="page">
+  <!-- 头部 -->
+  <view class="wall-hero">
+    <view class="hero-title">匿名表白墙</view>
+    <view class="hero-sub">心事可以说，名字不用留 · 仅同校可见</view>
+    <view class="compose-entry" bindtap="openCompose">
+      <text class="compose-icon">✍️</text>
+      <text class="compose-ph">写下今天想说的话…</text>
+      <text class="compose-btn">发布</text>
+    </view>
+  </view>
+
+  <!-- 列表：整卡可点，进入详情 -->
+  <view class="wall-list">
+    <view
+      class="wall-card"
+      wx:for="{{posts}}"
+      wx:key="id"
+      bindtap="goDetail"
+      data-id="{{item.id}}"
+      hover-class="card-hover"
+      hover-stay-time="60"
+    >
+      <view class="between">
+        <view class="row gap12">
+          <view class="anon-avatar {{item.avatarClass}}">{{item.avatarEmoji}}</view>
+          <view>
+            <view class="anon-name">{{item.anonName}}</view>
+            <view class="muted">{{item.timeText}}</view>
+          </view>
+        </view>
+        <text class="del-btn" wx:if="{{item.mine}}" catchtap="deletePost" data-index="{{index}}">删除</text>
+      </view>
+
+      <view class="wall-content">{{item.content}}</view>
+
+      <view class="wall-imgs" wx:if="{{item.imageList.length}}">
+        <image
+          wx:for="{{item.imageList}}"
+          wx:for-item="img"
+          wx:for-index="imgIndex"
+          wx:key="*this"
+          class="wall-img"
+          src="{{img}}"
+          mode="aspectFill"
+          catchtap="preview"
+          data-index="{{index}}"
+          data-url="{{img}}"
+        />
+      </view>
+
+      <view class="wall-actions">
+        <view class="action {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+          <text class="act-icon">{{item.liked ? '♥' : '♡'}}</text>
+          <text>{{item.likeCount ? item.likeCount : '点赞'}}</text>
+        </view>
+        <view class="action" catchtap="goDetail" data-id="{{item.id}}">
+          <text class="act-icon">💬</text>
+          <text>{{item.commentCount ? item.commentCount : '评论'}}</text>
+        </view>
+        <view class="flex1"></view>
+        <text class="detail-hint">查看详情 ›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !posts.length}}">
+    <text class="empty-icon">{{loadError ? '📡' : '💌'}}</text>
+    <text>{{loadError ? '加载失败，请检查网络或后端服务' : '还没有人写心事，第一个就是你'}}</text>
+    <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
+  </view>
+
+  <view class="list-tip" wx:if="{{posts.length}}">
+    {{loading ? '加载中…' : (hasMore ? '上拉看更多心事' : '— 到底啦 —')}}
+  </view>
+
+  <!-- 发布弹层 -->
+  <view class="mask" wx:if="{{showCompose}}" bindtap="closeCompose">
+    <view class="sheet" catchtap="stop">
+      <view class="between">
+        <text class="h2">写一条匿名心事</text>
+        <text class="sheet-close" bindtap="closeCompose">✕</text>
+      </view>
+      <textarea
+        class="compose-textarea"
+        placeholder="匿名发布，不会展示你的昵称和头像"
+        placeholder-class="placeholder"
+        maxlength="1000"
+        value="{{content}}"
+        bindinput="onContent"
+        auto-height
+        focus
+      />
+      <view class="row between mt16">
+        <view class="row gap12">
+          <view class="img-add" wx:if="{{images.length < 3}}" bindtap="chooseImage">＋</view>
+          <view class="img-item" wx:for="{{images}}" wx:key="*this">
+            <image class="img-thumb" src="{{item}}" mode="aspectFill" />
+            <view class="img-del" catchtap="removeImage" data-index="{{index}}">✕</view>
+          </view>
+        </view>
+        <text class="muted">{{content.length}}/1000</text>
+      </view>
+      <button class="btn btn-primary mt24" loading="{{submitting}}" bindtap="submitPost">匿名发布</button>
+      <view class="sheet-note">发布后仍可编辑或删除</view>
+    </view>
+  </view>
+</view>

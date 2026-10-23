@@ -1,0 +1,176 @@
+.page {
+  padding-bottom: calc(190rpx + env(safe-area-inset-bottom));
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  background: #ffffff;
+}
+.s-wrap {
+  flex: 1;
+  height: 76rpx;
+  background: #f4f5f9;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+.s-icon {
+  font-size: 26rpx;
+  margin-right: 10rpx;
+}
+.s-input {
+  flex: 1;
+  font-size: 27rpx;
+  color: #1f2329;
+}
+.s-ph {
+  color: #b6bbc6;
+  font-size: 26rpx;
+}
+.s-clear {
+  font-size: 24rpx;
+  color: #b6bbc6;
+  padding: 0 6rpx;
+}
+.s-btn {
+  font-size: 27rpx;
+  color: #ff5a76;
+  font-weight: 600;
+}
+
+/* 分类 */
+.cat-scroll {
+  background: #ffffff;
+  white-space: nowrap;
+  padding-bottom: 12rpx;
+}
+.cat-row {
+  display: inline-flex;
+  gap: 14rpx;
+  padding: 0 24rpx;
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  height: 62rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: #f4f5f9;
+  font-size: 25rpx;
+  color: #5b6170;
+}
+.cat-chip.active {
+  background: rgba(255, 107, 87, 0.12);
+  color: #ff5a76;
+  font-weight: 600;
+}
+.cat-emoji {
+  font-size: 24rpx;
+}
+
+/* 排序 */
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  padding: 22rpx 24rpx 18rpx;
+}
+.sort-item {
+  font-size: 26rpx;
+  color: #8b8f99;
+}
+.sort-item.active {
+  color: #1f2329;
+  font-weight: 700;
+}
+.total-text {
+  font-size: 23rpx;
+  color: #b6bbc6;
+}
+
+/* 商品网格 */
+.goods-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  padding: 0 24rpx;
+}
+.goods-card {
+  width: calc((100% - 20rpx) / 2);
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 6rpx 20rpx rgba(31, 35, 41, 0.05);
+}
+.goods-cover {
+  position: relative;
+  height: 220rpx;
+}
+.cover-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cover-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64rpx;
+  background: linear-gradient(135deg, #f8f9fd 0%, #eef1f8 100%);
+}
+.cover-tag {
+  position: absolute;
+  left: 12rpx;
+  top: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(31, 35, 41, 0.55);
+  color: #ffffff;
+  font-size: 20rpx;
+}
+.cover-status {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 35, 41, 0.45);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.goods-body {
+  padding: 18rpx 20rpx 22rpx;
+}
+.goods-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  height: 78rpx;
+}
+.list-tip {
+  text-align: center;
+  font-size: 23rpx;
+  color: #b6bbc6;
+  padding: 32rpx 0;
+}
+.retry-btn {
+  margin-top: 28rpx;
+  display: inline-block;
+}
+
+/* 悬浮发布按钮上移，避开自定义 tabBar */
+.fab {
+  bottom: calc(150rpx + env(safe-area-inset-bottom));
+}

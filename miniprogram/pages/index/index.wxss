@@ -1,0 +1,226 @@
+.page {
+  /* 给自定义 tabBar 留出空间 */
+  padding-bottom: calc(170rpx + env(safe-area-inset-bottom));
+}
+
+/* 顶部 */
+.hero {
+  padding: 40rpx 32rpx 56rpx;
+  background: linear-gradient(170deg, #fff1ec 0%, #fdf8f6 55%, #f6f7fb 100%);
+}
+.hero-hi {
+  font-size: 42rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.hero-sub {
+  font-size: 24rpx;
+  color: #8b8f99;
+  margin-top: 10rpx;
+}
+.status-chip {
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+.chip-ok {
+  background: rgba(46, 196, 182, 0.14);
+  color: #14a89b;
+}
+.chip-todo {
+  background: rgba(255, 107, 87, 0.14);
+  color: #ff5a76;
+}
+
+.search {
+  margin-top: 28rpx;
+  height: 84rpx;
+  background: #ffffff;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 87, 0.1);
+}
+.search-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+.search-ph {
+  font-size: 26rpx;
+  color: #b6bbc6;
+}
+
+/* 快捷入口 */
+.quick-card {
+  margin: -32rpx 24rpx 0;
+  background: #ffffff;
+  border-radius: 28rpx;
+  display: flex;
+  padding: 30rpx 10rpx;
+  box-shadow: 0 10rpx 30rpx rgba(31, 35, 41, 0.06);
+}
+.quick-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+.quick-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+.q1 { background: #fff0ea; }
+.q2 { background: #ffedf2; }
+.q3 { background: #eaf6ff; }
+.q4 { background: #e9f8f5; }
+.quick-label {
+  font-size: 24rpx;
+  color: #4b5563;
+}
+
+/* 分类 */
+.cat-scroll {
+  margin-top: 28rpx;
+  white-space: nowrap;
+}
+.cat-row {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 0 24rpx;
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  height: 64rpx;
+  padding: 0 26rpx;
+  background: #ffffff;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  color: #4b5563;
+  box-shadow: 0 4rpx 14rpx rgba(31, 35, 41, 0.04);
+}
+.cat-emoji {
+  font-size: 26rpx;
+}
+
+/* 区块标题 */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 40rpx 24rpx 20rpx;
+}
+.more {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+/* 商品 */
+.goods-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  padding: 0 24rpx;
+}
+.goods-card {
+  width: calc((100% - 20rpx) / 2);
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 6rpx 20rpx rgba(31, 35, 41, 0.05);
+}
+.goods-cover {
+  position: relative;
+  height: 210rpx;
+}
+.cover-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cover-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 62rpx;
+  background: linear-gradient(135deg, #f8f9fd 0%, #eef1f8 100%);
+}
+.cover-tag {
+  position: absolute;
+  left: 12rpx;
+  top: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(31, 35, 41, 0.55);
+  color: #ffffff;
+  font-size: 20rpx;
+}
+.goods-body {
+  padding: 18rpx 20rpx 22rpx;
+}
+.goods-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  height: 78rpx;
+}
+
+/* 帖子 */
+.post-list {
+  padding: 0 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.post-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 26rpx;
+  box-shadow: 0 6rpx 20rpx rgba(31, 35, 41, 0.05);
+}
+.post-channel {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #14a89b;
+  margin-right: 12rpx;
+}
+.post-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 14rpx;
+}
+.mini-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #eef0f5;
+}
+.mini-avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  color: #6b7280;
+}
+.footer-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: #c2c6cf;
+  margin: 48rpx 0 20rpx;
+}
+.retry-btn {
+  margin-top: 28rpx;
+  display: inline-block;
+}

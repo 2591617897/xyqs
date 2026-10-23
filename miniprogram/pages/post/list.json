@@ -1,0 +1,6 @@
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "校园频道",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "light"
+}

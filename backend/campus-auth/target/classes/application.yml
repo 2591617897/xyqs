@@ -1,0 +1,32 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: campus-auth
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123456}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+campus:
+  jwt:
+    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
+    expire-hours: 168
+  qq:
+    appid: ${QQ_APPID:}
+    appsecret: ${QQ_APPSECRET:}
+    # 本地没有小程序 appid 时开启 mock：用 code / devOpenid 直接生成 openid
+    mock: ${QQ_MOCK:true}

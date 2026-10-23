@@ -1,0 +1,40 @@
+server:
+  port: 8102
+
+spring:
+  application:
+    name: campus-user
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123456}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+campus:
+  jwt:
+    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
+    expire-hours: 168
+  verify:
+    # true：提交即视为认证通过（本地联调）；false：进入人工/接口审核
+    auto-approve: ${VERIFY_AUTO_APPROVE:true}
+  upload:
+    # 图片落盘目录（相对启动目录），生产建议换成对象存储
+    dir: ${UPLOAD_DIR:./uploads}
+    # 外部可访问的网关地址，用于拼图片 URL
+    base-url: ${UPLOAD_BASE_URL:http://127.0.0.1:8888}
+    max-size: 5242880

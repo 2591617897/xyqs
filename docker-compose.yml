@@ -1,0 +1,53 @@
+version: "3.8"
+
+# 本地开发依赖：MySQL / Redis / Nacos
+# 启动：docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: campus-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: guizhou_campus_fun
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - campus-mysql-data:/var/lib/mysql
+      - ./backend/sql:/docker-entrypoint-initdb.d  # 首次启动自动执行 schema.sql / data.sql
+
+  redis:
+    image: redis:7-alpine
+    container_name: campus-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - campus-redis-data:/data
+
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: campus-nacos
+    restart: always
+    environment:
+      MODE: standalone
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      NACOS_AUTH_ENABLE: "false"
+      TZ: Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    volumes:
+      - campus-nacos-data:/home/nacos/data
+
+volumes:
+  campus-mysql-data:
+  campus-redis-data:
+  campus-nacos-data:

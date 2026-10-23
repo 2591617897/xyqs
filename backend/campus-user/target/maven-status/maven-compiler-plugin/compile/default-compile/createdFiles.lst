@@ -1,0 +1,12 @@
+com\campus\user\service\UserService.class
+com\campus\user\UserApplication.class
+com\campus\user\dto\VerifyReq.class
+com\campus\user\dto\UserVO.class
+com\campus\user\dto\VerifyResp.class
+com\campus\user\dto\LoginOrCreateReq.class
+com\campus\user\dto\UserBrief.class
+com\campus\user\entity\User.class
+com\campus\user\controller\InternalUserController.class
+com\campus\user\controller\UserController.class
+com\campus\user\dto\UpdateProfileReq.class
+com\campus\user\mapper\UserMapper.class

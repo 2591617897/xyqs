@@ -1,0 +1,72 @@
+<view class="page">
+  <!-- 频道 -->
+  <scroll-view class="channel-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="channel-row">
+      <view class="channel-chip {{channelId === 0 ? 'active' : ''}}" bindtap="switchChannel" data-id="0">
+        <text>🌟</text>
+        <text>全部</text>
+      </view>
+      <view
+        class="channel-chip {{channelId === item.id ? 'active' : ''}}"
+        wx:for="{{channels}}"
+        wx:key="id"
+        bindtap="switchChannel"
+        data-id="{{item.id}}"
+      >
+        <text>{{item.icon}}</text>
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 帖子 -->
+  <view class="post-list">
+    <view class="post-card" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="row between">
+        <view class="channel-line">
+          <text class="channel-icon">{{item.channelIcon}}</text>
+          <text class="channel-name">{{item.channelName}}</text>
+        </view>
+        <text class="muted">{{item.timeText}}</text>
+      </view>
+
+      <view class="post-title">{{item.title}}</view>
+      <view class="post-excerpt clamp2">{{item.excerpt}}</view>
+
+      <view class="post-imgs" wx:if="{{item.imageList.length}}">
+        <image
+          wx:for="{{item.imageList}}"
+          wx:for-item="img"
+          wx:key="*this"
+          class="post-img"
+          src="{{img}}"
+          mode="aspectFill"
+        />
+      </view>
+
+      <view class="post-foot">
+        <view class="row gap12">
+          <image wx:if="{{item.authorAvatar}}" class="author-avatar" src="{{item.authorAvatar}}" mode="aspectFill" />
+          <view wx:else class="author-avatar author-ph">{{item.avatarText}}</view>
+          <text class="author-name">{{item.authorName}}</text>
+        </view>
+        <view class="row gap24">
+          <text class="muted">♡ {{item.likeCount}}</text>
+          <text class="muted">💬 {{item.commentCount}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !list.length}}">
+    <text class="empty-icon">{{loadError ? '📡' : '💬'}}</text>
+    <text>{{loadError ? '加载失败，请检查网络或后端服务' : '这个频道还没有帖子，来发第一帖'}}</text>
+    <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
+  </view>
+
+  <view class="list-tip" wx:if="{{list.length}}">
+    {{loading ? '加载中…' : (hasMore ? '上拉加载更多' : '— 到底啦 —')}}
+  </view>
+
+  <view class="fab" bindtap="goPublish">＋</view>
+</view>
