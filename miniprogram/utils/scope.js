@@ -1,0 +1,84 @@
+/**
+ * 浏览范围（信息流圈子）：本校 / 本市。
+ *
+ * - scope: 'school' 本校（默认，只看自己学校的内容）
+ * - scope: 'city'   本市（同一城市所有高校的内容）
+ * - city:  本市模式下的城市名；默认学校所在市，定位到异地时可为定位城市
+ *
+ * 位置信息 API：wx.getLocation 取经纬度 → 后端逆地理出城市（/auth/geo/city，
+ * 腾讯位置服务），失败时返回 null，前端回退到学校所在市。
+ */
+const http = require('./request')
+const { mp } = require('./util')
+
+const KEY = 'feedScope'
+
+function read() {
+  const s = mp.getStorageSync(KEY)
+  if (s && (s.scope === 'school' || s.scope === 'city')) {
+    return { scope: s.scope, city: s.city || '' }
+  }
+  return { scope: 'school', city: '' }
+}
+
+function write(next) {
+  const v = { scope: next && next.scope === 'city' ? 'city' : 'school', city: (next && next.city) || '' }
+  mp.setStorageSync(KEY, v)
+  return v
+}
+
+/**
+ * 拼进列表请求（/posts、/wall/posts）的查询参数。
+ * 本校模式返回空对象，沿用后端默认的本校过滤。
+ */
+function postParams() {
+  const s = read()
+  if (s.scope !== 'city') return {}
+  const q = { scope: 'city' }
+  if (s.city) q.city = s.city
+  return q
+}
+
+/** 胶囊文案：本校显示学校名，本市显示「城市 · 全市」 */
+function label(schoolName, schoolCity) {
+  const s = read()
+  if (s.scope === 'city') {
+    return (s.city || schoolCity || '本市') + ' · 全市'
+  }
+  return schoolName || '选择学校'
+}
+
+/**
+ * 位置信息 API：定位当前城市。任何一步失败都返回 null（静默降级，不打扰用户）。
+ * @returns {Promise<{city: string, district: string}|null>}
+ */
+function resolveGeoCity() {
+  return new Promise(function (resolve) {
+    mp.getLocation({
+      type: 'gcj02',
+      success: function (res) {
+        http.get('/auth/geo/city', {
+          lat: res.latitude,
+          lng: res.longitude
+        }, { silent: true }).then(function (geo) {
+          resolve(geo && geo.available && geo.city
+            ? { city: geo.city, district: geo.district || '' }
+            : null)
+        }).catch(function () {
+          resolve(null)
+        })
+      },
+      fail: function () {
+        resolve(null)
+      }
+    })
+  })
+}
+
+module.exports = {
+  read: read,
+  write: write,
+  postParams: postParams,
+  label: label,
+  resolveGeoCity: resolveGeoCity
+}

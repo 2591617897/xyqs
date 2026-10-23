@@ -333,3 +333,48 @@
   justify-content: center;
   font-size: 38rpx;
 }
+
+/* ---------- 楼中楼回复 ---------- */
+.ci-reply-btn {
+  font-size: 22rpx;
+  color: #b6bbc6;
+  padding: 4rpx 8rpx;
+}
+.ci-replies {
+  margin-top: 16rpx;
+  background: #f6f8fb;
+  border-radius: 16rpx;
+  padding: 8rpx 16rpx;
+}
+.reply-item {
+  display: flex;
+  gap: 14rpx;
+  padding: 14rpx 0;
+}
+.reply-item + .reply-item {
+  border-top: 1rpx solid #eceff5;
+}
+.reply-to {
+  color: #11a86b;
+  font-weight: 600;
+}
+.reply-more {
+  padding: 14rpx 0 8rpx;
+  font-size: 24rpx;
+  color: #11a86b;
+}
+.reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10rpx 20rpx;
+  background: #eef2f7;
+  border-radius: 12rpx 12rpx 0 0;
+  font-size: 22rpx;
+  color: #5b6472;
+}
+.reply-bar-cancel {
+  padding: 4rpx 10rpx;
+  color: #b6bbc6;
+  font-size: 24rpx;
+}

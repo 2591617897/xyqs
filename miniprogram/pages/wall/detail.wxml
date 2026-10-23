@@ -81,7 +81,7 @@
 
         <!-- 楼中楼回复 -->
         <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
-          <view class="reply-item" wx:for="{{item.expanded ? item.replies : item.replies.slice(0, 5)}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
+          <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
             <view class="c-avatar reply-avatar {{rp.avatarClass}}">💬</view>
             <view class="flex1">
               <view class="c-head">

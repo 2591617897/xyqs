@@ -1,7 +1,16 @@
 const http = require('../../utils/request')
-const { timeAgo, priceText, mp, categoryEmoji, toast } = require('../../utils/util')
+const { timeAgo, priceText, mp, categoryEmoji, conditionText, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const upload = require('../../utils/upload')
 const { resolveList } = require('../../utils/img')
+
+const EMOJIS = [
+  '😀', '😃', '😄', '😁', '😊', '🥰', '😍', '😘',
+  '😜', '🤪', '😳', '🥺', '😭', '😅', '😴', '🤔',
+  '🙃', '😇', '🤗', '😎', '🥳', '😤', '😱', '🤯',
+  '👍', '👏', '🙏', '💪', '🤝', '✌️', '👀', '🎉',
+  '❤️', '💔', '💌', '🌙', '⭐', '🌸', '🍀', '🌈'
+]
 
 Page({
   data: {
@@ -14,7 +23,15 @@ Page({
     showOrder: false,
     message: '',
     contact: '',
-    submitting: false
+    submitting: false,
+    comments: [],
+    commentInput: '',
+    commentImages: [],
+    commentFocus: false,
+    showEmoji: false,
+    emojiList: EMOJIS,
+    sending: false,
+    replyTo: null
   },
 
   onLoad: function (options) {
@@ -41,39 +58,44 @@ Page({
         g.sellerAvatar = me.avatar
       }
 
-      // ---- 演示数据（先保证页面展示，后续接后端时替换为真实接口） ----
+      // ---- 以下展示数据全部来自发布时填写的真实字段，无值则自动隐藏或兜底 ----
       g.saveText = g.originalPrice && g.originalPrice > g.price
         ? '省 ¥' + priceText(g.originalPrice - g.price)
         : ''
-      g.badges = [{ text: (g.categoryName || '闲置') + ' · 成色不错', mint: true }, { text: '支持自提验机' }]
       g.sellerMeta = [
-        { top: '信用极好 780', sub: '同校互信', icon: '🏅' },
-        { top: '<5分钟', sub: '平均即刻回复', icon: '' },
-        { top: '在售 3 · 评价 28', sub: '100% 好评度', icon: '' }
+        { top: '在售 ' + (g.sellerSaleCount || 0) + ' 件', sub: '实时在售', icon: '🏅', brand: true },
+        { top: '累计发布 ' + (g.sellerTotalCount || 0) + ' 件', sub: '校园认证卖家', icon: '' }
       ]
-      g.specs = [
-        { icon: '🗓️', label: '入手时间', value: '2023年9月（开学购入）', warn: false },
-        { icon: '💻', label: '使用频率与来源', value: '实验室备用机自用 · 无拆修', warn: false },
-        { icon: '🛡️', label: '保修状态', value: '官方保修已过 · 支持面交试机', warn: true },
-        { icon: '🚚', label: '交易方式', value: (g.tradeType === 1 ? '限校内自提' : '支持邮寄') + (g.location ? '（' + g.location + '）' : ''), warn: false, brand: true }
-      ]
-      g.qaList = [
-        {
-          q: '同学还在吗？支持今天傍晚去现场看机通电测试吗？',
-          a: '在的呀！今晚 7 点后我都在寝室，可以当场测试～',
-          time: '15分钟前'
-        },
-        {
-          q: '跑 Python 日常数据分析会卡顿吗？配件单出吗？',
-          a: '跑常规 Notebook 很流畅！配件是随主机打包送的，不单出哈。',
-          time: '2小时前'
-        },
-        {
-          q: '新生爽快自提，可以小刀 50 块当路费嘛？^_^',
-          a: '好嘞！点下方「聊一聊」，面交时给你减 50 带走～',
-          time: '昨天'
-        }
-      ]
+      const specs = []
+      const conditionLabel = conditionText(g.conditionLevel)
+      if (conditionLabel) {
+        specs.push({ icon: '✨', label: '成色', value: conditionLabel, warn: false })
+      }
+      if (g.purchaseTime) {
+        specs.push({ icon: '🗓️', label: '入手时间', value: g.purchaseTime, warn: false })
+      }
+      const usageText = [g.usageFrequency, g.source].filter(Boolean).join(' · ')
+      if (usageText) {
+        specs.push({ icon: '💻', label: '使用频率与来源', value: usageText, warn: false })
+      }
+      if (g.warranty) {
+        specs.push({
+          icon: '🛡️',
+          label: '保修状态',
+          value: g.warranty + (g.supportTrial === 1 ? ' · 支持面交试机' : ''),
+          warn: g.warranty !== '官方保修中'
+        })
+      }
+      specs.push({
+        icon: '🚚',
+        label: '交易方式',
+        value: (g.tradeType === 1 ? '限校内自提' : '支持邮寄') + (g.location ? '（' + g.location + '）' : ''),
+        warn: false,
+        brand: true
+      })
+      g.specs = specs
+      // 校友问答需登录后实时拉取，当前版本不展示演示数据
+      g.qaList = []
 
       self.setData({
         goods: g,
@@ -83,6 +105,7 @@ Page({
         isOwner: isOwner
       })
       mp.setNavigationBarTitle({ title: g.title })
+      self.loadComments()
     }).catch(function (err) {
       const notFound = err && err.code === 404
       self.setData({ loading: false, loadError: !notFound })
@@ -251,6 +274,157 @@ Page({
   },
 
   stop: function () {},
+
+  /* ---------- 评论（含楼中楼回复） ---------- */
+  loadComments: function () {
+    const self = this
+    http.get('/goods/' + this.goodsId + '/comments', null, { silent: true }).then(function (list) {
+      const arr = (list || []).map(function (c) {
+        c.timeText = timeAgo(c.createdAt)
+        c.imageList = resolveList(c.imageList)
+        c.expanded = false
+        c.replyCount = c.replyCount || (c.replies || []).length
+        c.replies = (c.replies || []).map(function (r) {
+          r.timeText = timeAgo(r.createdAt)
+          r.imageList = resolveList(r.imageList)
+          return r
+        })
+        // WXML 不支持数组方法，默认展示的回复列表在 JS 里预计算
+        c.repliesShown = c.replies.slice(0, 5)
+        return c
+      })
+      self.setData({ comments: arr })
+    }).catch(function () {})
+  },
+
+  focusInput: function () {
+    this.setData({ commentFocus: true, showEmoji: false })
+  },
+
+  onCommentInput: function (e) {
+    this.setData({ commentInput: e.detail.value })
+  },
+
+  toggleEmoji: function () {
+    this.setData({ showEmoji: !this.data.showEmoji, commentFocus: false })
+  },
+
+  addEmoji: function (e) {
+    const next = this.data.commentInput + e.currentTarget.dataset.emoji
+    if (next.length > 500) {
+      toast('评论最多 500 字')
+      return
+    }
+    this.setData({ commentInput: next })
+  },
+
+  chooseCommentImage: function () {
+    const self = this
+    const rest = 3 - this.data.commentImages.length
+    if (rest <= 0) {
+      toast('最多 3 张图片')
+      return
+    }
+    mp.chooseImage({
+      count: rest,
+      sizeType: ['compressed'],
+      success: function (res) {
+        self.setData({
+          commentImages: self.data.commentImages.concat(res.tempFilePaths),
+          showEmoji: false
+        })
+      }
+    })
+  },
+
+  removeCommentImage: function (e) {
+    const list = this.data.commentImages.slice()
+    list.splice(e.currentTarget.dataset.index, 1)
+    this.setData({ commentImages: list })
+  },
+
+  replyComment: function (e) {
+    const ds = e.currentTarget.dataset
+    this.setData({
+      replyTo: { id: ds.id, name: ds.name },
+      commentFocus: true,
+      showEmoji: false
+    })
+  },
+
+  cancelReply: function () {
+    this.setData({ replyTo: null })
+  },
+
+  toggleReplies: function (e) {
+    const index = e.currentTarget.dataset.index
+    const comment = this.data.comments[index]
+    const expanded = !comment.expanded
+    const patch = {}
+    patch['comments[' + index + '].expanded'] = expanded
+    patch['comments[' + index + '].repliesShown'] = expanded ? comment.replies : comment.replies.slice(0, 5)
+    this.setData(patch)
+  },
+
+  sendComment: function () {
+    const self = this
+    const content = this.data.commentInput.trim()
+    const images = this.data.commentImages
+    if (!content && !images.length) {
+      toast('说点什么，或者配张图吧')
+      return
+    }
+    if (this.data.sending) return
+    this.setData({ sending: true })
+    if (images.length) mp.showLoading({ title: '上传图片中', mask: true })
+    auth.ensureVerified().then(function () {
+      return upload.uploadImages(images)
+    }).then(function (urls) {
+      if (images.length) mp.hideLoading()
+      const payload = { content: content, images: urls }
+      if (self.data.replyTo) payload.parentId = self.data.replyTo.id
+      return http.post('/goods/' + self.goodsId + '/comments', payload)
+    }).then(function () {
+      self.setData({
+        commentInput: '',
+        commentImages: [],
+        showEmoji: false,
+        commentFocus: false,
+        sending: false,
+        replyTo: null
+      })
+      self.loadComments()
+      self.load(true)
+      mp.setStorageSync('needRefreshGoods', 1)
+    }).catch(function () {
+      self.setData({ sending: false })
+      mp.hideLoading()
+    })
+  },
+
+  deleteComment: function (e) {
+    const self = this
+    const id = e.currentTarget.dataset.id
+    mp.showModal({
+      title: '删除这条评论？',
+      content: '删除后不可恢复',
+      confirmColor: '#ff4d4f',
+      success: function (res) {
+        if (!res.confirm) return
+        http.del('/goods/' + self.goodsId + '/comments/' + id).then(function () {
+          toast('已删除')
+          self.loadComments()
+          self.load(true)
+          mp.setStorageSync('needRefreshGoods', 1)
+        }).catch(function () {})
+      }
+    })
+  },
+
+  previewCommentImage: function (e) {
+    const url = e.currentTarget.dataset.url
+    mp.previewImage({ current: url, urls: [url] })
+  },
 
   /** 关注卖家：占位交互 */
   onFollow: function () {

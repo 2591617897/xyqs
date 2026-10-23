@@ -70,19 +70,42 @@ function ensureVerified() {
 }
 
 /**
+ * 剔除入参里的无效字段（undefined / null）。
+ * 只过滤「要写入的入参」，不去清空已有缓存：
+ * '' / 0 / false 都是合法业务值，必须原样保留，否则
+ * 「未认证时把学校名清空」这类语义会被破坏。
+ *
+ * @param {Object} patch 待写入字段
+ * @returns {Object} 只含有效值的字段集合
+ */
+function pickValid(patch) {
+  var out = {}
+  if (!patch) return out
+  Object.keys(patch).forEach(function (k) {
+    var v = patch[k]
+    if (v === undefined || v === null) return
+    out[k] = v
+  })
+  return out
+}
+
+/**
  * 更新本地用户缓存（globalData + storage）。
  *
  * 必须以「已有缓存」为基础做合并，而不是整体替换：
  * 调用方经常只传部分字段（如 id/schoolId/verifyStatus），整体替换会把缓存里已有的
  * schoolName 等字段冲掉，导致首页「选择学校」与认证学籍信息不一致。
  *
+ * 合并前先剔除入参里的 null / undefined，避免后端字段缺失（未认证时 schoolName 为 null）
+ * 把缓存中的有效值抹成空。
+ *
  * @param {Object} user 需要写入的字段（可只传部分）
  * @returns {Object} 合并后的完整用户对象
  */
 function updateUser(user) {
-  const app = getApp()
-  const cached = (app && app.globalData && app.globalData.user) || mp.getStorageSync('user') || {}
-  const next = Object.assign({}, cached, user || {})
+  var app = getApp()
+  var cached = (app && app.globalData && app.globalData.user) || mp.getStorageSync('user') || {}
+  var next = Object.assign({}, cached, pickValid(user))
   app.globalData.user = next
   mp.setStorageSync('user', next)
   return next

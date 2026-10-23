@@ -2,7 +2,7 @@
   <!-- ===== 用户信息卡（绿色渐变头部） ===== -->
   <view class="hero">
     <view class="hero-top">
-      <view class="school-pill" bindtap="demoEntry" data-name="切换学校">📍 {{user && user.schoolName ? user.schoolName : '大学城校区'}} ▾</view>
+      <view class="school-pill" bindtap="openScope">📍 {{scopeLabel}} ▾</view>
       <view class="hero-title">个人主页</view>
       <view class="hero-acts">
         <view class="hero-act" bindtap="goMessages">🔔</view>
@@ -263,4 +263,17 @@
       </scroll-view>
     </view>
   </view>
+
+  <!-- 浏览范围切换：本校 / 本市（+ 定位城市），与首页共用 -->
+  <scope-sheet
+    show="{{scopeShow}}"
+    school-name="{{user.schoolName}}"
+    school-city="{{schoolCity}}"
+    geo-city="{{geoCity}}"
+    current="{{scopeMode}}"
+    current-city="{{scopeCity}}"
+    bind:close="closeScope"
+    bind:select="onScopeSelect"
+    bind:verify="onScopeVerify"
+  />
 </view>

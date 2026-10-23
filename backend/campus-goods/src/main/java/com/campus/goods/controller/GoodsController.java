@@ -5,9 +5,12 @@ import com.campus.common.security.UserContext;
 import com.campus.goods.dto.GoodsOrderReq;
 import com.campus.goods.dto.GoodsReq;
 import com.campus.goods.entity.Goods;
+import com.campus.goods.entity.GoodsComment;
 import com.campus.goods.entity.GoodsOrder;
 import com.campus.goods.service.GoodsService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -101,5 +104,38 @@ public class GoodsController {
     @PostMapping("/{id}/order")
     public R<Long> order(@PathVariable("id") Long id, @RequestBody @Valid GoodsOrderReq req) {
         return R.ok(goodsService.createOrder(id, req));
+    }
+
+    /** 商品评论列表（含楼中楼回复） */
+    @GetMapping("/{id}/comments")
+    public R<List<GoodsComment>> comments(@PathVariable("id") Long id) {
+        return R.ok(goodsService.comments(id, UserContext.userId()));
+    }
+
+    /** 发表评论 / 回复 */
+    @PostMapping("/{id}/comments")
+    public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid CommentReq req) {
+        return R.ok(goodsService.addComment(id, req.getContent(), req.getImages(), req.getParentId()));
+    }
+
+    /** 删除自己的评论 */
+    @DeleteMapping("/{goodsId}/comments/{id}")
+    public R<Void> deleteComment(@PathVariable("goodsId") Long goodsId, @PathVariable("id") Long id) {
+        goodsService.deleteComment(goodsId, id);
+        return R.ok();
+    }
+
+    @Data
+    public static class CommentReq {
+
+        @Size(max = 500, message = "评论不超过 500 字")
+        private String content;
+
+        /** 评论配图，最多 3 张 */
+        @Size(max = 3, message = "评论最多 3 张图")
+        private List<String> images;
+
+        /** 回复的父评论 id，空 / 0 表示直接评论 */
+        private Long parentId;
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.client.UserClient;
 import com.campus.common.client.dto.LoginOrCreateReq;
 import com.campus.common.client.dto.UserBrief;
+import com.campus.auth.dto.GeoCity;
 import com.campus.auth.dto.LoginReq;
 import com.campus.auth.dto.LoginResp;
 import com.campus.auth.entity.School;
@@ -47,6 +48,10 @@ public class AuthService {
     @Value("${campus.auth.mock:true}")
     private boolean mock;
 
+    /** 腾讯位置服务 key（逆地理编码用），未配置时位置解析优雅降级 */
+    @Value("${campus.geo.qqmap-key:}")
+    private String qqmapKey;
+
     public LoginResp login(LoginReq req) {
         if (!StringUtils.hasText(req.getCode()) && !StringUtils.hasText(req.getDevOpenid())) {
             throw new BizException("缺少登录凭证 code");
@@ -75,6 +80,43 @@ public class AuthService {
                 .like(StringUtils.hasText(keyword), School::getName, keyword)
                 .orderByDesc(School::getSort)
                 .last("limit 50"));
+    }
+
+    /**
+     * 位置信息 API：经纬度 → 省/市/区（腾讯位置服务 WebService 逆地理编码）。
+     * key 未配置或调用失败时返回 available=false，前端据此回退到「学校所在市」。
+     */
+    public GeoCity resolveCity(double lat, double lng) {
+        GeoCity resp = new GeoCity();
+        resp.setAvailable(false);
+        if (!StringUtils.hasText(qqmapKey)) {
+            log.info("campus.geo.qqmap-key 未配置，逆地理编码降级为不可用");
+            return resp;
+        }
+        try {
+            String url = String.format(Locale.ROOT,
+                    "https://apis.map.qq.com/ws/geocoder/v1/?location=%s,%s&key=%s&output=json&get_poi=0",
+                    lat, lng, qqmapKey);
+            Map<?, ?> body = restTemplate.getForObject(url, Map.class);
+            Object result = body == null ? null : body.get("result");
+            Object comp = result instanceof Map ? ((Map<?, ?>) result).get("address_component") : null;
+            if (comp instanceof Map) {
+                Map<?, ?> c = (Map<?, ?>) comp;
+                resp.setProvince(asText(c.get("province")));
+                resp.setCity(asText(c.get("city")));
+                resp.setDistrict(asText(c.get("district")));
+                resp.setAvailable(StringUtils.hasText(resp.getCity()));
+            } else {
+                log.warn("逆地理编码返回异常 body={}", body);
+            }
+        } catch (Exception e) {
+            log.warn("逆地理编码失败 lat={} lng={} {}", lat, lng, e.getMessage());
+        }
+        return resp;
+    }
+
+    private String asText(Object o) {
+        return o == null ? null : String.valueOf(o);
     }
 
     /** 未指定平台时按微信小程序处理（当前主端） */

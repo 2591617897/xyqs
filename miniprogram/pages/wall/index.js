@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const scopeMod = require('../../utils/scope')
 const upload = require('../../utils/upload')
 const { resolveList } = require('../../utils/img')
 
@@ -80,6 +81,11 @@ Page({
     if (this.data.cat && this.data.cat !== 'love') {
       query.category = this.data.cat
     }
+    // 浏览范围：本校（默认）/ 本市，与首页共用同一份存储
+    const scopeParams = scopeMod.postParams()
+    Object.keys(scopeParams).forEach(function (k) {
+      query[k] = scopeParams[k]
+    })
     http.get('/wall/posts', query, { silent: true })
       .then(function (res) {
         const records = (res.records || []).map(decorate)

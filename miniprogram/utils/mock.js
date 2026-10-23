@@ -79,6 +79,10 @@ function byTimeDesc(a, b) {
   return a.createdAt < b.createdAt ? 1 : -1
 }
 
+function byLikeDesc(a, b) {
+  return (b.likeCount || 0) - (a.likeCount || 0)
+}
+
 /* ============================ 种子数据 ============================ */
 
 function seed() {
@@ -102,26 +106,26 @@ function seed() {
     },
 
     schools: [
-      { id: 1001, name: '清华大学', province: '北京', city: '北京', sort: 100 },
-      { id: 1002, name: '北京大学', province: '北京', city: '北京', sort: 99 },
-      { id: 1003, name: '复旦大学', province: '上海', city: '上海', sort: 98 },
-      { id: 1004, name: '上海交通大学', province: '上海', city: '上海', sort: 97 },
-      { id: 1005, name: '浙江大学', province: '浙江', city: '杭州', sort: 96 },
-      { id: 1006, name: '武汉大学', province: '湖北', city: '武汉', sort: 95 },
-      { id: 1007, name: '四川大学', province: '四川', city: '成都', sort: 94 },
-      { id: 1008, name: '中山大学', province: '广东', city: '广州', sort: 93 },
-      { id: 1009, name: '华中科技大学', province: '湖北', city: '武汉', sort: 92 },
-      { id: 1010, name: '南京大学', province: '江苏', city: '南京', sort: 91 },
-      { id: 1011, name: '西安交通大学', province: '陕西', city: '西安', sort: 90 },
-      { id: 1012, name: '哈尔滨工业大学', province: '黑龙江', city: '哈尔滨', sort: 89 },
-      { id: 1013, name: '山东大学', province: '山东', city: '济南', sort: 88 },
-      { id: 1014, name: '厦门大学', province: '福建', city: '厦门', sort: 87 },
-      { id: 1015, name: '湖南大学', province: '湖南', city: '长沙', sort: 86 },
-      { id: 1016, name: '郑州大学', province: '河南', city: '郑州', sort: 85 },
-      { id: 1017, name: '深圳大学', province: '广东', city: '深圳', sort: 84 },
-      { id: 1018, name: '苏州大学', province: '江苏', city: '苏州', sort: 83 },
-      { id: 1019, name: '西南大学', province: '重庆', city: '重庆', sort: 82 },
-      { id: 1020, name: '兰州大学', province: '甘肃', city: '兰州', sort: 81 }
+      { id: 1001, name: '清华大学', province: '北京', city: '北京', district: '海淀区', sort: 100 },
+      { id: 1002, name: '北京大学', province: '北京', city: '北京', district: '海淀区', sort: 99 },
+      { id: 1003, name: '复旦大学', province: '上海', city: '上海', district: '杨浦区', sort: 98 },
+      { id: 1004, name: '上海交通大学', province: '上海', city: '上海', district: '闵行区', sort: 97 },
+      { id: 1005, name: '浙江大学', province: '浙江', city: '杭州', district: '西湖区', sort: 96 },
+      { id: 1006, name: '武汉大学', province: '湖北', city: '武汉', district: '武昌区', sort: 95 },
+      { id: 1007, name: '四川大学', province: '四川', city: '成都', district: '武侯区', sort: 94 },
+      { id: 1008, name: '中山大学', province: '广东', city: '广州', district: '海珠区', sort: 93 },
+      { id: 1009, name: '华中科技大学', province: '湖北', city: '武汉', district: '洪山区', sort: 92 },
+      { id: 1010, name: '南京大学', province: '江苏', city: '南京', district: '鼓楼区', sort: 91 },
+      { id: 1011, name: '西安交通大学', province: '陕西', city: '西安', district: '碑林区', sort: 90 },
+      { id: 1012, name: '哈尔滨工业大学', province: '黑龙江', city: '哈尔滨', district: '南岗区', sort: 89 },
+      { id: 1013, name: '山东大学', province: '山东', city: '济南', district: '历城区', sort: 88 },
+      { id: 1014, name: '厦门大学', province: '福建', city: '厦门', district: '思明区', sort: 87 },
+      { id: 1015, name: '湖南大学', province: '湖南', city: '长沙', district: '岳麓区', sort: 86 },
+      { id: 1016, name: '郑州大学', province: '河南', city: '郑州', district: '高新区', sort: 85 },
+      { id: 1017, name: '深圳大学', province: '广东', city: '深圳', district: '南山区', sort: 84 },
+      { id: 1018, name: '苏州大学', province: '江苏', city: '苏州', district: '姑苏区', sort: 83 },
+      { id: 1019, name: '西南大学', province: '重庆', city: '重庆', district: '北碚区', sort: 82 },
+      { id: 1020, name: '兰州大学', province: '甘肃', city: '兰州', district: '城关区', sort: 81 }
     ],
 
     channels: [
@@ -146,6 +150,12 @@ function seed() {
         price: 129,
         originalPrice: 299,
         categoryId: 1,
+        conditionLevel: 2,
+        purchaseTime: '2023年11月',
+        usageFrequency: '每天使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 二食堂门口',
@@ -165,6 +175,12 @@ function seed() {
         price: 45,
         originalPrice: 180,
         categoryId: 2,
+        conditionLevel: 3,
+        purchaseTime: '2024年3月',
+        usageFrequency: '经常使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 图书馆',
@@ -184,6 +200,12 @@ function seed() {
         price: 35,
         originalPrice: 99,
         categoryId: 3,
+        conditionLevel: 3,
+        purchaseTime: '2024年9月',
+        usageFrequency: '经常使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 蓝田宿舍楼下',
@@ -203,6 +225,12 @@ function seed() {
         price: 160,
         originalPrice: 599,
         categoryId: 4,
+        conditionLevel: 2,
+        purchaseTime: '2024年10月',
+        usageFrequency: '几乎没用过',
+        source: '自购自用',
+        warranty: '官方保修中',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 西区操场',
@@ -222,6 +250,12 @@ function seed() {
         price: 60,
         originalPrice: 158,
         categoryId: 5,
+        conditionLevel: 3,
+        purchaseTime: '2023年9月',
+        usageFrequency: '偶尔使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 体育馆',
@@ -241,6 +275,12 @@ function seed() {
         price: 320,
         originalPrice: 899,
         categoryId: 1,
+        conditionLevel: 2,
+        purchaseTime: '2023年6月',
+        usageFrequency: '每天使用',
+        source: '自购自用',
+        warranty: '官方保修中',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 玉泉 8 舍',
@@ -260,6 +300,12 @@ function seed() {
         price: 260,
         originalPrice: 780,
         categoryId: 5,
+        conditionLevel: 3,
+        purchaseTime: '2024年4月',
+        usageFrequency: '经常使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 东门车棚',
@@ -279,6 +325,12 @@ function seed() {
         price: 15,
         originalPrice: 45,
         categoryId: 2,
+        conditionLevel: 1,
+        purchaseTime: '2025年9月',
+        usageFrequency: '几乎没用过',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 0,
         images: '',
         tradeType: 2,
         location: '可邮寄，邮费另算',
@@ -298,6 +350,12 @@ function seed() {
         price: 180,
         originalPrice: 399,
         categoryId: 3,
+        conditionLevel: 3,
+        purchaseTime: '2023年12月',
+        usageFrequency: '每天使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 蓝田 5 舍',
@@ -317,6 +375,12 @@ function seed() {
         price: 30,
         originalPrice: 89,
         categoryId: 3,
+        conditionLevel: 2,
+        purchaseTime: '2024年6月',
+        usageFrequency: '经常使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 图书馆门口',
@@ -336,6 +400,12 @@ function seed() {
         price: 25,
         originalPrice: 79,
         categoryId: 1,
+        conditionLevel: 2,
+        purchaseTime: '2025年3月',
+        usageFrequency: '偶尔使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 0,
         images: '',
         tradeType: 2,
         location: '可邮寄',
@@ -355,6 +425,12 @@ function seed() {
         price: 350,
         originalPrice: 800,
         categoryId: 6,
+        conditionLevel: 3,
+        purchaseTime: '2023年9月',
+        usageFrequency: '偶尔使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 学生活动中心',
@@ -374,6 +450,12 @@ function seed() {
         price: 60,
         originalPrice: 159,
         categoryId: 5,
+        conditionLevel: 3,
+        purchaseTime: '2024年5月',
+        usageFrequency: '偶尔使用',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 篮球场',
@@ -393,6 +475,12 @@ function seed() {
         price: 120,
         originalPrice: 480,
         categoryId: 4,
+        conditionLevel: 2,
+        purchaseTime: '2024年10月',
+        usageFrequency: '几乎没用过',
+        source: '自购自用',
+        warranty: '官方保修已过',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 一食堂',
@@ -412,6 +500,12 @@ function seed() {
         price: 260,
         originalPrice: 599,
         categoryId: 1,
+        conditionLevel: 2,
+        purchaseTime: '2024年2月',
+        usageFrequency: '每天使用',
+        source: '自购自用',
+        warranty: '官方保修中',
+        supportTrial: 1,
         images: '',
         tradeType: 1,
         location: '紫金港校区 · 紫金港 4 舍',
@@ -963,6 +1057,7 @@ function decorateGoods(g) {
   copy.emoji = CATEGORY[g.categoryId] ? CATEGORY[g.categoryId].icon : '✨'
   copy.price = Number(g.price)
   copy.liked = hasLike('GOODS', g.id)
+  copy.supportTrial = g.supportTrial === 0 ? 0 : 1
   return copy
 }
 
@@ -1018,6 +1113,31 @@ function schoolName(id) {
   return s ? s.name : ''
 }
 
+/** 学校所属区域（省/市/区），与后端 t_school 的区域字段对齐 */
+function schoolRegion(id) {
+  const s = db.schools.filter(function (x) {
+    return x.id === Number(id)
+  })[0]
+  return s ? { province: s.province || '', city: s.city || '', district: s.district || '' } : { province: '', city: '', district: '' }
+}
+
+/**
+ * 浏览范围过滤：scope=city 按城市聚合（本市所有高校），
+ * 其余情况不过滤（兼容旧调用与自检脚本）。
+ */
+function filterByScope(list, q) {
+  if (!q || q.scope !== 'city') return list
+  const city = q.city || schoolRegion(db.profile.schoolId).city
+  const ids = db.schools.filter(function (x) {
+    return x.city === city
+  }).map(function (x) {
+    return x.id
+  })
+  return list.filter(function (p) {
+    return ids.indexOf(Number(p.schoolId)) >= 0
+  })
+}
+
 function maskStudentNo(no) {
   if (!no) return null
   if (no.length <= 4) return '****'
@@ -1032,6 +1152,7 @@ function maskName(name) {
 
 function meVO() {
   const p = db.profile
+  const region = schoolRegion(p.schoolId)
   return {
     id: p.id,
     nickname: p.nickname,
@@ -1041,6 +1162,9 @@ function meVO() {
     bio: p.bio,
     schoolId: p.schoolId,
     schoolName: p.schoolId ? schoolName(p.schoolId) : '',
+    schoolProvince: region.province,
+    schoolCity: region.city,
+    schoolDistrict: region.district,
     studentNo: maskStudentNo(p.studentNo),
     realName: maskName(p.realName),
     verifyStatus: p.verifyStatus,
@@ -1113,7 +1237,14 @@ function goodsDetail(id) {
   if (!g) throw { code: 404, msg: '商品不存在或已被删除' }
   g.viewCount = (g.viewCount || 0) + 1
   save()
-  return decorateGoods(g)
+  const copy = decorateGoods(g)
+  copy.sellerSaleCount = db.goods.filter(function (x) {
+    return x.userId === g.userId && x.status === 1
+  }).length
+  copy.sellerTotalCount = db.goods.filter(function (x) {
+    return x.userId === g.userId
+  }).length
+  return copy
 }
 
 function createGoods(q) {
@@ -1132,6 +1263,12 @@ function createGoods(q) {
     price: Number(q.price),
     originalPrice: q.originalPrice ? Number(q.originalPrice) : null,
     categoryId: Number(q.categoryId) || 6,
+    conditionLevel: q.conditionLevel ? Number(q.conditionLevel) : null,
+    purchaseTime: q.purchaseTime || '',
+    usageFrequency: q.usageFrequency || '',
+    source: q.source || '',
+    warranty: q.warranty || '',
+    supportTrial: q.supportTrial === 0 ? 0 : 1,
     images: images,
     tradeType: Number(q.tradeType) || 1,
     location: q.location || '',
@@ -1163,6 +1300,12 @@ function updateGoods(id, q) {
   if (q.price !== undefined) g.price = Number(q.price)
   if (q.originalPrice !== undefined) g.originalPrice = q.originalPrice ? Number(q.originalPrice) : null
   if (q.categoryId !== undefined) g.categoryId = Number(q.categoryId)
+  if (q.conditionLevel !== undefined) g.conditionLevel = q.conditionLevel ? Number(q.conditionLevel) : null
+  if (q.purchaseTime !== undefined) g.purchaseTime = q.purchaseTime || ''
+  if (q.usageFrequency !== undefined) g.usageFrequency = q.usageFrequency || ''
+  if (q.source !== undefined) g.source = q.source || ''
+  if (q.warranty !== undefined) g.warranty = q.warranty || ''
+  if (q.supportTrial !== undefined) g.supportTrial = q.supportTrial === 0 ? 0 : 1
   if (q.images !== undefined) g.images = (q.images || []).join(',')
   if (q.tradeType !== undefined) g.tradeType = Number(q.tradeType)
   if (q.location !== undefined) g.location = q.location
@@ -1269,7 +1412,7 @@ function myOrders(role) {
 /* ---------- 表白墙 ---------- */
 
 function queryWall(q) {
-  const list = db.wallPosts.filter(function (p) {
+  const list = filterByScope(db.wallPosts, q).filter(function (p) {
     return p.status === 1
   })
   if (q.sort === 'hot') {
@@ -1349,14 +1492,34 @@ function wallComments(id) {
     return x.id === Number(id)
   })[0]
   if (!p) throw { code: 404, msg: '这条表白不见了' }
-  return db.wallComments
+  const all = db.wallComments
     .filter(function (c) {
       return c.postId === Number(id)
     })
+    .sort(function (a, b) {
+      return a.createdAt < b.createdAt ? -1 : 1
+    })
+  return all
+    .filter(function (c) {
+      return !c.parentId
+    })
     .map(function (c) {
+      const replies = all
+        .filter(function (r) {
+          return r.parentId === c.id
+        })
+        .map(function (r) {
+          const rc = Object.assign({}, r)
+          rc.mine = db.session && r.userId === db.profile.id
+          rc.imageList = splitImages(r.images)
+          delete rc.userId
+          return rc
+        })
       const copy = Object.assign({}, c)
       copy.mine = db.session && c.userId === db.profile.id
       copy.imageList = splitImages(c.images)
+      copy.replies = replies
+      copy.replyCount = replies.length
       delete copy.userId
       return copy
     })
@@ -1381,7 +1544,16 @@ function addWallComment(id, q) {
     anonName: anonName(post.id + db.wallComments.length * 7 + 13),
     content: content,
     images: images,
+    parentId: Number(q.parentId) || 0,
+    replyToName: null,
     createdAt: fmt(new Date())
+  }
+  if (comment.parentId > 0) {
+    const parent = db.wallComments.filter(function (c) {
+      return c.id === comment.parentId && c.postId === post.id
+    })[0]
+    if (!parent) throw { code: 400, msg: '要回复的评论不存在' }
+    comment.replyToName = parent.anonName || '匿名同学'
   }
   db.wallComments.push(comment)
   post.commentCount = (post.commentCount || 0) + 1
@@ -1398,13 +1570,24 @@ function deleteWallComment(postId, commentId) {
   if (!comment) throw { code: 404, msg: '评论不存在或已删除' }
   if (comment.userId !== p.id) throw { code: 403, msg: '只能删除自己的评论' }
 
+  const parentId = comment.parentId || 0
+  let removed = 0
+  if (parentId === 0) {
+    const replies = db.wallComments.filter(function (c) {
+      return c.parentId === comment.id
+    })
+    removed = replies.length
+    db.wallComments = db.wallComments.filter(function (c) {
+      return c.parentId !== comment.id
+    })
+  }
   db.wallComments = db.wallComments.filter(function (c) {
     return c.id !== comment.id
   })
   const post = db.wallPosts.filter(function (x) {
     return x.id === Number(postId)
   })[0]
-  if (post) post.commentCount = Math.max(0, (post.commentCount || 0) - 1)
+  if (post) post.commentCount = Math.max(0, (post.commentCount || 0) - 1 - removed)
   save()
   return null
 }
@@ -1428,7 +1611,7 @@ function channels() {
 }
 
 function queryPosts(q) {
-  let list = db.posts.filter(function (p) {
+  let list = filterByScope(db.posts, q).filter(function (p) {
     return p.status === 1
   })
   if (q.channelId) {
@@ -1436,7 +1619,8 @@ function queryPosts(q) {
       return p.channelId === Number(q.channelId)
     })
   }
-  list.sort(byTimeDesc)
+  // sort=hot：按点赞倒序（首页最热帖子）
+  list.sort(q.sort === 'hot' ? byLikeDesc : byTimeDesc)
   return paginate(list.map(decoratePost), q)
 }
 
@@ -1511,14 +1695,36 @@ function deletePost(id) {
 }
 
 function postComments(id) {
-  return db.postComments
+  db.postComments = db.postComments || []
+  const all = db.postComments
     .filter(function (c) {
       return c.postId === Number(id)
     })
+    .sort(function (a, b) {
+      return a.createdAt < b.createdAt ? -1 : 1
+    })
+  return all
+    .filter(function (c) {
+      return !c.parentId
+    })
     .map(function (c) {
+      const replies = all
+        .filter(function (r) {
+          return r.parentId === c.id
+        })
+        .map(function (r) {
+          const rc = Object.assign({}, r)
+          rc.mine = db.session && r.userId === db.profile.id
+          rc.imageList = r.images ? String(r.images).split(',').filter(Boolean) : []
+          delete rc.userId
+          return rc
+        })
       const copy = Object.assign({}, c)
       copy.mine = db.session && c.userId === db.profile.id
       copy.imageList = c.images ? String(c.images).split(',').filter(Boolean) : []
+      copy.replies = replies
+      copy.replyCount = replies.length
+      delete copy.userId
       return copy
     })
 }
@@ -1534,6 +1740,16 @@ function addPostComment(id, q) {
   const images = (q.images || []).slice(0, 3).join(',')
   if (!content && !images) throw { code: 400, msg: '说点什么，或者配张图吧' }
 
+  const parentId = Number(q.parentId) || 0
+  let replyToName = null
+  if (parentId > 0) {
+    const parent = db.postComments.filter(function (c) {
+      return c.id === parentId && c.postId === post.id
+    })[0]
+    if (!parent) throw { code: 400, msg: '要回复的评论不存在' }
+    replyToName = parent.userName || '校园用户'
+  }
+
   const comment = {
     id: nextId(),
     postId: post.id,
@@ -1543,6 +1759,8 @@ function addPostComment(id, q) {
     content: content,
     images: images,
     imageList: images ? images.split(',') : [],
+    parentId: parentId,
+    replyToName: replyToName,
     createdAt: fmt(new Date())
   }
   db.postComments.push(comment)
@@ -1551,7 +1769,7 @@ function addPostComment(id, q) {
   return comment.id
 }
 
-/** 删除自己的帖子评论 */
+/** 删除自己的帖子评论（删顶层评论时级联删除其回复） */
 function deletePostComment(postId, commentId) {
   const p = requireLogin()
   const comment = db.postComments.filter(function (c) {
@@ -1560,13 +1778,139 @@ function deletePostComment(postId, commentId) {
   if (!comment) throw { code: 404, msg: '评论不存在或已删除' }
   if (comment.userId !== p.id) throw { code: 403, msg: '只能删除自己的评论' }
 
+  const parentId = comment.parentId || 0
+  let removed = 0
+  if (parentId === 0) {
+    // 级联删除该顶层评论下的全部回复
+    const replies = db.postComments.filter(function (c) {
+      return c.parentId === comment.id
+    })
+    removed = replies.length
+    db.postComments = db.postComments.filter(function (c) {
+      return c.parentId !== comment.id
+    })
+  }
   db.postComments = db.postComments.filter(function (c) {
     return c.id !== comment.id
   })
   const post = db.posts.filter(function (x) {
     return x.id === Number(postId)
   })[0]
-  if (post) post.commentCount = Math.max(0, (post.commentCount || 0) - 1)
+  if (post) post.commentCount = Math.max(0, (post.commentCount || 0) - 1 - removed)
+  save()
+  return null
+}
+
+/* ---------- 商品评论（含楼中楼回复，结构与帖子评论一致） ---------- */
+
+function goodsComments(id) {
+  const g = db.goods.filter(function (x) {
+    return x.id === Number(id)
+  })[0]
+  if (!g) throw { code: 404, msg: '商品不存在或已下架' }
+  db.goodsComments = db.goodsComments || []
+  const all = db.goodsComments
+    .filter(function (c) {
+      return c.goodsId === Number(id)
+    })
+    .sort(function (a, b) {
+      return a.createdAt < b.createdAt ? -1 : 1
+    })
+  return all
+    .filter(function (c) {
+      return !c.parentId
+    })
+    .map(function (c) {
+      const replies = all
+        .filter(function (r) {
+          return r.parentId === c.id
+        })
+        .map(function (r) {
+          const rc = Object.assign({}, r)
+          rc.mine = db.session && r.userId === db.profile.id
+          rc.imageList = r.images ? String(r.images).split(',').filter(Boolean) : []
+          delete rc.userId
+          return rc
+        })
+      const copy = Object.assign({}, c)
+      copy.mine = db.session && c.userId === db.profile.id
+      copy.imageList = c.images ? String(c.images).split(',').filter(Boolean) : []
+      copy.replies = replies
+      copy.replyCount = replies.length
+      delete copy.userId
+      return copy
+    })
+}
+
+function addGoodsComment(id, q) {
+  const p = requireVerified()
+  const goods = db.goods.filter(function (x) {
+    return x.id === Number(id)
+  })[0]
+  if (!goods || goods.status !== 1) throw { code: 404, msg: '商品不存在或已下架' }
+
+  const content = q.content ? String(q.content).trim() : ''
+  const images = (q.images || []).slice(0, 3).join(',')
+  if (!content && !images) throw { code: 400, msg: '说点什么，或者配张图吧' }
+
+  db.goodsComments = db.goodsComments || []
+  const parentId = Number(q.parentId) || 0
+  let replyToName = null
+  if (parentId > 0) {
+    const parent = db.goodsComments.filter(function (c) {
+      return c.id === parentId && c.goodsId === goods.id
+    })[0]
+    if (!parent) throw { code: 400, msg: '要回复的评论不存在' }
+    replyToName = parent.userName || '校园用户'
+  }
+
+  const comment = {
+    id: nextId(),
+    goodsId: goods.id,
+    userId: p.id,
+    userName: p.nickname,
+    userAvatar: p.avatar,
+    content: content,
+    images: images,
+    imageList: images ? images.split(',') : [],
+    parentId: parentId,
+    replyToName: replyToName,
+    createdAt: fmt(new Date())
+  }
+  db.goodsComments.push(comment)
+  goods.commentCount = (goods.commentCount || 0) + 1
+  save()
+  return comment.id
+}
+
+/** 删除自己的商品评论（删顶层评论时级联删除其回复） */
+function deleteGoodsComment(goodsId, commentId) {
+  const p = requireLogin()
+  db.goodsComments = db.goodsComments || []
+  const comment = db.goodsComments.filter(function (c) {
+    return c.id === Number(commentId) && c.goodsId === Number(goodsId)
+  })[0]
+  if (!comment) throw { code: 404, msg: '评论不存在或已删除' }
+  if (comment.userId !== p.id) throw { code: 403, msg: '只能删除自己的评论' }
+
+  const parentId = comment.parentId || 0
+  let removed = 0
+  if (parentId === 0) {
+    const replies = db.goodsComments.filter(function (c) {
+      return c.parentId === comment.id
+    })
+    removed = replies.length
+    db.goodsComments = db.goodsComments.filter(function (c) {
+      return c.parentId !== comment.id
+    })
+  }
+  db.goodsComments = db.goodsComments.filter(function (c) {
+    return c.id !== comment.id
+  })
+  const goods = db.goods.filter(function (x) {
+    return x.id === Number(goodsId)
+  })[0]
+  if (goods) goods.commentCount = Math.max(0, (goods.commentCount || 0) - 1 - removed)
   save()
   return null
 }
@@ -1616,8 +1960,12 @@ function route(method, url, data) {
   const q = data || {}
   load()
 
-  // 登录 / 学校
+  // 登录 / 学校 / 位置
   if (s[0] === 'auth' && s[1] === 'login' && M === 'POST') return login(q)
+  if (s[0] === 'auth' && s[1] === 'geo' && s[2] === 'city' && M === 'GET') {
+    // 位置信息 API 的模拟：返回演示账号所在城市（真实模式走后端逆地理）
+    return ok({ province: '浙江', city: '杭州', district: '西湖区', available: true })
+  }
   if (s[0] === 'schools' && M === 'GET') {
     const kw = q.keyword ? String(q.keyword) : ''
     const list = db.schools.filter(function (x) {
@@ -1660,6 +2008,9 @@ function route(method, url, data) {
     if (s[2] === 'status' && M === 'POST') return ok(changeGoodsStatus(s[1], q.status))
     if (s[2] === 'like' && M === 'POST') return ok(toggleLike('GOODS', s[1]))
     if (s[2] === 'order' && M === 'POST') return ok(createOrder(s[1], q))
+    if (s.length === 3 && s[2] === 'comments' && M === 'GET') return ok(goodsComments(s[1]))
+    if (s.length === 3 && s[2] === 'comments' && M === 'POST') return ok(addGoodsComment(s[1], q))
+    if (s.length === 4 && s[2] === 'comments' && M === 'DELETE') return ok(deleteGoodsComment(s[1], s[3]))
   }
 
   // 表白墙

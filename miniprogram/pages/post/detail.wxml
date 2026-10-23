@@ -73,7 +73,36 @@
         <view class="ci-foot">
           <text class="ci-time">{{item.timeText}}</text>
           <view class="flex1"></view>
+          <text class="ci-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">回复</text>
           <text class="ci-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+        </view>
+
+        <!-- 楼中楼回复 -->
+        <view class="ci-replies" wx:if="{{item.replies && item.replies.length}}">
+          <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:key="id">
+            <view class="ci-avatar">
+              <image wx:if="{{rp.userAvatar}}" class="ci-avatar-img" src="{{rp.userAvatar}}" mode="aspectFill" />
+              <view wx:else class="avatar-default">
+                <view class="ad-head"></view>
+                <view class="ad-body"></view>
+              </view>
+            </view>
+            <view class="ci-body">
+              <view class="ci-name">{{rp.userName || '校园用户'}}</view>
+              <view class="ci-text">
+                <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
+              </view>
+              <view class="ci-foot">
+                <text class="ci-time">{{rp.timeText}}</text>
+                <view class="flex1"></view>
+                <text class="ci-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">回复</text>
+                <text class="ci-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+              </view>
+            </view>
+          </view>
+          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{index}}">
+            查看全部 {{item.replyCount}} 条回复 ›
+          </view>
         </view>
       </view>
     </view>
@@ -99,11 +128,17 @@
       <text class="p-tip">最多 3 张</text>
     </view>
 
+    <!-- 回复状态条 -->
+    <view class="reply-bar" wx:if="{{replyTo}}">
+      <text class="reply-bar-text">回复 @{{replyTo.name}}</text>
+      <text class="reply-bar-cancel" catchtap="cancelReply">✕</text>
+    </view>
+
     <view class="bb-row">
       <view class="bb-input-wrap">
         <input
           class="bb-input"
-          placeholder="写评论…"
+          placeholder="{{replyTo ? '回复 ' + replyTo.name : '写评论…'}}"
           placeholder-class="bb-placeholder"
           value="{{commentInput}}"
           focus="{{commentFocus}}"

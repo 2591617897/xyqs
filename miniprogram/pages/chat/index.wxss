@@ -27,6 +27,12 @@
   position: relative;
   flex-shrink: 0;
 }
+.peer-img {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  display: block;
+}
 .peer-avatar .avatar-default {
   width: 96rpx;
   height: 96rpx;
@@ -69,7 +75,12 @@
   color: #64748b;
   font-size: 20rpx;
   font-weight: 600;
+  flex-shrink: 0;
 }
+.peer-tag.mint { background: rgba(16, 185, 129, 0.14); color: #005236; }
+.peer-tag.orange { background: #ffdbca; color: #783200; }
+.peer-tag.pink { background: rgba(236, 72, 153, 0.12); color: #8c0053; }
+.peer-tag.plain { background: #f1f5f9; color: #64748b; }
 .peer-school {
   margin-top: 6rpx;
   font-size: 22rpx;
@@ -224,6 +235,12 @@
   flex-shrink: 0;
   background: #e6e8ea;
 }
+.msg-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: block;
+}
 .msg-body {
   max-width: 68%;
   display: flex;
@@ -278,36 +295,6 @@
 }
 .msgs-pad {
   height: 24rpx;
-}
-
-/* ---------- 快捷话术 ---------- */
-.quicks {
-  display: flex;
-  gap: 14rpx;
-  padding: 16rpx 24rpx 8rpx;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-.quick-chip {
-  flex-shrink: 0;
-  height: 64rpx;
-  line-height: 64rpx;
-  padding: 0 26rpx;
-  border-radius: 999rpx;
-  font-size: 24rpx;
-  font-weight: 600;
-}
-.quick-chip.amber {
-  background: #fff6e0;
-  color: #b45309;
-}
-.quick-chip.green {
-  background: rgba(16, 185, 129, 0.14);
-  color: #006c49;
-}
-.quick-chip.gray {
-  background: #f1f5f9;
-  color: #475569;
 }
 
 /* ---------- 输入栏 ---------- */

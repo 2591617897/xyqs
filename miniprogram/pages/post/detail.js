@@ -25,7 +25,8 @@ Page({
     commentFocus: false,
     showEmoji: false,
     emojiList: EMOJIS,
-    sending: false
+    sending: false,
+    replyTo: null
   },
 
   onLoad: function (options) {
@@ -57,6 +58,15 @@ Page({
       const arr = (list || []).map(function (c) {
         c.timeText = timeAgo(c.createdAt)
         c.imageList = resolveList(c.imageList)
+        c.expanded = false
+        c.replyCount = c.replyCount || (c.replies || []).length
+        c.replies = (c.replies || []).map(function (r) {
+          r.timeText = timeAgo(r.createdAt)
+          r.imageList = resolveList(r.imageList)
+          return r
+        })
+        // WXML 不支持数组方法，默认展示的回复列表在 JS 里预计算
+        c.repliesShown = c.replies.slice(0, 5)
         return c
       })
       if (self.data.commentSort === 'newest') arr.reverse()
@@ -77,6 +87,30 @@ Page({
     const list = this.data.comments.slice()
     if (sort === 'newest') list.reverse()
     this.setData({ commentSort: sort, comments: list })
+  },
+
+  /* ---------- 楼中楼回复 ---------- */
+  replyComment: function (e) {
+    const ds = e.currentTarget.dataset
+    this.setData({
+      replyTo: { id: ds.id, name: ds.name },
+      commentFocus: true,
+      showEmoji: false
+    })
+  },
+
+  cancelReply: function () {
+    this.setData({ replyTo: null })
+  },
+
+  toggleReplies: function (e) {
+    const index = e.currentTarget.dataset.index
+    const comment = this.data.comments[index]
+    const expanded = !comment.expanded
+    const patch = {}
+    patch['comments[' + index + '].expanded'] = expanded
+    patch['comments[' + index + '].repliesShown'] = expanded ? comment.replies : comment.replies.slice(0, 5)
+    this.setData(patch)
   },
 
   /* ---------- 点赞 ---------- */
@@ -158,23 +192,21 @@ Page({
       return upload.uploadImages(images)
     }).then(function (urls) {
       if (images.length) mp.hideLoading()
-      return http.post('/posts/' + self.postId + '/comments', {
-        content: content,
-        images: urls
-      })
+      const payload = { content: content, images: urls }
+      if (self.data.replyTo) payload.parentId = self.data.replyTo.id
+      return http.post('/posts/' + self.postId + '/comments', payload)
     }).then(function () {
       self.setData({
         commentInput: '',
         commentImages: [],
         showEmoji: false,
         commentFocus: false,
-        sending: false
+        sending: false,
+        replyTo: null
       })
       self.loadComments()
+      self.load()
       mp.setStorageSync('needRefreshPosts', 1)
-      const post = self.data.post
-      post.commentCount = (post.commentCount || 0) + 1
-      self.setData({ post: post })
     }).catch(function () {
       self.setData({ sending: false })
       mp.hideLoading()
@@ -193,9 +225,8 @@ Page({
         http.del('/posts/' + self.postId + '/comments/' + id).then(function () {
           toast('已删除')
           self.loadComments()
-          const post = self.data.post
-          post.commentCount = Math.max(0, (post.commentCount || 0) - 1)
-          self.setData({ post: post })
+          self.load()
+          mp.setStorageSync('needRefreshPosts', 1)
         }).catch(function () {})
       }
     })

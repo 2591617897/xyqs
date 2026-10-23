@@ -1,6 +1,7 @@
 package com.campus.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.campus.user.dto.SchoolRegion;
 import com.campus.user.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,6 +12,9 @@ public interface UserMapper extends BaseMapper<User> {
 
     @Select("select name from t_school where id = #{schoolId}")
     String selectSchoolName(@Param("schoolId") Long schoolId);
+
+    @Select("select province, city, district from t_school where id = #{schoolId}")
+    SchoolRegion selectSchoolRegion(@Param("schoolId") Long schoolId);
 
     @Select("select count(1) from t_school where id = #{schoolId}")
     int countSchool(@Param("schoolId") Long schoolId);

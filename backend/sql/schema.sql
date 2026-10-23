@@ -9,12 +9,14 @@ USE guizhou_campus_fun;
 CREATE TABLE IF NOT EXISTS t_school (
   id          BIGINT       NOT NULL PRIMARY KEY,
   name        VARCHAR(64)  NOT NULL COMMENT '学校全称',
-  province    VARCHAR(32)  DEFAULT NULL,
-  city        VARCHAR(32)  DEFAULT NULL,
+  province    VARCHAR(32)  DEFAULT NULL COMMENT '所属省份',
+  city        VARCHAR(32)  DEFAULT NULL COMMENT '所属城市（市域帖子聚合的依据）',
+  district    VARCHAR(32)  DEFAULT NULL COMMENT '所属区县（区域定位展示）',
   logo        VARCHAR(255) DEFAULT NULL,
   sort        INT          NOT NULL DEFAULT 0,
   created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
-  KEY idx_name (name)
+  KEY idx_name (name),
+  KEY idx_city (city)
 ) COMMENT '学校字典（身份认证必选）';
 
 -- 用户（身份认证为核心字段）
@@ -65,6 +67,7 @@ CREATE TABLE IF NOT EXISTS t_goods (
   status         TINYINT       NOT NULL DEFAULT 1 COMMENT '0已下架 1在售 2已售出',
   view_count     INT           NOT NULL DEFAULT 0,
   like_count     INT           NOT NULL DEFAULT 0,
+  comment_count  INT           NOT NULL DEFAULT 0 COMMENT '评论数(含楼中楼回复)',
   created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_school_status (school_id, status, created_at),
@@ -165,9 +168,26 @@ CREATE TABLE IF NOT EXISTS t_post_comment (
   user_avatar VARCHAR(255) DEFAULT NULL,
   content    VARCHAR(500) NOT NULL DEFAULT '',
   images     VARCHAR(1000)         DEFAULT NULL COMMENT '逗号分隔，最多 3 张',
+  parent_id  BIGINT       NOT NULL DEFAULT 0 COMMENT '父评论id，0=直接评论；>0=对该评论的回复',
+  reply_to_name VARCHAR(64) DEFAULT NULL COMMENT '被回复人展示名快照',
   created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
   KEY idx_post (post_id)
 ) COMMENT '帖子评论';
+
+-- 商品评论（含楼中楼回复，parent_id=0 为顶层）
+CREATE TABLE IF NOT EXISTS t_goods_comment (
+  id            BIGINT       NOT NULL PRIMARY KEY,
+  goods_id      BIGINT       NOT NULL,
+  user_id       BIGINT       NOT NULL,
+  user_name     VARCHAR(64)  DEFAULT NULL,
+  user_avatar   VARCHAR(255) DEFAULT NULL,
+  content       VARCHAR(500) NOT NULL DEFAULT '',
+  images        VARCHAR(1000)         DEFAULT NULL COMMENT '逗号分隔，最多 3 张',
+  parent_id     BIGINT       NOT NULL DEFAULT 0 COMMENT '父评论id，0=直接评论；>0=对该评论的回复',
+  reply_to_name VARCHAR(64)  DEFAULT NULL COMMENT '被回复人展示名快照',
+  created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_goods (goods_id)
+) COMMENT '商品评论';
 
 -- ============================================================
 -- 升级脚本：已建过的库补充后加的字段

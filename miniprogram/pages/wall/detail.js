@@ -86,6 +86,8 @@ Page({
               r.imageList = resolveList(r.imageList)
               return r
             })
+            // 注意：WXML 表达式不支持数组方法，默认展示的回复列表必须在 JS 里预计算
+            c.repliesShown = c.replies.slice(0, 5)
             return c
           })
         })
@@ -156,8 +158,12 @@ Page({
   /** 展开 / 收起某条评论的全部回复 */
   toggleReplies: function (e) {
     const index = e.currentTarget.dataset.index
-    const key = 'comments[' + index + '].expanded'
-    this.setData({ [key]: !this.data.comments[index].expanded })
+    const comment = this.data.comments[index]
+    const expanded = !comment.expanded
+    const patch = {}
+    patch['comments[' + index + '].expanded'] = expanded
+    patch['comments[' + index + '].repliesShown'] = expanded ? comment.replies : comment.replies.slice(0, 5)
+    this.setData(patch)
   },
 
   deleteReply: function (e) {

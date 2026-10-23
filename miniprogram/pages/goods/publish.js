@@ -4,6 +4,12 @@ const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
 const { resolveList } = require('../../utils/img')
 
+/** '2023年9月' -> '2023-09'，供 picker 回显 */
+function toMonth(text) {
+  const m = /^(\d{4})年(\d{1,2})月$/.exec(text || '')
+  return m ? m[1] + '-' + (m[2].length < 2 ? '0' + m[2] : m[2]) : ''
+}
+
 Page({
   data: {
     id: null,
@@ -17,6 +23,23 @@ Page({
     images: [],
     tradeType: 1,
     location: '',
+    // 规格与成色
+    conditionLevel: 2,
+    conditionOptions: [
+      { id: 1, name: '全新' },
+      { id: 2, name: '几乎全新' },
+      { id: 3, name: '轻微使用痕迹' },
+      { id: 4, name: '明显使用痕迹' }
+    ],
+    purchaseTime: '',
+    purchaseMonth: '',
+    usageFrequency: '',
+    usageOptions: ['每天使用', '经常使用', '偶尔使用', '几乎没用过'],
+    source: '',
+    sourceOptions: ['自购自用', '朋友赠送', '活动奖品', '实验室配发', '其他'],
+    warranty: '',
+    warrantyOptions: ['官方保修中', '官方保修已过', '不确定'],
+    supportTrial: 1,
     submitting: false,
     loadError: false
   },
@@ -54,7 +77,14 @@ Page({
         categoryId: g.categoryId || 6,
         images: resolveList(g.imageList).slice(0, 9),
         tradeType: g.tradeType || 1,
-        location: g.location || ''
+        location: g.location || '',
+        conditionLevel: g.conditionLevel || 2,
+        purchaseTime: g.purchaseTime || '',
+        purchaseMonth: toMonth(g.purchaseTime),
+        usageFrequency: g.usageFrequency || '',
+        source: g.source || '',
+        warranty: g.warranty || '',
+        supportTrial: g.supportTrial === 0 ? 0 : 1
       })
     }).catch(function () {
       self.setData({ loadError: true })
@@ -74,6 +104,39 @@ Page({
 
   chooseTrade: function (e) {
     this.setData({ tradeType: Number(e.currentTarget.dataset.type) })
+  },
+
+  /* ---------- 规格与成色 ---------- */
+
+  chooseCondition: function (e) {
+    this.setData({ conditionLevel: Number(e.currentTarget.dataset.id) })
+  },
+
+  onPurchaseChange: function (e) {
+    const ym = e.detail.value
+    if (!ym) return
+    const parts = ym.split('-')
+    this.setData({
+      purchaseTime: parts[0] + '年' + Number(parts[1]) + '月',
+      purchaseMonth: ym
+    })
+  },
+
+  clearPurchase: function () {
+    this.setData({ purchaseTime: '', purchaseMonth: '' })
+  },
+
+  /** 单选 chips：再点一次取消选择 */
+  chooseChip: function (e) {
+    const field = e.currentTarget.dataset.field
+    const value = e.currentTarget.dataset.value
+    const patch = {}
+    patch[field] = this.data[field] === value ? '' : value
+    this.setData(patch)
+  },
+
+  toggleTrial: function (e) {
+    this.setData({ supportTrial: e.detail.value ? 1 : 0 })
   },
 
   chooseImage: function () {
@@ -119,6 +182,10 @@ Page({
       toast('原价格式不正确')
       return
     }
+    if (d.originalPrice && Number(d.originalPrice) < price) {
+      toast('原价比售价还低啦')
+      return
+    }
     if (this.data.submitting) return
 
     this.setData({ submitting: true })
@@ -135,6 +202,12 @@ Page({
           price: price,
           originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
           categoryId: d.categoryId,
+          conditionLevel: d.conditionLevel,
+          purchaseTime: d.purchaseTime || null,
+          usageFrequency: d.usageFrequency || null,
+          source: d.source || null,
+          warranty: d.warranty || null,
+          supportTrial: d.supportTrial,
           images: urls,
           tradeType: d.tradeType,
           location: d.location

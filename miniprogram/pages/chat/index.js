@@ -4,11 +4,18 @@ const { mp, timeAgo } = require('../../utils/util')
 Page({
   data: {
     convoId: '',
+    peerId: '',
     peerName: '同学',
+    peerAvatar: '',
+    peerVerified: false,
+    peerTags: [],
+    anon: false,
+    anonName: '',
+    showCta: false,
+    dayText: '今天',
     goodsCard: null,
     messages: [],
     draft: '',
-    quicks: ['🐣 我想小刀 ¥100', '📍 约定面交时间地点', '🏫 发宿舍定位'],
     sending: false,
     scrollInto: ''
   },
@@ -23,6 +30,8 @@ Page({
       goodsEmoji: options.ge ? decodeURIComponent(options.ge) : '',
       goodsStatus: options.gs ? decodeURIComponent(options.gs) : '',
       peerName: options.name ? decodeURIComponent(options.name) : '同学',
+      anon: options.anon === '1',
+      anonName: options.anonName ? decodeURIComponent(options.anonName) : '',
       goodsCard: options.goods
         ? {
             title: decodeURIComponent(options.goods),
@@ -48,6 +57,7 @@ Page({
       // 纯展示会话（无会话 id、无对端用户）
       const goods = this.data.goodsCard
       this.setData({
+        showCta: !!goods,
         messages: [
           {
             id: 1,
@@ -84,13 +94,16 @@ Page({
       goodsTitle: this.data.goodsCard ? this.data.goodsCard.title : '',
       goodsPrice: this.data.goodsPrice,
       goodsEmoji: this.data.goodsEmoji,
-      goodsStatus: this.data.goodsStatus === '' ? undefined : Number(this.data.goodsStatus)
+      goodsStatus: this.data.goodsStatus === '' ? undefined : Number(this.data.goodsStatus),
+      anon: this.data.anon ? 1 : undefined,
+      anonName: this.data.anonName || undefined
     }, { silent: true }).then(function (convo) {
       self.setData({
         convoId: convo.id,
         peerName: convo.peerName || self.data.peerName,
         goodsCard: convo.goodsCard || self.data.goodsCard
       })
+      self.applyPeer(convo)
       if (done) done()
     }).catch(function () {
       mp.showToast({ title: '会话创建失败', icon: 'none' })
@@ -105,9 +118,24 @@ Page({
     this.setData({
       peerName: res.peerName || this.data.peerName,
       goodsCard: res.goodsCard || this.data.goodsCard,
-      messages: msgs
+      messages: msgs,
+      dayText: dayDivider(msgs)
     })
+    this.applyPeer(res)
     this.scrollToEnd()
+  },
+
+  /** 用后端返回的对端信息刷新头部（头像 / 标签 / 认证 / 匿名） */
+  applyPeer: function (res) {
+    const tags = res.peerTags || []
+    this.setData({
+      peerAvatar: res.peerAvatar || '',
+      peerVerified: !!res.peerVerified,
+      peerTags: tags,
+      anon: !!res.anon,
+      // 只有对端是卖家时才展示「发起预订 / 小刀还价」
+      showCta: tags.some(function (t) { return t.text === '卖家' })
+    })
   },
 
   scrollToEnd: function () {
@@ -164,6 +192,7 @@ Page({
       self.scrollToEnd()
     }).catch(function () {
       self.setData({ sending: false })
+      mp.showToast({ title: '发送失败，请重试', icon: 'none' })
     })
   },
 
@@ -171,9 +200,11 @@ Page({
     this.send(this.data.draft)
   },
 
-  onQuick: function (e) {
-    const text = e.currentTarget.dataset.text.replace(/^[^\u4e00-\u9fa5A-Za-z0-9¥]+/, '')
-    this.send(text)
+  /** 发起预订 / 小刀还价：按闲鱼「小刀还价」的心智，直接发一条询价消息 */
+  onBargain: function () {
+    const goods = this.data.goodsCard
+    const title = goods && goods.title ? '「' + goods.title + '」' : '这件宝贝'
+    this.send('你好！我想对' + title + '发起预订 / 小刀还价，请问方便优惠一些吗？😊')
   },
 
   onSafety: function () {
@@ -205,4 +236,16 @@ function shortTime(t) {
     return '今天 ' + p(d.getHours()) + ':' + p(d.getMinutes())
   }
   return timeAgo(t)
+}
+
+/** 日期分割线：取首条消息的日期，兼容 iOS 的 '-' 解析 */
+function dayDivider(msgs) {
+  if (!msgs.length || !msgs[0].createdAt) return '今天'
+  const d = new Date(String(msgs[0].createdAt).replace(/-/g, '/'))
+  if (isNaN(d.getTime())) return '今天'
+  const p = function (n) { return n < 10 ? '0' + n : '' + n }
+  const now = new Date()
+  if (d.toDateString() === now.toDateString()) return '今天'
+  if (d.toDateString() === new Date(now.getTime() - 86400000).toDateString()) return '昨天'
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日'
 }

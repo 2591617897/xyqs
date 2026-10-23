@@ -14,6 +14,7 @@ import com.campus.wall.entity.WallComment;
 import com.campus.wall.entity.WallPost;
 import com.campus.wall.mapper.WallCommentMapper;
 import com.campus.wall.mapper.WallPostMapper;
+import com.campus.wall.mapper.SchoolRegionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public class WallService {
 
     private final WallPostMapper postMapper;
     private final WallCommentMapper commentMapper;
+    private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
 
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size) {
@@ -46,9 +48,32 @@ public class WallService {
      * @param category 分类过滤：love / tree / find / findp，空则不过滤
      */
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size, String sort, String category) {
+        return pageInternal(schoolId, null, userId, page, size, sort, category);
+    }
+
+    /** 学校所在市（未配置/未知时为 null） */
+    public String cityOfSchool(Long schoolId) {
+        return schoolId == null ? null : schoolRegionMapper.selectCityBySchoolId(schoolId);
+    }
+
+    /** 市域范围：同一城市所有高校的表白 */
+    public R.Page<WallPost> pageByCity(String city, Long userId, long page, long size, String sort, String category) {
+        return pageInternal(null, city, userId, page, size, sort, category);
+    }
+
+    private R.Page<WallPost> pageInternal(Long schoolId, String city, Long userId,
+                                          long page, long size, String sort, String category) {
+        List<Long> citySchoolIds = null;
+        if (StringUtils.hasText(city)) {
+            citySchoolIds = schoolRegionMapper.selectSchoolIdsByCity(city.trim());
+            if (citySchoolIds.isEmpty()) {
+                return R.Page.of(java.util.List.of(), 0, page, size);
+            }
+        }
         LambdaQueryWrapper<WallPost> q = Wrappers.<WallPost>lambdaQuery()
                 .eq(WallPost::getStatus, 1)
                 .eq(schoolId != null, WallPost::getSchoolId, schoolId)
+                .in(citySchoolIds != null, WallPost::getSchoolId, citySchoolIds)
                 .eq(StringUtils.hasText(category), WallPost::getCategory, normalizeCategory(category));
         if ("hot".equalsIgnoreCase(sort)) {
             q.orderByDesc(WallPost::getLikeCount).orderByDesc(WallPost::getCreatedAt);

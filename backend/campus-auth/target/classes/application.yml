@@ -28,6 +28,10 @@ campus:
   auth:
     # 本地没有小程序 appid 时开启 mock：用 code / devOpenid 直接生成 openid
     mock: ${AUTH_MOCK:true}
+  geo:
+    # 腾讯位置服务 key（小程序定位后逆地理出城市）。未配置时 /auth/geo/city 返回 available=false，
+    # 前端自动回退到「学校所在市」。申请：https://lbs.qq.com/
+    qqmap-key: ${QQMAP_KEY:}
   wx:
     # 微信小程序（当前主端）
     appid: ${WX_APPID:}

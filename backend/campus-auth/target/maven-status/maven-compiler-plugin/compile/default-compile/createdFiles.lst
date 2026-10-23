@@ -1,3 +1,4 @@
+com\campus\auth\dto\GeoCity.class
 com\campus\auth\AuthApplication.class
 com\campus\auth\dto\LoginResp.class
 com\campus\auth\entity\School.class

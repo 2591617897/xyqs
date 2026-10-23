@@ -114,6 +114,33 @@ async function main() {
       await call('GET /wall/posts/{id}/comments', 'GET', '/wall/posts/' + (await firstWallId()) + '/comments', null, token)
       await call('GET /posts/{id}', 'GET', '/posts/' + (await firstPostId()), null, token)
       await call('GET /posts/{id}/comments', 'GET', '/posts/' + (await firstPostId()) + '/comments', null, token)
+      // 商品评论（含楼中楼回复）：发一条顶层 + 一条回复，再删顶层（级联）
+      const goodsId = detail.body.data.id
+      await call('GET /goods/{id}/comments', 'GET', '/goods/' + goodsId + '/comments', null, token)
+      const posted = await call('POST /goods/{id}/comments', 'POST', '/goods/' + goodsId + '/comments', {
+        content: '冒烟测试：商品评论'
+      }, token)
+      const cid = posted.body && posted.body.data
+      if (cid) {
+        await call('POST /goods/{id}/comments（回复）', 'POST', '/goods/' + goodsId + '/comments', {
+          content: '冒烟测试：楼中楼回复',
+          parentId: cid
+        }, token)
+        await call('DELETE /goods/{id}/comments/{cid}', 'DELETE', '/goods/' + goodsId + '/comments/' + cid, null, token)
+      }
+      // 帖子评论回复
+      const postId = await firstPostId()
+      const pcomment = await call('POST /posts/{id}/comments', 'POST', '/posts/' + postId + '/comments', {
+        content: '冒烟测试：帖子评论'
+      }, token)
+      const pcid = pcomment.body && pcomment.body.data
+      if (pcid) {
+        await call('POST /posts/{id}/comments（回复）', 'POST', '/posts/' + postId + '/comments', {
+          content: '冒烟测试：帖子楼中楼回复',
+          parentId: pcid
+        }, token)
+        await call('DELETE /posts/{id}/comments/{cid}', 'DELETE', '/posts/' + postId + '/comments/' + pcid, null, token)
+      }
     }
 
     console.log('\n[4] 私信 / 消息中心')

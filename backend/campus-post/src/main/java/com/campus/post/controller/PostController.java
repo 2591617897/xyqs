@@ -35,13 +35,25 @@ public class PostController {
         return R.ok(postService.channels(scope));
     }
 
+    /**
+     * 帖子分页。
+     * scope=school（默认）：本校帖子；scope=city：city 指定城市（缺省取用户学校所在市）下所有高校的帖子。
+     * sort=hot：按点赞数倒序（首页「最热帖子」用）。
+     */
     @GetMapping("/posts")
     public R<R.Page<Post>> page(@RequestParam(required = false, name = "channelId") Long channelId,
                                 @RequestParam(required = false, name = "schoolId") Long schoolId,
+                                @RequestParam(required = false, name = "scope") String scope,
+                                @RequestParam(required = false, name = "city") String city,
                                 @RequestParam(defaultValue = "1", name = "page") long page,
-                                @RequestParam(defaultValue = "10", name = "size") long size) {
-        Long scope = schoolId != null ? schoolId : UserContext.schoolId();
-        return R.ok(postService.page(channelId, scope, page, size, UserContext.userId()));
+                                @RequestParam(defaultValue = "10", name = "size") long size,
+                                @RequestParam(required = false, name = "sort") String sort) {
+        Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
+        if ("city".equalsIgnoreCase(scope)) {
+            String targetCity = city != null && !city.isBlank() ? city : postService.cityOfSchool(schoolScope);
+            return R.ok(postService.pageByCity(channelId, targetCity, page, size, UserContext.userId()));
+        }
+        return R.ok(postService.page(channelId, schoolScope, page, size, UserContext.userId(), sort));
     }
 
     @PostMapping("/posts")
@@ -79,7 +91,7 @@ public class PostController {
 
     @PostMapping("/posts/{id}/comments")
     public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid ContentReq req) {
-        return R.ok(postService.addComment(id, req.getContent(), req.getImages()));
+        return R.ok(postService.addComment(id, req.getContent(), req.getImages(), req.getParentId()));
     }
 
     /** 删除自己的评论 */
@@ -98,5 +110,8 @@ public class PostController {
         /** 评论配图，最多 3 张 */
         @Size(max = 3, message = "评论最多 3 张图")
         private List<String> images;
+
+        /** 回复的父评论 id，空 / 0 表示直接评论 */
+        private Long parentId;
     }
 }

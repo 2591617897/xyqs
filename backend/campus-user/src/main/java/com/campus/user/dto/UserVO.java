@@ -26,6 +26,15 @@ public class UserVO {
 
     private String schoolName;
 
+    /** 学校所属省份 */
+    private String schoolProvince;
+
+    /** 学校所属城市（市域帖子流的聚合维度） */
+    private String schoolCity;
+
+    /** 学校所属区县 */
+    private String schoolDistrict;
+
     /** 脱敏：2022****0101 */
     private String studentNo;
 

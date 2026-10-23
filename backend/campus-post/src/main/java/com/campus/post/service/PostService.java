@@ -16,6 +16,7 @@ import com.campus.post.entity.PostComment;
 import com.campus.post.mapper.ChannelMapper;
 import com.campus.post.mapper.PostCommentMapper;
 import com.campus.post.mapper.PostMapper;
+import com.campus.post.mapper.SchoolRegionMapper;
 import com.campus.post.dto.PostReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final ChannelMapper channelMapper;
     private final PostCommentMapper commentMapper;
+    private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
 
@@ -52,11 +54,41 @@ public class PostService {
         return channelMapper.selectList(w);
     }
 
+    /** 学校所在市（未配置/未知时为 null） */
+    public String cityOfSchool(Long schoolId) {
+        return schoolId == null ? null : schoolRegionMapper.selectCityBySchoolId(schoolId);
+    }
+
+    /** 本校范围：只看自己学校的帖子 */
     public R.Page<Post> page(Long channelId, Long schoolId, long page, long size, Long userId) {
+        return pageInternal(channelId, schoolId, null, page, size, userId, null);
+    }
+
+    /** 本校范围 + 排序（sort=hot 按点赞倒序，用于首页最热帖子） */
+    public R.Page<Post> page(Long channelId, Long schoolId, long page, long size, Long userId, String sort) {
+        return pageInternal(channelId, schoolId, null, page, size, userId, sort);
+    }
+
+    /** 市域范围：同一城市所有高校的帖子 */
+    public R.Page<Post> pageByCity(Long channelId, String city, long page, long size, Long userId) {
+        return pageInternal(channelId, null, city, page, size, userId, null);
+    }
+
+    private R.Page<Post> pageInternal(Long channelId, Long schoolId, String city,
+                                      long page, long size, Long userId, String sort) {
+        List<Long> citySchoolIds = null;
+        if (StringUtils.hasText(city)) {
+            citySchoolIds = schoolRegionMapper.selectSchoolIdsByCity(city.trim());
+            if (citySchoolIds.isEmpty()) {
+                return R.Page.of(List.of(), 0, page, size);
+            }
+        }
         Page<Post> p = postMapper.selectPage(new Page<>(page, size), Wrappers.<Post>lambdaQuery()
                 .eq(Post::getStatus, 1)
                 .eq(channelId != null && channelId > 0, Post::getChannelId, channelId)
                 .eq(schoolId != null, Post::getSchoolId, schoolId)
+                .in(citySchoolIds != null, Post::getSchoolId, citySchoolIds)
+                .orderByDesc("hot".equalsIgnoreCase(sort), Post::getLikeCount)
                 .orderByDesc(Post::getCreatedAt));
 
         Map<Long, Channel> channelMap = channelMap(p.getRecords());
@@ -165,19 +197,33 @@ public class PostService {
     }
 
     public List<PostComment> comments(Long postId, Long userId) {
-        List<PostComment> list = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
+        List<PostComment> all = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
                 .eq(PostComment::getPostId, postId)
                 .orderByAsc(PostComment::getCreatedAt)
-                .last("limit 300"));
-        list.forEach(c -> {
-            c.setMine(userId != null && userId.equals(c.getUserId()));
-            c.setImageList(splitImages(c.getImages()));
-        });
-        return list;
+                .last("limit 500"));
+        // 内存组装两层树：顶层评论 + 各自挂载的回复
+        Map<Long, List<PostComment>> replyMap = all.stream()
+                .filter(c -> c.getParentId() != null && c.getParentId() > 0)
+                .collect(Collectors.groupingBy(PostComment::getParentId));
+        return all.stream()
+                .filter(c -> c.getParentId() == null || c.getParentId() == 0)
+                .map(c -> {
+                    c.setMine(userId != null && userId.equals(c.getUserId()));
+                    c.setImageList(splitImages(c.getImages()));
+                    List<PostComment> replies = replyMap.getOrDefault(c.getId(), List.of());
+                    replies.forEach(r -> {
+                        r.setMine(userId != null && userId.equals(r.getUserId()));
+                        r.setImageList(splitImages(r.getImages()));
+                    });
+                    c.setReplies(replies);
+                    c.setReplyCount(replies.size());
+                    return c;
+                })
+                .toList();
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long addComment(Long postId, String content, List<String> images) {
+    public Long addComment(Long postId, String content, List<String> images, Long parentId) {
         Long userId = UserContext.requireVerifiedUserId();
         Post post = postMapper.selectById(postId);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
@@ -192,6 +238,15 @@ public class PostService {
         PostComment comment = new PostComment();
         comment.setPostId(postId);
         comment.setUserId(userId);
+        comment.setParentId(parentId == null ? 0L : parentId);
+        // 回复评论：记录被回复人展示名快照，供「A 回复 B」展示
+        if (comment.getParentId() > 0) {
+            PostComment parent = commentMapper.selectById(comment.getParentId());
+            if (parent == null || !postId.equals(parent.getPostId())) {
+                throw new BizException("要回复的评论不存在");
+            }
+            comment.setReplyToName(StringUtils.hasText(parent.getUserName()) ? parent.getUserName() : "校园用户");
+        }
         comment.setContent(text);
         comment.setImages(imgs);
         try {
@@ -211,7 +266,7 @@ public class PostService {
         return comment.getId();
     }
 
-    /** 删除自己的评论 */
+    /** 删除自己的评论（删顶层评论时级联删除其下回复） */
     @Transactional(rollbackFor = Exception.class)
     public void deleteComment(Long postId, Long commentId) {
         Long userId = UserContext.requireUserId();
@@ -222,8 +277,17 @@ public class PostService {
         if (!userId.equals(comment.getUserId())) {
             throw BizException.forbidden("只能删除自己的评论");
         }
+        int removed = 0;
+        if (comment.getParentId() == null || comment.getParentId() == 0) {
+            List<PostComment> replies = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
+                    .eq(PostComment::getParentId, commentId));
+            if (!replies.isEmpty()) {
+                commentMapper.deleteByIds(replies.stream().map(PostComment::getId).toList());
+                removed = replies.size();
+            }
+        }
         commentMapper.deleteById(commentId);
-        postMapper.incrComment(postId, -1);
+        postMapper.incrComment(postId, -(1 + removed));
     }
 
     // ---------------- 内部方法 ----------------

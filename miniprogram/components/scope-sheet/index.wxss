@@ -1,0 +1,95 @@
+/* 浏览范围切换弹层：底部抽屉，风格与发布面板一致 */
+.sheet-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 36rpx 32rpx calc(36rpx + env(safe-area-inset-bottom));
+}
+
+.sheet-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.sheet-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9b9ba3;
+  text-align: center;
+}
+
+.scope-opt {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 20rpx;
+  background: #f5f6f8;
+  border: 2rpx solid transparent;
+}
+
+.scope-opt.on {
+  background: rgba(17, 168, 107, 0.08);
+  border-color: #11a86b;
+}
+
+.scope-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+
+.scope-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.scope-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.scope-desc {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #9b9ba3;
+}
+
+.scope-check {
+  margin-left: 16rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #11a86b;
+}
+
+.sheet-foot {
+  margin-top: 28rpx;
+  padding: 12rpx 0 4rpx;
+  font-size: 26rpx;
+  color: #11a86b;
+  text-align: center;
+}
+
+.sheet-cancel {
+  margin-top: 20rpx;
+  padding: 22rpx 0;
+  font-size: 28rpx;
+  color: #6b6b73;
+  text-align: center;
+  border-top: 1rpx solid #eef0f4;
+}

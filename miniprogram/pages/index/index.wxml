@@ -1,8 +1,8 @@
 <view class="page">
-  <!-- 顶部：学校胶囊 + 搜索 + 通知 + 头像 -->
+  <!-- 顶部：范围胶囊（本校/本市） + 搜索 + 通知 -->
   <view class="topbar">
-    <view class="school-pill" bindtap="goStatus">
-      <text class="school-name">{{schoolName}}</text>
+    <view class="school-pill" bindtap="openScope">
+      <text class="school-name">{{scopeLabel}}</text>
       <text class="school-arrow">▾</text>
     </view>
     <view class="search-box" bindtap="goSearch">
@@ -12,13 +12,6 @@
     <view class="bell-btn" bindtap="goMessages">
       <text class="bell-icon">🔔</text>
       <view class="bell-dot" wx:if="{{unread > 0}}"></view>
-    </view>
-    <view class="topbar-avatar" bindtap="goStatus">
-      <image wx:if="{{user && user.avatar}}" class="topbar-avatar-img" src="{{user.avatar}}" mode="aspectFill" />
-      <view wx:else class="avatar-default">
-        <view class="ad-head"></view>
-        <view class="ad-body"></view>
-      </view>
     </view>
   </view>
 
@@ -58,6 +51,64 @@
       <view class="announce-sub">校园闲置交易平台 低价买卖与无忧保障</view>
     </view>
     <view class="announce-btn">去逛逛 ›</view>
+  </view>
+
+  <!-- 最热帖子：全站点赞第一（点赞 > 10 才展示） -->
+  <view class="hot-card" wx:if="{{hotPost}}" bindtap="goDetail" data-type="post" data-id="{{hotPost.id}}" hover-class="feed-hover" hover-stay-time="60">
+    <view class="hot-head">
+      <text class="hot-flame">🔥</text>
+      <text class="hot-title">今日最热帖子</text>
+      <view class="flex1"></view>
+      <text class="hot-hint">点赞榜第一</text>
+    </view>
+
+    <view class="hot-user">
+      <view class="hot-avatar">
+        <image wx:if="{{hotPost.avatar}}" class="hot-avatar-img" src="{{hotPost.avatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
+        </view>
+      </view>
+      <view class="flex1">
+        <text class="hot-name">{{hotPost.authorName}}</text>
+        <text class="hot-meta">{{hotPost.badge}} · {{hotPost.timeText}}</text>
+      </view>
+    </view>
+
+    <view class="hot-text clamp3">
+      <text class="feed-topic">#{{hotPost.badge}}</text>
+      <text wx:if="{{hotPost.title}}"> {{hotPost.title}} </text>
+      <text>{{hotPost.excerpt}}</text>
+    </view>
+
+    <!-- 热评预览 -->
+    <view class="hot-comment" wx:if="{{hotComment}}">
+      <view class="hot-like-badge">{{hotPost.likeCount}}赞</view>
+      <view class="hot-comment-body">
+        <text class="hot-comment-name">{{hotComment.userName}}：</text>
+        <text class="hot-comment-text">{{hotComment.content}}</text>
+      </view>
+    </view>
+
+    <view class="feed-actions">
+      <view class="feed-view">
+        <text class="fa-icon">👁</text>
+        <text>{{hotPost.viewText}}</text>
+      </view>
+      <view class="flex1"></view>
+      <view class="feed-act {{hotPost.liked ? 'liked' : ''}}" catchtap="likeHot">
+        <text class="fa-icon">{{hotPost.liked ? '💚' : '👍'}}</text>
+        <text>{{hotPost.likeText}}</text>
+      </view>
+      <view class="feed-act" catchtap="goDetail" data-type="post" data-id="{{hotPost.id}}">
+        <text class="fa-icon">💬</text>
+        <text>{{hotPost.commentText}}</text>
+      </view>
+      <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover">
+        <text class="fa-icon">↗</text>
+      </button>
+    </view>
   </view>
 
   <!-- 信息流 -->
@@ -153,20 +204,20 @@
         <text class="attach-down">⬇</text>
       </view>
 
-      <!-- 底部：浏览数 + 赞/评/分享 -->
+      <!-- 底部：浏览 / 赞 / 评 / 分享 -->
       <view class="feed-actions">
         <view class="feed-view" wx:if="{{item.viewCount}}">
           <text class="fa-icon">👁</text>
-          <text>{{item.viewCount}} 浏览</text>
+          <text>{{item.viewText}}</text>
         </view>
         <view class="flex1"></view>
         <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
           <text class="fa-icon">{{item.liked ? '💚' : '👍'}}</text>
-          <text wx:if="{{item.likeCount}}">{{item.likeCount}}</text>
+          <text>{{item.likeText}}</text>
         </view>
         <view class="feed-act" catchtap="goComments" data-type="{{item.type}}" data-id="{{item.id}}">
           <text class="fa-icon">💬</text>
-          <text wx:if="{{item.commentCount}}">{{item.commentCount}}</text>
+          <text>{{item.commentText}}</text>
         </view>
         <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover">
           <text class="fa-icon">↗</text>
@@ -182,4 +233,17 @@
   </view>
 
   <view class="list-end" wx:if="{{feed.length && !loading}}">已经到底啦，点击右下方「＋」发布你的新动态吧</view>
+
+  <!-- 浏览范围切换：本校 / 本市（+ 定位城市） -->
+  <scope-sheet
+    show="{{scopeShow}}"
+    school-name="{{user.schoolName}}"
+    school-city="{{schoolCity}}"
+    geo-city="{{geoCity}}"
+    current="{{scopeMode}}"
+    current-city="{{scopeCity}}"
+    bind:close="closeScope"
+    bind:select="onScopeSelect"
+    bind:verify="onScopeVerify"
+  />
 </view>

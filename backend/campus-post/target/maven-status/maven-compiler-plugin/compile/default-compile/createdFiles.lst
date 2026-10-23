@@ -1,11 +1,12 @@
 com\campus\post\entity\Channel.class
 com\campus\post\mapper\ChannelMapper.class
+com\campus\post\mapper\PostMapper.class
+com\campus\post\service\PostService.class
+com\campus\post\controller\PostController.class
 com\campus\post\PostApplication.class
 com\campus\post\mapper\PostCommentMapper.class
-com\campus\post\mapper\PostMapper.class
 com\campus\post\entity\PostComment.class
 com\campus\post\dto\PostReq.class
 com\campus\post\controller\PostController$ContentReq.class
 com\campus\post\entity\Post.class
-com\campus\post\service\PostService.class
-com\campus\post\controller\PostController.class
+com\campus\post\mapper\SchoolRegionMapper.class

@@ -48,6 +48,13 @@ function categoryEmoji(id) {
   return CATEGORY_EMOJI[id] || '✨'
 }
 
+/** 闲置成色文案，与后端 condition_level 对齐 */
+const CONDITION_TEXT = { 1: '全新', 2: '几乎全新', 3: '轻微使用痕迹', 4: '明显使用痕迹' }
+
+function conditionText(id) {
+  return CONDITION_TEXT[id] || ''
+}
+
 module.exports = {
   mp,
   PLATFORM,
@@ -56,5 +63,6 @@ module.exports = {
   priceText,
   toast,
   parseDate,
-  categoryEmoji
+  categoryEmoji,
+  conditionText
 }

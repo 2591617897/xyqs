@@ -89,7 +89,8 @@
           class="cat-pill {{usageFrequency === item ? 'active' : ''}}"
           wx:for="{{usageOptions}}"
           wx:key="*this"
-          bindtap="chooseUsage"
+          bindtap="chooseChip"
+          data-field="usageFrequency"
           data-value="{{item}}"
         >{{item}}</view>
       </view>
@@ -102,7 +103,8 @@
           class="cat-pill {{source === item ? 'active' : ''}}"
           wx:for="{{sourceOptions}}"
           wx:key="*this"
-          bindtap="chooseSource"
+          bindtap="chooseChip"
+          data-field="source"
           data-value="{{item}}"
         >{{item}}</view>
       </view>
@@ -115,7 +117,8 @@
           class="cat-pill {{warranty === item ? 'active' : ''}}"
           wx:for="{{warrantyOptions}}"
           wx:key="*this"
-          bindtap="chooseWarranty"
+          bindtap="chooseChip"
+          data-field="warranty"
           data-value="{{item}}"
         >{{item}}</view>
       </view>

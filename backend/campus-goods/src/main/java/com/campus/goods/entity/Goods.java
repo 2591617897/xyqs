@@ -71,6 +71,8 @@ public class Goods {
 
     private Integer likeCount;
 
+    private Integer commentCount;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

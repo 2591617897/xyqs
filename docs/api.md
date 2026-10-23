@@ -30,9 +30,9 @@
 | --- | --- | --- |
 | GET | `/goods` | 🔓 列表。参数：`keyword, categoryId, sort(latest/price_asc/price_desc/hot), page, size, schoolId` |
 | GET | `/goods/categories` | 🔓 分类：数码/图书/生活/服饰/运动/其他 |
-| GET | `/goods/{id}` | 🔓 详情（自动 +1 浏览量，登录时返回 `liked`） |
-| POST | `/goods` | 发布（需认证）。body：`{title, description, price, originalPrice, categoryId, images[], tradeType, location}` |
-| PUT | `/goods/{id}` | 编辑（仅本人，已售出不可改） |
+| GET | `/goods/{id}` | 🔓 详情（自动 +1 浏览量，登录时返回 `liked`；含规格字段 `conditionLevel/purchaseTime/usageFrequency/source/warranty/supportTrial` 与卖家统计 `sellerSaleCount/sellerTotalCount`） |
+| POST | `/goods` | 发布（需认证）。body：`{title, description, price, originalPrice, categoryId, conditionLevel, purchaseTime, usageFrequency, source, warranty, supportTrial, images[], tradeType, location}` |
+| PUT | `/goods/{id}` | 编辑（仅本人，已售出不可改）。字段同发布，规格字段传 `null` 表示清除 |
 | POST | `/goods/{id}/status?status=` | 0 下架 / 1 上架 / 2 已售出 |
 | DELETE | `/goods/{id}` | 删除（仅本人） |
 | GET | `/goods/mine?status=` | 我发布的 |
@@ -40,6 +40,8 @@
 | POST | `/goods/{id}/like` | 收藏 / 取消收藏 → 返回最新 `liked` |
 | POST | `/goods/{id}/order` | 提交购买意向（需认证）。body：`{contact, message?}` |
 | GET | `/goods/orders/mine?role=buyer\|seller` | 我的求购 / 收到的意向（含 `goodsTitle`） |
+
+规格字段取值：`conditionLevel` 1全新/2几乎全新/3轻微使用痕迹/4明显使用痕迹；`purchaseTime` 形如 `2023年9月`；`usageFrequency` 每天使用/经常使用/偶尔使用/几乎没用过；`source` 自购自用/朋友赠送/活动奖品/实验室配发/其他；`warranty` 官方保修中/官方保修已过/不确定；`supportTrial` 0否/1是。规格字段均为选填，老数据为 `null` 时详情页自动隐藏对应行。
 
 ## 匿名表白墙（campus-wall）
 

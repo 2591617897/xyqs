@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "scope-sheet": "/components/scope-sheet/index"
+  },
   "navigationBarTitleText": "我的"
 }

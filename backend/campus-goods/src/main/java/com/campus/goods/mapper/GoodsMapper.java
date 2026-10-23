@@ -14,4 +14,7 @@ public interface GoodsMapper extends BaseMapper<Goods> {
 
     @Update("update t_goods set like_count = greatest(like_count + #{delta}, 0) where id = #{id}")
     int incrLike(@Param("id") Long id, @Param("delta") int delta);
+
+    @Update("update t_goods set comment_count = greatest(comment_count + #{delta}, 0) where id = #{id}")
+    int incrComment(@Param("id") Long id, @Param("delta") int delta);
 }

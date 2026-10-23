@@ -20,6 +20,9 @@ public class School {
 
     private String city;
 
+    /** 所属区县（区域定位展示） */
+    private String district;
+
     private String logo;
 
     private Integer sort;

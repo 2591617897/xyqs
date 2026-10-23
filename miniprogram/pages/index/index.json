@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "scope-sheet": "/components/scope-sheet/index"
+  },
   "navigationBarTitleText": "校园趣事",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"

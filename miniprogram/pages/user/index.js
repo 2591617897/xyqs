@@ -1,12 +1,20 @@
 const http = require('../../utils/request')
 const { mp, toast, timeAgo } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const scopeMod = require('../../utils/scope')
 const mock = require('../../utils/mock')
 
 Page({
   data: {
     user: null,
     logged: false,
+    // 浏览范围（本校 / 本市），与首页共用同一份存储
+    scopeLabel: '选择学校',
+    scopeMode: 'school',
+    scopeCity: '',
+    schoolCity: '',
+    scopeShow: false,
+    geoCity: null,
     stats: { goods: 0, favorites: 0, orders: 0 },
     loading: true,
     showOrders: false,
@@ -21,11 +29,12 @@ Page({
       this.getTabBar().setData({ selected: 4 })
     }
     mp.setNavigationBarTitle({ title: '我的' })
-const cached = getApp().globalData.user
-this.setData({
+    const cached = getApp().globalData.user
+    this.setData({
       logged: !!http.getToken(),
       user: cached
     })
+    this.applyScope()
     if (http.getToken()) {
       this.loadMe()
       this.loadStats()
@@ -33,6 +42,50 @@ this.setData({
     } else {
       this.setData({ loading: false })
     }
+  },
+
+  /** 胶囊文案：本校显示学校名，本市显示「城市 · 全市」 */
+  applyScope: function () {
+    const s = scopeMod.read()
+    const user = this.data.user || getApp().globalData.user
+    this.setData({
+      schoolCity: (user && user.schoolCity) || '',
+      scopeMode: s.scope,
+      scopeCity: s.scope === 'city' ? s.city : '',
+      scopeLabel: scopeMod.label(user && user.schoolName, user && user.schoolCity)
+    })
+  },
+
+  /** 打开「浏览范围」弹层：本校 / 本市（+ 位置 API 解析出的定位城市） */
+  openScope: function () {
+    const self = this
+    this.setData({
+      scopeShow: true,
+      schoolCity: (this.data.user && this.data.user.schoolCity) || ''
+    })
+    scopeMod.resolveGeoCity().then(function (geo) {
+      self.setData({ geoCity: geo })
+    })
+  },
+
+  closeScope: function () {
+    this.setData({ scopeShow: false })
+  },
+
+  onScopeSelect: function (e) {
+    const d = e.detail || {}
+    const next = scopeMod.write({ scope: d.scope, city: d.city })
+    this.setData({ scopeShow: false })
+    this.applyScope()
+    if (next.scope === 'city') {
+      toast('已切换到' + (next.city || '本市') + ' · 全市')
+    }
+  },
+
+  /** 弹层里的「学籍认证 / 切换学校」 */
+  onScopeVerify: function () {
+    this.setData({ scopeShow: false })
+    if (typeof this.goVerify === 'function') this.goVerify()
   },
 
   loadMe: function () {
@@ -49,8 +102,10 @@ this.setData({
         avatar: me.avatar,
         schoolId: me.schoolId,
         schoolName: me.schoolName || '',
+        schoolCity: me.schoolCity || '',
         verifyStatus: me.verifyStatus
       })
+      self.applyScope()
     }).catch(function (err) {
       // 只有 401 才能判定为未登录；网络异常时保留登录态
       if (err && err.code === 401) {
@@ -111,8 +166,10 @@ this.setData({
       avatar: me.avatar,
       schoolId: me.schoolId,
       schoolName: me.schoolName || '',
+      schoolCity: me.schoolCity || '',
       verifyStatus: me.verifyStatus
     })
+    this.applyScope()
   },
 
   logout: function () {

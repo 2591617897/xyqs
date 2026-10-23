@@ -13,7 +13,9 @@ import com.campus.common.social.mapper.LikeMapper;
 import com.campus.goods.dto.GoodsOrderReq;
 import com.campus.goods.dto.GoodsReq;
 import com.campus.goods.entity.Goods;
+import com.campus.goods.entity.GoodsComment;
 import com.campus.goods.entity.GoodsOrder;
+import com.campus.goods.mapper.GoodsCommentMapper;
 import com.campus.goods.mapper.GoodsMapper;
 import com.campus.goods.mapper.GoodsOrderMapper;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class GoodsService {
 
     private final GoodsMapper goodsMapper;
     private final GoodsOrderMapper orderMapper;
+    private final GoodsCommentMapper commentMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
 
@@ -171,6 +174,114 @@ public class GoodsService {
         likeMapper.insert(like);
         goodsMapper.incrLike(goodsId, 1);
         return true;
+    }
+
+    /* ================= 评论（含楼中楼回复） ================= */
+
+    /** 商品评论列表：内存组装两层树（顶层评论 + 各自回复） */
+    public List<GoodsComment> comments(Long goodsId, Long userId) {
+        List<GoodsComment> all = commentMapper.selectList(Wrappers.<GoodsComment>lambdaQuery()
+                .eq(GoodsComment::getGoodsId, goodsId)
+                .orderByAsc(GoodsComment::getCreatedAt)
+                .last("limit 500"));
+        Map<Long, List<GoodsComment>> replyMap = all.stream()
+                .filter(c -> c.getParentId() != null && c.getParentId() > 0)
+                .collect(Collectors.groupingBy(GoodsComment::getParentId));
+        return all.stream()
+                .filter(c -> c.getParentId() == null || c.getParentId() == 0)
+                .map(c -> {
+                    c.setMine(userId != null && userId.equals(c.getUserId()));
+                    c.setImageList(splitImages(c.getImages()));
+                    List<GoodsComment> replies = replyMap.getOrDefault(c.getId(), List.of());
+                    replies.forEach(r -> {
+                        r.setMine(userId != null && userId.equals(r.getUserId()));
+                        r.setImageList(splitImages(r.getImages()));
+                    });
+                    c.setReplies(replies);
+                    c.setReplyCount(replies.size());
+                    return c;
+                })
+                .toList();
+    }
+
+    /** 发表评论 / 回复（parentId>0 时为楼中楼回复） */
+    @Transactional(rollbackFor = Exception.class)
+    public Long addComment(Long goodsId, String content, List<String> images, Long parentId) {
+        Long userId = UserContext.requireVerifiedUserId();
+        Goods goods = goodsMapper.selectById(goodsId);
+        if (goods == null) {
+            throw BizException.notFound("商品不存在");
+        }
+        String text = content == null ? "" : content.trim();
+        String imgs = joinImages(images);
+        if (!StringUtils.hasText(text) && !StringUtils.hasText(imgs)) {
+            throw new BizException("说点什么，或者配张图吧");
+        }
+        GoodsComment comment = new GoodsComment();
+        comment.setGoodsId(goodsId);
+        comment.setUserId(userId);
+        comment.setParentId(parentId == null ? 0L : parentId);
+        if (comment.getParentId() > 0) {
+            GoodsComment parent = commentMapper.selectById(comment.getParentId());
+            if (parent == null || !goodsId.equals(parent.getGoodsId())) {
+                throw new BizException("要回复的评论不存在");
+            }
+            comment.setReplyToName(StringUtils.hasText(parent.getUserName()) ? parent.getUserName() : "校园用户");
+        }
+        comment.setContent(text);
+        comment.setImages(imgs);
+        try {
+            R<UserBrief> res = userClient.getBrief(userId);
+            if (res != null && res.getData() != null) {
+                comment.setUserName(res.getData().getNickname());
+                comment.setUserAvatar(res.getData().getAvatar());
+            }
+        } catch (Exception e) {
+            log.warn("获取用户信息失败 userId={}", userId);
+        }
+        comment.setUserName(comment.getUserName() == null ? "校园用户" : comment.getUserName());
+        commentMapper.insert(comment);
+        goodsMapper.incrComment(goodsId, 1);
+        comment.setMine(true);
+        comment.setImageList(splitImages(imgs));
+        return comment.getId();
+    }
+
+    /** 删除自己的评论（删顶层评论时级联删除其下回复） */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteComment(Long goodsId, Long commentId) {
+        Long userId = UserContext.requireUserId();
+        GoodsComment comment = commentMapper.selectById(commentId);
+        if (comment == null || !goodsId.equals(comment.getGoodsId())) {
+            throw BizException.notFound("评论不存在或已删除");
+        }
+        if (!userId.equals(comment.getUserId())) {
+            throw BizException.forbidden("只能删除自己的评论");
+        }
+        int removed = 0;
+        if (comment.getParentId() == null || comment.getParentId() == 0) {
+            List<GoodsComment> replies = commentMapper.selectList(Wrappers.<GoodsComment>lambdaQuery()
+                    .eq(GoodsComment::getParentId, commentId));
+            if (!replies.isEmpty()) {
+                commentMapper.deleteByIds(replies.stream().map(GoodsComment::getId).toList());
+                removed = replies.size();
+            }
+        }
+        commentMapper.deleteById(commentId);
+        goodsMapper.incrComment(goodsId, -(1 + removed));
+    }
+
+    private List<String> splitImages(String images) {
+        return StringUtils.hasText(images)
+                ? Arrays.stream(images.split(",")).filter(StringUtils::hasText).toList()
+                : List.of();
+    }
+
+    private String joinImages(List<String> images) {
+        if (images == null || images.isEmpty()) {
+            return null;
+        }
+        return images.stream().filter(StringUtils::hasText).limit(3).collect(Collectors.joining(","));
     }
 
     public List<Goods> myFavorites(Long userId) {

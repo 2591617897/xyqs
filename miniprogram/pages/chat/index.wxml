@@ -10,22 +10,22 @@
   <!-- 对方信息 -->
   <view class="peer">
     <view class="peer-avatar">
-      <view class="avatar-default">
+      <image wx:if="{{peerAvatar}}" class="peer-img" src="{{peerAvatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-default">
         <view class="ad-head"></view>
         <view class="ad-body"></view>
       </view>
-      <view class="peer-check">✓</view>
+      <view class="peer-check" wx:if="{{peerVerified}}">✓</view>
     </view>
     <view class="peer-main">
       <view class="peer-name-row">
         <text class="peer-name">{{peerName}}</text>
-        <text class="peer-tag">卖家</text>
+        <text class="peer-tag {{tag.cls}}" wx:for="{{peerTags}}" wx:for-item="tag" wx:key="text">{{tag.text}}</text>
       </view>
-      <view class="peer-school">🎓 同校同学 · 计算机学院</view>
+      <view class="peer-school">{{anon ? '💌 匿名纸条 · 身份保密' : '🎓 同校同学'}}</view>
     </view>
     <view class="peer-acts">
-      <view class="peer-act">📞</view>
-      <view class="peer-act">⋯</view>
+      <view class="peer-act" bindtap="onSafety">⋯</view>
     </view>
   </view>
 
@@ -43,7 +43,7 @@
         <text class="gc-talk">发宝贝链接</text>
       </view>
     </view>
-    <view class="gc-cta" bindtap="onSafety">📮 发起预订 / 小刀还价</view>
+    <view class="gc-cta" wx:if="{{showCta}}" bindtap="onBargain">📮 发起预订 / 小刀还价</view>
   </view>
 
   <!-- 安全提示 -->
@@ -54,7 +54,7 @@
 
   <!-- 消息列表 -->
   <scroll-view class="msgs" scroll-y="true" scroll-into-view="{{scrollInto}}" scroll-with-animation>
-    <view class="msg-day">今天 14:22</view>
+    <view class="msg-day">{{dayText}}</view>
     <view
       class="msg {{item.from === 'me' ? 'mine' : ''}}"
       wx:for="{{messages}}"
@@ -62,7 +62,8 @@
       id="msg-{{item.id}}"
     >
       <view class="msg-avatar" wx:if="{{item.from !== 'me'}}">
-        <view class="avatar-default">
+        <image wx:if="{{peerAvatar && !anon}}" class="msg-img" src="{{peerAvatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-default">
           <view class="ad-head"></view>
           <view class="ad-body"></view>
         </view>
@@ -80,13 +81,6 @@
     </view>
     <view class="msgs-pad"></view>
   </scroll-view>
-
-  <!-- 快捷话术 -->
-  <view class="quicks">
-    <view class="quick-chip amber" bindtap="onQuick" data-text="{{quicks[0]}}">🐣 我想小刀 ¥100</view>
-    <view class="quick-chip green" bindtap="onQuick" data-text="{{quicks[1]}}">📍 约定面交时间地点</view>
-    <view class="quick-chip gray" bindtap="onQuick" data-text="{{quicks[2]}}">🏫 发宿舍定位</view>
-  </view>
 
   <!-- 输入栏 -->
   <view class="input-bar">

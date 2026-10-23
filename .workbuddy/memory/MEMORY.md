@@ -26,6 +26,9 @@
 
 ## 工程约定
 - 小程序端默认 `USE_MOCK = false`（`miniprogram/utils/config.js`，环境化配置：改 `ACTIVE_ENV` 或 `host/port` 即可，`SERVER/BASE_URL/UPLOAD_URL` 自动派生）
+- **私信**：`campus-message`（8106，网关 `/api/messages/**`），表 `t_message_conversation`/`t_message`；
+  `user_a=min(id)`、`user_b=max(id)`，`goods_id=0` 表示非商品会话；商品快照冗余进会话。
+  **聊天页（pages/chat）不要加快捷话术 chips**——用户 2026-10-23 明确要求去掉底部快捷输入，只保留输入栏
 - **后端父 POM 必须保留 maven-compiler-plugin 的 `-parameters`**：本项目未继承 `spring-boot-starter-parent`，
   缺了它所有 `@RequestParam/@PathVariable` 会报 "Name for argument ... not specified"（全站 400）。
   已在该 POM 显式开启，且 controller 注解也写死了 name（双保险）

@@ -21,7 +21,7 @@
         <text class="gt-check">✓</text>
         <text>{{goods.categoryName || '闲置'}}</text>
       </view>
-      <view class="gallery-tag ghost" wx:if="{{goods.tradeType === 1}}">🏫 支持自提验机</view>
+      <view class="gallery-tag ghost" wx:if="{{goods.supportTrial === 1}}">🏫 支持自提验机</view>
     </view>
 
     <!-- 右下角计数胶囊 -->
@@ -72,17 +72,9 @@
         <view class="follow-btn" catchtap="onFollow">关注</view>
       </view>
       <view class="seller-metrics">
-        <view class="metric">
-          <view class="metric-top brand">{{goods.sellerMeta[0].icon}} {{goods.sellerMeta[0].top}}</view>
-          <view class="metric-sub">{{goods.sellerMeta[0].sub}}</view>
-        </view>
-        <view class="metric">
-          <view class="metric-top">{{goods.sellerMeta[1].top}}</view>
-          <view class="metric-sub">{{goods.sellerMeta[1].sub}}</view>
-        </view>
-        <view class="metric">
-          <view class="metric-top">{{goods.sellerMeta[2].top}}</view>
-          <view class="metric-sub">{{goods.sellerMeta[2].sub}}</view>
+        <view class="metric" wx:for="{{goods.sellerMeta}}" wx:key="top">
+          <view class="metric-top {{item.brand ? 'brand' : ''}}">{{item.icon}} {{item.top}}</view>
+          <view class="metric-sub">{{item.sub}}</view>
         </view>
       </view>
     </view>
@@ -108,7 +100,7 @@
         <text class="head-title">宝贝详细描述</text>
       </view>
       <view class="desc">{{goods.description || '卖家很懒，什么都没写～'}}</view>
-      <view class="desc-note" wx:if="{{goods.tradeType === 1}}">支持校内任意地点当面验货！诚心想要的同校同学欢迎点击下方随时发起沟通～</view>
+      <view class="desc-note" wx:if="{{goods.supportTrial === 1}}">支持校内任意地点当面验货！诚心想要的同校同学欢迎点击下方随时发起沟通～</view>
     </view>
 
     <!-- 安全提示 -->
@@ -120,8 +112,132 @@
       </view>
     </view>
 
-    <!-- 校友问答 -->
-    <view class="card qa-card">
+    <!-- 评论区（含楼中楼回复） -->
+    <view class="card comment-card">
+      <view class="card-head">
+        <view class="head-bar"></view>
+        <text class="head-title">全部评论</text>
+        <text class="cc-count">{{goods.commentCount || 0}}</text>
+      </view>
+
+      <!-- 回复状态条 -->
+      <view class="reply-bar" wx:if="{{replyTo}}">
+        <text class="reply-bar-text">回复 @{{replyTo.name}}</text>
+        <text class="reply-bar-cancel" catchtap="cancelReply">✕</text>
+      </view>
+
+      <!-- 待发送配图 -->
+      <view class="pending-imgs" wx:if="{{commentImages.length}}">
+        <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
+          <image class="p-thumb" src="{{item}}" mode="aspectFill" />
+          <view class="p-del" catchtap="removeCommentImage" data-index="{{index}}">✕</view>
+        </view>
+        <text class="p-tip">最多 3 张</text>
+      </view>
+
+      <!-- 输入行 -->
+      <view class="cc-input-row">
+        <input
+          class="cc-input"
+          placeholder="{{replyTo ? '回复 ' + replyTo.name : '写下你的评论…'}}"
+          placeholder-class="placeholder"
+          value="{{commentInput}}"
+          focus="{{commentFocus}}"
+          maxlength="500"
+          confirm-type="send"
+          bindinput="onCommentInput"
+          bindconfirm="sendComment"
+          bindfocus="focusInput"
+        />
+        <view class="cc-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
+        <view class="cc-tool" catchtap="chooseCommentImage">🖼</view>
+        <view class="cc-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发送</view>
+      </view>
+
+      <!-- 表情面板 -->
+      <view class="emoji-panel" wx:if="{{showEmoji}}">
+        <view class="emoji-grid">
+          <view
+            class="emoji-item"
+            wx:for="{{emojiList}}"
+            wx:key="*this"
+            catchtap="addEmoji"
+            data-emoji="{{item}}"
+          >{{item}}</view>
+        </view>
+      </view>
+
+      <!-- 评论列表 -->
+      <view class="cc-list" wx:if="{{comments.length}}">
+        <view class="comment-item" wx:for="{{comments}}" wx:for-index="cindex" wx:key="id">
+          <view class="ci-avatar">
+            <image wx:if="{{item.userAvatar}}" class="ci-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
+            <view wx:else class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
+          </view>
+          <view class="ci-body">
+            <view class="ci-name">{{item.userName || '校园用户'}}</view>
+            <view class="ci-text" wx:if="{{item.content}}">{{item.content}}</view>
+            <view class="ci-imgs" wx:if="{{item.imageList.length}}">
+              <image
+                wx:for="{{item.imageList}}"
+                wx:for-item="img"
+                wx:key="*this"
+                class="ci-img"
+                src="{{img}}"
+                mode="aspectFill"
+                catchtap="previewCommentImage"
+                data-url="{{img}}"
+              />
+            </view>
+            <view class="ci-foot">
+              <text class="ci-time">{{item.timeText}}</text>
+              <view class="flex1"></view>
+              <text class="ci-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">回复</text>
+              <text class="ci-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+            </view>
+
+            <!-- 楼中楼回复 -->
+            <view class="ci-replies" wx:if="{{item.replies && item.replies.length}}">
+              <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:key="id">
+                <view class="ci-avatar">
+                  <image wx:if="{{rp.userAvatar}}" class="ci-avatar-img" src="{{rp.userAvatar}}" mode="aspectFill" />
+                  <view wx:else class="avatar-default">
+                    <view class="ad-head"></view>
+                    <view class="ad-body"></view>
+                  </view>
+                </view>
+                <view class="ci-body">
+                  <view class="ci-name">{{rp.userName || '校园用户'}}</view>
+                  <view class="ci-text">
+                    <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
+                  </view>
+                  <view class="ci-foot">
+                    <text class="ci-time">{{rp.timeText}}</text>
+                    <view class="flex1"></view>
+                    <text class="ci-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">回复</text>
+                    <text class="ci-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+                  </view>
+                </view>
+              </view>
+              <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{cindex}}">
+                查看全部 {{item.replyCount}} 条回复 ›
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="comment-empty" wx:if="{{!comments.length}}">
+        <text class="empty-icon">💬</text>
+        <text>还没有评论，来抢沙发</text>
+      </view>
+    </view>
+
+    <!-- 校友问答（有真实提问数据时才展示） -->
+    <view class="card qa-card" wx:if="{{goods.qaList.length}}">
       <view class="card-head between">
         <view class="row">
           <view class="head-bar"></view>

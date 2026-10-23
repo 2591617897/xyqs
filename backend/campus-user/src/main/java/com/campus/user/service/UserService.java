@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.dto.LoginOrCreateReq;
+import com.campus.user.dto.SchoolRegion;
 import com.campus.user.dto.UpdateProfileReq;
 import com.campus.user.dto.UserBrief;
 import com.campus.user.dto.UserVO;
@@ -85,6 +86,14 @@ public class UserService {
         vo.setBio(user.getBio());
         vo.setSchoolId(user.getSchoolId());
         vo.setSchoolName(user.getSchoolId() == null ? null : userMapper.selectSchoolName(user.getSchoolId()));
+        if (user.getSchoolId() != null) {
+            SchoolRegion region = userMapper.selectSchoolRegion(user.getSchoolId());
+            if (region != null) {
+                vo.setSchoolProvince(region.getProvince());
+                vo.setSchoolCity(region.getCity());
+                vo.setSchoolDistrict(region.getDistrict());
+            }
+        }
         vo.setStudentNo(maskStudentNo(user.getStudentNo()));
         vo.setRealName(maskName(user.getRealName()));
         vo.setVerifyStatus(user.getVerifyStatus());
