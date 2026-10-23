@@ -8,7 +8,7 @@ QQ 小程序端 (WXML/WXSS/JS)
         ▼
 campus-gateway :8888      ← Spring Cloud Gateway：路由 + JWT 鉴权 + 注入用户上下文
         │  lb://
-        ├── campus-auth   :8101   QQ code2Session 登录取 openid、JWT 签发、学校字典
+        ├── campus-auth   :8101   微信/QQ code2Session 登录取 openid、JWT 签发、学校字典
         ├── campus-user   :8102   用户资料、实名/学号身份认证（核心准入门槛）
         ├── campus-goods  :8103   二手商品发布/浏览/收藏/购买意向
         ├── campus-wall   :8104   匿名表白墙（匿名昵称派生 + 内部留痕）
@@ -35,8 +35,8 @@ campus-gateway :8888      ← Spring Cloud Gateway：路由 + JWT 鉴权 + 注�
 首次进入小程序
   └─ qq.login() → code
       └─ POST /api/auth/login {code}
-          └─ auth: code → jscode2session → openid
-              └─ Feign: /internal/users/login-or-create (openid)
+          └─ auth: code + platform → jscode2session → openid
+              └─ Feign: /internal/users/login-or-create (platform, openid)
                   └─ 返回 userId / schoolId=null / verifyStatus=0
           └─ 签发 JWT (userId, schoolId, verifyStatus)
 → 前端检测 verifyStatus != 2 → 强制跳转认证页

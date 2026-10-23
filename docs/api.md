@@ -13,7 +13,7 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| POST | `/auth/login` | 🔓 登录。body：`{code, nickname?, avatar?, devOpenid?}`，返回 `{token, user:{id,nickname,avatar,schoolId,verifyStatus}}` |
+| POST | `/auth/login` | 🔓 登录。body：`{code, platform?, nickname?, avatar?, devOpenid?}`，`platform` 取 `wx`（默认）/ `qq`，决定用哪套 appid 去换 openid。返回 `{token, user:{id,nickname,avatar,schoolId,verifyStatus}}` |
 | GET | `/schools?keyword=` | 🔓 学校字典（注册/认证必选），最多 50 条 |
 
 ## 用户（campus-user）

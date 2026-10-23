@@ -1,7 +1,7 @@
-# 校园趣事 · QQ 小程序
+# 校园趣事 · 微信小程序
 
-面向同校学生的校园社区：**二手闲置交易** + **匿名表白墙** + **QQ 频道式帖子**。
-后端 Spring Boot 3 + Spring Cloud Alibaba 微服务，前端为 QQ 小程序（WXML/WXSS/JS）。
+面向同校学生的校园社区：**二手闲置交易** + **匿名表白墙** + **频道式帖子**。
+后端 Spring Boot 3 + Spring Cloud Alibaba 微服务，前端为微信小程序（WXML/WXSS/JS）。
 
 > **小程序端默认使用本地模拟数据**（`USE_MOCK = true`），不启动后端也能完整跑通所有页面与交互。
 > 详见下文「小程序端：模拟数据模式」。
@@ -14,13 +14,13 @@
 │   ├── pom.xml                  # 聚合父 POM（Spring Boot 3.2.5 / Spring Cloud 2023.0.1）
 │   ├── campus-common/           # 统一返回 R、异常、JWT、用户上下文、MyBatis-Plus 配置
 │   ├── campus-gateway/   :8888  # 网关：路由 + JWT 鉴权 + 身份头透传
-│   ├── campus-auth/      :8101  # QQ code2Session 登录、JWT 签发、学校字典
+│   ├── campus-auth/      :8101  # 微信/QQ code2Session 登录、JWT 签发、学校字典
 │   ├── campus-user/      :8102  # 用户资料、校园身份认证（核心准入）
 │   ├── campus-goods/     :8103  # 二手商品、收藏、购买意向
 │   ├── campus-wall/      :8104  # 匿名表白墙、评论、点赞
 │   ├── campus-post/      :8105  # 频道、帖子、评论、点赞
 │   └── sql/                     # schema.sql / data.sql
-├── miniprogram/                 # QQ 小程序端
+├── miniprogram/                 # 微信小程序端
 │   ├── utils/mock.js            # 本地模拟数据层（假后端，可交互）
 │   ├── pages/index              # 发现首页
 │   ├── pages/goods/*            # 二手列表 / 详情 / 发布
@@ -37,7 +37,7 @@
 
 | 层 | 选型 |
 | --- | --- |
-| 小程序 | QQ 小程序原生（`qq.request` / `qq.login`，兼容 `wx.` 前缀） |
+| 小程序 | 微信小程序原生（`wx.request` / `wx.login`；`utils/util.js` 保留 QQ 兜底，`PLATFORM` 常量自动识别宿主） |
 | 网关 | Spring Cloud Gateway（WebFlux），全局 JWT 过滤器 |
 | 注册/配置 | Nacos 2.3（standalone） |
 | 服务调用 | OpenFeign + LoadBalancer（`/internal/**` 内部接口） |
@@ -100,7 +100,7 @@ const ENVS = {
 发布商品 / 发帖 / 表白 / 评论配图时，选完图片**先上传再提交**：
 
 ```
-qq.chooseImage → POST /api/upload (multipart) → 拿到绝对 URL → 随业务数据提交
+wx.chooseImage → POST /api/upload (multipart) → 拿到绝对 URL → 随业务数据提交
 ```
 
 后端把文件存到 `campus-user` 的 `./uploads/yyyy/MM/`，并通过 `/uploads/**` 直接对外提供（网关放行，无需 token），返回的 URL 可直接放进 `<image>`。
@@ -200,7 +200,7 @@ node scripts/api-smoke-test.js
 
 ### 3. 跑小程序（连接真实接口）
 
-1. 用 **QQ 小程序开发者工具** 打开 `miniprogram/` 目录；
+1. 用 **微信开发者工具** 打开 `miniprogram/` 目录；
 2. `project.config.json` 里的 `appid` 换成你自己的（没有可先用测试号）；
 3. 详情 → 本地设置 → 勾选 **不校验合法域名**（接口是 `http://127.0.0.1:8888`）；
 4. 编译运行，进入「我的」点「一键登录」。
@@ -210,13 +210,86 @@ node scripts/api-smoke-test.js
 
 > 本地无小程序 AppID 时，`campus-auth` 默认开启 mock：
 > 用固定的 `DEV_OPENID`（见 `miniprogram/utils/config.js`）生成 openid，
-> 保证反复登录都是同一个用户。接真实环境时把 `QQ_MOCK=false`，
-> 并配置 `QQ_APPID / QQ_APPSECRET`。
+> 保证反复登录都是同一个用户。接真实环境时把 `AUTH_MOCK=false`，
+> 并配置 `WX_APPID / WX_APPSECRET`（需要继续支持 QQ 小程序时再填 `QQ_APPID / QQ_APPSECRET`）。
+
+## 微信小程序接入
+
+### 宿主平台识别
+
+`miniprogram/utils/util.js` 统一识别宿主并导出常量，业务代码只用 `mp.*`，不直接判断 `wx` / `qq`：
+
+```js
+const IS_QQ = typeof wx === 'undefined' && typeof qq !== 'undefined'
+const mp = IS_QQ ? qq : wx
+const PLATFORM = IS_QQ ? 'qq' : 'wx'   // 登录时随 code 发给后端
+```
+
+### 登录链路支持双平台
+
+`POST /api/auth/login` 的 body 增加 `platform`（`wx` / `qq`，缺省按 `wx`）：
+
+```
+wx.login() → code ─┐
+                   ├→ POST /api/auth/login { code, platform, devOpenid }
+qq.login() → code ─┘        ↓
+        AuthService.code2Session(platform, code)
+        ├ wx → https://api.weixin.qq.com/sns/jscode2session
+        └ qq → https://api.q.qq.com/sns/jscode2session
+                   ↓
+        Feign → campus-user /internal/users/login-or-create { platform, openid, ... }
+```
+
+### 为什么 t_user 必须带 platform
+
+`openid` 只在**宿主平台内**唯一 —— 同一个 QQ 用户的微信 openid 和 QQ openid 是两个毫不相干的字符串，
+但反过来，微信和 QQ 的 openid 也**可能**恰好撞上。因此唯一键必须是联合键：
+
+```sql
+UNIQUE KEY uk_platform_openid (platform, openid)
+```
+
+> 代价要清楚：同一个人分别用微信和 QQ 登录，会产生**两个独立账号**（认证、学号、发帖、点赞全部隔离）。
+> 要合并只能靠 unionid（需同一开放平台账号下绑定）或手机号绑定，本项目暂未实现。
+
+迁移脚本（老库必须执行，已在 `backend/sql/schema.sql` 末尾注释）：
+
+```sql
+ALTER TABLE t_user ADD COLUMN platform VARCHAR(16) NOT NULL DEFAULT 'qq' AFTER id;
+ALTER TABLE t_user DROP INDEX uk_openid;
+ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);
+```
+
+> 历史数据的 openid 来自 QQ 小程序，所以默认值必须是 `'qq'` 而不是 `'wx'`，否则老用户会被错标成微信用户。
+
+### 头像与昵称：按微信新规范取
+
+微信已于 2021-04 废弃 `getUserInfo` 的静默授权、2022-11 废弃 `getUserProfile`，
+现在**必须由用户主动点击**才能拿到真实头像昵称：
+
+| 能力 | 实现 | 说明 |
+| --- | --- | --- |
+| 头像 | `<button open-type="chooseAvatar" bindchooseavatar>` | 拿到的是**临时路径**，必须先 `POST /api/upload` 换成可访问 URL 再入库 |
+| 昵称 | `<input type="nickname">` | 由微信输入法直接给候选，用户也可自己输入，失焦/确认时 `PUT /api/user/me` |
+| 兜底 | 「从相册上传头像」菜单 | 兼容个别基础库上 `chooseAvatar` 不可用的情况 |
+
+> 头像临时路径**不能直接存库**：小程序重启后临时目录会被清理，图片就失效了。
+
+### 真机 / 上线前必做
+
+| 项 | 要求 |
+| --- | --- |
+| 服务器域名 | 「微信公众平台 → 开发管理 → 服务器域名」配置 `request` / `uploadFile` / `downloadFile` 合法域名 |
+| HTTPS | 必须是 HTTPS + 有效证书，`project.config.json` 的 `urlCheck:false` 只在开发者工具生效 |
+| 备案 | 域名需已完成 ICP 备案（微信要求） |
+| 隐私保护指引 | 在后台声明收集的用户信息（学号、真实姓名、学生证照片），并在页面提供授权说明 |
+| 内容安全 | UGC（表白墙、帖子、商品）建议接入 `msgSecCheck` / `imgSecCheck`，否则易被审核驳回 |
+| 类目资质 | 「二手交易 / 社区」类目需要对应资质，自营类目审核较严 |
 
 ## 核心业务流程
 
-**登录**：`qq.login()` → code → `POST /api/auth/login` → auth 服务 code2Session 换 openid →
-Feign 调 user 服务 `get-or-create` 用户 → 签发 JWT（含 userId / schoolId / verifyStatus）。
+**登录**：`wx.login()` → code → `POST /api/auth/login`（带 `platform`）→ auth 服务按平台
+code2Session 换 openid → Feign 调 user 服务 `login-or-create`（按 `(platform, openid)` 定位/建用户）→ 签发 JWT（含 userId / schoolId / verifyStatus）。
 
 **校园身份认证（发布前的硬门槛）**：
 `POST /api/user/verify` 提交 `schoolId + 学号 + 真实姓名 + 学生证照片`，

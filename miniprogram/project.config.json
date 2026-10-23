@@ -1,28 +1,47 @@
 {
-	"compileType": "miniprogram",
-	"appid": "1112280220",
-	"projectname": "campus-fun",
-	"description": "校园趣事 · 同校二手 / 匿名表白墙 / 校园频道",
-	"setting": {
-		"urlCheck": false,
-		"es6": true,
-		"enhance": true,
-		"postcss": true,
-		"minified": true,
-		"newFeature": true,
-		"nodeModules": true,
-		"autoAudits": false,
-		"uploadWithSourceMap": true,
-		"uglifyFileName": true,
-		"remoteDebugLogEnable": false,
-		"prefetch": false
-	},
-	"libVersion": "1.10.0",
-	"qqappid": "1112280220",
-	"scripts": {
-		"beforeCompile": "",
-		"beforePreview": "",
-		"beforeUpload": ""
-	},
-	"condition": {}
+  "compileType": "miniprogram",
+  "appid": "wx2cac838bfcc963d7",
+  "projectname": "campus-fun",
+  "description": "校园趣事 · 同校二手 / 匿名表白墙 / 校园频道",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "nodeModules": true,
+    "autoAudits": false,
+    "uploadWithSourceMap": true,
+    "uglifyFileName": true,
+    "remoteDebugLogEnable": false,
+    "prefetch": false,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "compileWorklet": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "libVersion": "3.0.0",
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
 }

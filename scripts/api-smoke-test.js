@@ -94,6 +94,7 @@ async function main() {
   console.log('\n[2] 登录')
   const login = await call('POST /auth/login', 'POST', '/auth/login', {
     code: 'mock_code_for_smoke_test',
+    platform: 'wx',
     devOpenid: 'dev_openid_guizhou_campus_001'
   })
   const token = login.body && login.body.data ? login.body.data.token : null

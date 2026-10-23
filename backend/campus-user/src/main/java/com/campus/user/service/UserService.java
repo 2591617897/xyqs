@@ -37,10 +37,14 @@ public class UserService {
         if (!StringUtils.hasText(req.getOpenid())) {
             throw new BizException("openid 不能为空");
         }
+        // openid 只在宿主平台内唯一，必须带 platform 一起定位
+        String platform = StringUtils.hasText(req.getPlatform()) ? req.getPlatform() : "wx";
         User user = userMapper.selectOne(Wrappers.<User>lambdaQuery()
+                .eq(User::getPlatform, platform)
                 .eq(User::getOpenid, req.getOpenid()));
         if (user == null) {
             user = new User();
+            user.setPlatform(platform);
             user.setOpenid(req.getOpenid());
             user.setUnionid(req.getUnionid());
             user.setNickname(StringUtils.hasText(req.getNickname())

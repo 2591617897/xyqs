@@ -2,7 +2,13 @@
   <!-- 用户卡片 -->
   <view class="profile">
     <view class="row">
-      <button wx:if="{{logged}}" class="avatar-btn" open-type="getUserInfo" bindgetuserinfo="onGetUserInfo">
+      <!-- 微信规范取头像：用户主动点击 chooseAvatar 按钮授权 -->
+      <button
+        wx:if="{{logged}}"
+        class="avatar-btn"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar"
+      >
         <image wx:if="{{user && user.avatar}}" class="avatar-xl" src="{{user.avatar}}" mode="aspectFill" />
         <view wx:else class="avatar-xl">
           <view class="avatar-default">
@@ -28,6 +34,22 @@
       <view class="verify-badge {{user && user.verifyStatus === 2 ? 'ok' : 'todo'}}" bindtap="goVerify">
         {{user && user.verifyStatus === 2 ? '已认证' : (user && user.verifyStatus === 1 ? '审核中' : '去认证')}}
       </view>
+    </view>
+
+    <!-- 微信规范取昵称：type="nickname" 由微信输入法提供，不依赖任何授权接口 -->
+    <view class="nick-row" wx:if="{{logged}}">
+      <text class="nick-label">昵称</text>
+      <input
+        class="nick-input"
+        type="nickname"
+        value="{{nicknameDraft}}"
+        placeholder="点击使用微信昵称，或自己输入"
+        placeholder-class="nick-ph"
+        maxlength="20"
+        bindinput="onNicknameInput"
+        bindblur="saveNickname"
+        bindconfirm="saveNickname"
+      />
     </view>
 
     <view class="id-row" wx:if="{{user && user.verifyStatus === 2}}">
@@ -74,7 +96,7 @@
     </view>
     <view class="menu-item" bindtap="chooseAvatar">
       <text class="menu-icon">📷</text>
-      <text class="menu-text">从相册设置头像</text>
+      <text class="menu-text">从相册上传头像</text>
       <text class="menu-arrow">›</text>
     </view>
     <view class="menu-item" bindtap="goMyGoods">

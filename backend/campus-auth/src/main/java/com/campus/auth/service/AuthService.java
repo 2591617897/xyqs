@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
@@ -32,21 +33,29 @@ public class AuthService {
     private final RestTemplate restTemplate;
 
     @Value("${campus.qq.appid:}")
-    private String appid;
+    private String qqAppid;
 
     @Value("${campus.qq.appsecret:}")
-    private String appsecret;
+    private String qqAppsecret;
 
-    @Value("${campus.qq.mock:true}")
+    @Value("${campus.wx.appid:}")
+    private String wxAppid;
+
+    @Value("${campus.wx.appsecret:}")
+    private String wxAppsecret;
+
+    @Value("${campus.auth.mock:true}")
     private boolean mock;
 
     public LoginResp login(LoginReq req) {
         if (!StringUtils.hasText(req.getCode()) && !StringUtils.hasText(req.getDevOpenid())) {
             throw new BizException("缺少登录凭证 code");
         }
-        QqSession session = code2Session(req.getCode(), req.getDevOpenid());
+        String platform = normalizePlatform(req.getPlatform());
+        Session session = code2Session(platform, req.getCode(), req.getDevOpenid());
 
         LoginOrCreateReq createReq = new LoginOrCreateReq();
+        createReq.setPlatform(platform);
         createReq.setOpenid(session.openid());
         createReq.setUnionid(session.unionid());
         createReq.setNickname(req.getNickname());
@@ -68,30 +77,51 @@ public class AuthService {
                 .last("limit 50"));
     }
 
+    /** 未指定平台时按微信小程序处理（当前主端） */
+    private String normalizePlatform(String platform) {
+        if (!StringUtils.hasText(platform)) {
+            return LoginOrCreateReq.DEFAULT_PLATFORM;
+        }
+        String p = platform.trim().toLowerCase(Locale.ROOT);
+        return LoginOrCreateReq.DEFAULT_PLATFORM.equals(p) ? "wx" : "qq";
+    }
+
     /**
-     * QQ 小程序 code2Session。未配置 appid 时走 mock，方便本地联调。
+     * 小程序 code2Session。微信与 QQ 的 URL/参数名一致，只有域名不同；
+     * 微信额外返回 session_key（当前业务用不上，保留字段）。
+     * 未配置对应平台 appid 时走 mock，方便本地联调。
      */
-    private QqSession code2Session(String code, String devOpenid) {
+    private Session code2Session(String platform, String code, String devOpenid) {
+        boolean qq = "qq".equals(platform);
+        String appid = qq ? qqAppid : wxAppid;
+        String appsecret = qq ? qqAppsecret : wxAppsecret;
+
         if (mock || !StringUtils.hasText(appid)) {
             String openid = StringUtils.hasText(devOpenid)
                     ? devOpenid
-                    : "mock_" + Math.abs(String.valueOf(code).hashCode());
-            log.info("[mock] code2Session -> openid={}", openid);
-            return new QqSession(openid, null);
+                    : "mock_" + platform + "_" + Math.abs(String.valueOf(code).hashCode());
+            log.info("[mock] code2Session platform={} -> openid={}", platform, openid);
+            return new Session(openid, null);
         }
-        String url = String.format(
+
+        String url = qq
+                ? String.format(
                 "https://api.q.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
+                appid, appsecret, code)
+                : String.format(
+                "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
                 appid, appsecret, code);
+
         Map<?, ?> body = restTemplate.getForObject(url, Map.class);
         if (body == null || body.get("openid") == null) {
             Object errmsg = body == null ? null : body.get("errmsg");
-            log.warn("code2Session 失败: {}", body);
-            throw new BizException("微信/QQ 登录失败：" + (errmsg == null ? "未知错误" : errmsg));
+            log.warn("code2Session 失败 platform={} body={}", platform, body);
+            throw new BizException((qq ? "QQ" : "微信") + "登录失败：" + (errmsg == null ? "未知错误" : errmsg));
         }
-        return new QqSession(String.valueOf(body.get("openid")),
+        return new Session(String.valueOf(body.get("openid")),
                 body.get("unionid") == null ? null : String.valueOf(body.get("unionid")));
     }
 
-    private record QqSession(String openid, String unionid) {
+    private record Session(String openid, String unionid) {
     }
 }

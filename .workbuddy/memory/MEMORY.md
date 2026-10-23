@@ -1,5 +1,18 @@
 # 项目长期约定
 
+## 宿主平台（当前主端：微信小程序）
+- `miniprogram/utils/util.js` 统一识别宿主并导出 `PLATFORM`（`wx`/`qq`），
+  业务代码只用 `mp.*`，**不要直接判断 `wx`/`qq`**
+- 登录链路带 `platform`：`POST /api/auth/login { code, platform, devOpenid }`
+  - 后端配置：`campus.wx.appid/appsecret`（`WX_APPID`/`WX_APPSECRET`）、
+    `campus.qq.appid/appsecret`（`QQ_APPID`/`QQ_APPSECRET`）、`campus.auth.mock`（`AUTH_MOCK`）
+- **`t_user` 唯一键是 `uk_platform_openid (platform, openid)`**，不能改回单列 `openid`：
+  openid 只在宿主平台内唯一。迁移脚本默认值给 `'qq'`（历史数据来自 QQ）
+- 微信已废弃 `getUserInfo`/`getUserProfile` 静默授权：头像用 `open-type="chooseAvatar"`，
+  昵称用 `input type="nickname"`。**chooseAvatar 给的是临时路径，必须先 upload 再入库**
+- MySQL CLI：`/d/Program Files/MySQL/MySQL Server 8.0/bin/mysql`，
+  中文乱码时加 `--default-character-set=utf8mb4`
+
 ## 环境参数（本地开发）
 - 数据库：`guizhou_campus_fun`，账号 `root`，密码 `123456`
 - MySQL `3306` / Redis `6379` / Nacos `8848`
@@ -8,6 +21,8 @@
 - 修改这些参数时必须同步的位置：
   `docker-compose.yml`、`backend/sql/schema.sql`(CREATE DATABASE)、`backend/sql/data.sql`(USE)、
   5 个 `campus-*/src/main/resources/application.yml`、`miniprogram/utils/config.js`(BASE_URL)、README、docs
+- **Maven 必须指定 JDK 17**：`JAVA_HOME='C:\Program Files\Java\jdk-17'`，
+  默认 JDK 会报「无效的目标发行版: 17」
 
 ## 工程约定
 - 小程序端默认 `USE_MOCK = false`（`miniprogram/utils/config.js`，环境化配置：改 `ACTIVE_ENV` 或 `host/port` 即可，`SERVER/BASE_URL/UPLOAD_URL` 自动派生）
@@ -23,13 +38,15 @@
   正确做法：先停服务，再 `mvn clean install`
 - 在 WorkBuddy 执行环境里启动服务要 `env -u SERVER__PORT`，否则继承的 `SERVER__PORT=61581`
   会覆盖 `server.port`，所有服务抢同一端口；用户自己的终端/IDEA 无此变量
+- **同名 DTO 陷阱**：`campus-common` 与 `campus-user` 各有一个 `LoginOrCreateReq`
+  （前者 Feign 契约，后者服务端接收），改字段时**两个都要改**
 - **每个页面必须同时产出 4 个文件**：`.js` / `.wxml` / `.json` / `.wxss`；
   `.json` 里显式写 `"usingComponents": {}`——缺 json 会导致整页白屏并报
   `Cannot read properties of undefined (reading "usingComponents")`
 - 校验命令：
   - `node scripts/check-miniprogram.js`（页面结构完整性）
-  - `node scripts/mock-selftest.js`（模拟数据层 89 条断言）
-  - `node scripts/api-smoke-test.js`（后端 16 个核心接口连通性）
+  - `node scripts/mock-selftest.js`（模拟数据层 96 条断言）
+  - `node scripts/api-smoke-test.js`（后端 16 个核心接口连通性，**需 Nacos + 服务已启动**）
 - 统一响应 `{code,msg,data}`，`code=0` 成功；401 未登录 / 403 未认证 / 404 不存在
 - **ID 一律以字符串传输**：雪花 ID 是 19 位 Long，超出 JS 安全整数（2^53-1）。
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；

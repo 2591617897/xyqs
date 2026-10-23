@@ -93,6 +93,35 @@
   padding-top: 22rpx;
   border-top: 1rpx solid rgba(255, 255, 255, 0.24);
 }
+
+/* 昵称行：type="nickname"，微信输入法直接给候选 */
+.nick-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 20rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 255, 255, 0.18);
+}
+.nick-label {
+  font-size: 25rpx;
+  color: rgba(255, 255, 255, 0.85);
+  flex-shrink: 0;
+}
+.nick-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 27rpx;
+  color: #ffffff;
+  text-align: right;
+}
+.nick-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+.nick-ph {
+  color: rgba(255, 255, 255, 0.6);
+}
 .id-item {
   font-size: 23rpx;
   color: rgba(255, 255, 255, 0.85);

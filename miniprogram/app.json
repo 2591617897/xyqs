@@ -13,16 +13,16 @@
     "pages/user/verify"
   ],
   "window": {
-    "backgroundTextStyle": "light",
+    "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTitleText": "校园趣事",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#F6F7FB"
+    "backgroundColor": "#F5F6F8"
   },
   "tabBar": {
     "custom": true,
     "color": "#8A8F99",
-    "selectedColor": "#FF6B57",
+    "selectedColor": "#11A86B",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
@@ -44,5 +44,6 @@
       }
     ]
   },
+  "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

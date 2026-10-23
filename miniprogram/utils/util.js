@@ -1,5 +1,12 @@
-// 兼容 QQ 小程序 (qq) 与微信 (wx) 的宿主 API
-const mp = typeof qq !== 'undefined' ? qq : wx
+// 微信小程序为主端；保留 QQ 小程序兜底（同一套代码两端都能跑）
+const IS_QQ = typeof wx === 'undefined' && typeof qq !== 'undefined'
+const mp = IS_QQ ? qq : wx
+
+/** 宿主平台标识：登录时随 code 一起发给后端，决定用哪套 appid 去换 openid */
+const PLATFORM = IS_QQ ? 'qq' : 'wx'
+
+/** 平台展示名，用于文案 */
+const PLATFORM_NAME = IS_QQ ? 'QQ' : '微信'
 
 function pad(n) {
   return n < 10 ? '0' + n : '' + n
@@ -41,4 +48,13 @@ function categoryEmoji(id) {
   return CATEGORY_EMOJI[id] || '✨'
 }
 
-module.exports = { mp, timeAgo, priceText, toast, parseDate, categoryEmoji }
+module.exports = {
+  mp,
+  PLATFORM,
+  PLATFORM_NAME,
+  timeAgo,
+  priceText,
+  toast,
+  parseDate,
+  categoryEmoji
+}

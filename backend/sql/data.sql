@@ -33,9 +33,9 @@ INSERT INTO t_channel (id, name, icon, description, school_id, sort) VALUES
 (2006, '运动搭子', '🏀', '篮球、羽毛球、夜跑约起来', NULL, 50)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
--- 演示用户（已通过身份认证）
-INSERT INTO t_user (id, openid, nickname, avatar, gender, school_id, student_no, real_name, verify_status, bio)
-VALUES (9001, 'demo_openid_001', '林小满', '', 2, 1005, '2022010101', '林满', 2, '浙大在读，喜欢逛食堂和拍照')
+-- 演示用户（已通过身份认证）platform='wx' 对应微信小程序
+INSERT INTO t_user (id, platform, openid, nickname, avatar, gender, school_id, student_no, real_name, verify_status, bio)
+VALUES (9001, 'wx', 'demo_openid_001', '林小满', '', 2, 1005, '2022010101', '林满', 2, '浙大在读，喜欢逛食堂和拍照')
 ON DUPLICATE KEY UPDATE nickname = VALUES(nickname);
 
 INSERT INTO t_goods (id, user_id, school_id, seller_name, title, description, price, original_price, category_id, trade_type, location, status, view_count)

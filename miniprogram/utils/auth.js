@@ -1,4 +1,4 @@
-const { mp, toast } = require('./util')
+const { mp, toast, PLATFORM, PLATFORM_NAME } = require('./util')
 const { DEV_OPENID, USE_MOCK } = require('./config')
 const http = require('./request')
 
@@ -6,7 +6,11 @@ let pending = null
 
 function exchange(code) {
   // devOpenid 仅在后端 mock 模式生效，正式环境会被忽略
-  return http.post('/auth/login', { code: code, devOpenid: DEV_OPENID }).then(function (res) {
+  return http.post('/auth/login', {
+    code: code,
+    platform: PLATFORM,
+    devOpenid: DEV_OPENID
+  }).then(function (res) {
     mp.setStorageSync('token', res.token)
     mp.setStorageSync('user', res.user)
     const app = getApp()
@@ -45,8 +49,6 @@ function ensureLogin(force) {
   if (pending) return pending
   pending = doLogin().then(function (user) {
     pending = null
-    // 已授权过 QQ/微信 的情况下顺手补齐头像，不阻塞返回
-    syncProfileQuietly(user)
     return user
   }).catch(function (err) {
     pending = null
@@ -74,60 +76,12 @@ function updateUser(user) {
 }
 
 /**
- * 静默获取 QQ / 微信 用户资料。
- * 已授权过才会返回真实头像；未授权或返回默认灰头像时 resolve(null)。
+ * 宿主平台说明（登录用）。
+ * 注意：微信已废弃 getUserInfo / getUserProfile 的静默授权，取头像昵称必须由用户主动点击
+ * `open-type="chooseAvatar"` 与 `input type="nickname"` 完成，见 pages/user/index。
  */
-function getQQProfile() {
-  return new Promise(function (resolve) {
-    if (typeof mp.getUserInfo !== 'function') {
-      resolve(null)
-      return
-    }
-    mp.getUserInfo({
-      withCredentials: false,
-      success: function (res) {
-        const info = (res && res.userInfo) || {}
-        const avatar = info.avatarUrl || ''
-        if (!avatar || avatar.indexOf('default') >= 0) {
-          resolve(null)
-          return
-        }
-        resolve({
-          nickname: info.nickName || '',
-          avatar: avatar,
-          gender: typeof info.gender === 'number' ? info.gender : 0
-        })
-      },
-      fail: function () {
-        resolve(null)
-      }
-    })
-  })
-}
-
-/**
- * 登录后静默补齐头像/昵称（仅当本地还没有头像时执行一次）。
- * 不阻塞登录流程，失败静默忽略。
- */
-function syncProfileQuietly(user) {
-  if (!user || user.avatar) return
-  getQQProfile().then(function (profile) {
-    if (!profile) return null
-    return http.put('/user/me', {
-      nickname: profile.nickname || undefined,
-      avatar: profile.avatar,
-      gender: profile.gender
-    }, { silent: true }).then(function (me) {
-      updateUser({
-        id: me.id,
-        nickname: me.nickname,
-        avatar: me.avatar,
-        schoolId: me.schoolId,
-        verifyStatus: me.verifyStatus
-      })
-      return me
-    })
-  }).catch(function () {})
+function platformInfo() {
+  return { platform: PLATFORM, name: PLATFORM_NAME }
 }
 
 module.exports = {
@@ -135,6 +89,5 @@ module.exports = {
   ensureVerified,
   updateUser,
   doLogin,
-  getQQProfile,
-  syncProfileQuietly
+  platformInfo
 }

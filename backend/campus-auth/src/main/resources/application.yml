@@ -25,8 +25,14 @@ campus:
   jwt:
     secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
     expire-hours: 168
+  auth:
+    # 本地没有小程序 appid 时开启 mock：用 code / devOpenid 直接生成 openid
+    mock: ${AUTH_MOCK:true}
+  wx:
+    # 微信小程序（当前主端）
+    appid: ${WX_APPID:}
+    appsecret: ${WX_APPSECRET:}
   qq:
+    # QQ 小程序（保留兼容，需要时填上即可）
     appid: ${QQ_APPID:}
     appsecret: ${QQ_APPSECRET:}
-    # 本地没有小程序 appid 时开启 mock：用 code / devOpenid 直接生成 openid
-    mock: ${QQ_MOCK:true}

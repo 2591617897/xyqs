@@ -16,6 +16,10 @@ public class User {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
+    /** 宿主平台：wx 微信小程序 / qq QQ 小程序 */
+    private String platform;
+
+    /** 仅在 platform 内唯一，与 platform 组成联合唯一键 */
     private String openid;
 
     private String unionid;

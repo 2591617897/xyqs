@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS t_school (
 -- 用户（身份认证为核心字段）
 CREATE TABLE IF NOT EXISTS t_user (
   id            BIGINT       NOT NULL PRIMARY KEY,
-  openid        VARCHAR(64)  NOT NULL COMMENT 'QQ小程序 openid',
+  platform      VARCHAR(16)  NOT NULL DEFAULT 'wx' COMMENT '宿主平台 wx / qq',
+  openid        VARCHAR(64)  NOT NULL COMMENT '宿主平台内唯一',
   unionid       VARCHAR(64)  DEFAULT NULL,
   nickname      VARCHAR(64)  DEFAULT NULL,
   avatar        VARCHAR(255) DEFAULT NULL,
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS t_user (
   status        TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0封禁',
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_openid (openid),
+  UNIQUE KEY uk_platform_openid (platform, openid),
   KEY idx_school (school_id, verify_status)
 ) COMMENT '用户';
 
@@ -165,3 +166,12 @@ CREATE TABLE IF NOT EXISTS t_post_comment (
 -- ============================================================
 -- ALTER TABLE t_post_comment ADD COLUMN images VARCHAR(1000) DEFAULT NULL COMMENT '逗号分隔，最多 3 张' AFTER content;
 -- ALTER TABLE t_wall_comment ADD COLUMN images VARCHAR(1000) DEFAULT NULL COMMENT '逗号分隔，最多 3 张' AFTER content;
+
+-- ------------------------------------------------------------
+-- 迁移到微信小程序：t_user 增加 platform 维度
+-- 历史数据来自 QQ 小程序，默认值给 'qq'（不是 'wx'，否则老用户会被标成微信用户）
+-- 执行后新旧用户各自按 (platform, openid) 定位，同一个人两端登录是两个账号
+-- ------------------------------------------------------------
+-- ALTER TABLE t_user ADD COLUMN platform VARCHAR(16) NOT NULL DEFAULT 'qq' COMMENT '宿主平台 wx / qq' AFTER id;
+-- ALTER TABLE t_user DROP INDEX uk_openid;
+-- ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);

@@ -8,6 +8,7 @@ Page({
   data: {
     user: null,
     logged: false,
+    nicknameDraft: '',
     stats: { goods: 0, favorites: 0, orders: 0 },
     loading: true,
     showOrders: false,
@@ -22,8 +23,12 @@ Page({
       this.getTabBar().setData({ selected: 4 })
     }
     mp.setNavigationBarTitle({ title: '我的' })
-    const cached = getApp().globalData.user
-    this.setData({ logged: !!http.getToken(), user: cached })
+const cached = getApp().globalData.user
+this.setData({
+      logged: !!http.getToken(),
+      user: cached,
+      nicknameDraft: cached ? cached.nickname || '' : ''
+    })
     if (http.getToken()) {
       this.loadMe()
       this.loadStats()
@@ -36,7 +41,12 @@ Page({
   loadMe: function () {
     const self = this
     http.get('/user/me', null, { silent: true }).then(function (me) {
-      self.setData({ user: me, logged: true, loading: false })
+      self.setData({
+        user: me,
+        logged: true,
+        loading: false,
+        nicknameDraft: me.nickname || ''
+      })
       auth.updateUser({
         id: me.id,
         nickname: me.nickname,
@@ -90,35 +100,61 @@ Page({
   },
 
   /**
-   * 头像按钮授权：open-type="getUserInfo" 触发，拿到 QQ/微信 真实头像与昵称
+   * 微信取头像：用户主动点击 open-type="chooseAvatar" 按钮
+   * 拿到的是临时路径，必须先上传换成可访问的 URL 再入库
    */
-  onGetUserInfo: function (e) {
+  onChooseAvatar: function (e) {
     const self = this
-    const info = e && e.detail && e.detail.userInfo
-    if (!info) {
-      toast('未获取到 QQ 资料，请重试')
+    if (!this.data.logged) {
+      this.login()
       return
     }
-    const avatar = info.avatarUrl || ''
-    if (!avatar) {
-      toast('未获取到头像，请换个方式重试')
+    const tmpPath = e && e.detail && e.detail.avatarUrl
+    if (!tmpPath) {
+      toast('未获取到头像，请重试')
       return
     }
-    http.put('/user/me', {
-      nickname: info.nickName || undefined,
-      avatar: avatar,
-      gender: typeof info.gender === 'number' ? info.gender : 0
-    }, { loading: '同步中' }).then(function (me) {
-      self.setData({ user: me })
-      auth.updateUser({
-        id: me.id,
-        nickname: me.nickname,
-        avatar: me.avatar,
-        schoolId: me.schoolId,
-        verifyStatus: me.verifyStatus
-      })
-      toast('头像已同步')
-    }).catch(function () {})
+    mp.showLoading({ title: '上传中', mask: true })
+    upload.uploadImage(tmpPath).then(function (url) {
+      mp.hideLoading()
+      return http.put('/user/me', { avatar: url }, { loading: '保存中' })
+    }).then(function (me) {
+      self.applyMe(me)
+      toast('头像已更新')
+    }).catch(function () {
+      mp.hideLoading()
+    })
+  },
+
+  /** 昵称：type="nickname" 由微信输入法给出候选，用户也可自己输入 */
+  onNicknameInput: function (e) {
+    this.setData({ nicknameDraft: e.detail.value })
+  },
+
+  saveNickname: function () {
+    const self = this
+    const nickname = (this.data.nicknameDraft || '').trim()
+    if (!this.data.logged || !nickname) return
+    if (this.data.user && nickname === this.data.user.nickname) return
+    http.put('/user/me', { nickname: nickname }, { loading: '保存中' }).then(function (me) {
+      self.applyMe(me)
+      toast('昵称已保存')
+    }).catch(function () {
+      // 失败时回滚输入框，避免界面与服务端不一致
+      self.setData({ nicknameDraft: (self.data.user && self.data.user.nickname) || '' })
+    })
+  },
+
+  /** 统一同步服务端用户信息到页面与本地缓存 */
+  applyMe: function (me) {
+    this.setData({ user: me, logged: true, nicknameDraft: me.nickname || '' })
+    auth.updateUser({
+      id: me.id,
+      nickname: me.nickname,
+      avatar: me.avatar,
+      schoolId: me.schoolId,
+      verifyStatus: me.verifyStatus
+    })
   },
 
   /** 兜底：从相册选一张作为头像（走已有的上传接口） */
@@ -139,14 +175,7 @@ Page({
           mp.hideLoading()
           return http.put('/user/me', { avatar: url }, { loading: '保存中' })
         }).then(function (me) {
-          self.setData({ user: me })
-          auth.updateUser({
-            id: me.id,
-            nickname: me.nickname,
-            avatar: me.avatar,
-            schoolId: me.schoolId,
-            verifyStatus: me.verifyStatus
-          })
+          self.applyMe(me)
           toast('头像已更新')
         }).catch(function () {
           mp.hideLoading()
@@ -166,6 +195,7 @@ Page({
         self.setData({
           logged: false,
           user: null,
+          nicknameDraft: '',
           stats: { goods: 0, favorites: 0, orders: 0 },
           buyerOrders: [],
           sellerOrders: []
