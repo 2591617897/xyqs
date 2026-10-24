@@ -164,5 +164,13 @@
   默认激活；profile 配置优先级高于主配置。换机器/新克隆需重建该文件，缺失时登录报「微信登录未配置」
 - **凭据有效性自检**（别等真机）：`GET https://api.weixin.qq.com/sns/jscode2session?appid=..&secret=..&js_code=test&grant_type=authorization_code`
   → `40029 invalid code` = 有效；`40125` = secret 错；`40013` = appid 错
+- **`jscode2session` 响应头是 `text/plain`**（body 才是 JSON）→ 用 `RestTemplate.getForObject(url, Map.class)`
+  会抛 `UnknownContentTypeException`。必须 `String.class` 取回再 `ObjectMapper` 解析（`AuthService.code2Session` 已这么写）。
+  任何新增的第三方 JSON-over-text/plain 接口都按这个来
+- **「绑定学校」与「学籍认证」是两件事，别混文案**：绑定 = `schoolId != null`；认证 = `verifyStatus == 2`。
+  2026-10-24 修过一次：我的页兜底写成 `{{user.schoolName || '已绑定学校'}}` → 没学校时反而显示「已绑定学校」。
+  **判断一律以 `schoolId` 为准**，姓名 `schoolName` 只用于显示，查不到名时回退「已选择学校」
+- 未认证用户可选学校入口：首页引导弹层 + 我的页 `🎓 未绑定学校 去选择 ›`（都复用 `components/school-onboard`）；
+  已认证用户换校必须走 `pages/user/verify`
 - 排查登录问题看 `campus-auth` 日志：`登录 platform=wx openid=xxxx****xxxx`
   —— 两个微信号应当打印出两个不同 openid

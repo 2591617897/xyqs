@@ -12,6 +12,7 @@ import com.campus.auth.mapper.SchoolMapper;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,13 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    /**
+     * 解析第三方接口的纯文本响应。
+     * 微信/QQ 的 code2Session 响应头是 text/plain，不能交给 RestTemplate 的
+     * Jackson 转换器（它只认 application/json），只能取字符串后手动解析。
+     */
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private final SchoolMapper schoolMapper;
     private final UserClient userClient;
@@ -100,7 +108,10 @@ public class AuthService {
             String url = String.format(Locale.ROOT,
                     "https://apis.map.qq.com/ws/geocoder/v1/?location=%s,%s&key=%s&output=json&get_poi=0",
                     lat, lng, qqmapKey);
-            Map<?, ?> body = restTemplate.getForObject(url, Map.class);
+            // 同样先取字符串再解析：腾讯位置服务偶尔也会返回 text/plain，
+            // 直接要 Map 会抛转换异常并被下面的 catch 静默降级
+            String raw = restTemplate.getForObject(url, String.class);
+            Map<?, ?> body = StringUtils.hasText(raw) ? JSON.readValue(raw, Map.class) : null;
             Object result = body == null ? null : body.get("result");
             Object comp = result instanceof Map ? ((Map<?, ?>) result).get("address_component") : null;
             if (comp instanceof Map) {
@@ -170,14 +181,62 @@ public class AuthService {
                 "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
                 appid, appsecret, code);
 
-        Map<?, ?> body = restTemplate.getForObject(url, Map.class);
-        if (body == null || body.get("openid") == null) {
-            Object errmsg = body == null ? null : body.get("errmsg");
-            log.warn("code2Session 失败 platform={} body={}", platform, body);
-            throw new BizException(label + "登录失败：" + (errmsg == null ? "未知错误" : errmsg));
+        // 注意：微信/QQ 的这个接口响应头是 text/plain（body 才是 JSON），
+        // 直接 getForObject(url, Map.class) 会抛
+        // UnknownContentTypeException: no suitable HttpMessageConverter ... text/plain。
+        // 所以统一先取字符串，再自己解析，顺便把原始 body 打进日志便于排查。
+        String raw;
+        try {
+            raw = restTemplate.getForObject(url, String.class);
+        } catch (Exception e) {
+            log.error("code2Session 请求异常 platform={} {}", platform, e.getMessage());
+            throw new BizException(label + "登录失败：无法连接" + label + "服务器，请稍后重试");
         }
-        return new Session(String.valueOf(body.get("openid")),
+        if (!StringUtils.hasText(raw)) {
+            log.error("code2Session 空响应 platform={}", platform);
+            throw new BizException(label + "登录失败：返回空响应");
+        }
+
+        Map<?, ?> body;
+        try {
+            body = JSON.readValue(raw, Map.class);
+        } catch (Exception e) {
+            log.error("code2Session 响应非 JSON platform={} raw={}", platform, raw);
+            throw new BizException(label + "登录失败：返回格式异常");
+        }
+
+        Object openid = body.get("openid");
+        if (openid == null) {
+            Object errcode = body.get("errcode");
+            Object errmsg = body.get("errmsg");
+            log.warn("code2Session 失败 platform={} errcode={} errmsg={}", platform, errcode, errmsg);
+            throw new BizException(label + "登录失败：" + describeSessionError(errcode, errmsg));
+        }
+        log.info("code2Session 成功 platform={} openid={}", platform, maskOpenid(String.valueOf(openid)));
+        return new Session(String.valueOf(openid),
                 body.get("unionid") == null ? null : String.valueOf(body.get("unionid")));
+    }
+
+    /** 把微信的 errcode 翻成人话，前端 toast 才有意义 */
+    private String describeSessionError(Object errcode, Object errmsg) {
+        String code = errcode == null ? "" : String.valueOf(errcode);
+        switch (code) {
+            case "40013":
+                return "AppID 无效，请核对小程序 appid";
+            case "40125":
+            case "41004":
+                return "AppSecret 无效，请在微信公众平台重置后更新配置";
+            case "40029":
+            case "40163":
+                return "登录凭证 code 已失效，请重新进入小程序";
+            case "45011":
+                return "登录过于频繁，请稍后再试";
+            case "40226":
+                return "该账号被限制登录，请联系管理员";
+            default:
+                String msg = errmsg == null ? "未知错误" : String.valueOf(errmsg);
+                return code.isEmpty() ? msg : msg + "（errcode=" + code + "）";
+        }
     }
 
     /** openid 打码后再进日志：既能核对「不同微信是否落到不同 openid」，又不会把凭证原样落盘 */

@@ -15,6 +15,9 @@ Page({
     schoolCity: '',
     scopeShow: false,
     geoCity: null,
+    /** 未绑定学校时的选择弹层（复用 components/school-onboard） */
+    onboardShow: false,
+    onboardSaving: false,
     // 信用等级文案（由 loadMe 根据 creditScore 计算）
     creditLevel: '',
     // 关注 / 粉丝数（来自 /user/me）
@@ -192,6 +195,59 @@ Page({
       return
     }
     mp.navigateTo({ url: '/pages/user/verify' })
+  },
+
+  /* ---------- 选学校（未绑定时可自行选择，无需学籍认证） ---------- */
+  goPickSchool: function () {
+    const self = this
+    const user = this.data.user
+    // 已绑定：交给「去认证」处理换校（认证后换校必须走材料审核）
+    if (user && user.schoolId) {
+      this.goVerify()
+      return
+    }
+    if (!this.data.logged) {
+      auth.ensureLogin(true).then(function (u) {
+        self.setData({ logged: true, user: u, onboardShow: true })
+      }).catch(function () {
+        toast('登录失败，请重试')
+      })
+      return
+    }
+    this.setData({ onboardShow: true })
+  },
+
+  onOnboardSelect: function (e) {
+    const self = this
+    const school = e.detail && e.detail.school
+    if (!school || this.data.onboardSaving) return
+    this.setData({ onboardSaving: true })
+    auth.ensureLogin().then(function () {
+      return http.put('/user/me', { schoolId: school.id })
+    }).then(function (me) {
+      // schoolId 写进了 JWT 快照，必须重签 token，否则本校筛选不生效
+      return auth.ensureLogin(true).then(function () {
+        return me
+      })
+    }).then(function (me) {
+      auth.updateUser({
+        id: me.id,
+        schoolId: me.schoolId,
+        schoolName: me.schoolName || school.name || '',
+        schoolCity: me.schoolCity || school.city || '',
+        verifyStatus: me.verifyStatus
+      })
+      self.setData({ onboardShow: false, onboardSaving: false })
+      self.loadMe()
+      self.applyScope()
+      toast('已绑定 ' + (me.schoolName || school.name || '学校'))
+    }).catch(function () {
+      self.setData({ onboardSaving: false })
+    })
+  },
+
+  onOnboardClose: function () {
+    this.setData({ onboardShow: false })
   },
 
   goMyGoods: function () {

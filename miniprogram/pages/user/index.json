@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "scope-sheet": "/components/scope-sheet/index"
+    "scope-sheet": "/components/scope-sheet/index",
+    "school-onboard": "/components/school-onboard/index"
   },
   "navigationBarTitleText": "我的"
 }

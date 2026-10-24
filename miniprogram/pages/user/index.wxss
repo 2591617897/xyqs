@@ -125,6 +125,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 未绑学校时的「去选择 ›」引导 */
+.user-school-act {
+  margin-left: 8rpx;
+  font-size: 22rpx;
+  color: #11a86b;
+}
 .user-verified-line {
   margin-top: 8rpx;
   font-size: 22rpx;

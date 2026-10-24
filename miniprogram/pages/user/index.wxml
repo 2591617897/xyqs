@@ -22,7 +22,12 @@
               <text>{{user && user.verifyStatus === 2 ? '已认证' : '去认证'}}</text>
             </view>
           </view>
-          <view class="user-school" wx:if="{{user}}">🎓 {{user.schoolName || '已绑定学校'}}</view>
+          <!-- 学校状态：与「个人信息 → 学籍信息」用同一判断（以 schoolId 为准），
+               之前这里兜底写成「已绑定学校」，导致没绑学校时也显示已绑定 -->
+          <view class="user-school" wx:if="{{user}}" catchtap="goPickSchool">
+            <block wx:if="{{user.schoolId}}">🎓 {{user.schoolName || '已选择学校'}}</block>
+            <block wx:else>🎓 未绑定学校<text class="user-school-act">去选择 ›</text></block>
+          </view>
           <view class="user-school" wx:else>点击登录，同步你的校园身份</view>
           <view class="user-verified-line" wx:if="{{user && user.verifyStatus === 2}}">🛡️ 学籍认证已通过</view>
           <view class="user-verified-line warn" wx:if="{{user && user.verifyStatus === 3}}">⚠️ 认证被驳回，请重新提交</view>
@@ -257,6 +262,14 @@
     bind:close="closeScope"
     bind:select="onScopeSelect"
     bind:verify="onScopeVerify"
+  />
+
+  <!-- 未绑定学校时的选择弹层 -->
+  <school-onboard
+    show="{{onboardShow}}"
+    saving="{{onboardSaving}}"
+    bind:select="onOnboardSelect"
+    bind:close="onOnboardClose"
   />
 </view>
 

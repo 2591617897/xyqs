@@ -90,7 +90,8 @@
 
       <view class="ro-row">
         <text class="ro-label">学校</text>
-        <text class="ro-value">{{user.schoolName || '未绑定'}}</text>
+        <!-- 以 schoolId 为准，与「我的」页保持一致 -->
+        <text class="ro-value">{{user.schoolId ? (user.schoolName || '已选择') : '未绑定'}}</text>
       </view>
       <view class="ro-row">
         <text class="ro-label">学号</text>
@@ -107,7 +108,7 @@
         </text>
       </view>
       <view class="ro-tip" wx:if="{{user.verifyStatus === 3}}">驳回原因：{{user.verifyRemark || '资料不清晰，请重新提交'}}</view>
-      <view class="ro-tip">学籍信息涉及校园身份，需在「实名学籍认证」中提交材料修改</view>
+      <view class="ro-tip">学籍信息涉及校园身份：未认证前可自行选择所在学校，认证通过后需重新提交材料才能更换</view>
     </view>
 
     <!-- 保存 -->
