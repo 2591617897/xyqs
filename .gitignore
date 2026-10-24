@@ -1,29 +1,120 @@
-# Java / Maven
-target/
+# ============================================================================
+# Java / Spring Boot / Maven
+# ============================================================================
+# 字节码 —— 核心要求：**绝不提交 .class**
 *.class
-*.jar
-!backend/*/target/*.jar
+*.class.*
 
-# 上传的用户图片（运行时生成，不入库）
+# Maven / Gradle 构建产物
+target/
+!backend/*/target/*.jar
+!backend/*/target/*.pom
+build/
+out/
+!build/libs/*.jar
+
+# Spring Boot 热重载
+spring-boot-*.class
+
+# ============================================================================
+# Node.js / npm / 脚本
+# ============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============================================================================
+# 微信小程序开发者工具
+# ============================================================================
+miniprogram/.temp/
+miniprogram/.wx/
+miniprogram/dist/
+miniprogram/miniprogram_npm/
+project.private.config.json
+project.config.json.user
+.pack/
+
+# ============================================================================
+# Python（临时测试脚本 / 缓存）
+# ============================================================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+# 根目录临时测试脚本（命名约定：_test_*.py / _debug_*.py / _verify*.py）
+_test_*.py
+_debug_*.py
+_verify*.py
+
+# ============================================================================
+# 运行时数据
+# ============================================================================
 backend/uploads/
 uploads/
+backend/sql/*.sql.bak
 
+# ============================================================================
 # 日志
+# ============================================================================
 *.log
 logs/
+backend/logs/
+nohup.out
 
-# IDE
+# ============================================================================
+# IDE / 编辑器
+# ============================================================================
+# IntelliJ IDEA / JetBrains 系列
 .idea/
 *.iml
-.vscode/
+*.iws
+*.ipr
+# WebStorm / PyCharm 共享 .idea 已有，这里补其他
+.atlassian/
+# Eclipse
 .settings/
 .classpath
 .project
+.factorypath
+.metadata/
+# VS Code（团队共享的配置保留，个人的排除）
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+# Sublime
+*.sublime-workspace
+*.sublime-project
+# Vim
+[._]*.sw[a-p]
+[._]s[a-rc-v][a-p]
 
-# 小程序开发者工具
-miniprogram/.temp/
-project.private.config.json
-
-# 系统
+# ============================================================================
+# 操作系统
+# ============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================================
+# 敏感信息 / 密钥
+# ============================================================================
+*.pem
+*.key
+*.keystore
+!*.keystore.example
+application-local.yml
+application-local.properties
+.env
+.env.local
+.env.*.local
