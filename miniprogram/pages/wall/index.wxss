@@ -305,7 +305,7 @@
   display: block;
 }
 
-/* 互动栏 */
+/* 互动栏：左浏览数 / 右紧凑动作组 */
 .feed-actions {
   display: flex;
   align-items: center;
@@ -316,14 +316,22 @@
 .feed-view {
   font-size: 24rpx;
   color: #94a3b8;
+  flex-shrink: 0;
+}
+.feed-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .feed-act {
   display: inline-flex;
   align-items: center;
-  gap: 8rpx;
-  margin-left: 28rpx;
+  gap: 6rpx;
   font-size: 24rpx;
   color: #64748b;
+  line-height: 1;
 }
 .feed-act.liked {
   color: #ec4899;
@@ -333,21 +341,21 @@
   line-height: 1;
 }
 
-/* 分享：紧凑圆形图标按钮，点赞/评论同级 */
+/* 分享：薄荷胶囊，和赞/评论并列紧凑 */
 .feed-share {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48rpx;
+  gap: 4rpx;
   height: 48rpx;
-  margin: 0 0 0 20rpx;
-  padding: 0;
+  margin: 0;
+  padding: 0 18rpx;
   border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #64748b;
-  font-size: inherit;
+  border-radius: 999rpx;
+  background: #edf9f3;
+  color: #047857;
+  font-size: 22rpx;
+  font-weight: 600;
   line-height: 1;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -357,13 +365,16 @@
   border: none;
 }
 .feed-share-hover {
-  background: #edf9f3;
+  background: #d9f2e6;
 }
 .feed-share-icon {
-  font-size: 28rpx;
+  font-size: 22rpx;
   font-weight: 700;
   line-height: 1;
-  color: #047857;
+  color: #10b981;
+}
+.feed-share-text {
+  letter-spacing: 0.5rpx;
 }
 
 /* 空态 / 底部 */

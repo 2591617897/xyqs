@@ -3,15 +3,12 @@
   <view class="hero">
     <view class="hero-top">
       <view class="school-pill" bindtap="openScope">📍 {{scopeLabel}} ▾</view>
-      <view class="hero-title">个人主页</view>
-      <view class="hero-acts">
-        <view class="hero-act" bindtap="goMessages">🔔</view>
-        <view class="hero-act" bindtap="demoEntry" data-name="设置">⚙️</view>
       </view>
+      
     </view>
 
     <!-- 用户卡：精简为基本信息，点击进「个人信息」页查看/修改 -->
-    <view class="user-card" hover-class="card-hover" bindtap="goProfile">
+    <view class="user-card" hover-class="card-hover" bindtap="goProfile" style="width: 98rpx; height: 18rpx; display: block; box-sizing: border-box">
       <view class="user-row">
         <view class="user-avatar">
           <image wx:if="{{user && user.avatar}}" src="{{user.avatar}}" mode="aspectFill" class="avatar-img" />
@@ -59,7 +56,6 @@
         <view class="stat-label">赞与收藏</view>
       </view>
     </view>
-  </view>
 
   <!-- ===== 校园信用分 ===== -->
   <view class="credit-card" bindtap="demoEntry" data-name="信用特权">
@@ -277,3 +273,4 @@
     bind:verify="onScopeVerify"
   />
 </view>
+

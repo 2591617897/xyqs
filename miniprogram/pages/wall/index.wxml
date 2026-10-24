@@ -93,21 +93,23 @@
         </view>
       </view>
 
-      <!-- 互动栏 -->
+      <!-- 互动栏：左浏览数 / 右赞评分享紧凑组 -->
       <view class="feed-actions">
         <view class="feed-view">👁 {{item.viewCount || 0}}</view>
-        <view class="flex1"></view>
-        <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
-          <text class="fa-icon">{{item.liked ? '💗' : '🤍'}}</text>
-          <text>{{item.likeCount || '赞'}}</text>
+        <view class="feed-actions-right">
+          <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
+            <text class="fa-icon">{{item.liked ? '💗' : '🤍'}}</text>
+            <text>{{item.likeCount || '赞'}}</text>
+          </view>
+          <view class="feed-act" catchtap="goDetail" data-id="{{item.id}}">
+            <text class="fa-icon">💬</text>
+            <text>{{item.commentCount || '评'}}</text>
+          </view>
+          <button class="feed-share" open-type="share" catchtap="noop" hover-class="feed-share-hover" data-id="{{item.id}}" aria-label="分享这条心事" style="width: 128rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
+            <text class="feed-share-icon">↗</text>
+            <text class="feed-share-text">分享</text>
+          </button>
         </view>
-        <view class="feed-act" catchtap="goDetail" data-id="{{item.id}}">
-          <text class="fa-icon">💬</text>
-          <text>{{item.commentCount || '评'}}</text>
-        </view>
-        <button class="feed-share" open-type="share" catchtap="noop" hover-class="feed-share-hover" data-id="{{item.id}}" aria-label="分享这条心事">
-          <text class="feed-share-icon">↗</text>
-        </button>
       </view>
     </view>
   </view>
