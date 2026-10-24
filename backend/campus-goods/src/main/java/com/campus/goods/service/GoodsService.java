@@ -18,6 +18,7 @@ import com.campus.goods.entity.GoodsOrder;
 import com.campus.goods.mapper.GoodsCommentMapper;
 import com.campus.goods.mapper.GoodsMapper;
 import com.campus.goods.mapper.GoodsOrderMapper;
+import com.campus.goods.mapper.SchoolRegionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ public class GoodsService {
     private final GoodsMapper goodsMapper;
     private final GoodsOrderMapper orderMapper;
     private final GoodsCommentMapper commentMapper;
+    private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
 
@@ -57,20 +59,31 @@ public class GoodsService {
         return CATEGORIES;
     }
 
+    /** 学校所在市（未配置/未知时为 null） */
+    public String cityOfSchool(Long schoolId) {
+        return schoolId == null ? null : schoolRegionMapper.selectCityBySchoolId(schoolId);
+    }
+
     /**
      * 商品分页。
      * userId 非空（个人主页场景）：返回该作者全部状态商品，不加 status=1 与学校范围过滤；
-     * userId 为空：行为与现状完全一致（在售 + 学校范围 + 排序）。
+     * 否则按范围过滤：city 非空按同城高校混排，schoolId 非空按本校。
      */
     public R.Page<Goods> page(String keyword, Integer categoryId, String sort,
-                              long page, long size, Long schoolId, Long userId) {
+                              long page, long size, Long schoolId, String city, Long userId) {
         LambdaQueryWrapper<Goods> w = Wrappers.<Goods>lambdaQuery();
         if (userId != null) {
             // 个人主页：作者全部状态（前端渲染状态标签）
             w.eq(Goods::getUserId, userId);
         } else {
             w.eq(Goods::getStatus, 1);
-            if (schoolId != null && schoolId > 0) {
+            if (StringUtils.hasText(city)) {
+                List<Long> citySchoolIds = schoolRegionMapper.selectSchoolIdsByCity(city.trim());
+                if (citySchoolIds.isEmpty()) {
+                    return R.Page.of(List.of(), 0, page, size);
+                }
+                w.in(Goods::getSchoolId, citySchoolIds);
+            } else if (schoolId != null && schoolId > 0) {
                 w.eq(Goods::getSchoolId, schoolId);
             }
         }

@@ -39,6 +39,14 @@ function postParams() {
   return q
 }
 
+/**
+ * 拼进闲置列表请求（/goods）的查询参数，逻辑与帖子一致：
+ * 本市模式下让闲置也按同城高校混排，避免切换范围后闲置仍停留在本校。
+ */
+function goodsParams() {
+  return postParams()
+}
+
 /** 胶囊文案：本校显示学校名，本市显示「城市 · 全市」 */
 function label(schoolName, schoolCity) {
   const s = read()
@@ -79,6 +87,7 @@ module.exports = {
   read: read,
   write: write,
   postParams: postParams,
+  goodsParams: goodsParams,
   label: label,
   resolveGeoCity: resolveGeoCity
 }

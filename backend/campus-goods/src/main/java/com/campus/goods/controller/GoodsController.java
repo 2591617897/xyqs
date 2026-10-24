@@ -34,7 +34,8 @@ public class GoodsController {
     /**
      * 商品列表（未登录也可浏览）。
      * userId：个人主页按作者过滤，返回该作者全部状态商品（0下架/1在售/2已售出），
-     * 不加 status=1 与学校范围过滤；不传时行为与现状完全一致。
+     * 不加 status=1 与学校范围过滤。
+     * scope=school（默认）：本校范围；scope=city：同城高校混排（city 缺省取用户学校所在市）。
      */
     @GetMapping
     public R<R.Page<Goods>> page(@RequestParam(required = false, name = "keyword") String keyword,
@@ -43,9 +44,19 @@ public class GoodsController {
                                  @RequestParam(defaultValue = "1", name = "page") long page,
                                  @RequestParam(defaultValue = "10", name = "size") long size,
                                  @RequestParam(required = false, name = "schoolId") Long schoolId,
+                                 @RequestParam(required = false, name = "scope") String scope,
+                                 @RequestParam(required = false, name = "city") String city,
                                  @RequestParam(required = false, name = "userId") Long userId) {
-        Long scope = schoolId != null ? schoolId : UserContext.schoolId();
-        return R.ok(goodsService.page(keyword, categoryId, sort, page, size, scope, userId));
+        // 个人主页：按作者过滤，跳过学校/城市范围逻辑
+        if (userId != null) {
+            return R.ok(goodsService.page(keyword, categoryId, sort, page, size, null, null, userId));
+        }
+        Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
+        if ("city".equalsIgnoreCase(scope)) {
+            String targetCity = city != null && !city.isBlank() ? city : goodsService.cityOfSchool(schoolScope);
+            return R.ok(goodsService.page(keyword, categoryId, sort, page, size, null, targetCity, null));
+        }
+        return R.ok(goodsService.page(keyword, categoryId, sort, page, size, schoolScope, null, null));
     }
 
     @GetMapping("/categories")

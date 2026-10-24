@@ -126,7 +126,7 @@ Page({
     // 否则切了频道看到的还是同一批闲置，会让人以为筛选没生效。
     const goodsTask = this.data.channelId
       ? Promise.resolve(null)
-      : http.get('/goods', { page: 1, size: 4, sort: 'latest' }, { silent: true }).catch(fail('goods'))
+      : http.get('/goods', Object.assign({ page: 1, size: 4, sort: 'latest' }, scopeMod.goodsParams()), { silent: true }).catch(fail('goods'))
 
     Promise.all([
       http.get('/channels', null, { silent: true }).catch(fail('channels')),
