@@ -7,14 +7,14 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+        server-addr: ${NACOS_ADDR:localhost:8848}
   servlet:
     multipart:
       max-file-size: 20MB
       max-request-size: 20MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PWD:123456}
 

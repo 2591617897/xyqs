@@ -18,21 +18,21 @@ const ENVS = {
   // 只想看界面效果、不想起后端时把它改回 true 即可
   dev: {
     scheme: 'http',
-    host: '192.168.0.2',
+    host: '192.168.31.178',
     port: 8888,
     mock: false
   },
   // 局域网联调（真机预览时改成电脑的局域网 IP）
   lan: {
     scheme: 'http',
-    host: '192.168.0.2',
+    host: '192.168.31.178',
     port: 8888,
     mock: false
   },
   // 线上环境（需 HTTPS + 已备案 + 已在后台配合法域名）
   prod: {
-    scheme: 'https',
-    host: 'api.example.com',
+    scheme: 'http',
+    host: '192.168.31.178',
     port: '',
     mock: false
   }
