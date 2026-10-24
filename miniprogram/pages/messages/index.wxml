@@ -1,22 +1,22 @@
 <view class="page">
-  <!-- 顶栏 -->
-  <view class="topbar">
+  <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏） -->
+  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
     <view class="tb-left">
-      <view class="tb-back" bindtap="goBack">←</view>
+      <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
       <text class="tb-title">私信与消息中心</text>
     </view>
     <view class="tb-right">
-      <view class="tb-act" bindtap="markAllRead">✓✓</view>
-      <view class="tb-act" bindtap="onSettings">☰</view>
+      <view class="tb-act" bindtap="markAllRead"><view class="ico ico-done-all"></view></view>
+      <view class="tb-act" bindtap="onSettings"><view class="ico ico-tune"></view></view>
     </view>
   </view>
 
   <!-- 搜索框 -->
   <view class="search-wrap">
     <view class="search-box">
-      <text class="search-icon">🔍</text>
+      <view class="ico ico-search"></view>
       <input class="search-input" placeholder="搜索校友昵称、聊天记录或宝贝..." placeholder-class="ph" value="{{keyword}}" bindinput="onSearch" confirm-type="search" />
-      <text class="search-mic">🎙</text>
+      <view class="ico ico-mic"></view>
     </view>
   </view>
 
@@ -59,7 +59,7 @@
       <view class="tip-title">校园面交防骗小贴士</view>
       <view class="tip-text">面交请优先选择宿舍大厅、主楼或食堂等明亮公共区域，认准实名校友，谨防脱离平台私下转账。</view>
     </view>
-    <view class="tip-close" bindtap="closeTip">✕</view>
+    <view class="tip-close" bindtap="closeTip"><view class="ico ico-close"></view></view>
   </view>
 
   <!-- 分类筛选 -->
@@ -73,62 +73,78 @@
         data-key="{{item.key}}"
       >
         <text>{{item.name}}</text>
-        <text class="fp-count" wx:if="{{item.key === 'all'}}">{{convos.length}}</text>
+        <text class="fp-count" wx:if="{{item.key === 'all'}}">{{allConvos.length}}</text>
       </view>
     </view>
   </scroll-view>
 
-  <!-- 会话列表 -->
+  <!-- 会话列表：左滑露出「删除」操作 -->
   <view class="convos">
-    <view
-      class="convo"
+    <swipe-cell
       wx:for="{{convos}}"
       wx:key="id"
-      hover-class="convo-hover"
-      bindtap="goChat"
+      class="convo-swipe"
+      open="{{openSwipeId === item.id}}"
+      bind:openchange="onSwipeChange"
+      bind:action="onSwipeAction"
       data-id="{{item.id}}"
-      data-name="{{item.peerName}}"
     >
-      <!-- 头像 -->
-      <view class="c-avatar-wrap">
-        <image wx:if="{{item.peerAvatar}}" class="c-avatar" src="{{item.peerAvatar}}" mode="aspectFill" />
-        <view wx:elif="{{item.official}}" class="c-avatar official">🏫<view class="c-official-check">✓</view></view>
-        <view wx:elif="{{item.anon}}" class="c-avatar anon">✉️</view>
-        <view wx:else class="c-avatar">
-          <view class="avatar-default">
-            <view class="ad-head"></view>
-            <view class="ad-body"></view>
-          </view>
+      <view slot="action">
+        <view class="op-btn op-btn-danger" catchtap="onSwipeAction" data-id="{{item.id}}">
+          <view class="ico ico-trash"></view>
+          <text class="op-btn-text">删除</text>
         </view>
-        <view class="c-online" wx:if="{{item.peerOnline}}"></view>
       </view>
 
-      <view class="c-main">
-        <view class="c-head">
-          <view class="c-name-row">
-            <text class="c-name">{{item.peerName}}</text>
-            <text class="c-tag {{tag.cls}}" wx:for="{{item.peerTags}}" wx:for-item="tag" wx:key="text">{{tag.text}}</text>
+      <view
+        class="convo"
+        hover-class="convo-hover"
+        bindtap="goChat"
+        data-id="{{item.id}}"
+        data-name="{{item.peerName}}"
+      >
+        <!-- 头像 -->
+        <view class="c-avatar-wrap">
+          <image wx:if="{{item.peerAvatar}}" class="c-avatar" src="{{item.peerAvatar}}" mode="aspectFill" />
+          <view wx:elif="{{item.official}}" class="c-avatar official">🏫<view class="c-official-check">✓</view></view>
+          <view wx:elif="{{item.anon}}" class="c-avatar anon">✉️</view>
+          <view wx:else class="c-avatar">
+            <view class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
           </view>
-          <text class="c-time">{{item.timeText}}</text>
+          <view class="c-online" wx:if="{{item.peerOnline}}"></view>
+          <!-- 未读红点：贴在头像右上角，符合 IM 习惯 -->
+          <view class="c-badge" wx:if="{{item.unread > 0}}">{{item.unread > 99 ? '99+' : item.unread}}</view>
         </view>
 
-        <!-- 关联宝贝卡片 -->
-        <view class="c-goods" wx:if="{{item.goodsCard}}">
-          <view class="cg-cover">{{item.goodsCard.emoji}}</view>
-          <view class="cg-main">
+        <view class="c-main">
+          <!-- 第一行：昵称 + 身份标签 ... 时间 -->
+          <view class="c-head">
+            <view class="c-name-row">
+              <text class="c-name">{{item.peerName}}</text>
+              <text class="c-tag {{tag.cls}}" wx:for="{{item.peerTags}}" wx:for-item="tag" wx:key="text">{{tag.text}}</text>
+            </view>
+            <text class="c-time">{{item.timeText}}</text>
+          </view>
+
+          <!-- 第二行：最新消息摘要（这是会话列表的主角） -->
+          <view class="c-preview">
+            <text class="c-prefix" wx:if="{{item.lastFrom === 'me'}}">我：</text>
+            <text class="c-last {{item.unread ? 'strong' : ''}}">{{item.lastText || '暂无消息'}}</text>
+          </view>
+
+          <!-- 第三行：关联宝贝（轻量标签条，不再是大卡片） -->
+          <view class="c-goods" wx:if="{{item.goodsCard}}" catchtap="goChat" data-id="{{item.id}}" data-name="{{item.peerName}}">
+            <text class="cg-emoji">{{item.goodsCard.emoji}}</text>
             <text class="cg-title">{{item.goodsCard.title}}</text>
             <view class="cg-price"><text class="cg-symbol">¥</text><text class="cg-num">{{item.goodsCard.price}}</text></view>
+            <text class="cg-status">{{item.goodsCard.statusText}}</text>
           </view>
-          <text class="cg-status">{{item.goodsCard.statusText}}</text>
-        </view>
-
-        <!-- 最新消息 + 未读 -->
-        <view class="c-foot">
-          <text class="c-last {{item.unread ? 'strong' : ''}}">{{item.lastText}}</text>
-          <view class="c-unread" wx:if="{{item.unread}}">{{item.unread}}</view>
         </view>
       </view>
-    </view>
+    </swipe-cell>
   </view>
 
   <view class="empty" wx:if="{{!loading && !convos.length}}">

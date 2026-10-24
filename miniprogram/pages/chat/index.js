@@ -113,6 +113,7 @@ Page({
   applyConvo: function (res) {
     const msgs = (res.messages || []).map(function (m) {
       m.timeText = shortTime(m.createdAt)
+      m.id = String(m.id)
       return m
     })
     this.setData({
@@ -186,6 +187,7 @@ Page({
     http.post('/messages/' + this.data.convoId, { content: text }, { silent: true }).then(function (res) {
       const msgs = (res.messages || []).map(function (m) {
         m.timeText = shortTime(m.createdAt)
+        m.id = String(m.id)
         return m
       })
       self.setData({ messages: msgs, sending: false })
@@ -205,6 +207,56 @@ Page({
     const goods = this.data.goodsCard
     const title = goods && goods.title ? '「' + goods.title + '」' : '这件宝贝'
     this.send('你好！我想对' + title + '发起预订 / 小刀还价，请问方便优惠一些吗？😊')
+  },
+
+  /** 长按消息：微信同款，仅自己发的消息可在 2 分钟内撤回 */
+  onLongPress: function (e) {
+    const self = this
+    const id = e.currentTarget.dataset.id
+    const msg = this.data.messages.filter(function (m) { return m.id === id })[0]
+    if (!msg || msg.from !== 'me') return
+    if (!recallable(msg)) {
+      mp.showToast({ title: '超过 2 分钟的消息无法撤回', icon: 'none' })
+      return
+    }
+    mp.showModal({
+      title: '撤回消息',
+      content: '撤回后这条消息将从双方的聊天记录中消失。',
+      confirmText: '撤回',
+      confirmColor: '#ef4444',
+      success: function (res) {
+        if (res.confirm) self.doDelete(id)
+      }
+    })
+  },
+
+  doDelete: function (id) {
+    const self = this
+    // 本地未落库的消息（发消息后的极短窗口内长按）：直接本地移除即可
+    if (String(id).indexOf('local-') === 0) {
+      this.setData({
+        messages: this.data.messages.filter(function (m) { return m.id !== id })
+      })
+      mp.showToast({ title: '已撤回消息', icon: 'none' })
+      return
+    }
+    // 纯前端演示会话（无真实会话 id）没有后端可删，直接本地移除
+    if (!this.data.convoId) {
+      this.setData({
+        messages: this.data.messages.filter(function (m) { return m.id !== id })
+      })
+      mp.showToast({ title: '已撤回消息', icon: 'none' })
+      return
+    }
+    http.del('/messages/' + this.data.convoId + '/messages/' + id, null, { silent: true }).then(function () {
+      self.setData({
+        messages: self.data.messages.filter(function (m) { return m.id !== id })
+      })
+      mp.showToast({ title: '已撤回消息', icon: 'none' })
+    }).catch(function (err) {
+      const msg = err && err.msg ? err.msg : ''
+      mp.showToast({ title: msg || '撤回失败，请重试', icon: 'none' })
+    })
   },
 
   onSafety: function () {
@@ -248,4 +300,19 @@ function dayDivider(msgs) {
   if (d.toDateString() === now.toDateString()) return '今天'
   if (d.toDateString() === new Date(now.getTime() - 86400000).toDateString()) return '昨天'
   return (d.getMonth() + 1) + '月' + d.getDate() + '日'
+}
+
+/** 消息距现在的毫秒数；无时间戳（本地未落库消息）返回 -1 */
+function msgAge(createdAt) {
+  if (!createdAt) return -1
+  const t = new Date(String(createdAt).replace(/-/g, '/'))
+  if (isNaN(t.getTime())) return -1
+  return Date.now() - t.getTime()
+}
+
+/** 是否在可撤回窗口内（微信同款 2 分钟）；本地未落库消息视为可撤回 */
+function recallable(msg) {
+  const age = msgAge(msg.createdAt)
+  if (age < 0) return true
+  return age <= 2 * 60 * 1000
 }

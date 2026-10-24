@@ -12,12 +12,39 @@ import java.util.List;
 @Mapper
 public interface MessageMapper extends BaseMapper<Message> {
 
-    /** 会话内最近的消息，升序返回（limit 条） */
+    /** 会话内最近的消息，升序返回（limit 条）；已撤回（deleted=1）的不返回 */
     @Select("select * from ("
-            + "select * from t_message where conversation_id = #{conversationId} "
+            + "select * from t_message where conversation_id = #{conversationId} and deleted = 0 "
             + "order by id desc limit #{limit}"
             + ") t order by t.id asc")
     List<Message> selectRecent(@Param("conversationId") Long conversationId, @Param("limit") long limit);
+
+    /**
+     * 撤回一条消息：仅发送者本人可删，且只能删未撤回过的。
+     * 返回受影响行数，0 表示「不存在 / 不是我发的 / 已撤回过」。
+     */
+    @Update("update t_message set deleted = 1 "
+            + "where id = #{id} and conversation_id = #{conversationId} "
+            + "and sender_id = #{senderId} and deleted = 0")
+    int softDelete(@Param("id") Long id,
+                   @Param("conversationId") Long conversationId,
+                   @Param("senderId") Long senderId);
+
+    /** 会话内最后一条未撤回的消息（撤回后用来重算会话摘要） */
+    @Select("select * from t_message "
+            + "where conversation_id = #{conversationId} and deleted = 0 "
+            + "order by id desc limit 1")
+    Message selectLastAlive(@Param("conversationId") Long conversationId);
+
+    /**
+     * 批量查消息发送方：用于会话列表标记「最后一条是我发的还是对方发的」。
+     * 返回 id -> sender_id 的映射。
+     */
+    @Select("<script>"
+            + "select id, sender_id from t_message where id in "
+            + "<foreach collection='ids' item='it' open='(' separator=',' close=')'>#{it}</foreach>"
+            + "</script>")
+    List<Message> selectSenders(@Param("ids") List<Long> ids);
 
     /** 把对方发给我的消息标为已读 */
     @Update("update t_message set read_flag = 1 "

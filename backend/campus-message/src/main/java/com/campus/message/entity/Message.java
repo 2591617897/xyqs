@@ -33,6 +33,9 @@ public class Message {
     /** 0未读 1已读 */
     private Integer readFlag;
 
+    /** 0正常 1已删除（撤回）：仅发送者本人可删，删后双方都看不到 */
+    private Integer deleted;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 }

@@ -259,9 +259,21 @@ CREATE TABLE IF NOT EXISTS t_message (
   type            VARCHAR(16)   NOT NULL DEFAULT 'text' COMMENT 'text 文本 / location 定位 / image 图片 / system 系统',
   content         VARCHAR(2000) NOT NULL,
   read_flag       TINYINT       NOT NULL DEFAULT 0 COMMENT '0未读 1已读',
+  deleted         TINYINT       NOT NULL DEFAULT 0 COMMENT '0正常 1已删除（撤回，发送者本人可删）',
   created_at      DATETIME      DEFAULT CURRENT_TIMESTAMP,
   KEY idx_conversation (conversation_id, id),
   KEY idx_receiver (receiver_id, read_flag)
 ) COMMENT '私信消息';
+
+-- 会话隐藏（用户维度）：左滑删除会话时只对当前用户生效，对方会话不受影响。
+-- uk_user_conv 保证同一用户对同一会话只隐藏一次，删除接口可重复调用。
+CREATE TABLE IF NOT EXISTS t_message_conversation_hide (
+  id              BIGINT      NOT NULL PRIMARY KEY COMMENT '雪花ID',
+  user_id         BIGINT      NOT NULL COMMENT '执行删除的用户（只有他自己看不到该会话）',
+  conversation_id BIGINT      NOT NULL COMMENT '被隐藏的会话 id',
+  created_at      DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '隐藏时间',
+  UNIQUE KEY uk_user_conv (user_id, conversation_id),
+  KEY idx_conv (conversation_id)
+) COMMENT '会话隐藏记录（用户维度删除会话）';
 -- ALTER TABLE t_user DROP INDEX uk_openid;
 -- ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);

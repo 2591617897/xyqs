@@ -4,8 +4,11 @@ const { mp, timeAgo } = require('../../utils/util')
 Page({
   data: {
     loading: true,
+    statusBarHeight: 20,
     summary: { likes: 0, followers: 0, mentions: 0, notice: '' },
     convos: [],
+    /** 全量会话（本地筛选，避免每次筛选都打接口） */
+    allConvos: [],
     keyword: '',
     showTip: true,
     filters: [
@@ -14,11 +17,15 @@ Page({
       { key: 'echo', name: '树洞回声' },
       { key: 'unread', name: '未读消息' }
     ],
-    filter: 'all'
+    filter: 'all',
+    /** 当前处于左滑展开状态的会话 id（受控，保证同时只有一个展开） */
+    openSwipeId: ''
   },
 
   onLoad: function () {
-    mp.setNavigationBarTitle({ title: '私信与消息中心' })
+    // 自绘顶栏需要自己避开状态栏（navigationStyle:custom）
+    const info = typeof mp.getWindowInfo === 'function' ? mp.getWindowInfo() : mp.getSystemInfoSync()
+    this.setData({ statusBarHeight: info.statusBarHeight || 20 })
     this.load()
   },
 
@@ -26,15 +33,17 @@ Page({
     const self = this
     this.setData({ loading: true })
     http.get('/messages', null, { silent: true }).then(function (res) {
-      const convos = (res.convos || []).map(function (c) {
+      const all = (res.convos || []).map(function (c) {
         c.timeText = shortTime(c.lastTime)
+        c.id = String(c.id)
         return c
       })
       self.setData({
         summary: res.summary || self.data.summary,
-        convos: convos,
+        allConvos: all,
         loading: false
       })
+      self.applyFilter()
     }).catch(function () {
       self.setData({ loading: false })
     })
@@ -52,29 +61,24 @@ Page({
     this.applyFilter()
   },
 
+  /** 本地过滤：数据量小，无需重复请求 */
   applyFilter: function () {
-    const self = this
     const kw = (this.data.keyword || '').trim()
-    http.get('/messages', null, { silent: true }).then(function (res) {
-      let list = (res.convos || []).map(function (c) {
-        c.timeText = shortTime(c.lastTime)
-        return c
+    const f = this.data.filter
+    let list = this.data.allConvos.slice()
+    if (kw) {
+      list = list.filter(function (c) {
+        return (c.peerName || '').indexOf(kw) >= 0 || (c.lastText || '').indexOf(kw) >= 0
       })
-      if (kw) {
-        list = list.filter(function (c) {
-          return c.peerName.indexOf(kw) >= 0 || (c.lastText || '').indexOf(kw) >= 0
-        })
-      }
-      const f = self.data.filter
-      if (f === 'trade') {
-        list = list.filter(function (c) { return !!c.goodsCard })
-      } else if (f === 'echo') {
-        list = list.filter(function (c) { return !!c.anon })
-      } else if (f === 'unread') {
-        list = list.filter(function (c) { return c.unread > 0 })
-      }
-      self.setData({ convos: list })
-    }).catch(function () {})
+    }
+    if (f === 'trade') {
+      list = list.filter(function (c) { return !!c.goodsCard })
+    } else if (f === 'echo') {
+      list = list.filter(function (c) { return !!c.anon })
+    } else if (f === 'unread') {
+      list = list.filter(function (c) { return c.unread > 0 })
+    }
+    this.setData({ convos: list })
   },
 
   closeTip: function () {
@@ -90,10 +94,11 @@ Page({
     const self = this
     const unread = this.data.convos.filter(function (c) { return c.unread > 0 })
     const patch = {}
-    this.data.convos.forEach(function (c, i) {
-      patch['convos[' + i + '].unread'] = 0
+    this.data.allConvos.forEach(function (c, i) {
+      if (c.unread > 0) patch['allConvos[' + i + '].unread'] = 0
     })
     this.setData(patch)
+    this.applyFilter()
     // 同步到后端：逐个会话标记已读，失败不影响本地已清零的展示
     unread.forEach(function (c) {
       http.post('/messages/' + c.id + '/read', null, { silent: true }).catch(function () {})
@@ -105,9 +110,51 @@ Page({
     mp.showToast({ title: '消息设置即将上线', icon: 'none' })
   },
 
+  /** 左滑卡片展开/收起：受控，保证同时只有一个展开 */
+  onSwipeChange: function (e) {
+    const id = e.currentTarget.dataset.id
+    const open = e.detail.open
+    this.setData({ openSwipeId: open ? id : (this.data.openSwipeId === id ? '' : this.data.openSwipeId) })
+  },
+
+  /** 左滑操作：删除会话 */
+  onSwipeAction: function (e) {
+    const id = e.currentTarget.dataset.id
+    const self = this
+    const convo = this.data.allConvos.filter(function (c) { return c.id === id })[0]
+    const name = convo ? convo.peerName : '该会话'
+    mp.showModal({
+      title: '删除会话',
+      content: '确定删除与「' + name + '」的会话记录吗？删除后聊天内容将不再展示，对方不受影响。',
+      confirmText: '删除',
+      confirmColor: '#ef4444',
+      success: function (res) {
+        if (!res.confirm) return
+        self.doDelete(id)
+      }
+    })
+  },
+
+  doDelete: function (id) {
+    const self = this
+    http.del('/messages/' + id, null, { silent: true }).then(function () {
+      const all = self.data.allConvos.filter(function (c) { return c.id !== id })
+      self.setData({ allConvos: all, openSwipeId: '' })
+      self.applyFilter()
+      mp.showToast({ title: '已删除会话', icon: 'none' })
+    }).catch(function () {
+      mp.showToast({ title: '删除失败，请重试', icon: 'none' })
+    })
+  },
+
   goChat: function (e) {
     const id = e.currentTarget.dataset.id
     const name = e.currentTarget.dataset.name
+    // 卡片处于左滑展开态时，点击收起而不是进入聊天
+    if (this.data.openSwipeId === id) {
+      this.setData({ openSwipeId: '' })
+      return
+    }
     mp.navigateTo({ url: '/pages/chat/index?id=' + id + '&name=' + encodeURIComponent(name || '') })
   },
 

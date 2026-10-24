@@ -53,10 +53,18 @@
 - **每个页面必须同时产出 4 个文件**：`.js` / `.wxml` / `.json` / `.wxss`；
   `.json` 里显式写 `"usingComponents": {}`——缺 json 会导致整页白屏并报
   `Cannot read properties of undefined (reading "usingComponents")`
+- **require 相对路径按目录深度数层级**：`pages/user/space/space.js` 是 3 层深，
+  引 utils 必须 `../../../utils/`（2 层页面才是 `../../utils/`）。写错不会报编译错，
+  只在运行时模块加载失败 → Page 未注册 → **整页白屏只剩导航标题**，`node --check` 查不出
+- **自绘顶栏页面必须 `navigationStyle: custom`**（如 pages/messages），否则原生导航栏
+  和自绘顶栏叠两层（双返回键/双标题）。顶栏内联 `padding-top: {{statusBarHeight+8}}px`
+  避开状态栏；功能图标用 SVG data-URI 对齐设计稿 Material 图标，**别用 ←/✓✓/☰ 等文本字符**
+  （真机字体会变形，且常与设计稿图标不符，如设置应为 tune 滑块而非汉堡菜单）
 - 校验命令：
   - `node scripts/check-miniprogram.js`（页面结构完整性）
-  - `node scripts/mock-selftest.js`（模拟数据层，**126 条**断言，含 [12] 关注/主页段）
-  - `node scripts/api-smoke-test.js`（后端 **38 项**核心接口连通性，**需 Nacos + 服务已启动**）
+  - `node scripts/mock-selftest.js`（模拟数据层，**139 条**断言，含 [12] 关注/主页、[13] 左滑删除段）
+  - `node scripts/api-smoke-test.js`（后端 **45 项**核心接口连通性，**需 Nacos + 服务已启动**；
+    **跑完要清理演示数据**：delete `content='冒烟测试消息'` 的行并重置 4 个会话的 last_*/unread_a）
 - 统一响应 `{code,msg,data}`，`code=0` 成功；401 未登录 / 403 未认证 / 404 不存在
 - **ID 一律以字符串传输**：雪花 ID 是 19 位 Long，超出 JS 安全整数（2^53-1）。
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；
@@ -99,3 +107,25 @@
   不 catch 会冒泡误跳
 - 未纳入本期（P1/P2）：关注/粉丝列表页、消息中心 followers 汇总、「我的」页统计条真实化、
   互相关注标识、新粉丝通知、计数对账脚本
+
+## 私信左滑删除 + 消息中心布局（2026-10-24 交付）
+- **删除会话 = 只对当前用户隐藏，不删数据、对方不受影响**。
+  表 `t_message_conversation_hide(user_id, conversation_id)`（`uk_user_conv` → 幂等）；
+  `selectMine`/`countUnread` 用 `not exists` 排除。迁移 `migration-20261026-message-delete.sql`
+- **撤回消息 = 软删除** `t_message.deleted`，仅发送者本人可删（他人 403、不存在 404）。
+  **撤回会话最后一条时必须回滚会话摘要**（last_msg_id/last_content/last_time → 上一条存活消息），
+  否则列表摘要会指向已撤回的消息
+- **IM 语义**：删除后对方发来新消息 → 自动取消隐藏、会话重新出现；
+  重新 `POST /messages/start` 也自动取消隐藏
+- **接口**（campus-message 8106，网关 `/api/messages/**` 零改动）：
+  `DELETE /api/messages/{id}`（删会话）、`DELETE /api/messages/{id}/messages/{msgId}`（撤回消息）
+- **列表新增 `lastFrom`**（`me`/`peer`）用于显示「我：」前缀，批量查 `selectSenders`，
+  **失败要 try/catch 降级**，不许打崩列表
+- **左滑组件 `miniprogram/components/swipe-cell/`**（4 件套）：
+  - 横向位移占优才接管手势（|dx|>|dy|），否则让位页面纵向滚动
+  - `open` 属性**受控**：页面用 `openSwipeId` 保证同时只有一个展开；`openchange` 事件回传
+  - **组件内 `overflow:hidden` 会裁掉卡片 box-shadow 且切掉气泡圆角** → 圆角/投影要放在**宿主元素 class** 上
+  - **`scroll-into-view` 定位不到插槽内的 id**（shadow DOM）→ id 用 `swipe-id` 属性透传到组件根节点
+  - **插槽里的 `catchtap` 属父组件作用域**（组件内 `onActionTap` 不触发）→ 父组件按钮直接 `catchtap` 父方法
+- **聊天页只有「我发的」消息可左滑撤回**，对方消息走 `wx:else` 普通渲染（无左滑）
+- 消息中心筛选改**本地过滤**（`allConvos` 全量缓存），不再每次筛选都打接口

@@ -10,6 +10,7 @@ import com.campus.message.dto.StartConversationReq;
 import com.campus.message.service.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,5 +83,26 @@ public class MessageController {
         Long userId = UserContext.requireUserId();
         messageService.requireMember(id, userId);
         return R.ok(messageService.messages(id, userId));
+    }
+
+    /**
+     * 删除会话（消息中心左滑）。
+     * 只对当前用户生效：对方会话与消息本体不受影响。幂等。
+     */
+    @DeleteMapping("/{id}")
+    public R<Void> deleteConversation(@PathVariable("id") Long id) {
+        messageService.deleteConversation(id, UserContext.requireUserId());
+        return R.ok();
+    }
+
+    /**
+     * 撤回一条消息（聊天页左滑）。
+     * 只有发送者本人可以删除自己的消息，删除后双方都看不到。
+     */
+    @DeleteMapping("/{id}/messages/{messageId}")
+    public R<Void> deleteMessage(@PathVariable("id") Long id,
+                                  @PathVariable("messageId") Long messageId) {
+        messageService.deleteMessage(id, messageId, UserContext.requireUserId());
+        return R.ok();
     }
 }

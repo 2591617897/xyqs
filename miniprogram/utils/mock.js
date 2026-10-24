@@ -2216,10 +2216,15 @@ function route(method, url, data) {
     if (s.length === 2 && M === 'GET' && s[1] === 'unread') return ok({ unread: unreadTotal() })
     if (s.length === 2 && M === 'POST' && s[1] === 'start') return ok(startConvo(q))
     if (s.length === 3 && M === 'POST' && s[2] === 'read') return ok(convoRead(s[1]))
-    if (s.length === 3 && M === 'GET' && s[2] === 'messages') return ok({ messages: (convoRaw(s[1]) || {}).messages || [] })
+    if (s.length === 3 && M === 'GET' && s[2] === 'messages') {
+      const raw = (convoRaw(s[1]) || {}).messages || []
+      return ok({ messages: raw.filter(function (m) { return !m.deleted }) })
+    }
+    if (s.length === 4 && M === 'DELETE' && s[2] === 'messages') return ok(deleteMessage(s[1], s[3]))
     if (s.length === 1 && M === 'GET') return ok(messageList())
     if (s.length === 2 && M === 'GET') return ok(convoDetail(s[1]))
     if (s.length === 2 && M === 'POST') return ok(sendMessage(s[1], q))
+    if (s.length === 2 && M === 'DELETE') return ok(deleteConvo(s[1]))
   }
 
   return err(404, '模拟数据未覆盖该接口：' + M + ' ' + path)
@@ -2230,8 +2235,12 @@ function route(method, url, data) {
 /** 会话列表（含快捷入口角标），按最新消息时间倒序 */
 function messageList() {
   const d = load()
-  const list = (d.convos || []).map(function (c) {
-    const last = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null
+  const list = (d.convos || []).filter(function (c) {
+    // 已隐藏（左滑删除）的会话不再出现在列表里
+    return !c.hidden
+  }).map(function (c) {
+    const msgs = (c.messages || []).filter(function (m) { return !m.deleted })
+    const last = msgs.length ? msgs[msgs.length - 1] : null
     return {
       id: c.id,
       peerName: c.peerName,
@@ -2251,6 +2260,43 @@ function messageList() {
     return a.lastTime < b.lastTime ? 1 : -1
   })
   return { summary: d.msgSummary || { likes: 0, followers: 0, mentions: 0, notice: '' }, convos: list }
+}
+
+/**
+ * 左滑删除会话：只隐藏自己这一侧的会话（hidden 标记），
+ * 与后端「会话隐藏表」语义一致——对方不受影响，消息本体不删。
+ */
+function deleteConvo(id) {
+  requireLogin()
+  const d = load()
+  const c = convoRaw(id)
+  if (!c) throw { code: 404, msg: '会话不存在或已删除' }
+  c.hidden = true
+  c.unread = 0
+  save()
+  return null
+}
+
+/**
+ * 左滑撤回消息：仅「我发的」可撤，且撤回后从双方记录中消失。
+ * 与后端软删除（deleted=1）语义一致。
+ */
+function deleteMessage(convoId, msgId) {
+  requireLogin()
+  const d = load()
+  const c = convoRaw(convoId)
+  if (!c) throw { code: 404, msg: '会话不存在或已删除' }
+  const msgs = c.messages || []
+  let target = null
+  for (let i = 0; i < msgs.length; i++) {
+    if (String(msgs[i].id) === String(msgId)) { target = msgs[i]; break }
+  }
+  if (!target) throw { code: 404, msg: '消息不存在' }
+  if (target.deleted) throw { code: 400, msg: '该消息已删除' }
+  if (target.from !== 'me') throw { code: 403, msg: '只能删除自己发送的消息' }
+  target.deleted = true
+  save()
+  return null
 }
 
 /** 取原始会话对象（不清零未读） */
@@ -2350,7 +2396,7 @@ function convoDetail(id) {
     official: !!c.official,
     peerTags: c.peerTags || [],
     goodsCard: c.goodsCard || null,
-    messages: c.messages
+    messages: c.messages.filter(function (m) { return !m.deleted })
   }
 }
 

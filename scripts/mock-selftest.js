@@ -258,5 +258,43 @@ check('该作者商品全部属于该作者', userGoods.data.records.every((g) =
 check('主页帖子数与列表一致', call('GET', '/user/9002/profile').data.postCount === userPosts.data.total)
 check('主页在售数与列表一致', call('GET', '/user/9002/profile').data.goodsSaleCount === userGoods.data.records.filter((g) => g.status === 1).length)
 
+console.log('\n[13] 私信左滑删除（会话隐藏 / 消息撤回）')
+// 已登录状态（第 12 段末尾已登录）
+const beforeList = call('GET', '/messages').data
+check('消息中心返回会话列表', beforeList.convos.length > 0, beforeList.convos.length)
+const targetConvo = beforeList.convos[0]
+check('会话带 lastFrom 字段', targetConvo.lastFrom === 'me' || targetConvo.lastFrom === 'peer', targetConvo.lastFrom)
+
+// 删除会话：只对自己隐藏
+const delRes = call('DELETE', '/messages/' + targetConvo.id)
+check('删除会话返回成功', delRes.code === 0, delRes)
+const afterList = call('GET', '/messages').data
+check('被删会话已从列表移除', afterList.convos.every((c) => String(c.id) !== String(targetConvo.id)))
+check('其他会话不受影响', afterList.convos.length === beforeList.convos.length - 1)
+// 幂等：重复删除仍成功
+check('重复删除会话仍成功（幂等）', call('DELETE', '/messages/' + targetConvo.id).code === 0)
+
+// 撤回消息：只能删自己发的
+const convoDetail2 = call('GET', '/messages/' + targetConvo.id)
+check('会话详情可读', convoDetail2.code === 0 && convoDetail2.data.messages.length > 0)
+const myMsg = convoDetail2.data.messages.filter((m) => m.from === 'me')[0]
+const peerMsg = convoDetail2.data.messages.filter((m) => m.from === 'peer')[0]
+if (myMsg) {
+  const delMsg = call('DELETE', '/messages/' + targetConvo.id + '/messages/' + myMsg.id)
+  check('撤回自己的消息成功', delMsg.code === 0, delMsg)
+  const afterMsg = call('GET', '/messages/' + targetConvo.id).data.messages
+  check('撤回后消息不再返回', afterMsg.every((m) => String(m.id) !== String(myMsg.id)))
+  check('重复撤回被拒', call('DELETE', '/messages/' + targetConvo.id + '/messages/' + myMsg.id).code === 400)
+}
+if (peerMsg) {
+  const delPeer = call('DELETE', '/messages/' + targetConvo.id + '/messages/' + peerMsg.id)
+  check('撤回对方消息被拒（403）', delPeer.code === 403, delPeer)
+}
+check('撤回不存在的消息 404', call('DELETE', '/messages/' + targetConvo.id + '/messages/999999').code === 404)
+// 未登录不能删除
+mock.logout()
+check('未登录删除会话被拦（401）', call('DELETE', '/messages/' + targetConvo.id).code === 401)
+call('POST', '/auth/login', {})
+
 console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
 process.exit(fail ? 1 : 0)

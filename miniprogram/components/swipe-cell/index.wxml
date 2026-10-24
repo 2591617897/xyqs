@@ -1,0 +1,20 @@
+<!-- 左滑操作单元格 -->
+<!-- id 透传到根节点：供 scroll-into-view 定位（组件内插槽里的 id 无法被外部定位） -->
+<view class="sc" id="{{swipeId}}">
+  <!-- 右侧操作区：固定在右边，卡片左移后露出 -->
+  <view class="sc-actions" style="width: {{actionWidth}}px;">
+    <slot name="action" />
+  </view>
+
+  <!-- 内容层：手势中跟随手指移动 -->
+  <view
+    class="sc-body {{dragging ? 'sc-body-dragging' : ''}}"
+    style="transform: translateX({{offset}}px);"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchEnd"
+  >
+    <slot />
+  </view>
+</view>

@@ -52,33 +52,44 @@
     <text class="safety-text">平台安全提示：同校交易请约定公共场所面交，谨防钓鱼链接</text>
   </view>
 
-  <!-- 消息列表 -->
+  <!-- 消息列表：长按自己发的消息可撤回（微信同款，2 分钟内） -->
   <scroll-view class="msgs" scroll-y="true" scroll-into-view="{{scrollInto}}" scroll-with-animation>
     <view class="msg-day">{{dayText}}</view>
-    <view
-      class="msg {{item.from === 'me' ? 'mine' : ''}}"
-      wx:for="{{messages}}"
-      wx:key="id"
-      id="msg-{{item.id}}"
-    >
-      <view class="msg-avatar" wx:if="{{item.from !== 'me'}}">
-        <image wx:if="{{peerAvatar && !anon}}" class="msg-img" src="{{peerAvatar}}" mode="aspectFill" />
-        <view wx:else class="avatar-default">
-          <view class="ad-head"></view>
-          <view class="ad-body"></view>
+    <block wx:for="{{messages}}" wx:key="id">
+      <view class="msg-row" id="msg-{{item.id}}">
+        <!-- 我发的：长按可撤回 -->
+        <view wx:if="{{item.from === 'me'}}" class="msg mine" bindlongpress="onLongPress" data-id="{{item.id}}">
+          <view class="msg-body">
+            <!-- 地址卡片消息 -->
+            <view class="loc-card" wx:if="{{item.type === 'location'}}">
+              <view class="loc-pin">📍 {{item.content}}</view>
+            </view>
+            <!-- 普通文本 -->
+            <view class="bubble" wx:else>{{item.content}}</view>
+            <view class="msg-time">{{item.timeText}}</view>
+          </view>
+          <view class="msg-me">我</view>
+        </view>
+
+        <!-- 对方发的：不可撤回，直接渲染 -->
+        <view wx:else class="msg">
+          <view class="msg-avatar">
+            <image wx:if="{{peerAvatar && !anon}}" class="msg-img" src="{{peerAvatar}}" mode="aspectFill" />
+            <view wx:else class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
+          </view>
+          <view class="msg-body">
+            <view class="loc-card" wx:if="{{item.type === 'location'}}">
+              <view class="loc-pin">📍 {{item.content}}</view>
+            </view>
+            <view class="bubble" wx:else>{{item.content}}</view>
+            <view class="msg-time">{{item.timeText}}</view>
+          </view>
         </view>
       </view>
-      <view class="msg-body">
-        <!-- 地址卡片消息 -->
-        <view class="loc-card" wx:if="{{item.type === 'location'}}">
-          <view class="loc-pin">📍 {{item.content}}</view>
-        </view>
-        <!-- 普通文本 -->
-        <view class="bubble" wx:else>{{item.content}}</view>
-        <view class="msg-time">{{item.timeText}}</view>
-      </view>
-      <view class="msg-me" wx:if="{{item.from === 'me'}}">我</view>
-    </view>
+    </block>
     <view class="msgs-pad"></view>
   </scroll-view>
 

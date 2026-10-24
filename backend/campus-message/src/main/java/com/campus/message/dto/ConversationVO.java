@@ -36,6 +36,12 @@ public class ConversationVO {
 
     private String lastText;
 
+    /**
+     * 最后一条消息的发送方：me 我发的 / peer 对方发的。
+     * 前端据此显示「我：」前缀。列表接口填充，详情接口也填充。
+     */
+    private String lastFrom;
+
     private LocalDateTime lastTime;
 
     /** 会话详情：聊天记录，按时间升序 */

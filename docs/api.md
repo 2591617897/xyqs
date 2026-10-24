@@ -112,15 +112,28 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/messages` | 消息中心：`{ summary, convos }`。summary 含 `unreadTotal / likes / mentions / followers / notice`，convos 含对端昵称、身份标签、宝贝卡片快照、最后一条摘要与未读数 |
+| GET | `/messages` | 消息中心：`{ summary, convos }`。summary 含 `unreadTotal / likes / mentions / followers / notice`，convos 含对端昵称、身份标签、宝贝卡片快照、最后一条摘要（`lastText`）、最后一条发送方（`lastFrom: 'me'|'peer'`）与未读数 |
 | GET | `/messages/unread` | 未读消息总数（首页铃铛角标）`{unread}` |
 | POST | `/messages/start` | 发起或复用会话。入参 `{ peerId, goodsId?, goodsTitle?, goodsPrice?, goodsEmoji?, goodsStatus?, anon?, anonName? }`，返回会话对象 |
 | GET | `/messages/{id}` | 会话详情（含聊天记录，按时间升序），进入即把对方消息标为已读 |
 | POST | `/messages/{id}` | 发消息 `{content, type?}`，type 支持 `text / location / image`，返回更新后的完整聊天记录 |
 | POST | `/messages/{id}/read` | 把整个会话标为已读 |
 | GET | `/messages/{id}/messages` | 只取聊天记录，不触发已读 |
+| DELETE | `/messages/{id}` | **删除会话（消息中心左滑）**。只对当前用户生效：写一条隐藏记录，对方会话与消息本体不受影响。幂等，重复调用仍返回成功 |
+| DELETE | `/messages/{id}/messages/{messageId}` | **撤回一条消息（聊天页左滑）**。仅发送者本人可删自己的消息（删他人返回 403）；软删除，双方都不再看到。撤回的若是会话最后一条，会话摘要自动回滚到上一条 |
 
 消息对象字段：`{ id, from: 'me'\|'peer', type, content, createdAt }`。
+
+### 左滑删除的语义边界
+
+| 场景 | 结果 |
+| --- | --- |
+| 删除会话 | 只写 `t_message_conversation_hide` 一行；`t_message_conversation` 与 `t_message` 数据不动，**对方完全不受影响** |
+| 重复删除同一会话 | 幂等返回成功（`uk_user_conv` 唯一键兜底） |
+| 删除后对方发来新消息 | 会话自动重新出现在列表中（发送时清除对端的隐藏记录） |
+| 重新发起会话（`POST /messages/start`） | 自动取消隐藏，会话恢复显示 |
+| 撤回消息 | 仅发送者本人可操作；他人消息返回 403；不存在的消息返回 404 |
+| 撤回会话最后一条消息 | 会话摘要（`last_msg_id / last_content / last_time`）回滚到上一条存活消息 |
 
 ## 文件上传（campus-user）
 

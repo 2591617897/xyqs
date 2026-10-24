@@ -11,7 +11,9 @@ import com.campus.message.dto.PeerTag;
 import com.campus.message.dto.SendMessageReq;
 import com.campus.message.dto.StartConversationReq;
 import com.campus.message.entity.Conversation;
+import com.campus.message.entity.ConversationHide;
 import com.campus.message.entity.Message;
+import com.campus.message.mapper.ConversationHideMapper;
 import com.campus.message.mapper.ConversationMapper;
 import com.campus.message.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
@@ -43,10 +45,13 @@ public class MessageService {
     private static final int MESSAGE_LIMIT = 200;
     /** 会话列表摘要截断长度 */
     private static final int SUMMARY_LEN = 60;
+    /** 撤回时间窗口（分钟）：微信同款，超过则无法撤回 */
+    private static final int RECALL_WINDOW_MINUTES = 2;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
     private final ConversationMapper conversationMapper;
+    private final ConversationHideMapper conversationHideMapper;
     private final MessageMapper messageMapper;
     private final UserClient userClient;
 
@@ -63,12 +68,46 @@ public class MessageService {
                 .distinct()
                 .toList();
         Map<Long, UserBrief> briefs = loadBriefs(peerIds);
+        Map<Long, Long> senders = loadLastSenders(list);
 
         List<ConversationVO> vos = new ArrayList<>(list.size());
         for (Conversation c : list) {
-            vos.add(toVO(c, userId, briefs, false));
+            ConversationVO vo = toVO(c, userId, briefs, false);
+            Long senderId = senders.get(c.getLastMsgId());
+            if (senderId != null) {
+                vo.setLastFrom(userId.equals(senderId) ? "me" : "peer");
+            }
+            vos.add(vo);
         }
         return vos;
+    }
+
+    /**
+     * 批量查各会话最后一条消息的发送方。
+     * 前端用它区分「我：」前缀；查不到时按对方发的处理，不影响主流程。
+     */
+    private Map<Long, Long> loadLastSenders(List<Conversation> list) {
+        List<Long> ids = list.stream()
+                .map(Conversation::getLastMsgId)
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .toList();
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            List<Message> rows = messageMapper.selectSenders(ids);
+            Map<Long, Long> map = new HashMap<>(rows.size());
+            for (Message m : rows) {
+                if (m.getId() != null && m.getSenderId() != null) {
+                    map.put(m.getId(), m.getSenderId());
+                }
+            }
+            return map;
+        } catch (Exception e) {
+            log.warn("批量查询最后一条消息发送方失败: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     /** 消息中心顶部统计（未读 / 收到的赞 / 评论与回复） */
@@ -149,6 +188,9 @@ public class MessageService {
                 msg.getCreatedAt() == null ? LocalDateTime.now() : msg.getCreatedAt(),
                 meIsA ? 0 : 1, meIsA ? 1 : 0);
 
+        // 对端若曾左滑删除过该会话，收到新消息后重新出现在其列表里（主流 IM 行为）
+        conversationHideMapper.deleteHide(peerId, c.getId());
+
         c.setLastMsgId(msg.getId());
         c.setLastContent(summarize(content));
         c.setLastTime(msg.getCreatedAt());
@@ -169,6 +211,75 @@ public class MessageService {
     /** 未读消息总数 */
     public int unreadTotal(Long userId) {
         return conversationMapper.countUnread(userId);
+    }
+
+    // ---------------- 左滑删除 ----------------
+
+    /**
+     * 删除会话（消息中心左滑）。
+     *
+     * 语义：只对当前用户生效——写一条「隐藏记录」，
+     * 对方会话与消息本体都不受影响。幂等：重复删除仍返回成功。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteConversation(Long conversationId, Long userId) {
+        Conversation c = requireConversation(conversationId, userId);
+        if (conversationHideMapper.countHide(userId, conversationId) == 0) {
+            ConversationHide hide = new ConversationHide();
+            hide.setUserId(userId);
+            hide.setConversationId(conversationId);
+            conversationHideMapper.insert(hide);
+        }
+        // 会话从列表消失，其未读数一并清零，避免角标残留
+        resetUnread(c, userId);
+    }
+
+    /**
+     * 撤回一条消息（聊天页长按）。
+     *
+     * 只有发送者本人能撤自己的消息；删除是软删除（deleted=1），
+     * 双方都不再看到这条消息。沿用微信同款规则：发送超过 2 分钟的消息无法撤回。
+     * 若撤回的正是会话最后一条消息，需要把会话摘要回滚到上一条。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMessage(Long conversationId, Long messageId, Long userId) {
+        requireConversation(conversationId, userId);
+
+        Message exist = messageMapper.selectById(messageId);
+        if (exist == null || !conversationId.equals(exist.getConversationId())) {
+            throw BizException.notFound("消息不存在");
+        }
+        if (!userId.equals(exist.getSenderId())) {
+            throw BizException.forbidden("只能撤回自己发送的消息");
+        }
+        if (Integer.valueOf(1).equals(exist.getDeleted())) {
+            throw BizException.of("该消息已撤回");
+        }
+        // 微信同款：发送超过 2 分钟无法撤回
+        LocalDateTime createdAt = exist.getCreatedAt();
+        if (createdAt != null && createdAt.plusMinutes(RECALL_WINDOW_MINUTES).isBefore(LocalDateTime.now())) {
+            throw BizException.of("超过 2 分钟的消息无法撤回");
+        }
+
+        int affected = messageMapper.softDelete(messageId, conversationId, userId);
+        if (affected == 0) {
+            throw BizException.of("该消息已撤回");
+        }
+        refreshSummaryAfterDelete(conversationId);
+    }
+
+    /**
+     * 撤回消息后重算会话摘要。
+     * 取会话内最后一条未撤回的消息作为新的摘要；一条都不剩则清空摘要。
+     */
+    private void refreshSummaryAfterDelete(Long conversationId) {
+        Message last = messageMapper.selectLastAlive(conversationId);
+        if (last == null) {
+            conversationMapper.refreshSummary(conversationId, null, null, null);
+        } else {
+            conversationMapper.refreshSummary(conversationId, last.getId(),
+                    summarize(last.getContent()), last.getCreatedAt());
+        }
     }
 
     // ---------------- 发起会话 ----------------
@@ -206,6 +317,8 @@ public class MessageService {
             c.setStatus(1);
             conversationMapper.insert(c);
         }
+        // 重新发起会话 = 取消隐藏，让它重新出现在列表里
+        conversationHideMapper.deleteHide(userId, c.getId());
         return toVO(c, userId, loadBriefs(List.of(req.getPeerId())), true);
     }
 

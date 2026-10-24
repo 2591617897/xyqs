@@ -1,7 +1,7 @@
-const http = require('../../utils/request')
-const { timeAgo, priceText, mp, toast } = require('../../utils/util')
-const { resolve, resolveList } = require('../../utils/img')
-const followMod = require('../../utils/follow')
+const http = require('../../../utils/request')
+const { timeAgo, priceText, mp, toast } = require('../../../utils/util')
+const { resolve, resolveList } = require('../../../utils/img')
+const followMod = require('../../../utils/follow')
 
 /** 每页条数（触底分页） */
 const PAGE_SIZE = 10

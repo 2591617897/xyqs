@@ -217,11 +217,16 @@
   color: #94a3b8;
   padding: 24rpx 0;
 }
+/* 消息行：包裹单条消息，供 scroll-into-view 定位 + 提供行间距 */
+.msg-row {
+  display: block;
+  margin-bottom: 28rpx;
+}
 .msg {
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  margin-bottom: 28rpx;
+  min-width: 0;
 }
 .msg.mine {
   flex-direction: row;
@@ -250,6 +255,7 @@
   align-items: flex-end;
 }
 .bubble {
+  box-sizing: border-box;
   padding: 22rpx 26rpx;
   border-radius: 8rpx 32rpx 32rpx 32rpx;
   background: #ffffff;

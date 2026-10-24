@@ -20,17 +20,24 @@ public interface ConversationMapper extends BaseMapper<Conversation> {
                               @Param("userB") Long userB,
                               @Param("goodsId") Long goodsId);
 
-    /** 我的会话列表，按最后一条消息时间倒序 */
-    @Select("select * from t_message_conversation "
-            + "where status = 1 and (user_a = #{userId} or user_b = #{userId}) "
-            + "order by (case when last_time is null then created_at else last_time end) desc "
+    /**
+     * 我的会话列表，按最后一条消息时间倒序。
+     * 排除「我已隐藏」的会话：左滑删除只对当前用户生效，对方不受影响。
+     */
+    @Select("select * from t_message_conversation c "
+            + "where c.status = 1 and (c.user_a = #{userId} or c.user_b = #{userId}) "
+            + "and not exists (select 1 from t_message_conversation_hide h "
+            + "where h.user_id = #{userId} and h.conversation_id = c.id) "
+            + "order by (case when c.last_time is null then c.created_at else c.last_time end) desc "
             + "limit #{limit}")
     List<Conversation> selectMine(@Param("userId") Long userId, @Param("limit") long limit);
 
-    /** 我的未读消息总数 */
-    @Select("select coalesce(sum(case when user_a = #{userId} then unread_a else unread_b end), 0) "
-            + "from t_message_conversation "
-            + "where status = 1 and (user_a = #{userId} or user_b = #{userId})")
+    /** 我的未读消息总数（同样排除已隐藏会话） */
+    @Select("select coalesce(sum(case when c.user_a = #{userId} then c.unread_a else c.unread_b end), 0) "
+            + "from t_message_conversation c "
+            + "where c.status = 1 and (c.user_a = #{userId} or c.user_b = #{userId}) "
+            + "and not exists (select 1 from t_message_conversation_hide h "
+            + "where h.user_id = #{userId} and h.conversation_id = c.id)")
     int countUnread(@Param("userId") Long userId);
 
     /** 收到新消息：更新会话摘要 + 给接收方累加未读 */
@@ -49,4 +56,15 @@ public interface ConversationMapper extends BaseMapper<Conversation> {
 
     @Update("update t_message_conversation set unread_b = 0 where id = #{id}")
     int resetUnreadB(@Param("id") Long id);
+
+    /**
+     * 重算会话摘要（撤回最后一条消息后调用）。
+     * lastMsgId 传 null 时清空摘要。
+     */
+    @Update("update t_message_conversation set last_msg_id = #{lastMsgId}, "
+            + "last_content = #{lastContent}, last_time = #{lastTime} where id = #{id}")
+    int refreshSummary(@Param("id") Long id,
+                       @Param("lastMsgId") Long lastMsgId,
+                       @Param("lastContent") String lastContent,
+                       @Param("lastTime") LocalDateTime lastTime);
 }

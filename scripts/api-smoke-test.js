@@ -165,10 +165,51 @@ async function main() {
       await call('GET /messages/{id}', 'GET', '/messages/' + cid, null, token)
       await call('GET /messages/{id}/messages', 'GET', '/messages/' + cid + '/messages', null, token)
       await call('POST /messages/{id}/read', 'POST', '/messages/' + cid + '/read', null, token)
-      await call('POST /messages/{id}（发消息）', 'POST', '/messages/' + cid, { content: '冒烟测试消息' }, token)
+      // 发一条 → 左滑撤回自己这条，闭环验证且不残留脏数据（撤回是软删除，
+      // 消息行仍在库但对双方都不可见，也不会影响演示会话摘要）
+      const sent = await call('POST /messages/{id}（发消息）', 'POST', '/messages/' + cid, { content: '冒烟测试消息' }, token)
+      const sentMsgs = sent.body && sent.body.data ? sent.body.data.messages || [] : []
+      const sentId = sentMsgs.length ? sentMsgs[sentMsgs.length - 1].id : null
+      if (sentId) {
+        await call('DELETE /messages/{id}/messages/{mid}（撤回）', 'DELETE',
+          '/messages/' + cid + '/messages/' + sentId, null, token)
+        // 撤回后再取一次，确认该消息已不可见
+        const afterMsgs = await request('GET', '/messages/' + cid + '/messages', null, token)
+        const list2 = afterMsgs.body && afterMsgs.body.data ? afterMsgs.body.data : []
+        if (list2.every((m) => String(m.id) !== String(sentId))) {
+          pass++
+          console.log('  ok   撤回后消息不再返回')
+        } else {
+          fail++
+          failures.push('DELETE /messages/{id}/messages/{mid} → 撤回后消息仍在返回')
+          console.log('  FAIL 撤回后消息不再返回')
+        }
+      }
     }
     // 用「自己 vs 演示卖家」发起会话，校验 start 的复用逻辑
     await call('POST /messages/start', 'POST', '/messages/start', { peerId: 9002, goodsId: 8001, goodsTitle: '九成新机械键盘 87 键' }, token)
+
+    console.log('\n[5] 左滑删除会话')
+    // 删一个会话再验证它从列表消失；随后重新发起会话恢复（避免污染演示数据）
+    const before = await call('GET /messages', 'GET', '/messages', null, token)
+    const list = before.body && before.body.data ? before.body.data.convos || [] : []
+    if (list.length) {
+      const delId = list[list.length - 1].id
+      await call('DELETE /messages/{id}（删除会话）', 'DELETE', '/messages/' + delId, null, token)
+      const after = await call('GET /messages', 'GET', '/messages', null, token)
+      const remain = after.body && after.body.data ? after.body.data.convos || [] : []
+      if (remain.every((c) => String(c.id) !== String(delId))) {
+        pass++
+        console.log('  ok   删除后会话已从列表移除')
+      } else {
+        fail++
+        failures.push('DELETE /messages/{id} → 会话仍在列表中')
+        console.log('  FAIL 删除后会话已从列表移除')
+      }
+      // 重新发起会话，恢复被隐藏的会话（start 会自动取消隐藏）
+      await call('POST /messages/start（恢复会话）', 'POST', '/messages/start',
+        { peerId: list[list.length - 1].peerId, goodsId: list[list.length - 1].goodsCard ? list[list.length - 1].goodsCard.id : 0 }, token)
+    }
   }
 
   console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
