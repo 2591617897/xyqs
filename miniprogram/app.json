@@ -13,6 +13,7 @@
     "pages/post/detail",
     "pages/post/publish",
     "pages/user/verify",
+    "pages/user/follow/index",
     "pages/messages/index",
     "pages/chat/index",
     "pages/legal/agreement",

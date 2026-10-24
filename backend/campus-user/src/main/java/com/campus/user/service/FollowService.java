@@ -3,6 +3,7 @@ package com.campus.user.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.exception.BizException;
 import com.campus.user.dto.FollowResp;
+import com.campus.user.dto.FollowUserVO;
 import com.campus.user.entity.Follow;
 import com.campus.user.entity.User;
 import com.campus.user.mapper.FollowMapper;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 关注 / 取消关注 / 关注状态查询。
@@ -121,5 +124,18 @@ public class FollowService {
     /** 计数字段兜底：空值统一为 0 */
     private int nz(Integer v) {
         return v == null ? 0 : v;
+    }
+
+    /**
+     * 列表：我关注的人 / 我的粉丝。
+     *
+     * @param me   当前登录用户 id
+     * @param type following = 我关注的；fans = 关注我的
+     */
+    public List<FollowUserVO> list(Long me, String type) {
+        if ("fans".equalsIgnoreCase(type)) {
+            return followMapper.listFans(me);
+        }
+        return followMapper.listFollowing(me);
     }
 }

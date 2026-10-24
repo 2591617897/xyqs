@@ -7,6 +7,7 @@ F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\Int
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\UploadController.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\UserController.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\FollowResp.java
+F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\FollowUserVO.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\LoginOrCreateReq.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\ProfileVO.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\SchoolRegion.java

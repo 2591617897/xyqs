@@ -208,17 +208,11 @@ Page({
   },
 
   /**
-   * 「我的关注」入口：P0 先跳自己的个人主页（isSelf 显示「编辑资料」），
-   * P1 关注/粉丝列表页（pages/user/follows）上线后再替换。
+   * 「我的关注」入口：进入关注/粉丝列表页，默认展示关注 Tab。
    */
   goMyFollows: function () {
     if (!this.guard()) return
-    const user = this.data.user || getApp().globalData.user
-    if (!user || !user.id) {
-      toast('还没有登录，请先登录')
-      return
-    }
-    mp.navigateTo({ url: '/pages/user/space/space?id=' + user.id })
+    mp.navigateTo({ url: '/pages/user/follow/index?tab=following' })
   },
 
   openOrders: function () {

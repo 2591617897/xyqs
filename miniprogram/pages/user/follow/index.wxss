@@ -1,0 +1,189 @@
+/* ===== 我的关注 · 列表页 ===== */
+.page {
+  min-height: 100vh;
+  background: #f7f9fb;
+  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
+}
+
+/* ---------- 顶部 Tab ---------- */
+.tabs {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 1rpx solid #eef2f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.tab {
+  flex: 1;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #94a3b8;
+  font-weight: 500;
+  position: relative;
+}
+.tab.active {
+  color: #047857;
+  font-weight: 600;
+  font-size: 30rpx;
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+.tab-count {
+  margin-left: 6rpx;
+  font-size: 24rpx;
+  color: #cbd5e1;
+}
+.tab.active .tab-count {
+  color: #10b981;
+}
+
+/* ---------- 列表 ---------- */
+.list {
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.user-card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(15, 23, 42, 0.04);
+}
+.avatar-wrap {
+  position: relative;
+  width: 96rpx;
+  height: 96rpx;
+  flex-shrink: 0;
+}
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+.avatar.default {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+}
+.verified-badge {
+  position: absolute;
+  right: -4rpx;
+  bottom: -4rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background: #10b981;
+  border-radius: 50%;
+  border: 3rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18rpx;
+  color: #ffffff;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.nickname {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+  max-width: 340rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meta {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.meta-dot {
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.follow-btn {
+  flex-shrink: 0;
+  height: 60rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.follow-btn.active {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1rpx solid #e2e8f0;
+}
+.follow-btn.inactive {
+  background: linear-gradient(135deg, #10b981, #047857);
+  color: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.25);
+}
+
+/* ---------- 空状态 ---------- */
+.empty {
+  padding: 160rpx 60rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+.empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72rpx;
+}
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+.empty-desc {
+  font-size: 26rpx;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ---------- 加载中 ---------- */
+.loading {
+  padding: 120rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #94a3b8;
+}

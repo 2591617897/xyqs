@@ -1,10 +1,13 @@
 package com.campus.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.campus.user.dto.FollowUserVO;
 import com.campus.user.entity.Follow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface FollowMapper extends BaseMapper<Follow> {
@@ -20,4 +23,42 @@ public interface FollowMapper extends BaseMapper<Follow> {
     /** 某关注关系是否存在（0=未关注，1=已关注；uk_pair 保证最多一行） */
     @Select("select count(1) from t_follow where follower_id = #{followerId} and followee_id = #{followeeId}")
     int countPair(@Param("followerId") Long followerId, @Param("followeeId") Long followeeId);
+
+    /**
+     * 我关注的人列表。
+     * me = 当前登录用户 id。返回按关注时间倒序的被关注者卡片，
+     * isFollowing 在本列表里恒为 true（因为本来就是"我关注的"）。
+     */
+    @Select("""
+        SELECT u.id AS id, u.nickname AS nickname, u.avatar AS avatar,
+               u.school_id AS schoolId, u.verify_status AS verifyStatus,
+               u.fans_count AS fansCount, u.follow_count AS followCount,
+               true AS isFollowing
+        FROM t_follow f
+        INNER JOIN t_user u ON u.id = f.followee_id
+        WHERE f.follower_id = #{me}
+          AND u.status <> 0
+        ORDER BY f.created_at DESC
+        """)
+    List<FollowUserVO> listFollowing(@Param("me") Long me);
+
+    /**
+     * 我的粉丝列表。
+     * me = 当前登录用户 id。isFollowing 表示当前用户是否反过来关注了粉丝（互关展示）。
+     */
+    @Select("""
+        SELECT u.id AS id, u.nickname AS nickname, u.avatar AS avatar,
+               u.school_id AS schoolId, u.verify_status AS verifyStatus,
+               u.fans_count AS fansCount, u.follow_count AS followCount,
+               EXISTS(
+                 SELECT 1 FROM t_follow fx
+                 WHERE fx.follower_id = #{me} AND fx.followee_id = u.id
+               ) AS isFollowing
+        FROM t_follow f
+        INNER JOIN t_user u ON u.id = f.follower_id
+        WHERE f.followee_id = #{me}
+          AND u.status <> 0
+        ORDER BY f.created_at DESC
+        """)
+    List<FollowUserVO> listFans(@Param("me") Long me);
 }

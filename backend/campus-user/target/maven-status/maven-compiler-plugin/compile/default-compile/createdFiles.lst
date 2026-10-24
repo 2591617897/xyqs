@@ -1,4 +1,5 @@
 com\campus\user\service\UserService.class
+com\campus\user\dto\FollowUserVO.class
 com\campus\user\dto\ProfileVO.class
 com\campus\user\dto\VerifyReq.class
 com\campus\user\controller\FollowController.class

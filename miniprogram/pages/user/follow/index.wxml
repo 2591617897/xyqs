@@ -1,0 +1,59 @@
+<view class="page">
+  <!-- WXS：WXML 不支持 JS 方法调用（.charAt、.slice 等），用 WXS 桥接 -->
+  <wxs module="u">
+module.exports.first = function(s) {
+  if (!s || !s.length) return '同';
+  return s.charAt(0);
+}
+  </wxs>
+
+  <!-- Tab 切换 -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'following' ? 'active' : ''}}" bindtap="switchTab" data-tab="following">
+      关注<text class="tab-count">{{followingCount || 0}}</text>
+    </view>
+    <view class="tab {{activeTab === 'fans' ? 'active' : ''}}" bindtap="switchTab" data-tab="fans">
+      粉丝<text class="tab-count">{{fansCount || 0}}</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">加载中…</view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:elif="{{!loading && list.length === 0}}">
+    <view class="empty-icon">{{activeTab === 'following' ? '👥' : '🌟'}}</view>
+    <view class="empty-title">{{activeTab === 'following' ? '还没有关注任何人' : '暂时还没有粉丝'}}</view>
+    <view class="empty-desc">{{activeTab === 'following' ? '在发布区发现有趣的同学，点个关注吧～' : '多发有趣的内容，同学们会来找你的'}}</view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="list" wx:else>
+    <view class="user-card" wx:for="{{list}}" wx:key="id" bindtap="openProfile" data-id="{{item.id}}">
+      <view class="avatar-wrap">
+        <image class="avatar" src="{{item.avatar}}" mode="aspectFill" wx:if="{{item.avatar}}" />
+        <view class="avatar default" wx:else>
+          <text style="font-size:40rpx;">{{u.first(item.nickname)}}</text>
+        </view>
+        <view class="verified-badge" wx:if="{{item.verifyStatus === 2}}">✓</view>
+      </view>
+      <view class="info">
+        <view class="nickname">{{item.nickname || '神秘同学'}}</view>
+        <view class="meta">
+          <text wx:if="{{item.schoolName}}">{{item.schoolName}}</text>
+          <text class="meta-dot" wx:if="{{item.schoolName && item.fansCount !== undefined}}"></text>
+          <text wx:if="{{item.fansCount !== undefined}}">{{item.fansCount}} 粉丝</text>
+        </view>
+      </view>
+      <!-- 互关按钮：粉丝列表里如果对方也关注了我，按钮文字变"已互关" -->
+      <view
+        class="follow-btn {{item.isFollowing ? 'active' : 'inactive'}}"
+        catchtap="toggleFollow"
+        data-index="{{index}}"
+        data-id="{{item.id}}"
+      >
+        {{item.isFollowing ? '已关注' : '+ 关注'}}
+      </view>
+    </view>
+  </view>
+</view>
