@@ -211,9 +211,11 @@ node scripts/api-smoke-test.js
 > 该目录建议加入 `.gitignore`，生产环境请换成对象存储并修改 `campus.upload.*` 配置。
 
 > 登录默认走**真实**微信 `code2Session`（`campus.auth.mock=false`）：
-> 必须提供环境变量 `WX_APPSECRET`（`WX_APPID` 已在 `campus-auth/application.yml`
-> 给了默认值 `wx2cac838bfcc963d7`，与 `project.config.json` 一致），
-> 否则登录会直接报「微信登录未配置」，不会静默降级成 mock。
+> appid / appsecret 放在 `campus-auth/src/main/resources/application-local.yml`
+> （**已被 `.gitignore` 忽略，不进仓库**，由 `application.yml` 的
+> `spring.profiles.active` 默认激活），缺失时登录会直接报「微信登录未配置」，
+> 不会静默降级成 mock。部署环境可用环境变量 `WX_APPID / WX_APPSECRET` 覆盖，
+> 或用 `SPRING_PROFILES_ACTIVE` 切别的 profile。
 >
 > 只想本地单人演示、又要看到种子数据时，**两处同时打开**才生效：
 > 后端 `AUTH_MOCK=true` + `miniprogram/utils/config.js` 的 `DEV_LOGIN: true`。

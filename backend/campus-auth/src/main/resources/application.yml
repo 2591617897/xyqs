@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: campus-auth
+  profiles:
+    # 默认激活 local：小程序 appid/appsecret 放在 application-local.yml（已被 .gitignore 忽略）。
+    # 缺失该文件时不会报错，只是登录会提示「微信登录未配置」；
+    # 部署环境可用 SPRING_PROFILES_ACTIVE 覆盖，或用环境变量 WX_APPSECRET 直接注入。
+    active: ${SPRING_PROFILES_ACTIVE:local}
   cloud:
     nacos:
       discovery:

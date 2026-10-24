@@ -151,3 +151,18 @@
   `openScope` 在无 schoolId 时改为打开它；z-index 1100（高于 scope-sheet 的 1000）
 - **id 类型陷阱**：后端雪花 id 是字符串、mock 是数字 → 组件内统一 `_key = String(id)`
   再做选中态比较，否则高亮不生效
+- **多微信同号的三个坑，一个都不能再踩**（2026-10-24 已修）：
+  1. `campus.auth.mock` 默认必须是 **false**（yml `${AUTH_MOCK:false}` + Java `@Value` 默认值要同步改）；
+  2. `code2Session` **禁止** `if (mock || !hasText(appid))` 这种静默降级 —— appid/appsecret 缺失要直接报错；
+  3. 前端 `devOpenid` **只能在 `config.js` 的 `DEV_LOGIN===true` 时发送**（默认 false）。
+  mock 分支会把它当 openid 原样入库，一旦常态发送，所有微信号都会写到同一行 `t_user`。
+- 看种子数据（林小满 9001）需要 `AUTH_MOCK=true` **且** `DEV_LOGIN: true`，两个同时开才会合号；
+  真实登录下 9001 不可达（它的 openid 就是 `dev_openid_guizhou_campus_001`）
+- `WX_APPID` 已内置默认 `wx2cac838bfcc963d7`；`WX_APPSECRET` 必须走环境变量，**不要写进仓库**
+- **小程序凭据实际落在 `campus-auth/src/main/resources/application-local.yml`**（文件名命中 `.gitignore`
+  第 116 行 → 不进仓库），由 `application.yml` 的 `spring.profiles.active: ${SPRING_PROFILES_ACTIVE:local}`
+  默认激活；profile 配置优先级高于主配置。换机器/新克隆需重建该文件，缺失时登录报「微信登录未配置」
+- **凭据有效性自检**（别等真机）：`GET https://api.weixin.qq.com/sns/jscode2session?appid=..&secret=..&js_code=test&grant_type=authorization_code`
+  → `40029 invalid code` = 有效；`40125` = secret 错；`40013` = appid 错
+- 排查登录问题看 `campus-auth` 日志：`登录 platform=wx openid=xxxx****xxxx`
+  —— 两个微信号应当打印出两个不同 openid
