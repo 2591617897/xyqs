@@ -215,5 +215,4 @@
 
     <view class="nd-loading" wx:if="{{notifyDrawerLoading}}">加载中...</view>
   </view>
-  </view>
 </view>
