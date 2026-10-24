@@ -321,7 +321,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  margin-left: 32rpx;
+  margin-left: 28rpx;
   font-size: 24rpx;
   color: #64748b;
 }
@@ -332,17 +332,38 @@
   font-size: 28rpx;
   line-height: 1;
 }
+
+/* 分享：紧凑圆形图标按钮，点赞/评论同级 */
 .feed-share {
-  background: transparent;
-  padding: 0 0 0 32rpx;
-  margin: 0;
-  line-height: 1;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48rpx;
+  height: 48rpx;
+  margin: 0 0 0 20rpx;
+  padding: 0;
   border: none;
-  font-size: 24rpx;
+  border-radius: 50%;
+  background: transparent;
   color: #64748b;
+  font-size: inherit;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
 }
 .feed-share::after {
   border: none;
+}
+.feed-share-hover {
+  background: #edf9f3;
+}
+.feed-share-icon {
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1;
+  color: #047857;
 }
 
 /* 空态 / 底部 */

@@ -105,8 +105,8 @@
           <text class="fa-icon">💬</text>
           <text>{{item.commentCount || '评'}}</text>
         </view>
-        <button class="feed-share" open-type="share" catchtap="noop">
-          <text class="fa-icon">↗</text>
+        <button class="feed-share" open-type="share" catchtap="noop" hover-class="feed-share-hover" data-id="{{item.id}}" aria-label="分享这条心事">
+          <text class="feed-share-icon">↗</text>
         </button>
       </view>
     </view>

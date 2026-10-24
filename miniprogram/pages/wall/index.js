@@ -133,6 +133,23 @@ Page({
   /** 阻止分享按钮冒泡 */
   noop: function () {},
 
+  /** 分享单条心事：卡片标题取正文摘要，落点是该心事详情 */
+  onShareAppMessage: function (res) {
+    const id = res && res.target && res.target.dataset ? res.target.dataset.id : ''
+    const post = id
+      ? (this.data.posts || []).find(function (p) { return String(p.id) === String(id) })
+      : null
+    let title = '匿名表白墙 · 校园趣事'
+    if (post && post.content) {
+      const brief = post.content.replace(/\s+/g, ' ').trim()
+      title = brief.length > 24 ? brief.slice(0, 24) + '…' : brief
+    }
+    return {
+      title: title,
+      path: id ? '/pages/wall/detail?id=' + id : '/pages/wall/index'
+    }
+  },
+
   /* ---------- 浏览 ---------- */
   retry: function () {
     this.load(true)
