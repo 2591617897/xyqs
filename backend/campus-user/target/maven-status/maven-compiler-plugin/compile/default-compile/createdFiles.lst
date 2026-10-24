@@ -4,6 +4,7 @@ com\campus\user\dto\VerifyReq.class
 com\campus\user\controller\FollowController.class
 com\campus\user\entity\Follow.class
 com\campus\user\controller\UserController.class
+com\campus\user\client\WallCountClient.class
 com\campus\user\mapper\UserMapper.class
 com\campus\user\service\FollowService.class
 com\campus\user\client\PostCountClient.class

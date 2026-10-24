@@ -114,13 +114,28 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
+                    <release>17</release>
                     <encoding>UTF-8</encoding>
                     <parameters>true</parameters>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+            <!-- 子模块若没继承 spring-boot-starter-parent，必须显式执行 repackage，
+                 否则 java -jar 会报「没有主清单属性」。 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -1,3 +1,4 @@
+com\campus\goods\mapper\SchoolRegionMapper.class
 com\campus\goods\mapper\GoodsOrderMapper.class
 com\campus\goods\GoodsApplication.class
 com\campus\goods\entity\Goods.class

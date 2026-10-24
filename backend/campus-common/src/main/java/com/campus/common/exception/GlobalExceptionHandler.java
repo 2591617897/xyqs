@@ -55,6 +55,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public R<Void> handleOther(Exception e) {
         log.error("服务器异常", e);
-        return R.fail(500, "服务器开小差了，请稍后再试");
+        // 开发环境返回根因 message，方便定位；生产环境（R.fail 统一文案）不暴露
+        String devMsg = e.getCause() != null && e.getCause().getMessage() != null
+                ? e.getCause().getMessage() : e.getMessage();
+        return R.fail(500, "服务器开小差了: " + (devMsg == null ? "" : devMsg.substring(0, Math.min(200, devMsg.length()))));
     }
 }
