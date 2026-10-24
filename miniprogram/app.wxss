@@ -1,7 +1,44 @@
-/* ===== 校园趣事 · 全局样式（酷安风格） ===== */
+/* ===== 校园趣事 · 全局样式（马卡龙清新可爱风） ===== */
+/* 配色变量 —— 所有页面和组件复用此系统 */
+/* 适配基础库: 2.11.0+ (CSS 变量支持) */
+
 page {
-  background: #f5f6f8;
-  color: #1a1a1a;
+  /* ========== 马卡龙色系主题变量（可全局换肤） ========== */
+  --brand-primary: #FF8FA8;          /* 主按钮 / 主题强调色  —— 樱花粉深 */
+  --brand-secondary: #FFB5C5;        /* 次主色 / 渐变亮端    —— 樱花粉 */
+  --brand-accent: #E8925E;           /* 深强调色 / 认证色    —— 珊瑚橙 */
+  --brand-gradient: linear-gradient(135deg, #FF8FA8 0%, #FFB5C5 100%);
+  --brand-gradient-accent: linear-gradient(135deg, #D4B5FF 0%, #FFB5C5 50%, #FFC4B5 100%);
+
+  /* 背景 */
+  --bg-page: #FFF8F5;                /* 页面奶油粉背景 */
+  --bg-card: #FFFFFF;
+  --bg-soft: #FFF0F3;                /* 柔和粉背景 */
+  --bg-muted: #FFE4EC;               /* 浅粉灰 */
+  --bg-deep: #F5E8EC;                /* 深一点的粉灰 */
+
+  /* 文字 */
+  --text-primary: #2D2D2D;
+  --text-secondary: #6b6b73;
+  --text-hint: #9b9ba3;
+  --text-inverse: #FFFFFF;
+
+  /* 语义色 */
+  --price: #E8925E;                  /* 价格用珊瑚橙 */
+  --success: #95C4A0;                /* 薄荷绿保留成功语义 */
+  --warn: #D97706;
+  --danger: #F472B6;
+
+  /* 分割线 */
+  --divider: #F5E8EC;
+
+  /* 阴影 */
+  --shadow-card: 0 4rpx 16rpx rgba(255, 143, 168, 0.08);
+  --shadow-float: 0 8rpx 32rpx rgba(255, 143, 168, 0.18);
+
+  /* ========== 全局基础样式 ========== */
+  background: var(--bg-page);
+  color: var(--text-primary);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -33,23 +70,23 @@ view, text, button, input, textarea {
 
 /* 卡片 */
 .card {
-  background: #ffffff;
-  border-radius: 20rpx;
+  background: var(--bg-card);
+  border-radius: 32rpx;
   padding: 28rpx;
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 .card + .card { margin-top: 20rpx; }
 .card-flat {
-  background: #ffffff;
-  border-radius: 20rpx;
+  background: var(--bg-card);
+  border-radius: 32rpx;
   overflow: hidden;
 }
 
 /* 文字 */
-.h1 { font-size: 40rpx; font-weight: 700; letter-spacing: -0.5rpx; }
-.h2 { font-size: 32rpx; font-weight: 700; }
-.sub { font-size: 26rpx; color: #6b6b73; }
-.muted { font-size: 24rpx; color: #9b9ba3; }
+.h1 { font-size: 40rpx; font-weight: 700; letter-spacing: -0.5rpx; color: var(--text-primary); }
+.h2 { font-size: 32rpx; font-weight: 700; color: var(--text-primary); }
+.sub { font-size: 26rpx; color: var(--text-secondary); }
+.muted { font-size: 24rpx; color: var(--text-hint); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .clamp2 {
   display: -webkit-box;
@@ -65,7 +102,7 @@ view, text, button, input, textarea {
 }
 
 /* 价格 */
-.price { color: #ff4d4f; font-weight: 700; }
+.price { color: var(--price); font-weight: 700; }
 .price-symbol { font-size: 24rpx; margin-right: 2rpx; }
 
 /* 按钮 */
@@ -78,20 +115,26 @@ view, text, button, input, textarea {
   font-weight: 600;
   border: none;
   padding: 0 40rpx;
+  transition: transform 200ms, box-shadow 200ms;
 }
 .btn::after { border: none; }
 .btn-primary {
-  background: #11a86b;
-  color: #ffffff;
+  background: var(--brand-gradient);
+  color: var(--text-inverse);
+  box-shadow: 0 4rpx 16rpx rgba(255, 143, 168, 0.3);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 2rpx 8rpx rgba(255, 143, 168, 0.2);
 }
 .btn-ghost {
-  background: #ffffff;
-  color: #11a86b;
-  border: 2rpx solid rgba(17, 168, 107, 0.35);
+  background: var(--bg-card);
+  color: var(--brand-primary);
+  border: 2rpx solid rgba(255, 143, 168, 0.4);
 }
 .btn-plain {
-  background: #f2f3f5;
-  color: #4b4b52;
+  background: var(--bg-soft);
+  color: var(--text-primary);
 }
 .btn-sm {
   height: 64rpx;
@@ -107,22 +150,22 @@ view, text, button, input, textarea {
   align-items: center;
   height: 40rpx;
   padding: 0 14rpx;
-  border-radius: 8rpx;
+  border-radius: 16rpx;
   font-size: 22rpx;
-  background: #f2f3f5;
-  color: #8c8c93;
+  background: var(--bg-soft);
+  color: var(--text-secondary);
 }
 .tag-brand {
-  background: rgba(17, 168, 107, 0.1);
-  color: #11a86b;
+  background: rgba(255, 143, 168, 0.15);
+  color: var(--brand-primary);
 }
 .tag-mint {
-  background: rgba(17, 168, 107, 0.1);
-  color: #11a86b;
+  background: rgba(255, 143, 168, 0.15);
+  color: var(--brand-primary);
 }
 .tag-warn {
-  background: rgba(245, 165, 36, 0.14);
-  color: #d97706;
+  background: rgba(232, 146, 94, 0.15);
+  color: var(--brand-accent);
 }
 
 /* 头像 */
@@ -130,7 +173,7 @@ view, text, button, input, textarea {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: #eef0f4;
+  background: var(--bg-muted);
   flex-shrink: 0;
 }
 .avatar-lg {
@@ -139,7 +182,7 @@ view, text, button, input, textarea {
   border-radius: 50%;
 }
 
-/* 默认头像：QQ/微信风格的人像剪影，纯 CSS 绘制，任意尺寸自适应 */
+/* 默认头像 */
 .avatar-default {
   display: block;
   width: 100%;
@@ -147,7 +190,7 @@ view, text, button, input, textarea {
   border-radius: inherit;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #eef1f7 0%, #dde3ee 100%);
+  background: linear-gradient(135deg, #FFE4EC 0%, #EFE4FF 100%);
 }
 .ad-head {
   position: absolute;
@@ -170,7 +213,7 @@ view, text, button, input, textarea {
   background: #ffffff;
 }
 
-/* 商品无图占位：纯 CSS 图标 + 分类名，不依赖 emoji 字体渲染 */
+/* 商品无图占位 */
 .cover-empty {
   width: 100%;
   height: 100%;
@@ -179,13 +222,13 @@ view, text, button, input, textarea {
   align-items: center;
   justify-content: center;
   gap: 10rpx;
-  background: linear-gradient(135deg, #f7f9fc 0%, #eaeef7 100%);
+  background: linear-gradient(135deg, #FFF0F3 0%, #EFE4FF 100%);
 }
 .ce-icon {
   position: relative;
   width: 72rpx;
   height: 58rpx;
-  border: 4rpx solid #ccd4e0;
+  border: 4rpx solid var(--bg-deep);
   border-radius: 10rpx;
   overflow: hidden;
 }
@@ -196,7 +239,7 @@ view, text, button, input, textarea {
   width: 14rpx;
   height: 14rpx;
   border-radius: 50%;
-  background: #ccd4e0;
+  background: var(--bg-deep);
 }
 .ce-hill {
   position: absolute;
@@ -204,16 +247,16 @@ view, text, button, input, textarea {
   bottom: -14rpx;
   width: 58rpx;
   height: 32rpx;
-  background: #ccd4e0;
+  background: var(--bg-deep);
   border-radius: 6rpx;
   transform: rotate(45deg);
 }
 .ce-text {
   font-size: 22rpx;
-  color: #b6bcca;
+  color: var(--text-hint);
 }
 
-/* 匿名头像色块 */
+/* 匿名头像色块 —— 马卡龙色系 */
 .anon-avatar {
   width: 72rpx;
   height: 72rpx;
@@ -224,19 +267,19 @@ view, text, button, input, textarea {
   font-size: 32rpx;
   flex-shrink: 0;
 }
-.anon-1 { background: #e6f7f0; }
-.anon-2 { background: #e8f1ff; }
-.anon-3 { background: #f3ecff; }
-.anon-4 { background: #fff4dd; }
-.anon-5 { background: #e6f7f5; }
-.anon-6 { background: #fdeaf3; }
-.anon-7 { background: #ecf7e6; }
-.anon-8 { background: #eef0f7; }
+.anon-1 { background: #FFE4EC; }
+.anon-2 { background: #E4F0FF; }
+.anon-3 { background: #EFE4FF; }
+.anon-4 { background: #FFF5E4; }
+.anon-5 { background: #E4F7EA; }
+.anon-6 { background: #FFE8E4; }
+.anon-7 { background: #FFEAD5; }
+.anon-8 { background: #F0E4FF; }
 
 /* 分割线 */
 .divider {
   height: 1rpx;
-  background: #f0f1f3;
+  background: var(--divider);
   margin: 20rpx 0;
 }
 
@@ -244,7 +287,7 @@ view, text, button, input, textarea {
 .empty {
   padding: 120rpx 40rpx;
   text-align: center;
-  color: #9b9ba3;
+  color: var(--text-hint);
   font-size: 26rpx;
 }
 .empty-icon {
@@ -254,7 +297,7 @@ view, text, button, input, textarea {
   opacity: 0.55;
 }
 
-/* 悬浮按钮 */
+/* 悬浮按钮 FAB */
 .fab {
   position: fixed;
   right: 32rpx;
@@ -262,25 +305,27 @@ view, text, button, input, textarea {
   width: 112rpx;
   height: 112rpx;
   border-radius: 50%;
-  background: #11a86b;
+  background: var(--brand-gradient);
   color: #fff;
   font-size: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(17, 168, 107, 0.32);
+  box-shadow: 0 8rpx 24rpx rgba(255, 143, 168, 0.35);
   z-index: 20;
+  transition: transform 200ms;
 }
+.fab:active { transform: scale(0.93); }
 
 /* 表单 */
 .field {
   padding: 28rpx 0;
-  border-bottom: 1rpx solid #f0f1f3;
+  border-bottom: 1rpx solid var(--divider);
 }
 .field:last-child { border-bottom: none; }
 .field-label {
   font-size: 26rpx;
-  color: #6b6b73;
+  color: var(--text-secondary);
   width: 160rpx;
   flex-shrink: 0;
 }
@@ -288,30 +333,30 @@ view, text, button, input, textarea {
   flex: 1;
   font-size: 30rpx;
   text-align: right;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 .textarea {
   width: 100%;
   min-height: 220rpx;
   font-size: 30rpx;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
-.placeholder { color: #c2c2c8; }
+.placeholder { color: var(--text-hint); }
 
 /* 底部安全区 */
 .safe-bottom { padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
 
-/* ===== 酷安式信息流 ===== */
+/* ===== 信息流样式 ===== */
 .feed {
-  background: #ffffff;
+  background: var(--bg-page);
 }
 .feed-item {
-  background: #ffffff;
+  background: var(--bg-card);
   padding: 24rpx 28rpx 20rpx;
 }
 .feed-item + .feed-item {
-  border-top: 1rpx solid #f0f1f3;
+  border-top: 1rpx solid var(--divider);
 }
 /* 作者行 */
 .feed-user {
@@ -322,7 +367,6 @@ view, text, button, input, textarea {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  /* 不设底色：匿名头像色块（.anon-N）需要能盖上来 */
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
@@ -332,11 +376,11 @@ view, text, button, input, textarea {
 .feed-name {
   font-size: 26rpx;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 .feed-meta {
   font-size: 22rpx;
-  color: #9b9ba3;
+  color: var(--text-hint);
   margin-top: 4rpx;
 }
 .feed-device {
@@ -344,22 +388,22 @@ view, text, button, input, textarea {
   align-items: center;
   gap: 4rpx;
   font-size: 22rpx;
-  color: #8c8c93;
-  background: #f2f3f5;
+  color: var(--text-secondary);
+  background: var(--bg-soft);
   padding: 2rpx 10rpx;
-  border-radius: 6rpx;
+  border-radius: 8rpx;
 }
 /* 正文 */
 .feed-text {
   font-size: 29rpx;
   line-height: 1.65;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin-top: 16rpx;
   white-space: pre-wrap;
   word-break: break-all;
 }
 .feed-more {
-  color: #11a86b;
+  color: var(--brand-primary);
   font-size: 27rpx;
 }
 /* 图片九宫格 */
@@ -372,9 +416,9 @@ view, text, button, input, textarea {
 .feed-img-wrap {
   width: calc((100% - 16rpx) / 3);
   height: 200rpx;
-  border-radius: 8rpx;
+  border-radius: 12rpx;
   overflow: hidden;
-  background: #f2f3f5;
+  background: var(--bg-soft);
 }
 .feed-img-wrap.single {
   width: 70%;
@@ -395,22 +439,22 @@ view, text, button, input, textarea {
   gap: 10rpx;
   margin-top: 16rpx;
   padding: 16rpx 18rpx;
-  background: #f7f8fa;
-  border-radius: 10rpx;
+  background: var(--bg-soft);
+  border-radius: 16rpx;
   font-size: 25rpx;
-  color: #4b4b52;
+  color: var(--text-primary);
   line-height: 1.5;
 }
 .hot-comment .hc-name {
-  color: #11a86b;
+  color: var(--brand-primary);
   flex-shrink: 0;
 }
-/* 操作栏：平铺图标 + 计数（新参考版式） */
+/* 操作栏 */
 .feed-actions {
   display: flex;
   align-items: center;
   margin-top: 18rpx;
-  color: #9b9ba3;
+  color: var(--text-hint);
   font-size: 24rpx;
 }
 .feed-action {
@@ -418,10 +462,10 @@ view, text, button, input, textarea {
   align-items: center;
   gap: 8rpx;
   padding: 10rpx 14rpx;
-  color: #6b6b73;
+  color: var(--text-secondary);
 }
 .feed-action.liked {
-  color: #11a86b;
+  color: var(--brand-primary);
 }
 .feed-action-icon {
   font-size: 28rpx;

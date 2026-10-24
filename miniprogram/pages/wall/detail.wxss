@@ -280,7 +280,7 @@
 .mention-item {
   display: flex; align-items: center; gap: 20rpx;
   padding: 20rpx 8rpx;
-  border-bottom: 1rpx solid #f1f5f9;
+  border-bottom: 1rpx solid #FFE4EC;
 }
 .mi-avatar {
   width: 72rpx; height: 72rpx; border-radius: 50%;
@@ -344,7 +344,7 @@
   border-radius: 20rpx;
   font-size: 29rpx;
   line-height: 1.7;
-  color: #1f2329;
+  color: #2D2D2D;
 }
 .img-add {
   width: 130rpx;
@@ -416,13 +416,13 @@
   font-size: 20rpx;
 }
 .reply-to {
-  color: #11a86b;
+  color: #FF8FA8;
   font-weight: 600;
 }
 .reply-more {
   padding: 14rpx 0 8rpx;
   font-size: 24rpx;
-  color: #11a86b;
+  color: #FF8FA8;
 }
 
 /* ---------- 评论抽屉 ---------- */
@@ -476,7 +476,7 @@
   font-size: 30rpx;
   color: #94a3b8;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: #FFE4EC;
 }
 .sheet-input-area {
   position: relative;
@@ -520,13 +520,13 @@
   text-align: center;
   font-size: 30rpx;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: #FFE4EC;
   color: #64748b;
   transition: background 0.15s, color 0.15s;
 }
 .sheet-tool.on {
   background: #edf9f3;
-  color: #047857;
+  color: #E8625A;
 }
 .sheet-send {
   padding: 0 40rpx;
@@ -540,7 +540,7 @@
   transition: background 0.15s, color 0.15s;
 }
 .sheet-send.on {
-  background: linear-gradient(135deg, #10b981, #047857);
+  background: linear-gradient(135deg, #FFB5C5, #E8625A);
   color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(255, 181, 197, 0.3);
 }

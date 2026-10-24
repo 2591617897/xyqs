@@ -34,7 +34,7 @@
 .intro-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #0e9a60;
+  color: #E8925E;
   margin-bottom: 10rpx;
 }
 .intro-item {
@@ -46,7 +46,7 @@
 .school-value {
   font-size: 30rpx;
   text-align: right;
-  color: #1f2329;
+  color: #2D2D2D;
 }
 .arrow {
   font-size: 32rpx;
@@ -91,7 +91,7 @@
 .upload-del {
   margin-top: 12rpx;
   font-size: 23rpx;
-  color: #0e9a60;
+  color: #E8925E;
 }
 
 .submit {
@@ -161,14 +161,14 @@
   color: #94a3b8;
 }
 .school-group.near {
-  color: #0e9a60;
+  color: #E8925E;
 }
 .school-name {
   font-size: 28rpx;
-  color: #1f2329;
+  color: #2D2D2D;
 }
 .school-check {
-  color: #0e9a60;
+  color: #E8925E;
   font-size: 30rpx;
   font-weight: 700;
 }

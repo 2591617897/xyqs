@@ -113,7 +113,7 @@
   padding: 0 16rpx;
   height: 36rpx;
   line-height: 36rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
   border-radius: 6rpx;
 }
 .tc-wall-label {
@@ -154,7 +154,7 @@
   width: 100%;
   height: 200rpx;
   border-radius: 12rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
 }
 .tc-images image:first-child:nth-last-child(1) {
   grid-column: span 2;
@@ -168,7 +168,7 @@
 .tc-foot {
   margin-top: 18rpx;
   padding-top: 14rpx;
-  border-top: 1rpx solid #f1f5f9;
+  border-top: 1rpx solid #FFE4EC;
   display: flex;
   align-items: center;
   gap: 28rpx;

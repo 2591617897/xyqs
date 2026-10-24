@@ -26,12 +26,12 @@
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTitleText": "校园趣事",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#F5F6F8"
+    "backgroundColor": "#FFF8F5"
   },
   "tabBar": {
     "custom": true,
     "color": "#8A8F99",
-    "selectedColor": "#11A86B",
+    "selectedColor": "#FF8FA8",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [

@@ -70,8 +70,8 @@
   color: #5b6170;
 }
 .cat-pill.active {
-  background: rgba(17, 168, 107, 0.12);
-  color: #0e9a60;
+  background: rgba(255, 143, 168, 0.12);
+  color: #E8925E;
   font-weight: 600;
 }
 
@@ -154,7 +154,7 @@
 }
 .seg-item.active {
   background: #ffffff;
-  color: #1f2329;
+  color: #2D2D2D;
   font-weight: 600;
   box-shadow: 0 2rpx 8rpx rgba(31, 35, 41, 0.08);
 }

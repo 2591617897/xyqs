@@ -16,7 +16,7 @@
   height: 64rpx;
   padding: 0 24rpx;
   border-radius: 999rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
   color: #191c1e;
   font-size: 24rpx;
   display: flex;
@@ -32,7 +32,7 @@
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: #FFE4EC;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,15 +66,15 @@
   height: 60rpx;
   padding: 0 28rpx;
   border-radius: 999rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
   color: #475569;
   font-size: 24rpx;
   font-weight: 600;
 }
 .cat-pill.active {
-  background: rgba(16, 185, 129, 0.14);
+  background: rgba(255, 181, 197, 0.14);
   color: #006c49;
-  border: 2rpx solid rgba(16, 185, 129, 0.5);
+  border: 2rpx solid rgba(255, 181, 197, 0.5);
   box-sizing: border-box;
 }
 
@@ -162,7 +162,7 @@
   padding: 22rpx 28rpx;
   border-radius: 999rpx;
   background: #ffffff;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(16, 185, 129, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(255, 181, 197, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .compose-ph {
   font-size: 26rpx;
@@ -188,7 +188,7 @@
   padding: 28rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(16, 185, 129, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(255, 181, 197, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .feed-hover {
   transform: scale(0.995);
@@ -264,7 +264,7 @@
 .feed-tag {
   font-size: 22rpx;
   font-weight: 600;
-  color: #10b981;
+  color: #FFB5C5;
 }
 
 /* 正文 */
@@ -353,7 +353,7 @@
   border: none;
   border-radius: 999rpx;
   background: #edf9f3;
-  color: #047857;
+  color: #E8625A;
   font-size: 22rpx;
   font-weight: 600;
   line-height: 1;
@@ -371,7 +371,7 @@
   font-size: 22rpx;
   font-weight: 700;
   line-height: 1;
-  color: #10b981;
+  color: #FFB5C5;
 }
 .feed-share-text {
   letter-spacing: 0.5rpx;
@@ -435,7 +435,7 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 20rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
   color: #94a3b8;
   font-size: 52rpx;
   display: flex;
@@ -494,16 +494,16 @@
 .cat-chip {
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
-  background: #f1f5f9;
+  background: #FFE4EC;
   color: #64748b;
   font-size: 22rpx;
   white-space: nowrap;
   border: 2rpx solid transparent;
 }
 .cat-chip.on {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(255, 181, 197, 0.12);
+  color: #FF7A95;
+  border-color: rgba(255, 181, 197, 0.5);
   font-weight: 600;
 }
 
@@ -539,7 +539,7 @@
   color: #191c1e;
 }
 .opt-hover {
-  background: #f1f5f9;
+  background: #FFE4EC;
 }
 .cat-option-name {
   font-size: 24rpx;

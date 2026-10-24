@@ -8,7 +8,7 @@
   display: flex;
   align-items: flex-end;
   background: #ffffff;
-  border-top: 1rpx solid #f1f5f9;
+  border-top: 1rpx solid #FFE4EC;
   padding: 10rpx 8rpx calc(10rpx + env(safe-area-inset-bottom));
 }
 
@@ -55,7 +55,7 @@
 }
 
 .tab-item.active .tab-label {
-  color: #10b981;
+  color: #FFB5C5;
   font-weight: 700;
 }
 
@@ -70,7 +70,7 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: #10b981;
+  background: #FFB5C5;
   color: #ffffff;
   font-size: 52rpx;
   font-weight: 300;
@@ -78,7 +78,7 @@
   text-align: center;
   box-sizing: content-box;
   margin-top: -52rpx;
-  box-shadow: 0 16rpx 48rpx -8rpx rgba(16, 185, 129, 0.42), 0 8rpx 20rpx -4rpx rgba(16, 185, 129, 0.25);
+  box-shadow: 0 16rpx 48rpx -8rpx rgba(255, 181, 197, 0.42), 0 8rpx 20rpx -4rpx rgba(255, 181, 197, 0.25);
   transition: transform 0.12s ease;
 }
 .plus-hover .plus-btn {
@@ -108,7 +108,7 @@
   position: relative;
   border-radius: 24rpx;
   padding: 32rpx 34rpx;
-  background: #11a86b;
+  background: #FF8FA8;
   color: #ffffff;
   overflow: hidden;
   margin-bottom: 20rpx;
@@ -208,7 +208,7 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  background: #1f2329;
+  background: #2D2D2D;
   color: #ffffff;
   font-size: 40rpx;
   display: flex;

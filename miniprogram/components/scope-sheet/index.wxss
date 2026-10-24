@@ -39,13 +39,13 @@
   margin-top: 24rpx;
   padding: 26rpx 28rpx;
   border-radius: 20rpx;
-  background: #f5f6f8;
+  background: #FFF8F5;
   border: 2rpx solid transparent;
 }
 
 .scope-opt.on {
-  background: rgba(17, 168, 107, 0.08);
-  border-color: #11a86b;
+  background: rgba(255, 143, 168, 0.08);
+  border-color: #FF8FA8;
 }
 
 .scope-icon {
@@ -74,14 +74,14 @@
   margin-left: 16rpx;
   font-size: 32rpx;
   font-weight: 700;
-  color: #11a86b;
+  color: #FF8FA8;
 }
 
 .sheet-foot {
   margin-top: 28rpx;
   padding: 12rpx 0 4rpx;
   font-size: 26rpx;
-  color: #11a86b;
+  color: #FF8FA8;
   text-align: center;
 }
 

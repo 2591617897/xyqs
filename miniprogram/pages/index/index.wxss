@@ -21,7 +21,7 @@
   height: 64rpx;
   padding: 0 20rpx;
   background: #ffffff;
-  border: 1rpx solid #e8e9ec;
+  border: 1rpx solid #F5E8EC;
   border-radius: 999rpx;
   box-shadow: 0 2rpx 8rpx rgba(17, 20, 26, 0.04);
   flex-shrink: 0;
@@ -117,7 +117,7 @@
   height: 6rpx;
   margin-left: -18rpx;
   border-radius: 999rpx;
-  background: #11a86b;
+  background: #FF8FA8;
 }
 
 /* ===== 分类横滑：激活项实心绿 ===== */
@@ -143,7 +143,7 @@
   color: #4b4b52;
 }
 .cat-pill.active {
-  background: #11a86b;
+  background: #FF8FA8;
   color: #ffffff;
   font-weight: 600;
 }
@@ -157,7 +157,7 @@
   padding: 24rpx 24rpx;
   border-radius: 24rpx;
   background: linear-gradient(100deg, #1cb877 0%, #0f9f5f 100%);
-  box-shadow: 0 8rpx 24rpx rgba(17, 168, 107, 0.22);
+  box-shadow: 0 8rpx 24rpx rgba(255, 143, 168, 0.22);
 }
 .announce-hover {
   transform: scale(0.99);
@@ -268,8 +268,8 @@
   border-radius: 999rpx;
 }
 .scope-school {
-  color: #11a86b;
-  background: rgba(17, 168, 107, 0.12);
+  color: #FF8FA8;
+  background: rgba(255, 143, 168, 0.12);
 }
 .scope-city {
   color: #2f6fed;
@@ -289,8 +289,8 @@
   border-radius: 8rpx;
 }
 .chip-green {
-  color: #11a86b;
-  background: rgba(17, 168, 107, 0.1);
+  color: #FF8FA8;
+  background: rgba(255, 143, 168, 0.1);
 }
 .chip-amber {
   color: #d97706;
@@ -305,8 +305,8 @@
   flex-shrink: 0;
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(17, 168, 107, 0.1);
-  color: #11a86b;
+  background: rgba(255, 143, 168, 0.1);
+  color: #FF8FA8;
   font-size: 22rpx;
   font-weight: 700;
 }
@@ -332,7 +332,7 @@
 }
 /* #话题 标签 */
 .feed-topic {
-  color: #11a86b;
+  color: #FF8FA8;
   font-weight: 600;
 }
 
@@ -422,7 +422,7 @@
   margin-top: 16rpx;
   padding: 18rpx 22rpx;
   border-radius: 16rpx;
-  background: #f5f6f8;
+  background: #FFF8F5;
 }
 .attach-icon {
   width: 68rpx;
@@ -454,7 +454,7 @@
 .attach-down {
   flex-shrink: 0;
   font-size: 32rpx;
-  color: #11a86b;
+  color: #FF8FA8;
   font-weight: 700;
 }
 
@@ -498,8 +498,8 @@
   background: #f4f5f7;
 }
 .feed-act.liked {
-  color: #11a86b;
-  background: rgba(17, 168, 107, 0.1);
+  color: #FF8FA8;
+  background: rgba(255, 143, 168, 0.1);
 }
 .feed-share {
   display: inline-flex;
@@ -530,8 +530,8 @@
   background: linear-gradient(135deg, #ffffff 0%, #f7fbf9 100%);
   border-radius: 24rpx;
   padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx -6rpx rgba(17, 168, 107, 0.12);
-  border: 1rpx solid rgba(17, 168, 107, 0.14);
+  box-shadow: 0 8rpx 28rpx -6rpx rgba(255, 143, 168, 0.12);
+  border: 1rpx solid rgba(255, 143, 168, 0.14);
 }
 .hot-head {
   display: flex;
@@ -549,8 +549,8 @@
 }
 .hot-hint {
   font-size: 20rpx;
-  color: #11a86b;
-  background: rgba(17, 168, 107, 0.1);
+  color: #FF8FA8;
+  background: rgba(255, 143, 168, 0.1);
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
 }
@@ -591,7 +591,7 @@
 .hot-comment {
   position: relative;
   margin-top: 14rpx;
-  background: #f4f6f8;
+  background: #FFF8F5;
   border-radius: 16rpx;
   padding: 20rpx 20rpx 20rpx 24rpx;
 }
@@ -599,13 +599,13 @@
   position: absolute;
   top: -14rpx;
   left: 20rpx;
-  background: #11a86b;
+  background: #FF8FA8;
   color: #ffffff;
   font-size: 20rpx;
   font-weight: 700;
   padding: 4rpx 16rpx;
   border-radius: 999rpx 999rpx 999rpx 0;
-  box-shadow: 0 4rpx 12rpx -2rpx rgba(17, 168, 107, 0.4);
+  box-shadow: 0 4rpx 12rpx -2rpx rgba(255, 143, 168, 0.4);
 }
 .hot-comment-body {
   font-size: 25rpx;
@@ -613,7 +613,7 @@
   color: #5b6472;
 }
 .hot-comment-name {
-  color: #11a86b;
+  color: #FF8FA8;
   font-weight: 600;
 }
 .hot-comment-text {
