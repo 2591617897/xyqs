@@ -28,7 +28,34 @@ Page({
     orderRole: 'buyer',
     buyerOrders: [],
     sellerOrders: [],
-    mockMode: http.USE_MOCK
+    mockMode: http.USE_MOCK,
+    // 视差滚动偏移量（动态 style 绑定到 hero）
+    heroOffset: 0,
+    // 入场动画开关：页面渲染完成后开启，配合 CSS delay 形成波浪入场
+    pageReady: false
+  },
+
+  /**
+   * 页面初次渲染完成 —— 开启入场动画
+   * 等一帧让页面结构先渲染出来，再添加 .animate-in
+   * CSS 的 .delay-1 ~ .delay-6 已定义好渐进延迟，实现波浪式入场
+   */
+  onReady: function () {
+    const self = this
+    setTimeout(function () {
+      self.setData({ pageReady: true })
+    }, 50)
+  },
+
+  /**
+   * 页面滚动 —— hero 区域视差效果
+   * 只修改 transform 属性，GPU 加速，保持 60fps
+   * 视差倍率 0.3，最大偏移 60px，避免过度偏移
+   */
+  onPageScroll: function (e) {
+    const scrollTop = e.scrollTop
+    const offset = Math.min(scrollTop * 0.3, 60)
+    this.setData({ heroOffset: offset })
   },
 
   onShow: function () {

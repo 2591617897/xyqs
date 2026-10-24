@@ -1,10 +1,8 @@
 <view class="page">
-  <!-- ===== 用户信息卡（绿色渐变头部） ===== -->
-  <view class="hero">
-    <!-- 顶部学校定位 pills 已隐藏 -->
-
-    <!-- 用户卡：精简为基本信息，点击进「个人信息」页查看/修改 -->
-    <view class="user-card" hover-class="card-hover" bindtap="goProfile">
+  <!-- ===== 用户信息卡（马卡龙粉紫渐变头部） ===== -->
+  <view class="hero hero-parallax" id="heroSection" style="transform: translateY(-{{heroOffset}}px)">
+    <!-- 用户卡：点击进「个人信息」页 -->
+    <view class="user-card fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-1" hover-class="card-hover" bindtap="goProfile">
       <view class="user-row">
         <view class="user-avatar">
           <image wx:if="{{user && user.avatar}}" src="{{user.avatar}}" mode="aspectFill" class="avatar-img" />
@@ -17,13 +15,11 @@
         <view class="user-info">
           <view class="user-name-row">
             <text class="user-name">{{user ? user.nickname : '还没有登录'}}</text>
-            <view class="verify-pill {{user && user.verifyStatus === 2 ? 'ok' : ''}}" catchtap="goVerify">
+            <view class="verify-pill {{user && user.verifyStatus === 2 ? 'ok' : ''}}" hover-class="scale-down" catchtap="goVerify">
               <text class="vp-check">✓</text>
               <text>{{user && user.verifyStatus === 2 ? '已认证' : '去认证'}}</text>
             </view>
           </view>
-          <!-- 学校状态：与「个人信息 → 学籍信息」用同一判断（以 schoolId 为准），
-               之前这里兜底写成「已绑定学校」，导致没绑学校时也显示已绑定 -->
           <view class="user-school" wx:if="{{user}}" catchtap="goPickSchool">
             <block wx:if="{{user.schoolId}}">🎓 {{user.schoolName || '已选择学校'}}</block>
             <block wx:else>🎓 未绑定学校<text class="user-school-act">去选择 ›</text></block>
@@ -35,33 +31,32 @@
 
         <view class="user-chev">›</view>
       </view>
-      <button class="btn btn-white login-btn" wx:if="{{!logged}}" catchtap="login">一键登录</button>
+      <button class="login-btn" wx:if="{{!logged}}" catchtap="login">一键登录</button>
     </view>
 
     <!-- 统计条 -->
-    <view class="stat-bar">
-      <view class="stat" bindtap="goMyGoods">
+    <view class="stat-bar fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-2">
+      <view class="stat" hover-class="tap-scale" bindtap="goMyGoods">
         <view class="stat-num">{{user.goodsCount || 0}}</view>
         <view class="stat-label">我发布的</view>
       </view>
-      <view class="stat" bindtap="demoEntry" data-name="已卖出">
+      <view class="stat" hover-class="tap-scale" bindtap="demoEntry" data-name="已卖出">
         <view class="stat-num">{{user.soldCount || 0}}</view>
         <view class="stat-label">已卖出</view>
       </view>
-      <view class="stat" bindtap="goMyDynamic">
-        <!-- dynamicCount = 帖子 + 表白墙，与「我的动态」页的「全部动态」同一口径 -->
+      <view class="stat" hover-class="tap-scale" bindtap="goMyDynamic">
         <view class="stat-num">{{user.dynamicCount || 0}}</view>
         <view class="stat-label">我的动态</view>
       </view>
-      <view class="stat" bindtap="goFavorites">
+      <view class="stat" hover-class="tap-scale" bindtap="goFavorites">
         <view class="stat-num">{{user.favoriteCount || 0}}</view>
         <view class="stat-label">赞与收藏</view>
       </view>
     </view>
   </view>
 
-  <!-- ===== 校园信用分 ===== -->
-  <view class="credit-card" bindtap="demoEntry" data-name="信用特权">
+  <!-- ===== 校园信用分（粉紫渐变卡） ===== -->
+  <view class="credit-card fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-3" hover-class="tap-scale" bindtap="demoEntry" data-name="信用特权">
     <view class="credit-top">
       <view class="credit-title-row">
         <text class="credit-shield">🛡️</text>
@@ -78,31 +73,31 @@
     <view class="credit-star">⭐</view>
   </view>
 
-  <!-- ===== 我的交易 ===== -->
-  <view class="section">
+  <!-- ===== 我的交易（闲置） ===== -->
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-4">
     <view class="section-head">
       <view class="section-bar"></view>
       <text class="section-title">闲置</text>
       <view class="flex1"></view>
-      <text class="section-more" bindtap="openOrders">全部记录 ›</text>
+      <text class="section-more" hover-class="scale-down" bindtap="openOrders">全部记录 ›</text>
     </view>
     <view class="grid4">
-      <view class="grid-item" bindtap="openOrders">
+      <view class="grid-item" hover-class="tap-scale" bindtap="openOrders">
         <view class="grid-icon gi-orange">🛍️</view>
         <view class="grid-label">我买到的</view>
         <view class="grid-sub">{{user.buyOrderCount || 0}} 件</view>
       </view>
-      <view class="grid-item" bindtap="demoEntry" data-name="我卖出的">
+      <view class="grid-item" hover-class="tap-scale" bindtap="demoEntry" data-name="我卖出的">
         <view class="grid-icon gi-green">🏷️</view>
         <view class="grid-label">我卖出的</view>
         <view class="grid-sub">{{user.sellOrderCount || 0}} 单</view>
       </view>
-      <view class="grid-item" bindtap="goMyGoods">
+      <view class="grid-item" hover-class="tap-scale" bindtap="goMyGoods">
         <view class="grid-icon gi-gray">📦</view>
         <view class="grid-label">我的闲置</view>
         <view class="grid-sub">{{user.activeCount || 0}} 件</view>
       </view>
-      <view class="grid-item" bindtap="openOrders">
+      <view class="grid-item" hover-class="tap-scale" bindtap="openOrders">
         <view class="grid-icon gi-blue">✉️</view>
         <view class="grid-label">意向单</view>
         <view class="grid-sub">{{user.intentCount || 0}} 单</view>
@@ -111,36 +106,36 @@
   </view>
 
   <!-- ===== 社交互动 ===== -->
-  <view class="section">
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-5">
     <view class="section-head">
       <view class="section-bar pink"></view>
       <text class="section-title">社交互动</text>
       <view class="flex1"></view>
-      <text class="section-more" bindtap="goMessages">校园回声 ›</text>
+      <text class="section-more" hover-class="scale-down" bindtap="goMessages">校园回声 ›</text>
     </view>
     <view class="grid2">
-      <view class="g2-item" bindtap="goMessages">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goMessages">
         <view class="g2-icon gi-pink">💗</view>
         <view class="g2-main">
           <view class="g2-title">发起的表白</view>
           <view class="g2-sub">{{user.confessionCount || 0}} 条表白</view>
         </view>
       </view>
-      <view class="g2-item" bindtap="goMessages">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goMessages">
         <view class="g2-icon gi-teal">💬</view>
         <view class="g2-main">
           <view class="g2-title">树洞秘语</view>
           <view class="g2-sub">匿名保护中（{{user.treeholeCount || 0}}条）</view>
         </view>
       </view>
-      <view class="g2-item" bindtap="goFavorites">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goFavorites">
         <view class="g2-icon gi-amber">🔖</view>
         <view class="g2-main">
           <view class="g2-title">收藏与赞</view>
           <view class="g2-sub">{{user.favoriteCount || 0}} 个收藏</view>
         </view>
       </view>
-      <view class="g2-item" bindtap="goMyFollows">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goMyFollows">
         <view class="g2-icon gi-pink">👥</view>
         <view class="g2-main">
           <view class="g2-title">我的关注</view>
@@ -152,48 +147,48 @@
 
 
   <!-- ===== 账户与服务 ===== -->
-  <view class="section">
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-6">
     <view class="section-head">
       <view class="section-bar dark"></view>
       <text class="section-title">账户与服务</text>
     </view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goVerify">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goVerify">
         <text class="mi-icon">🎓</text>
         <text class="mi-text">实名学籍认证中心</text>
         <text class="mi-tip" wx:if="{{user && user.verifyStatus === 2}}">认证有效（至 2026）</text>
         <text class="mi-tip warn" wx:else>未认证</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="goMessages">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goMessages">
         <text class="mi-icon">🔔</text>
         <text class="mi-text">消息通知与隐私权限</text>
         <text class="mi-tip orange">· 即时推送</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="demoEntry" data-name="在线客服与反馈">
+      <view class="menu-item" hover-class="tap-scale" bindtap="demoEntry" data-name="在线客服与反馈">
         <text class="mi-icon">💬</text>
         <text class="mi-text">在线客服与反馈</text>
         <text class="mi-tip">校内值班中</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="goAgreement">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goAgreement">
         <text class="mi-icon">📄</text>
         <text class="mi-text">用户服务协议</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="goPrivacy">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goPrivacy">
         <text class="mi-icon">🛡️</text>
         <text class="mi-text">隐私政策</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="goDisclaimer">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goDisclaimer">
         <text class="mi-icon">⚠️</text>
         <text class="mi-text">免责声明</text>
         <text class="mi-tip">交易风险必读</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" bindtap="about">
+      <view class="menu-item" hover-class="tap-scale" bindtap="about">
         <text class="mi-icon">ℹ️</text>
         <text class="mi-text">关于校园趣事</text>
         <text class="mi-tip">v2.4.1</text>
@@ -202,7 +197,7 @@
     </view>
   </view>
 
-  <view class="logout" wx:if="{{logged}}" bindtap="logout">⇄ 切换账号 / 退出登录</view>
+  <view class="logout fade-bounce-in {{pageReady ? 'animate-in' : ''}}" hover-class="tap-scale" wx:if="{{logged}}" bindtap="logout">⇄ 切换账号 / 退出登录</view>
   <view class="footer-tip" bindlongpress="resetMock">
     校园趣事 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
   </view>
@@ -212,7 +207,7 @@
     <view class="sheet" catchtap="stop">
       <view class="between">
         <text class="h2">购买意向</text>
-        <text class="sheet-close" bindtap="closeOrders">✕</text>
+        <text class="sheet-close" hover-class="scale-down" bindtap="closeOrders">✕</text>
       </view>
 
       <view class="seg mt16">
@@ -228,7 +223,7 @@
               <text class="tag">{{item.statusText}}</text>
             </view>
             <view class="muted mt8">{{item.timeText}} · 联系方式 {{item.contact}}</view>
-            <view class="order-msg" wx:if="{{item.message}}">“{{item.message}}”</view>
+            <view class="order-msg" wx:if="{{item.message}}">"{{item.message}}"</view>
           </view>
           <view class="empty" wx:if="{{!buyerOrders.length}}" style="padding: 60rpx 0;">
             <text>还没有求购记录</text>
@@ -242,7 +237,7 @@
             </view>
             <view class="muted mt8">{{item.timeText}} · {{item.buyerName}}</view>
             <view class="order-contact">联系他：{{item.contact}}</view>
-            <view class="order-msg" wx:if="{{item.message}}">“{{item.message}}”</view>
+            <view class="order-msg" wx:if="{{item.message}}">"{{item.message}}"</view>
           </view>
           <view class="empty" wx:if="{{!sellerOrders.length}}" style="padding: 60rpx 0;">
             <text>还没有人联系你</text>
@@ -273,4 +268,3 @@
     bind:close="onOnboardClose"
   />
 </view>
-
