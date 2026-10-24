@@ -32,10 +32,28 @@
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <jjwt.version>0.12.5</jjwt.version>
+        <!--
+          Lombok 版本：覆盖 Spring Boot 3.2.5 BOM 自带的 1.18.32。
+          1.18.32 不兼容 JDK 24+（TypeTag :: UNKNOWN 崩溃），
+          1.18.40 起支持 JDK 25，1.18.42 完整兼容 JDK 25 LTS。
+          项目产物仍是 Java 17 字节码（release=17），向下兼容 JDK 17 运行时。
+        -->
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!--
+              必须在 spring-boot-dependencies BOM import 之前显式覆盖 lombok.version。
+              Spring Boot BOM 管理了 lombok 1.18.32（写死在里面），
+              我们要在 BOM 之前指定版本，Maven 会以显式声明为准。
+            -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -121,6 +139,17 @@
                     <parameters>true</parameters>
                     <compilerArgs>
                         <arg>-parameters</arg>
+                        <!--
+                          关键：强制 javac 执行注解处理（annotation processing）。
+                          本项目 parent pom 没继承 spring-boot-starter-parent，
+                          Spring Boot 的 starter-parent 会帮你把 Lombok 注册到
+                          annotationProcessorPaths，缺了它 @Slf4j / @Getter 等
+                          全部不生效。这里不显式 pin 版本，让 javac 走 SPI 自动发现
+                          lombok jar 内 META-INF/services/javax.annotation.processing.Processor。
+                          比硬 pin annotationProcessorPaths 更兼容不同 JDK 版本
+                          （避免 Lombok 版本和 JDK 不匹配时 TypeTag :: UNKNOWN 崩溃）。
+                        -->
+                        <arg>-proc:full</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
