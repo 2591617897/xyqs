@@ -3,6 +3,7 @@ const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
 const upload = require('../../utils/upload')
+const swipe = require('../../utils/swipe')
 const { resolveList } = require('../../utils/img')
 
 Page({
@@ -29,11 +30,20 @@ Page({
       { key: 'find', name: '🔎 寻物启事', tag: '#寻物启事' },
       { key: 'findp', name: '🙋 捞人', tag: '#捞人' }
     ],
-    cat: 'love'
+    cat: 'love',
+    // 分类 chips 的 scroll-into-view 目标：滑动切换后把选中分类滚进可视区
+    catInto: ''
   },
 
   onLoad: function () {
     mp.setNavigationBarTitle({ title: '匿名表白墙' })
+    // 序号：滑动/连点会并发多次请求，回来晚的旧结果不许覆盖新结果
+    this._loadSeq = 0
+    const self = this
+    this._swipe = swipe.create({
+      next: function () { self.switchCatOffset(1) },
+      prev: function () { self.switchCatOffset(-1) }
+    })
     this.load(true)
   },
 
@@ -68,9 +78,10 @@ Page({
 
   load: function (reset) {
     const self = this
-    if (this.data.loading) return
-    if (!reset && !this.data.hasMore) return
+    // reset（切分类 / 下拉刷新）允许打断上一轮请求，上拉加载则要防重
+    if (!reset && (this.data.loading || !this.data.hasMore)) return
     if (reset) this.setData({ page: 1, hasMore: true })
+    const seq = this._loadSeq = (this._loadSeq || 0) + 1
     this.setData({ loading: true })
     const query = {
       page: this.data.page,
@@ -88,6 +99,7 @@ Page({
     })
     http.get('/wall/posts', query, { silent: true })
       .then(function (res) {
+        if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
         const records = (res.records || []).map(decorate)
         self.setData({
           posts: reset ? records : self.data.posts.concat(records),
@@ -100,6 +112,7 @@ Page({
         mp.stopPullDownRefresh()
       })
       .catch(function () {
+        if (seq !== self._loadSeq) return
         self.setData({ loading: false, loadError: true })
         mp.stopPullDownRefresh()
       })
@@ -116,8 +129,41 @@ Page({
   switchCat: function (e) {
     const key = e.currentTarget.dataset.key
     if (key === this.data.cat) return
-    this.setData({ cat: key })
+    this.setData({ cat: key, catInto: 'cat-' + key })
     this.load(true)
+  },
+
+  /** 按偏移量切分类（左右滑动用），到两端给轻提示 */
+  switchCatOffset: function (offset) {
+    const cats = this.data.cats || []
+    if (cats.length < 2) return
+    let cur = -1
+    for (let i = 0; i < cats.length; i++) {
+      if (cats[i].key === this.data.cat) { cur = i; break }
+    }
+    if (cur < 0) return
+    const next = cur + offset
+    if (next < 0 || next >= cats.length) {
+      toast(offset > 0 ? '已经是最后一个分类了' : '已经是第一个分类了')
+      return
+    }
+    const key = cats[next].key
+    if (key === this.data.cat) return
+    this.setData({ cat: key, catInto: 'cat-' + key })
+    this.load(true)
+  },
+
+  /* ---------- 左右滑动切分类（手势判定在 utils/swipe.js） ---------- */
+  onSwipeStart: function (e) {
+    if (this._swipe) this._swipe.start(e)
+  },
+
+  onSwipeMove: function (e) {
+    if (this._swipe) this._swipe.move(e)
+  },
+
+  onSwipeEnd: function (e) {
+    if (this._swipe) this._swipe.end(e)
   },
 
   /** banner 上的主行动点 */

@@ -14,6 +14,10 @@
   left: 0;
   right: 0;
   bottom: 0;
+  /* 用 max-height + flex 让列表自己滚动，避免在小屏上整块超出被裁掉 */
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
   border-radius: 32rpx 32rpx 0 0;
   padding: 36rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
@@ -21,6 +25,7 @@
 }
 
 .ob-head {
+  flex-shrink: 0;
   text-align: center;
 }
 
@@ -39,6 +44,7 @@
 .ob-search {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   margin-top: 28rpx;
   height: 76rpx;
   padding: 0 24rpx;
@@ -64,7 +70,9 @@
 }
 
 .ob-list {
-  max-height: 52vh;
+  /* flex 子项必须 min-height:0，否则会被内容撑高、scroll-view 不滚动 */
+  flex: 1;
+  min-height: 0;
   margin-top: 16rpx;
 }
 
@@ -113,6 +121,7 @@
 }
 
 .ob-skip {
+  flex-shrink: 0;
   margin-top: 20rpx;
   padding: 22rpx 0;
   font-size: 28rpx;
@@ -122,6 +131,7 @@
 }
 
 .ob-tip {
+  flex-shrink: 0;
   padding-bottom: 8rpx;
   font-size: 21rpx;
   color: #b6bbc6;

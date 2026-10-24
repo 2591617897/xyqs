@@ -12,7 +12,7 @@ target/
 build/
 out/
 !build/libs/*.jar
-
+build-jars/
 # Spring Boot 热重载
 spring-boot-*.class
 

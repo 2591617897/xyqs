@@ -1,9 +1,39 @@
 const { BASE_URL, USE_MOCK, TIMEOUT } = require('./config')
 const { mp, toast } = require('./util')
+const { resolve: resolveImg } = require('./img')
 const mock = require('./mock')
 
 /** 401 提示节流，避免并发请求弹多次 */
 let authTipLock = false
+
+/**
+ * 把响应里的图片地址统一收敛到当前 SERVER。
+ *
+ * 库里的图片地址是**上传那一刻**写死的绝对地址（历史数据可能是
+ * `http://192.168.0.102:8888/uploads/...`）。换域名/换环境后这些地址指向内网，
+ * 图片直接打不开。之前靠各页面自己调 resolve，结果漏字段（头像就漏了，导致
+ * 头像请求打到 192.168.0.102）。这里在响应入口做一次，全站一处生效。
+ *
+ * 只处理含 `/uploads/` 的字符串，其它类型原样返回；深度有限，避免异常数据打转。
+ */
+function normalizeImages(v, depth) {
+  if (depth > 6 || v === null || v === undefined) return v
+  if (typeof v === 'string') {
+    return v.indexOf('/uploads/') >= 0 ? resolveImg(v) : v
+  }
+  if (Array.isArray(v)) {
+    for (let i = 0; i < v.length; i++) v[i] = normalizeImages(v[i], depth + 1)
+    return v
+  }
+  if (typeof v === 'object') {
+    const keys = Object.keys(v)
+    for (let i = 0; i < keys.length; i++) {
+      v[keys[i]] = normalizeImages(v[keys[i]], depth + 1)
+    }
+    return v
+  }
+  return v
+}
 
 function getToken() {
   return mp.getStorageSync('token') || ''
@@ -65,7 +95,7 @@ function mockRequest(url, method, data, silent, loading) {
         return
       }
       if (body.code === 0) {
-        resolve(body.data)
+        resolve(normalizeImages(body.data, 0))
         return
       }
       if (!silent) toast(body.msg || '请求失败')
@@ -153,7 +183,7 @@ function request(options) {
         }
 
         if (body.code === 0) {
-          resolve(body.data)
+          resolve(normalizeImages(body.data, 0))
           return
         }
 

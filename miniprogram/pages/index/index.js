@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, priceText, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
+const swipe = require('../../utils/swipe')
 const { resolveList } = require('../../utils/img')
 
 Page({
@@ -19,6 +20,8 @@ Page({
     onboardSaving: false,
     channels: [],
     channelId: '',
+    // 频道导航的 scroll-into-view 目标：滑动切换后把选中频道滚进可视区
+    navInto: '',
     categories: [],
     feed: [],
     loading: true,
@@ -29,9 +32,20 @@ Page({
     hotComment: null
   },
 
+  onLoad: function () {
+    // 快速滑动会连发多次加载，只认最后一次的结果（见 loadData 里的 seq 校验）
+    this._loadSeq = 0
+    const self = this
+    this._swipe = swipe.create({
+      next: function () { self.switchChannelOffset(1) },
+      prev: function () { self.switchChannelOffset(-1) }
+    })
+  },
+
   onShow: function () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0 })
+      // hidden:false 兜底：若上次弹层没走正常关闭路径，避免底栏一直不显示
+      this.getTabBar().setData({ selected: 0, hidden: false })
     }
     this.applyUser(getApp().globalData.user)
     this.syncMe()
@@ -72,6 +86,7 @@ Page({
     auth.ensureLogin().then(function (user) {
       if (!user || user.schoolId) return
       if (mp.getStorageSync('onboardSkipped')) return
+      this.toggleTabBar(true)
       this.setData({ onboardShow: true })
     }.bind(this)).catch(function () {
       // 登录失败/用户拒绝都不阻塞浏览
@@ -101,6 +116,7 @@ Page({
         verifyStatus: me.verifyStatus
       })
       self.setData({ onboardShow: false, onboardSaving: false })
+      self.toggleTabBar(false)
       // 刚绑定学校时把浏览范围拉回「本校」：
       // 之前若停在「本市」模式，胶囊会显示成「某市 · 全市」，看起来像没绑学校
       scopeMod.write({ scope: 'school' })
@@ -115,6 +131,19 @@ Page({
   onOnboardClose: function () {
     mp.setStorageSync('onboardSkipped', 1)
     this.setData({ onboardShow: false })
+    this.toggleTabBar(false)
+  },
+
+  /**
+   * 弹层需要盖住自定义 tabBar。
+   *
+   * 自定义 tabBar 由框架层渲染（`custom-tab-bar/`），页面里的 z-index 再高也压不住它，
+   * 官方给定的做法是由页面把它隐藏掉（`.tabbar-hidden`），否则弹层底部会被底栏切掉。
+   */
+  toggleTabBar: function (hide) {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ hidden: !!hide })
+    }
   },
 
   /**
@@ -186,6 +215,8 @@ Page({
   loadData: function (refresh) {
     const self = this
     if (refresh) this.setData({ loading: true })
+    // 序号：滑动/连点会并发多次请求，回来晚的旧结果不许覆盖新结果
+    const seq = this._loadSeq = (this._loadSeq || 0) + 1
 
     let firstError = ''
     const fail = function (name) {
@@ -215,6 +246,7 @@ Page({
       // 全站点赞最高的帖子：点赞不超过 10 不值当展示，接口失败静默跳过
       http.get('/posts', { page: 1, size: 1, sort: 'hot' }, { silent: true }).catch(fail('hot'))
     ]).then(function (res) {
+      if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
       const channels = res[0] || []
       const postsRes = res[1] || { records: [] }
       const goodsRes = res[2] || { records: [] }
@@ -358,9 +390,11 @@ Page({
     const user = getApp().globalData.user
     // 还没落学校：胶囊点了直接进「选学校」，此时本校/本市切换没有意义
     if (!user || !user.schoolId) {
+      this.toggleTabBar(true)
       this.setData({ onboardShow: true })
       return
     }
+    this.toggleTabBar(true)
     this.setData({
       scopeShow: true,
       schoolCity: (user && user.schoolCity) || ''
@@ -373,12 +407,14 @@ Page({
 
   closeScope: function () {
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
   },
 
   onScopeSelect: function (e) {
     const d = e.detail || {}
     const next = scopeMod.write({ scope: d.scope, city: d.city })
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
     this.applyUser(getApp().globalData.user)
     // 范围变了重新拉信息流
     this.setData({ feed: [], loading: true })
@@ -391,14 +427,50 @@ Page({
   /** 弹层里的「学籍认证 / 切换学校」 */
   onScopeVerify: function () {
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
     this.goStatus()
   },
 
   switchChannel: function (e) {
     const id = e.currentTarget.dataset.id || ''
     if (String(id) === String(this.data.channelId)) return
-    this.setData({ channelId: id, feed: [], loading: true })
+    this.setData({ channelId: id, navInto: id ? 'nav-' + id : 'nav-all', feed: [], loading: true })
     this.loadData()
+  },
+
+  /**
+   * 按偏移量切换频道（左右滑动用）。
+   * 频道序列 = 「全部」+ 后端返回的频道；到两端给一句轻提示，
+   * 否则用户会以为滑动没生效。
+   */
+  switchChannelOffset: function (offset) {
+    const channels = this.data.channels || []
+    if (!channels.length) return
+    const keys = [''].concat(channels.map(function (c) { return String(c.id) }))
+    const cur = keys.indexOf(String(this.data.channelId || ''))
+    if (cur < 0) return
+    const next = cur + offset
+    if (next < 0 || next >= keys.length) {
+      if (keys.length > 1) toast(offset > 0 ? '已经是最后一个频道了' : '已经是第一个频道了')
+      return
+    }
+    const id = keys[next]
+    if (id === String(this.data.channelId || '')) return
+    this.setData({ channelId: id, navInto: id ? 'nav-' + id : 'nav-all', feed: [], loading: true })
+    this.loadData()
+  },
+
+  /* ---------- 左右滑动切频道（手势判定在 utils/swipe.js） ---------- */
+  onSwipeStart: function (e) {
+    if (this._swipe) this._swipe.start(e)
+  },
+
+  onSwipeMove: function (e) {
+    if (this._swipe) this._swipe.move(e)
+  },
+
+  onSwipeEnd: function (e) {
+    if (this._swipe) this._swipe.end(e)
   },
 
   openGoodsTab: function (mode, categoryId) {

@@ -15,11 +15,12 @@
     </view>
   </view>
 
-  <!-- 频道导航 -->
-  <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false">
+  <!-- 频道导航：左右滑动内容区会切换频道，选中项自动滚进可视区 -->
+  <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false" scroll-into-view="{{navInto}}" scroll-with-animation="true">
     <view class="nav-row">
-      <view class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">全部</view>
+      <view id="nav-all" class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">全部</view>
       <view
+        id="nav-{{item.id}}"
         class="nav-item {{channelId === item.id ? 'active' : ''}}"
         wx:for="{{channels}}"
         wx:key="id"
@@ -40,6 +41,14 @@
     </view>
   </scroll-view>
 
+  <!-- 内容区：左右滑动切换频道（手势判定见 utils/swipe.js；命中后走与点 tab 相同的逻辑） -->
+  <view
+    class="swipe-area"
+    bindtouchstart="onSwipeStart"
+    bindtouchmove="onSwipeMove"
+    bindtouchend="onSwipeEnd"
+    bindtouchcancel="onSwipeEnd"
+  >
   <!-- 运营公告位：跳蚤集市 -->
   <view class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
     <view class="announce-icon">🛍️</view>
@@ -231,6 +240,7 @@
   </view>
 
   <view class="list-end" wx:if="{{feed.length && !loading}}">已经到底啦，点击右下方「＋」发布你的新动态吧</view>
+  </view>
 
   <!-- 浏览范围切换：本校 / 本市（+ 定位城市） -->
   <scope-sheet

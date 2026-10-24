@@ -330,6 +330,30 @@ ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);
 - 微信后台修改合法域名每月有次数限制，配置前先核对清楚
 - 多项目共存时：`upstream` 名字要带项目前缀（模板里是 `campus_gateway`），否则和别的项目的 upstream 重名会启动失败
 
+> **`/uploads/` 交给 Nginx 直出**（模板里已启用）。Java 侧的静态映射依赖进程工作目录，
+> 一旦 `UPLOAD_DIR` 是相对路径、或 Nacos 里残留了多个 campus-user 实例，
+> 就会出现「上传成功（数据库也有地址）但访问 404」——Nginx alias 是同一个绝对路径，能彻底绕开这类问题。
+
+#### 上传目录（jar 与 uploads 同级）
+
+`campus.upload.dir` 写成 `./uploads` 时，**相对的是进程工作目录，不是 jar 所在目录**。
+`systemd` 的 `WorkingDirectory`、`cd /path && java -jar app.jar`、`nohup java -jar /path/app.jar`（从别的目录启动）
+三种情况 cwd 完全不同，于是「上传写 A 目录、静态资源读 B 目录」→ 上传 200、图片 404。
+
+已由 `UploadPaths` 统一处理，写（`UploadController`）与读（`WebConfig`）永远算同一个目录：
+
+| 运行方式 | `./uploads` 解析为 |
+| --- | --- |
+| `java -jar` | **jar 所在目录**/uploads（jar 与 uploads 同级即可） |
+| IDE / `mvn spring-boot:run` | 进程工作目录/uploads（避免写进 `target/`） |
+| 绝对路径 | 原样使用（**生产推荐**：`UPLOAD_DIR=/mnt/ssd/web/campus-api.trkcwl.com/uploads`） |
+
+启动日志会打印实际读取目录和 cwd，排查时先看这两行：
+
+```
+[upload] 静态资源映射 /uploads/** -> file:/mnt/ssd/web/campus-api.trkcwl.com/uploads/（配置 dir=./uploads，进程工作目录=/root）
+```
+
 ## 核心业务流程
 
 **登录**：`wx.login()` → code → `POST /api/auth/login`（带 `platform`）→ auth 服务按平台

@@ -2,6 +2,7 @@ package com.campus.user.controller;
 
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.user.config.UploadPaths;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -55,12 +57,21 @@ public class UploadController {
 
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         String fileName = UUID.randomUUID().toString().replace("-", "") + "." + ext;
-        File dir = new File(uploadDir, datePath);
+        // 与 WebConfig 用同一套解析规则，保证「写到哪」和「从哪读」永远是同一个目录
+        Path baseDir = UploadPaths.resolve(uploadDir);
+        File dir = baseDir.resolve(datePath).toFile();
         if (!dir.exists() && !dir.mkdirs()) {
             throw new BizException("上传目录创建失败，请检查服务端权限");
         }
         try {
-            file.transferTo(new File(dir, fileName).getAbsoluteFile());
+            File target = new File(dir, fileName).getAbsoluteFile();
+            file.transferTo(target);
+            // 落盘后立刻确认：写成功但路径和静态资源映射不一致时，
+            // 会出现「上传 200、图片 404」这种极难排查的现象，这里直接暴露出来
+            if (!target.isFile() || target.length() == 0) {
+                log.error("图片落盘校验失败 path={} exists={}", target.getAbsolutePath(), target.isFile());
+                throw new BizException("图片保存失败，请重试");
+            }
         } catch (IOException e) {
             log.error("图片保存失败 dir={}", dir.getAbsolutePath(), e);
             throw new BizException("图片保存失败，请重试");

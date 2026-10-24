@@ -1,10 +1,11 @@
 <view class="page">
   <!-- 顶部栏已隐藏：顶部标题改为使用微信原生导航栏 -->
 
-  <!-- 分类 chips -->
-  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">
+  <!-- 分类 chips：左右滑动内容区会切分类，选中项自动滚进可视区 -->
+  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false" scroll-into-view="{{catInto}}" scroll-with-animation="true">
     <view class="cat-row">
       <view
+        id="cat-{{item.key}}"
         class="cat-pill {{cat === item.key ? 'active' : ''}}"
         wx:for="{{cats}}"
         wx:key="key"
@@ -13,6 +14,15 @@
       >{{item.name}}</view>
     </view>
   </scroll-view>
+
+  <!-- 内容区：左右滑动切分类（手势判定见 utils/swipe.js） -->
+  <view
+    class="swipe-area"
+    bindtouchstart="onSwipeStart"
+    bindtouchmove="onSwipeMove"
+    bindtouchend="onSwipeEnd"
+    bindtouchcancel="onSwipeEnd"
+  >
 
   <!-- 毕业季 banner（粉色渐变） -->
   <view class="season">
@@ -117,6 +127,7 @@
 
   <view class="list-end" wx:if="{{posts.length}}">
     {{loading ? '加载中…' : (hasMore ? '上拉看更多心事' : '— 已经到底了 —')}}
+  </view>
   </view>
 
   <!-- 发布弹层 -->

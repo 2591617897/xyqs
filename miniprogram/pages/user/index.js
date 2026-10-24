@@ -33,7 +33,8 @@ Page({
 
   onShow: function () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 4 })
+      // hidden:false 兜底：弹层没走正常关闭路径时，别让底栏一直不显示
+      this.getTabBar().setData({ selected: 4, hidden: false })
     }
     mp.setNavigationBarTitle({ title: '我的' })
     const cached = getApp().globalData.user
@@ -68,6 +69,7 @@ Page({
   /** 打开「浏览范围」弹层：本校 / 本市（+ 位置 API 解析出的定位城市） */
   openScope: function () {
     const self = this
+    this.toggleTabBar(true)
     this.setData({
       scopeShow: true,
       schoolCity: (this.data.user && this.data.user.schoolCity) || ''
@@ -79,12 +81,14 @@ Page({
 
   closeScope: function () {
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
   },
 
   onScopeSelect: function (e) {
     const d = e.detail || {}
     const next = scopeMod.write({ scope: d.scope, city: d.city })
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
     this.applyScope()
     if (next.scope === 'city') {
       toast('已切换到' + (next.city || '本市') + ' · 全市')
@@ -94,7 +98,20 @@ Page({
   /** 弹层里的「学籍认证 / 切换学校」 */
   onScopeVerify: function () {
     this.setData({ scopeShow: false })
+    this.toggleTabBar(false)
     if (typeof this.goVerify === 'function') this.goVerify()
+  },
+
+  /**
+   * 弹层需要盖住自定义 tabBar。
+   *
+   * 自定义 tabBar 由框架层渲染（`custom-tab-bar/`），页面 z-index 压不住它，
+   * 只能由页面主动隐藏，否则弹层底部会被底栏切掉（选学校列表被挡住就是这样）。
+   */
+  toggleTabBar: function (hide) {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ hidden: !!hide })
+    }
   },
 
   loadMe: function () {
@@ -224,12 +241,14 @@ Page({
     if (!this.data.logged) {
       // 这里只是「去选学校」，不是用户主动点登录 → 走默认登录（先弹确认）
       auth.ensureLogin().then(function (u) {
+        self.toggleTabBar(true)
         self.setData({ logged: true, user: u, onboardShow: true })
       }).catch(function () {
         // 用户拒绝登录时弹窗已表达，这里不再打扰
       })
       return
     }
+    this.toggleTabBar(true)
     this.setData({ onboardShow: true })
   },
 
@@ -254,6 +273,7 @@ Page({
         verifyStatus: me.verifyStatus
       })
       self.setData({ onboardShow: false, onboardSaving: false })
+      self.toggleTabBar(false)
       // 绑定学校后范围回到「本校」，避免胶囊继续显示上一条「某市 · 全市」
       scopeMod.write({ scope: 'school' })
       self.loadMe()
@@ -266,6 +286,7 @@ Page({
 
   onOnboardClose: function () {
     this.setData({ onboardShow: false })
+    this.toggleTabBar(false)
   },
 
   goMyGoods: function () {

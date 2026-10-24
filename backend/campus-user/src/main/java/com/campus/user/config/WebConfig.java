@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -30,9 +31,18 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path abs = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path abs = UploadPaths.resolve(uploadDir);
         String location = abs.toUri().toString();
-        log.info("[upload] 静态资源映射 /uploads/** -> {}", location);
+        // 关键日志：配置写 ./uploads 时，实际指向由 UploadPaths 统一决定
+        // （jar 运行时 = jar 同目录，IDE 运行时 = 进程工作目录）
+        log.info("[upload] 静态资源映射 /uploads/** -> {}（配置 dir={}，进程工作目录={}）",
+                location, uploadDir, Paths.get("").toAbsolutePath());
+        // 启动即校验，避免「上传成功但访问 404」这种最难查的情况
+        if (!Files.isDirectory(abs)) {
+            log.warn("[upload] 上传目录不存在，将在首次上传时创建: {}（建议改用绝对路径）", abs);
+        } else if (!Files.isReadable(abs)) {
+            log.error("[upload] 上传目录不可读，/uploads/** 会返回 404: {}（检查属主与权限）", abs);
+        }
         registry.addResourceHandler("/uploads/**").addResourceLocations(location);
     }
 }

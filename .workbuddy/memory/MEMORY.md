@@ -12,8 +12,20 @@
 - **线上域名：`https://campus-api.trkcwl.com`**（主域名 trkcwl.com，**该服务器跑多个项目 → 子域名必须带项目名**）。
   小程序 `config.js` 的 `prod` 已填，上线把 `ACTIVE_ENV` 切成 `'prod'`；
   Nginx 模板 `deploy/nginx-campus-api.trkcwl.com.conf`（443 → 8888，upstream 名 `campus_gateway` 带项目前缀防冲突）
-- **上域名后必须设 `UPLOAD_BASE_URL=https://api.trkcwl.com`**，否则 `UploadController` 会按
-  `campus.upload.base-url` 的内网默认值拼图片地址；历史绝对地址由前端 `img.js#resolve` 自动归一，不用迁数据
+- **上域名后必须设 `UPLOAD_BASE_URL=https://campus-api.trkcwl.com`**，否则 `UploadController` 会按
+  `campus.upload.base-url` 的内网默认值拼图片地址；历史绝对地址由前端自动归一，不用迁数据
+- **图片地址只在 `utils/request.js` 归一，页面别再各自处理**：成功回调统一 `resolve(normalizeImages(body.data, 0))`，
+  递归把含 `/uploads/` 的字符串换成当前 `SERVER`。之前靠各页面调 `resolve`，**`avatar` 系列全漏了** →
+  头像请求打到 `192.168.0.102` 成灰块。页面里再调 `resolve` 幂等无害，新增字段无需额外处理
+- **「上传成功、库里有地址，但图片 404」**：`curl -D - <URL>` 若看到 **200 + `{"code":404,"msg":"资源不存在"}`**
+  （Spring 的 JSON 被 `<image>` 当图片解码失败）→ 是「写 A 目录、读 B 目录」。
+  根因两选一：`campus.upload.dir` 用了相对 `./uploads`（进程工作目录变了）或 **Nacos 残留多个 campus-user 实例**。
+  看启动日志 `[upload] 静态资源映射 /uploads/** -> file:/...` 即可确认读取目录。
+  **生产让 Nginx alias 直出 `/uploads/`**（模板已启用，服务器实际路径 `/mnt/ssd/web/campus-api.trkcwl.com/uploads/`），
+  `UPLOAD_DIR` 必须给绝对路径
+- **`./uploads` 相对的是进程工作目录（cwd），不是 jar 所在目录** —— systemd `WorkingDirectory` /
+  `cd && java -jar` / 从别处 `nohup java -jar` 三种 cwd 完全不同。已用 `UploadPaths` 统一：
+  写（`UploadController`）与读（`WebConfig`）同一套解析，jar 运行时按 **jar 同目录**，IDE 时退回 cwd
 - 微信后台要分别配 `request` / `uploadFile` / `downloadFile` 三个合法域名，不能带端口/路径/IP，且必须 ICP 备案
 - 端口：auth 8101 / user 8102 / goods 8103 / wall 8104 / post 8105 / message 8106
 - 改端口或库名要同步：`docker-compose.yml`、`sql/schema.sql`、`sql/data.sql`、5 个 `application.yml`、`utils/config.js`、README、docs
@@ -78,6 +90,10 @@
 
 ## 布局铁律
 - `scroll-view` 在 flex 列里必须 `min-height: 0`，否则不滚动（`chat/.msgs`、`verify/.school-scroll`）
+- **自定义 tabBar 压不住弹层**：`custom-tab-bar/` 是框架层渲染，页面 z-index 再高（mask 1100 vs tabbar 999）也盖不过，
+  弹层底部会被底栏切掉。必须由页面 `getTabBar().setData({hidden:true})` 隐藏、关闭时恢复，
+  并在 `onShow` 里 `hidden:false` 兜底。范式见 `pages/wall/index.js#toggleTabBar`，
+  首页/我的页的选学校与浏览范围弹层已补
 - 弹层写死 `height:Xvh` 必须配 `box-sizing: border-box`
 - 底部弹层输入框要手动避键盘：`adjust-position="{{false}}"` + `bindkeyboardheightchange` → `bottom: {{keyboardHeight}}px`
 
