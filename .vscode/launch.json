@@ -59,6 +59,16 @@
             "projectName": "campus-wall",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MessageApplication<campus-message>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.campus.message.MessageApplication",
+            "projectName": "campus-message",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

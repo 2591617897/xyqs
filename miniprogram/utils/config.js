@@ -18,14 +18,14 @@ const ENVS = {
   // 只想看界面效果、不想起后端时把它改回 true 即可
   dev: {
     scheme: 'http',
-    host: '192.168.0.103',
+    host: '192.168.0.2',
     port: 8888,
     mock: false
   },
   // 局域网联调（真机预览时改成电脑的局域网 IP）
   lan: {
     scheme: 'http',
-    host: '192.168.0.103',
+    host: '192.168.0.2',
     port: 8888,
     mock: false
   },

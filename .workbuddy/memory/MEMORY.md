@@ -55,8 +55,8 @@
   `Cannot read properties of undefined (reading "usingComponents")`
 - 校验命令：
   - `node scripts/check-miniprogram.js`（页面结构完整性）
-  - `node scripts/mock-selftest.js`（模拟数据层 96 条断言）
-  - `node scripts/api-smoke-test.js`（后端 16 个核心接口连通性，**需 Nacos + 服务已启动**）
+  - `node scripts/mock-selftest.js`（模拟数据层，**126 条**断言，含 [12] 关注/主页段）
+  - `node scripts/api-smoke-test.js`（后端 **38 项**核心接口连通性，**需 Nacos + 服务已启动**）
 - 统一响应 `{code,msg,data}`，`code=0` 成功；401 未登录 / 403 未认证 / 404 不存在
 - **ID 一律以字符串传输**：雪花 ID 是 19 位 Long，超出 JS 安全整数（2^53-1）。
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；
@@ -76,3 +76,26 @@
   市域聚合依据 `t_school.city`（province/city/district 三列，district 见 migration-20261024-school-district.sql）。
   位置信息 API：`GET /auth/geo/city?lat&lng`（腾讯位置服务逆地理，key 走 `QQMAP_KEY`，
   未配置返回 available=false，前端必须回退学校所在市）。组件 `components/scope-sheet` 是切换弹层。
+
+## 关注 / 粉丝与个人主页（2026-10-24 交付）
+- **表**：`t_follow`（`uk_pair(follower_id,followee_id)` 唯一键是幂等基石、idx_followee、idx_follower）；
+  `t_user` 冗余 `fans_count`/`follow_count`。迁移 `migration-20261025-follow-profile.sql`
+- **接口**（均在 campus-user 8102，网关路由零改动）：
+  `POST|DELETE /api/user/follow/{id}`（登录）、`GET /api/user/follow/status?userId=`（公开，返回布尔）、
+  `GET /api/user/{id}/profile`（🔓 公开，未登录可读；封禁/不存在 404）
+- **网关放行只能精确匹配**：`^/api/user/\d+/profile$`(GET) 与 `/api/user/follow/status`(GET 全等)。
+  **禁止把 /api/user 加进宽泛公开前缀**——会误开 /user/me
+- **计数事务铁律**：关系 insert/delete 与两条计数 UPDATE 同一 `@Transactional`；
+  UPDATE 用 `greatest(x+delta,0)` 防负数；**DuplicateKeyException 的 catch 分支必须直接 return，
+  绝不能让计数 UPDATE 漏进去**（并发双插会 +2 漂移）。粉丝数在 catch 内用
+  `select fans_count ... for update` 加锁读最新已提交值（普通快照读会落后于并发事务）
+- **主页聚合走 Feign 内部接口**：`/internal/goods/count`、`/internal/posts/count`（/internal/** 不经网关）；
+  campus-user 已加 `@EnableFeignClients`，client 放 `com.campus.user.client`。
+  **Feign 调用必须 try/catch 降级 0 + warn，不允许打崩主页**
+- **前端**：`pages/user/space/space.*`（app.json 注册为 `pages/user/space/space`，四件套）；
+  关注逻辑收敛 `utils/follow.js`，**不做 follow-btn 组件**（三处视觉形态与状态来源差异大）；
+  乐观更新 + 失败回滚 + `followLoading` 防重
+- **跳转一律 `catchtap`**（首页/闲置详情/帖子详情的头像+昵称区）——卡片本身是 bindtap 进详情，
+  不 catch 会冒泡误跳
+- 未纳入本期（P1/P2）：关注/粉丝列表页、消息中心 followers 汇总、「我的」页统计条真实化、
+  互相关注标识、新粉丝通知、计数对账脚本
