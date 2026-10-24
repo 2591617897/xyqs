@@ -1,4 +1,4 @@
-const { request } = require('../../../utils/request')
+const http = require('../../../utils/request')
 const { mp } = require('../../../utils/util')
 
 const FLAIR_MAP = {
@@ -31,11 +31,24 @@ Page({
 
     const user = getApp().globalData.user
     const meId = user && user.id ? user.id : ''
+    if (!meId) {
+      // 没登录/缓存还没回来：直接出空态，别发出 userId= 的空参数请求
+      this.setData({ loading: false, items: [], totalCount: 0, postCount: 0, wallCount: 0 })
+      return
+    }
 
+    // 注意：request 内部已拼 BASE_URL（本身就带 /api），这里**不能再写 /api 前缀**，
+    // 否则会请求到 /api/api/posts 直接 404，结果被 catch 吞成空列表。
+    const query = { userId: meId, page: 1, size: 30 }
+    const empty = { records: [] }
     Promise.all([
-      request({ url: '/api/posts?userId=' + meId + '&page=1&size=30', silent: true }),
-      request({ url: '/api/wall/posts?userId=' + meId + '&page=1&size=30', silent: true }).catch(function () {
-        return { records: [] }
+      http.get('/posts', query, { silent: true }).catch(function (err) {
+        console.error('[dynamic] 帖子列表失败', err)
+        return empty
+      }),
+      http.get('/wall/posts', query, { silent: true }).catch(function (err) {
+        console.error('[dynamic] 表白列表失败', err)
+        return empty
       })
     ]).then(function (results) {
       const postData = results[0] || {}

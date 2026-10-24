@@ -337,6 +337,16 @@ Page({
     })
   },
 
+  /**
+   * 图片加载失败兜底：只打日志，不打断浏览。
+   * 真机上 http 图片会被宿主静默拦截（灰块），这里能把它显式暴露出来；
+   * 同一个地址用 previewImage 却能打开，是两条下载通道的差异，不是图片地址错了。
+   */
+  onImageError: function (e) {
+    console.warn('[image] 正文图片加载失败（真机请确认已用 https 且域名在白名单）:',
+      e.currentTarget.dataset.url)
+  },
+
   previewComment: function (e) {
     const ds = e.currentTarget.dataset
     const comment = this.data.comments[ds.pindex]

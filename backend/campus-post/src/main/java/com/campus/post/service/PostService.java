@@ -20,6 +20,7 @@ import com.campus.post.mapper.ChannelMapper;
 import com.campus.post.mapper.PostCommentMapper;
 import com.campus.post.mapper.PostMapper;
 import com.campus.post.mapper.SchoolRegionMapper;
+import com.campus.post.mapper.UserSnapshotMapper;
 import com.campus.post.dto.PostReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import org.springframework.util.StringUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,6 +47,7 @@ public class PostService {
     private final ChannelMapper channelMapper;
     private final PostCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
+    private final UserSnapshotMapper userSnapshotMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
     private final FollowClient followClient;
@@ -94,6 +97,7 @@ public class PostService {
             decorate(post, channelMap, viewerId);
             post.setLiked(liked.contains(post.getId()));
         });
+        refreshAuthors(p.getRecords());
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
@@ -128,6 +132,7 @@ public class PostService {
             decorate(post, channelMap, userId);
             post.setLiked(liked.contains(post.getId()));
         });
+        refreshAuthors(p.getRecords());
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
@@ -138,6 +143,7 @@ public class PostService {
         }
         decorate(post, channelMap(List.of(post)), userId);
         post.setLiked(!likedIds(List.of(id), userId).isEmpty());
+        refreshAuthors(List.of(post));
         return post;
     }
 
@@ -421,6 +427,45 @@ public class PostService {
     }
 
     // ---------------- 内部方法 ----------------
+
+    /**
+     * 用 t_user 的**最新**昵称/头像覆盖帖子里的作者快照。
+     *
+     * author_name / author_avatar 是发布时写下的快照，用户改完资料后列表仍显示旧名字
+     * （典型现象：个人主页头部是「莫东海」，下面的帖子卡片还是「校园用户4400」）。
+     * 这里一次 IN 查询补齐，取不到就沿用快照，任何异常都不影响列表返回。
+     */
+    private void refreshAuthors(List<Post> posts) {
+        if (posts == null || posts.isEmpty()) {
+            return;
+        }
+        List<Long> userIds = posts.stream()
+                .map(Post::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return;
+        }
+        try {
+            Map<Long, UserBrief> briefs = userSnapshotMapper.selectBriefByIds(userIds).stream()
+                    .collect(Collectors.toMap(UserBrief::getId, u -> u, (a, b) -> a));
+            for (Post post : posts) {
+                UserBrief brief = briefs.get(post.getUserId());
+                if (brief == null) {
+                    continue;
+                }
+                if (StringUtils.hasText(brief.getNickname())) {
+                    post.setAuthorName(brief.getNickname());
+                }
+                if (StringUtils.hasText(brief.getAvatar())) {
+                    post.setAuthorAvatar(brief.getAvatar());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("刷新帖子作者资料失败，沿用快照: {}", e.getMessage());
+        }
+    }
 
     private void fillAuthor(Post post, Long userId) {
         try {

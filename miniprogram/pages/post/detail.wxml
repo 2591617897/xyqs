@@ -29,6 +29,7 @@
         class="article-img"
         src="{{item}}"
         mode="widthFix"
+        binderror="onImageError"
         bindtap="previewImage"
         data-url="{{item}}"
       />

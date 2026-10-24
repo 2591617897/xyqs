@@ -23,16 +23,27 @@ const ENVS = {
     mock: false
   },
   // 局域网联调（真机预览时改成电脑的局域网 IP）
+  // ⚠️ 注意：微信真机对 `<image>` 的 **http** 图片会静默失败（只显示灰块，不触发 binderror），
+  // 而 wx.previewImage 走的是另一条下载通道，所以会出现「点开预览能看、列表里是灰块」。
+  // 局域网 http 只能满足开发者工具；真机看图必须走下面的 https 环境。
   lan: {
     scheme: 'http',
     host: '192.168.0.102',
     port: 8888,
     mock: false
   },
-  // 线上环境（需 HTTPS + 已备案 + 已在后台配合法域名）
+  // 真机联调（HTTPS）：用内网穿透（cpolar / frp / ngrok）或正式域名拿到 https 地址后填这里，
+  // 并把 ACTIVE_ENV 改成 'tunnel'。接口 / 上传 / 图片地址全部由 SERVER 派生，改一处即可全站生效。
+  tunnel: {
+    scheme: 'https',
+    host: '', // 例如 xxxx.cpolar.cn
+    port: '',
+    mock: false
+  },
+  // 线上环境（需 HTTPS + 已备案 + 已在后台配 downloadFile / request 合法域名）
   prod: {
-    scheme: 'http',
-    host: '192.168.0.102',
+    scheme: 'https',
+    host: '', // 正式域名
     port: '',
     mock: false
   }

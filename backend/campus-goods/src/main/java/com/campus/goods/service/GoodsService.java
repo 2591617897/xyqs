@@ -22,6 +22,7 @@ import com.campus.goods.mapper.GoodsCommentMapper;
 import com.campus.goods.mapper.GoodsMapper;
 import com.campus.goods.mapper.GoodsOrderMapper;
 import com.campus.goods.mapper.SchoolRegionMapper;
+import com.campus.goods.mapper.UserSnapshotMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ import org.springframework.util.StringUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,6 +57,7 @@ public class GoodsService {
     private final GoodsOrderMapper orderMapper;
     private final GoodsCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
+    private final UserSnapshotMapper userSnapshotMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
     private final FollowClient followClient;
@@ -106,6 +109,7 @@ public class GoodsService {
         }
         Page<Goods> p = goodsMapper.selectPage(new Page<>(page, size), w);
         p.getRecords().forEach(this::fillExtra);
+        refreshSellers(p.getRecords());
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
@@ -147,6 +151,7 @@ public class GoodsService {
         goods.setViewCount(views + 1);
         fillExtra(goods);
         fillSellerStats(goods);
+        refreshSellers(List.of(goods));
         if (userId != null) {
             goods.setLiked(hasLiked(id, userId));
         }
@@ -577,6 +582,44 @@ public class GoodsService {
                 .eq(Like::getTargetType, TARGET)
                 .eq(Like::getTargetId, goodsId)
                 .eq(Like::getUserId, userId)) > 0;
+    }
+
+    /**
+     * 用 t_user 的最新昵称/头像覆盖商品里的卖家快照。
+     *
+     * seller_name / seller_avatar 是发布时写下的快照，卖家改完资料后列表仍显示旧名字，
+     * 与「我的」页对不上。一次 IN 查询补齐，取不到就沿用快照，异常不影响列表。
+     */
+    private void refreshSellers(List<Goods> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        List<Long> userIds = list.stream()
+                .map(Goods::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return;
+        }
+        try {
+            Map<Long, UserBrief> briefs = userSnapshotMapper.selectBriefByIds(userIds).stream()
+                    .collect(Collectors.toMap(UserBrief::getId, u -> u, (a, b) -> a));
+            for (Goods goods : list) {
+                UserBrief brief = briefs.get(goods.getUserId());
+                if (brief == null) {
+                    continue;
+                }
+                if (StringUtils.hasText(brief.getNickname())) {
+                    goods.setSellerName(brief.getNickname());
+                }
+                if (StringUtils.hasText(brief.getAvatar())) {
+                    goods.setSellerAvatar(brief.getAvatar());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("刷新卖家资料失败，沿用快照: {}", e.getMessage());
+        }
     }
 
     private void fillExtra(Goods goods) {

@@ -46,5 +46,5 @@ campus:
     # 图片落盘目录（相对启动目录），生产建议换成对象存储
     dir: ${UPLOAD_DIR:./uploads}
     # 外部可访问的网关地址，用于拼图片 URL
-    base-url: ${UPLOAD_BASE_URL:http://127.0.0.1:8888}
+    base-url: ${UPLOAD_BASE_URL:http://192.168.0.102:8888}
     max-size: ${UPLOAD_MAX_SIZE:20971520}

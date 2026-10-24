@@ -66,6 +66,17 @@
   - `node scripts/api-smoke-test.js`（后端 **45 项**核心接口连通性，**需 Nacos + 服务已启动**；
     **跑完要清理演示数据**：delete `content='冒烟测试消息'` 的行并重置 4 个会话的 last_*/unread_a）
 - 统一响应 `{code,msg,data}`，`code=0` 成功；401 未登录 / 403 未认证 / 404 不存在
+- **调用接口时不要再写 `/api` 前缀**：`utils/request.js` 内部是 `BASE_URL + url`，而 `BASE_URL`
+  已经是 `SERVER + '/api'`，写 `'/api/posts'` 会变成 `/api/api/posts` → **404**（2026-10-24 就踩过，
+  表现为「我的页计数 N、点进列表却是 0」，因为计数器走 `/user/me` 的 Feign 聚合、列表走前端请求）。
+  正确写法：`http.get('/posts', { userId, page, size })`。唯一例外是 `config.js` 的 `UPLOAD_URL`（完整地址）
+- **`Promise.all` 里每个请求都要各自 `.catch`**，否则一个 404/失败会把整页数据吞成空列表
+- **作者名/头像不能只靠内容表里的快照**：`t_post.author_name`、`t_goods.seller_name` 都是发布时写的快照，
+  用户改昵称/头像后列表会显示旧值（现象：个人主页头部是「莫东海」，卡片还是「校园用户4400」）。
+  已在 `PostService#refreshAuthors` / `GoodsService#refreshSellers` 里用 `UserSnapshotMapper`（读 `t_user`）
+  一次 IN 查询覆盖，快照仅在取不到时兜底。**新增内容类表也要照此处理**
+- 子模块编译报「找不到符号 FollowClient / NotificationClient」= 本地仓库的 `campus-common` jar 过期，
+  先 `mvn -pl campus-common -DskipTests install` 再编译其它模块
 - **ID 一律以字符串传输**：雪花 ID 是 19 位 Long，超出 JS 安全整数（2^53-1）。
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；
   前端**不要对 id 做 `Number()`**（会丢精度 → 详情 404）。计数类是 `Integer`，仍是数字。
@@ -191,6 +202,16 @@
   `pages/user/verify.wxss .school-scroll`。用 `max-height` 单独的（`order-scroll`、`school-onboard/.ob-list`）也可行
 - **弹层容器写死 `height: Xvh` 时必须配 `box-sizing: border-box`**，否则 Xvh + padding 超屏、底部被顶出可视区
 - 横向 `scroll-view`（`nav-scroll` / `cat-scroll` / `filter-scroll`）不需要高度约束
+
+## 图片加载（真机灰块）
+- **`<image>` 与 `wx.previewImage` 是两条下载通道**：真机上 `http://192.168.x.x` 的 `<image>` 会**静默失败**
+  （灰块、`binderror` 也可能不触发），但同一个 URL 用 `previewImage` 能正常打开。
+  「点开大图能看、列表里全是灰块」= 这个现象，**不是图片地址或代码问题**
+- 「真机调试」模式下 `<image>` 有已知不加载问题 → 先用**「预览」**二维码验证，能区分工具限制与真问题
+- 局域网 IP 无法加入 `downloadFile` 合法域名 → 真机看图必须 **HTTPS 域名**（内网穿透或正式域名），
+  填 `utils/config.js` 的 `tunnel` / `prod`，切 `ACTIVE_ENV`，图片地址随 `SERVER` 全站生效
+- 服务端自检：`curl -D - -o /dev/null <图片URL>` 必须 `200` + `Content-Type: image/jpeg`；
+  返回 `application/json` 说明没落到静态资源映射
 
 ## 「同校 / 同市」标签口径（唯一口径，别再写死）
 - 判定：`String(myUser.schoolId) === String(item.schoolId) ? '同校' : '同市'`（`myUser` 取

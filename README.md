@@ -294,6 +294,22 @@ ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);
 | 内容安全 | UGC（表白墙、帖子、商品）建议接入 `msgSecCheck` / `imgSecCheck`，否则易被审核驳回 |
 | 类目资质 | 「二手交易 / 社区」类目需要对应资质，自营类目审核较严 |
 
+#### 真机图片显示灰块（开发者工具正常）
+
+`<image>` 加载图片和 `wx.previewImage` 走的是**两条不同的下载通道**，所以会出现
+「点开大图能看、列表和正文里全是灰块」。按下面顺序排：
+
+1. **先在手机上用「预览」二维码打开（不是「真机调试」）** —— 真机调试模式下 `<image>` 有已知不加载问题，
+   换预览往往就正常了。这一步能把「工具限制」和「真问题」分开。
+2. 预览也不显示 → 是 **http / 域名白名单**问题：真机对 `http://192.168.x.x` 的图片会兜底失败，
+   且局域网 IP 无法加入 `downloadFile` 合法域名。解决办法是给一个 HTTPS 域名（内网穿透或正式域名），
+   填到 `miniprogram/utils/config.js` 的 `tunnel` / `prod` 项并把 `ACTIVE_ENV` 切过去 ——
+   接口、上传、图片地址都由 `SERVER` 派生，改一处全站生效。
+3. 先确认服务器本身正常：`curl -D - -o /dev/null <图片URL>`，应当是 `200` + `Content-Type: image/jpeg`；
+   若是 `application/json` 说明请求没落到静态资源映射。
+4. `pages/post/detail` 正文图已接 `binderror`，加载失败会在 console 打
+   `[image] 正文图片加载失败...`，可据此区分「宿主拦截」与「元素尺寸为 0」。
+
 ## 核心业务流程
 
 **登录**：`wx.login()` → code → `POST /api/auth/login`（带 `platform`）→ auth 服务按平台
