@@ -209,7 +209,6 @@
 .msgs {
   flex: 1;
   min-height: 0;
-  padding: 0 24rpx;
 }
 .msg-day {
   text-align: center;
@@ -217,10 +216,13 @@
   color: #94a3b8;
   padding: 24rpx 0;
 }
-/* 消息行：包裹单条消息，供 scroll-into-view 定位 + 提供行间距 */
+/* 消息行：包裹单条消息，供 scroll-into-view 定位 + 提供行间距。
+   水平内边距放在行上而非 scroll-view 上，避免真机上 scroll-view 右内边距失效导致气泡被裁剪 */
 .msg-row {
   display: block;
   margin-bottom: 28rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
 }
 .msg {
   display: flex;
@@ -285,19 +287,6 @@
   margin-top: 10rpx;
   font-size: 20rpx;
   color: #94a3b8;
-}
-.msg-me {
-  flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background: #10b981;
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .msgs-pad {
   height: 24rpx;

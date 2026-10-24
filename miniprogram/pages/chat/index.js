@@ -1,5 +1,6 @@
 const http = require('../../utils/request')
 const { mp, timeAgo } = require('../../utils/util')
+const { resolve } = require('../../utils/img')
 
 Page({
   data: {
@@ -11,6 +12,7 @@ Page({
     peerTags: [],
     anon: false,
     anonName: '',
+    myAvatar: '',
     showCta: false,
     dayText: '今天',
     goodsCard: null,
@@ -22,6 +24,7 @@ Page({
 
   onLoad: function (options) {
     mp.setNavigationBarTitle({ title: '私信' })
+    const cached = mp.getStorageSync('user') || {}
     this.setData({
       convoId: options.id || '',
       peerId: options.peer || '',
@@ -32,6 +35,7 @@ Page({
       peerName: options.name ? decodeURIComponent(options.name) : '同学',
       anon: options.anon === '1',
       anonName: options.anonName ? decodeURIComponent(options.anonName) : '',
+      myAvatar: resolve(cached.avatar),
       goodsCard: options.goods
         ? {
             title: decodeURIComponent(options.goods),

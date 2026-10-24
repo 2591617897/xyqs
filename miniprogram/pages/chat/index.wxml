@@ -68,7 +68,13 @@
             <view class="bubble" wx:else>{{item.content}}</view>
             <view class="msg-time">{{item.timeText}}</view>
           </view>
-          <view class="msg-me">我</view>
+          <view class="msg-avatar">
+            <image wx:if="{{myAvatar}}" class="msg-img" src="{{myAvatar}}" mode="aspectFill" />
+            <view wx:else class="avatar-default">
+              <view class="ad-head"></view>
+              <view class="ad-body"></view>
+            </view>
+          </view>
         </view>
 
         <!-- 对方发的：不可撤回，直接渲染 -->
