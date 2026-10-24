@@ -1,10 +1,5 @@
 <view class="page">
-  <!-- 顶部栏 -->
-  <view class="topbar">
-    <view class="school-pill">📍 大学城校区 ▾</view>
-    <view class="topbar-title">表白墙</view>
-    <view class="bell" bindtap="goMessages">🔔<view class="bell-dot"></view></view>
-  </view>
+  <!-- 顶部栏已隐藏：顶部标题改为使用微信原生导航栏 -->
 
   <!-- 分类 chips -->
   <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">

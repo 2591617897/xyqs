@@ -6,7 +6,7 @@
 
 /* ---------- 渐变头部 ---------- */
 .hero {
-  padding: 24rpx 24rpx 0;
+  padding: 8rpx 24rpx 0;
 }
 .hero-top {
   display: flex;
