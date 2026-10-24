@@ -34,6 +34,9 @@ public class ProfileVO {
     /** 当前登录用户是否已关注；未登录 / 本人 = false */
     private Boolean following;
 
+    /** 对方是否关注我；未登录 / 本人 / 对方没关注 = false。与 following 同为 true 即互相关注 */
+    private Boolean followedBy;
+
     /** 是否本人主页 */
     private Boolean isSelf;
 

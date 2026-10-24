@@ -222,10 +222,11 @@ Page({
       return
     }
     if (!this.data.logged) {
-      auth.ensureLogin(true).then(function (u) {
+      // 这里只是「去选学校」，不是用户主动点登录 → 走默认登录（先弹确认）
+      auth.ensureLogin().then(function (u) {
         self.setData({ logged: true, user: u, onboardShow: true })
       }).catch(function () {
-        toast('登录失败，请重试')
+        // 用户拒绝登录时弹窗已表达，这里不再打扰
       })
       return
     }

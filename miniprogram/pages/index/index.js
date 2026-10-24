@@ -63,17 +63,18 @@ Page({
    * 点过「暂不选择」记一个标记，本次不再打扰（清缓存后重置）。
    */
   checkOnboard: function () {
-    const self = this
-    if (mp.getStorageSync('onboardSkipped')) return
     const cached = getApp().globalData.user
+    // 未登录不主动发起登录：浏览是免登录的，登录必须先经用户确认（见 utils/auth.ensureLogin），
+    // 这里只对「已经登录且还没落学校」的用户做引导
+    if (!http.getToken()) return
+    if (mp.getStorageSync('onboardSkipped')) return
     if (cached && cached.schoolId) return
-    // 首页原本不主动登录，这里为判断是否需要引导走一次静默登录（有缓存时零请求）
     auth.ensureLogin().then(function (user) {
       if (!user || user.schoolId) return
       if (mp.getStorageSync('onboardSkipped')) return
-      self.setData({ onboardShow: true })
-    }).catch(function () {
-      // 登录失败不阻塞浏览
+      this.setData({ onboardShow: true })
+    }.bind(this)).catch(function () {
+      // 登录失败/用户拒绝都不阻塞浏览
     })
   },
 

@@ -310,6 +310,26 @@ ALTER TABLE t_user ADD UNIQUE KEY uk_platform_openid (platform, openid);
 4. `pages/post/detail` 正文图已接 `binderror`，加载失败会在 console 打
    `[image] 正文图片加载失败...`，可据此区分「宿主拦截」与「元素尺寸为 0」。
 
+#### 绑定域名 `campus-api.trkcwl.com`（上线用）
+
+服务器上还有其它项目，所以域名带项目名隔离；每个项目一个子域名 + 一个 Nginx conf。
+
+| 项 | 值 |
+| --- | --- |
+| 小程序接口域名 | `https://campus-api.trkcwl.com`（前端 `utils/config.js` 的 `prod` 已填好，切 `ACTIVE_ENV='prod'` 即可） |
+| 微信后台「服务器域名」 | `request` / `uploadFile` / `downloadFile` 三个都填 `https://campus-api.trkcwl.com`（不能带端口、不能带路径、不能是 IP） |
+| DNS | `A campus-api → 服务器公网 IP`（走 CDN 则用 `CNAME`） |
+| 证书 | `campus-api.trkcwl.com` 单域名证书，或泛域名 `*.trkcwl.com`（多个项目共用一张，续期省事）；**证书链要完整**，否则 iOS 报错 |
+| Nginx | 443 反代到网关 8888，模板见 `deploy/nginx-campus-api.trkcwl.com.conf` |
+| 后端图片前缀 | 必须设环境变量 `UPLOAD_BASE_URL=https://campus-api.trkcwl.com`，否则新上传的图仍会写成内网地址 |
+
+要点：
+- 域名必须已 **ICP 备案**（子域名跟随主域名备案，不用单独备）
+- 只走 **443**，小程序不接受 `https://host:8888` 这种带端口的写法
+- 图片与接口**同域**最省事：`https://campus-api.trkcwl.com/uploads/...`；量大后再拆 `campus-static.trkcwl.com` 挂 CDN
+- 微信后台修改合法域名每月有次数限制，配置前先核对清楚
+- 多项目共存时：`upstream` 名字要带项目前缀（模板里是 `campus_gateway`），否则和别的项目的 upstream 重名会启动失败
+
 ## 核心业务流程
 
 **登录**：`wx.login()` → code → `POST /api/auth/login`（带 `platform`）→ auth 服务按平台

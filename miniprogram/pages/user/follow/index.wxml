@@ -45,14 +45,15 @@ module.exports.first = function(s) {
           <text wx:if="{{item.fansCount !== undefined}}">{{item.fansCount}} 粉丝</text>
         </view>
       </view>
-      <!-- 互关按钮：粉丝列表里如果对方也关注了我，按钮文字变"已互关" -->
+      <!-- 关注按钮三态：相互关注 / 已关注 / + 关注
+           相互关注 = 我关注对方 且 对方也关注我（互关），点一下仍是取消关注 -->
       <view
-        class="follow-btn {{item.isFollowing ? 'active' : 'inactive'}}"
+        class="follow-btn {{item.isFollowing ? (item.mutual ? 'mutual' : 'active') : 'inactive'}}"
         catchtap="toggleFollow"
         data-index="{{index}}"
         data-id="{{item.id}}"
       >
-        {{item.isFollowing ? '已关注' : '+ 关注'}}
+        {{item.isFollowing ? (item.mutual ? '相互关注' : '已关注') : '+ 关注'}}
       </view>
     </view>
   </view>

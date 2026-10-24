@@ -7,6 +7,8 @@
  *   2. 每个页面 json 是否可解析、是否显式声明 usingComponents
  *   3. tabBar 里的页面是否都在 pages 中声明
  *   4. 页面 js 是否会调用 Page()、wxml 是否为空
+ *   5. 按需注入（lazyCodeLoading）是否开启；开启后 wxml 用到的自定义标签是否都在
+ *      对应 json 的 usingComponents 里声明（漏声明会「静默不渲染」，比白屏更难查）
  */
 const fs = require('fs')
 const path = require('path')
@@ -29,6 +31,80 @@ function rel(f) {
 
 function exists(f) {
   return fs.existsSync(f)
+}
+
+/** 内置组件（含带 - 的），用于从 wxml 里筛出真正的自定义标签 */
+const BUILTIN_TAGS = new Set([
+  'view', 'text', 'image', 'button', 'input', 'textarea', 'navigator', 'block', 'template',
+  'slot', 'icon', 'label', 'form', 'picker', 'switch', 'slider', 'progress', 'rich-text',
+  'scroll-view', 'swiper', 'swiper-item', 'checkbox', 'checkbox-group', 'radio', 'radio-group',
+  'picker-view', 'picker-view-column', 'movable-area', 'movable-view', 'cover-view', 'cover-image',
+  'web-view', 'video', 'audio', 'canvas', 'map', 'camera', 'image-viewer', 'open-data', 'ad',
+  'official-account', 'functional-page-navigator', 'live-player', 'live-pusher', 'editor',
+  'match-media', 'page-container', 'page-meta', 'navigation-bar', 'root-portal', 'share-element',
+  'keyboard-accessory', 'grid-view', 'list-view', 'sticky-header', 'sticky-section',
+  'snapshot', 'channel-live', 'channel-video', 'voip-room', 'wxs', 'include', 'import'
+])
+
+/** 扫 wxml 里用到的自定义标签（去掉注释与 wxs 代码块，避免误判） */
+function collectCustomTags(wxmlFile) {
+  const src = fs.readFileSync(wxmlFile, 'utf8')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<wxs[\s\S]*?<\/wxs>/g, '')
+  const tags = new Set()
+  const re = /<([a-zA-Z][\w-]*)/g
+  let m
+  while ((m = re.exec(src))) {
+    const t = m[1]
+    if (t.indexOf('-') > 0 && !BUILTIN_TAGS.has(t)) tags.add(t)
+  }
+  return Array.from(tags)
+}
+
+/**
+ * 按需注入下，wxml 用到但 json 未声明的自定义标签会被当成未知标签：
+ * 不渲染、不报错、控制台也没有明显提示 —— 所以必须静态查出来。
+ */
+function checkRequiredComponents(app, pages) {
+  const globalUC = app.usingComponents || {}
+
+  const checkUnit = function (base) {
+    const wxml = base + '.wxml'
+    if (!exists(wxml)) return
+    const used = collectCustomTags(wxml)
+    if (!used.length) return
+    const json = base + '.json'
+    let declared = {}
+    if (exists(json)) {
+      try {
+        declared = readJson(json).usingComponents || {}
+      } catch (e) {
+        return // 解析失败已在上文报错
+      }
+    }
+    const all = Object.assign({}, globalUC, declared)
+    const missing = used.filter(function (t) { return !all[t] })
+    if (missing.length) {
+      errors.push('按需注入会静默不渲染（wxml 用了但 json 未声明）：' + rel(wxml) + ' → ' + missing.join(', '))
+    }
+  }
+
+  pages.forEach(function (p) { checkUnit(path.join(ROOT, p)) })
+  ;(app.subpackages || []).concat(app.subPackages || []).forEach(function (sp) {
+    ;(sp.pages || []).forEach(function (p) {
+      checkUnit(path.join(ROOT, sp.root, p))
+    })
+  })
+  const compDir = path.join(ROOT, 'components')
+  if (exists(compDir)) {
+    fs.readdirSync(compDir).forEach(function (d) {
+      const base = path.join(compDir, d, d)
+      if (exists(base + '.js')) checkUnit(base)
+    })
+  }
+  if (app.tabBar && app.tabBar.custom) {
+    checkUnit(path.join(ROOT, 'custom-tab-bar', 'index'))
+  }
 }
 
 function main() {
@@ -129,6 +205,13 @@ function main() {
         errors.push('custom-tab-bar/index.json 解析失败：' + e.message)
       }
     }
+  }
+
+  // 按需注入：既检查有没有开，也检查开了之后组件声明齐不齐
+  if (app.lazyCodeLoading !== 'requiredComponents') {
+    warnings.push('app.json 未开启 "lazyCodeLoading": "requiredComponents"（开发者工具「代码质量」的「启用组件按需注入」会判未通过）')
+  } else {
+    checkRequiredComponents(app, pages)
   }
 
   report(pages.length)

@@ -155,7 +155,10 @@ public class UserService {
         boolean isSelf = viewerId != null && viewerId.equals(userId);
         vo.setIsSelf(isSelf);
         // 未登录 / 本人 → false
-        vo.setFollowing(!isSelf && followService.status(viewerId, userId));
+        boolean following = !isSelf && followService.status(viewerId, userId);
+        vo.setFollowing(following);
+        // 对方是否关注我（互关判断的另一半）：只查一次 countPair，走 uk_pair 索引
+        vo.setFollowedBy(!isSelf && viewerId != null && followService.status(userId, viewerId));
         // 跨服务计数聚合：Feign 失败降级 0 + warn 日志，主页整体不 500
         vo.setGoodsSaleCount(goodsCount(userId, 1));
         vo.setGoodsTotalCount(goodsCount(userId, null));

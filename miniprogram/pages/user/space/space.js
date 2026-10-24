@@ -14,6 +14,9 @@ Page({
     userId: '',
     profile: null,
     following: false,
+    // 对方是否关注我 → 与 following 同时为 true 即「相互关注」
+    followedBy: false,
+    mutual: false,
     // post | goods，默认帖子
     tab: 'post',
     posts: [],
@@ -65,9 +68,13 @@ Page({
       if (!p) return
       // 头像走 img.resolve 统一寻址（相对路径 / 历史绝对地址都收敛到当前服务器）
       p.avatar = resolve(p.avatar)
+      const following = !!p.following
+      const followedBy = !!p.followedBy
       self.setData({
         profile: p,
-        following: !!p.following,
+        following: following,
+        followedBy: followedBy,
+        mutual: following && followedBy,
         notFound: false
       })
     }).catch(function (err) {
@@ -148,24 +155,29 @@ Page({
     const profile = this.data.profile || {}
     const prev = { following: this.data.following, fansCount: profile.fansCount || 0 }
     const next = !prev.following
+    const followedBy = !!this.data.followedBy
     this.setData({
       followLoading: true,
       following: next,
+      mutual: next && followedBy,
       'profile.fansCount': Math.max(0, prev.fansCount + (next ? 1 : -1))
     })
     followMod.toggle(this.userId, prev.following).then(function (res) {
       // 以服务端返回校正状态与粉丝数
+      const following = !!res.following
       self.setData({
         followLoading: false,
-        following: !!res.following,
+        following: following,
+        mutual: following && followedBy,
         'profile.fansCount': res.fansCount == null ? prev.fansCount : res.fansCount
       })
-      toast(next ? '已关注' : '已取消关注')
+      toast(following ? (followedBy ? '已相互关注' : '已关注') : '已取消关注')
     }).catch(function () {
       // 回滚到操作前状态
       self.setData({
         followLoading: false,
         following: prev.following,
+        mutual: prev.following && followedBy,
         'profile.fansCount': prev.fansCount
       })
       toast('操作失败，请重试')

@@ -9,7 +9,7 @@
  *  - 校园网/局域网 IP 仅供局域网联调
  */
 
-const ACTIVE_ENV = 'lan'
+const ACTIVE_ENV = 'prod'
 
 const ENVS = {
   // 本地开发（开发者工具 + 本机后端）
@@ -17,8 +17,8 @@ const ENVS = {
   // 后端已实现完整（含私信），默认 mock: false 走真实接口；
   // 只想看界面效果、不想起后端时把它改回 true 即可
   dev: {
-    scheme: 'http',
-    host: '192.168.0.102',
+    scheme: 'https',
+    host: 'campus-api.trkcwl.com',
     port: 8888,
     mock: false
   },
@@ -40,11 +40,13 @@ const ENVS = {
     port: '',
     mock: false
   },
-  // 线上环境（需 HTTPS + 已备案 + 已在后台配 downloadFile / request 合法域名）
+  // 线上环境：Nginx 443 反代到网关 8888（见 deploy/nginx-campus-api.trkcwl.com.conf）
+  // 服务器上还跑着别的项目，所以用「项目名-api」做子域名，互不干扰。
+  // 微信后台「服务器域名」需要把这个域名分别加到 request / uploadFile / downloadFile
   prod: {
     scheme: 'https',
-    host: '', // 正式域名
-    port: '',
+    host: 'campus-api.trkcwl.com',
+    port: '', // 必须走 443，小程序不接受带端口的域名
     mock: false
   }
 }

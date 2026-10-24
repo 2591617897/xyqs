@@ -2,5 +2,6 @@
   "navigationBarTitleText": "免责声明",
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#F5F6F8"
+  "backgroundColor": "#F5F6F8",
+  "usingComponents": {}
 }

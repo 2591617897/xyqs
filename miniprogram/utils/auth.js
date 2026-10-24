@@ -4,6 +4,12 @@ const http = require('./request')
 
 let pending = null
 
+/** 本次运行里用户是否拒绝过登录（拒绝后不再反复弹窗，但仍会提示原因） */
+let loginDeclined = false
+
+/** 拒绝登录后的提示节流，避免连点时刷屏 */
+let declineTipLock = false
+
 /** 本次运行里是否已经为「已认证」换回过新 token（token 里的 vs 是登录快照，可能过期） */
 let verifiedTokenReady = false
 
@@ -42,7 +48,43 @@ function doLogin() {
   })
 }
 
-/** 静默登录（已登录则直接返回缓存用户） */
+/**
+ * 询问用户是否同意微信登录。
+ *
+ * `wx.login` 本身是无感的：一旦调用就会拿到 code 并在服务端建号。
+ * 按产品要求，凡是「系统主动发起」的登录都必须先让用户确认，
+ * 明确同意了才真正调用 wx.login。
+ *
+ * @returns {Promise<boolean>} 用户是否同意
+ */
+function confirmLogin() {
+  return new Promise(function (resolve) {
+    mp.showModal({
+      title: '需要登录',
+      content: '登录后即可点赞、评论和发布内容。我们会使用你的微信身份创建账号，'
+        + '不会读取手机号或通讯录。登录即表示同意《用户协议》和《隐私政策》。',
+      confirmText: '微信登录',
+      cancelText: '先逛逛',
+      confirmColor: '#11a86b',
+      success: function (res) {
+        resolve(!!res.confirm)
+      },
+      fail: function () {
+        resolve(false)
+      }
+    })
+  })
+}
+
+/**
+ * 获取登录态。
+ *
+ * - 已有 token + 缓存用户 → 直接返回，不打扰
+ * - 否则：
+ *   - `force = true`：调用方已经获得用户明确意图（点了「一键登录」、或 404 自愈重建），
+ *     不再二次确认，直接登录
+ *   - 默认：先弹窗征求同意，用户拒绝则抛 401（`canceled: true`），绝不偷偷建号
+ */
 function ensureLogin(force) {
   const app = getApp()
   const cached = app.globalData.user || mp.getStorageSync('user')
@@ -51,8 +93,33 @@ function ensureLogin(force) {
     return Promise.resolve(cached)
   }
   if (pending) return pending
-  pending = doLogin().then(function (user) {
+
+  let start
+  if (force) {
+    start = doLogin()
+  } else if (loginDeclined) {
+    // 本次运行里已经拒绝过一次：不再弹窗打断浏览，但要说明为什么没反应
+    if (!declineTipLock) {
+      declineTipLock = true
+      toast('需要登录后才能操作，可到「我的」页登录')
+      setTimeout(function () {
+        declineTipLock = false
+      }, 1500)
+    }
+    return Promise.reject({ code: 401, msg: '用户未登录', canceled: true })
+  } else {
+    start = confirmLogin().then(function (agreed) {
+      if (!agreed) {
+        loginDeclined = true
+        throw { code: 401, msg: '用户取消登录', canceled: true }
+      }
+      return doLogin()
+    })
+  }
+
+  pending = start.then(function (user) {
     pending = null
+    loginDeclined = false
     return user
   }).catch(function (err) {
     pending = null

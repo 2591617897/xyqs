@@ -19,8 +19,8 @@
         <view class="user-school">🎓 {{profile.schoolName || '同校同学'}}</view>
         <view class="user-bio" wx:if="{{profile.bio}}">{{profile.bio}}</view>
       </view>
-      <view class="follow-btn {{following ? 'on' : ''}}" wx:if="{{!profile.isSelf}}" catchtap="onFollowTap">
-        {{following ? '已关注' : '+ 关注'}}
+      <view class="follow-btn {{following ? (mutual ? 'mutual' : 'on') : ''}}" wx:if="{{!profile.isSelf}}" catchtap="onFollowTap">
+        {{following ? (mutual ? '相互关注' : '已关注') : '+ 关注'}}
       </view>
       <view class="follow-btn ghost" wx:else catchtap="goEditProfile">编辑资料</view>
     </view>

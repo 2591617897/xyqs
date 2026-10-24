@@ -43,8 +43,14 @@ campus:
     # true：提交即视为认证通过（本地联调）；false：进入人工/接口审核
     auto-approve: ${VERIFY_AUTO_APPROVE:true}
   upload:
-    # 图片落盘目录（相对启动目录），生产建议换成对象存储
+    # 图片落盘目录（相对启动目录，IDEA/mvn 启动 = <模块目录>/uploads）。
+    # 生产建议用绝对路径并对齐 Nginx 的 /uploads/ alias，或直接换对象存储
     dir: ${UPLOAD_DIR:./uploads}
-    # 外部可访问的网关地址，用于拼图片 URL
-    base-url: ${UPLOAD_BASE_URL:http://192.168.0.102:8888}
-    max-size: ${UPLOAD_MAX_SIZE:20971520}
+    # 图片 URL 的外网前缀，**必须是用户/手机真正访问得到的地址**：
+    #   - 域名上线：https://campus-api.trkcwl.com
+    #   - 内网穿透：填穿透给的 https 域名（如 https://xxxx.cpolar.cn），
+    #     绝不能填内网 IP —— 否则写进库的图片地址手机打不开
+    base-url: ${UPLOAD_BASE_URL:https://campus-api.trkcwl.com}
+    # 单文件上限（字节）。前端 utils/upload.js 已把超过 4MB 的图压到 4MB 内，
+    # 这里放太大没有意义；且必须 ≤ Nginx 的 client_max_body_size，否则会先在 Nginx 被 413
+    max-size: ${UPLOAD_MAX_SIZE:5242880}

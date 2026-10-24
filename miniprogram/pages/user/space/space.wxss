@@ -134,6 +134,13 @@
   color: #64748b;
 }
 
+/* 相互关注：hero 是绿色渐变，用半透明白底 + 白描边，比灰底「已关注」更醒目 */
+.follow-btn.mutual {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 1rpx solid rgba(255, 255, 255, 0.65);
+}
+
 .follow-btn.ghost {
   background: #ffffff;
   color: #11a86b;

@@ -41,13 +41,27 @@ Page({
       const schoolMap = {}
       schools.forEach(function (s) { schoolMap[s.id] = s.name })
 
-      const decorate = function (list) {
-        return list.map(function (u) {
-          return Object.assign({}, u, { schoolName: u.schoolId ? (schoolMap[u.schoolId] || '') : '' })
+      /**
+       * 卡片装态：
+       * - followedMe（对方是否关注我）：粉丝列表恒为 true；关注列表取后端 followedBy
+       * - mutual（相互关注）= 我关注对方 && 对方关注我
+       * 把「对方关注我」单独记住，取消关注再回关时互关状态才能还原，
+       * 不用重拉接口（对方是否关注我并不会因为我的操作而改变）。
+       */
+      const decorate = function (list, isFansList) {
+        return (list || []).map(function (u) {
+          const following = !!u.isFollowing
+          const followedMe = isFansList ? true : !!u.followedBy
+          return Object.assign({}, u, {
+            schoolName: u.schoolId ? (schoolMap[u.schoolId] || '') : '',
+            isFollowing: following,
+            followedMe: followedMe,
+            mutual: following && followedMe
+          })
         })
       }
-      self.followingList = decorate(following)
-      self.fansList = decorate(fans)
+      self.followingList = decorate(following, false)
+      self.fansList = decorate(fans, true)
       self.applyCurrentTab()
     }).catch(function (err) {
       self.setData({ loading: false })
@@ -80,13 +94,12 @@ Page({
     mp.navigateTo({ url: '/pages/user/space/space?id=' + id })
   },
 
-  /** 关注 / 取消关注 */
+  /** 关注 / 取消关注（乐观更新 + 失败回滚 + 防重复点击） */
   toggleFollow: function (e) {
     const idx = e.currentTarget.dataset.index
     const id = e.currentTarget.dataset.id
-    const list = this.data.list
-    const item = list[idx]
-    if (!item) return
+    const item = this.data.list[idx]
+    if (!item || this.toggling) return
 
     // 不能关注自己
     const selfId = (getApp().globalData.user || {}).id
@@ -95,46 +108,43 @@ Page({
       return
     }
 
-    const wasFollowing = item.isFollowing
     const self = this
+    const wasFollowing = !!item.isFollowing
+    this.toggling = true
+
+    /**
+     * 按「我的关注状态」重算两个列表的缓存行，再套回当前 tab。
+     * 返回全新数组（不原地改 this.data.list），避免 setData 拿到同一引用被判无变化。
+     * mutual = 我关注对方 && 对方关注我（followedMe 是缓存里记住的另一半，不受本次操作影响）。
+     */
+    const applyFollowing = function (following) {
+      const patch = function (arr) {
+        return (arr || []).map(function (u) {
+          if (String(u.id) !== String(id)) return u
+          return Object.assign({}, u, {
+            isFollowing: following,
+            mutual: following && !!u.followedMe
+          })
+        })
+      }
+      self.followingList = patch(self.followingList)
+      self.fansList = patch(self.fansList)
+      self.applyCurrentTab()
+    }
 
     // 乐观更新
-    item.isFollowing = !wasFollowing
-    list[idx] = Object.assign({}, item)
-    this.setData({ list: list })
+    applyFollowing(!wasFollowing)
 
     const url = '/user/follow/' + id
     const method = wasFollowing ? 'DELETE' : 'POST'
     request({ url: url, method: method, silent: true }).then(function (resp) {
-      // 服务端确认，可能和乐观更新一致（幂等）
-      list[idx].isFollowing = resp.following
-      // 同步更新两个列表的缓存
-      if (self.followingList) {
-        const fIdx = self.followingList.findIndex(function (u) { return String(u.id) === String(id) })
-        if (fIdx >= 0) self.followingList[fIdx].isFollowing = resp.following
-      }
-      if (self.fansList) {
-        const fIdx = self.fansList.findIndex(function (u) { return String(u.id) === String(id) })
-        if (fIdx >= 0) self.fansList[fIdx].isFollowing = resp.following
-      }
-      // 更新计数
-      if (self.data.activeTab === 'following') {
-        self.setData({
-          list: list,
-          followingCount: (self.followingList || []).length,
-          fansCount: (self.fansList || []).length
-        })
-      } else {
-        self.setData({
-          list: list,
-          followingCount: (self.followingList || []).length,
-          fansCount: (self.fansList || []).length
-        })
-      }
+      // 以服务端确认结果为准（幂等，正常与乐观值一致）
+      applyFollowing(!!resp.following)
+      self.toggling = false
     }).catch(function (err) {
       // 失败回滚
-      list[idx].isFollowing = wasFollowing
-      self.setData({ list: list })
+      applyFollowing(wasFollowing)
+      self.toggling = false
       if (err && err.code !== 401) {
         toast(err.msg || '操作失败')
       }

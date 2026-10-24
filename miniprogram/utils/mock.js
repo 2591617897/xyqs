@@ -1109,6 +1109,8 @@ function profileVO(id) {
     fansCount: countFans(uid),
     followCount: countFollow(uid),
     following: !!me && !isSelf && hasFollow(me.id, uid),
+    // 对方是否关注我：与 following 同时为 true 即「相互关注」
+    followedBy: !!me && !isSelf && hasFollow(uid, me.id),
     isSelf: isSelf,
     goodsSaleCount: countGoodsByUser(uid, 1),
     goodsTotalCount: countGoodsByUser(uid, null),

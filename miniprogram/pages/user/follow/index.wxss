@@ -144,6 +144,13 @@
   color: #64748b;
   border: 1rpx solid #e2e8f0;
 }
+/* 相互关注：浅绿底 + 绿字，与「已关注」的灰底区分开（四字文案略收窄内边距） */
+.follow-btn.mutual {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1rpx solid #a7f3d0;
+  padding: 0 22rpx;
+}
 .follow-btn.inactive {
   background: linear-gradient(135deg, #10b981, #047857);
   color: #ffffff;

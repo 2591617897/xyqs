@@ -35,6 +35,9 @@ public class NotificationService {
 
     private static final int SNAPSHOT_LEN = 300;
 
+    /** 新增粉丝通知类型 */
+    private static final String TYPE_NEW_FOLLOWER = "NEW_FOLLOWER";
+
     /**
      * 发送通知（Feign 入口调用）。异步执行，任何异常只记日志不向上抛。
      * 自通知过滤（点赞自己的帖子等）：receiverId == actorId 时跳过。
@@ -47,6 +50,23 @@ public class NotificationService {
             return;
         }
         try {
+            // 「谁关注了你」是事实而不是事件流：同一个粉丝只保留一条。
+            // 否则反复关注/取关会把同一个人的通知刷成好几条（曾经出现同一人 6 条）。
+            if (TYPE_NEW_FOLLOWER.equals(req.getType()) && req.getActorId() != null) {
+                Notification exist = findFollowerNotification(req.getReceiverId(), req.getActorId());
+                if (exist != null) {
+                    if (exist.getIsRead() != null && exist.getIsRead() == 0) {
+                        // 已有未读的同类通知，无需重复提醒
+                        return;
+                    }
+                    // 之前已读：重新置为未读即可，不新增行
+                    Notification bump = new Notification();
+                    bump.setId(exist.getId());
+                    bump.setIsRead(0);
+                    notificationMapper.updateById(bump);
+                    return;
+                }
+            }
             Notification n = new Notification();
             n.setType(req.getType());
             n.setReceiverId(req.getReceiverId());
@@ -60,6 +80,16 @@ public class NotificationService {
             log.warn("[notify] send failed type={} receiverId={} targetId={}: {}",
                     req.getType(), req.getReceiverId(), req.getTargetId(), e.getMessage());
         }
+    }
+
+    /** 查该粉丝是否已经有一条「新增粉丝」通知（取最新一条） */
+    private Notification findFollowerNotification(Long receiverId, Long actorId) {
+        return notificationMapper.selectOne(Wrappers.<Notification>lambdaQuery()
+                .eq(Notification::getReceiverId, receiverId)
+                .eq(Notification::getType, TYPE_NEW_FOLLOWER)
+                .eq(Notification::getActorId, actorId)
+                .orderByDesc(Notification::getId)
+                .last("limit 1"));
     }
 
     /** 批量发送（同类型多条时用，比如一条评论 @ 了 5 个人） */

@@ -27,4 +27,10 @@ public class FollowUserVO {
 
     /** 当前登录用户是否已关注对方（列表场景） */
     private Boolean isFollowing;
+
+    /**
+     * 对方是否关注我（raw 事实，与 isFollowing 合起来可判断互关）。
+     * 前端用 isFollowing && followedBy 渲染「相互关注」。
+     */
+    private Boolean followedBy;
 }
