@@ -23,7 +23,8 @@ Page({
     comments: [],
     commentInput: '',
     commentImages: [],
-    commentFocus: false,
+    showCommentSheet: false,
+    commentSheetFocus: false,
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
@@ -52,6 +53,15 @@ Page({
 
   onUnload: function () {
     mp.setStorageSync('needRefreshWall', 1)
+  },
+
+  /** 右上角菜单 / 底部分享按钮 */
+  onShareAppMessage: function () {
+    const post = this.data.post
+    return {
+      title: post ? (post.content || '匿名心事').substring(0, 30) : '校园趣事 · 匿名心事',
+      path: '/pages/wall/detail?id=' + this.data.id
+    }
   },
 
   load: function () {
@@ -132,20 +142,31 @@ Page({
     })
   },
 
-  /* ---------- 评论输入 ---------- */
-  focusInput: function () {
-    this.setData({ commentFocus: true, showEmoji: false })
+  /* ---------- 评论抽屉 ---------- */
+  /** 点「评论」：弹出底部回复框 */
+  openCommentSheet: function () {
+    this.setData({ showCommentSheet: true, showEmoji: false, commentSheetFocus: false })
+    // 延迟一帧再聚焦，保证 false→true 跳变，WeChat 才会弹键盘
+    const self = this
+    setTimeout(function () {
+      self.setData({ commentSheetFocus: true })
+    }, 150)
   },
 
-  onInputBlur: function () {
-    this.setData({ commentFocus: false })
+  closeCommentSheet: function () {
+    this.setData({
+      showCommentSheet: false,
+      commentSheetFocus: false,
+      showEmoji: false,
+      replyTo: null
+    })
   },
 
   onCommentInput: function (e) {
     this.setData({ commentInput: e.detail.value })
   },
 
-  /** 点评论 / 回复上的「回复」：进入回复某人的状态 */
+  /** 点评论 / 回复上的「回复」：弹出抽屉并进入回复某人的状态 */
   replyComment: function (e) {
     const ds = e.currentTarget.dataset
     // 先置 false 再置 true：刚发过评论时输入框往往仍处于聚焦态，
@@ -153,17 +174,14 @@ Page({
     // 延迟一帧再聚焦，避免「点了回复却输入不了」。
     this.setData({
       replyTo: { id: ds.id, name: ds.name },
-      commentFocus: false,
-      showEmoji: false
+      showCommentSheet: true,
+      showEmoji: false,
+      commentSheetFocus: false
     })
     const self = this
     setTimeout(function () {
-      self.setData({ commentFocus: true })
+      self.setData({ commentSheetFocus: true })
     }, 150)
-  },
-
-  cancelReply: function () {
-    this.setData({ replyTo: null })
   },
 
   /** 展开 / 收起某条评论的全部回复 */
@@ -182,7 +200,7 @@ Page({
   },
 
   toggleEmoji: function () {
-    this.setData({ showEmoji: !this.data.showEmoji, commentFocus: false })
+    this.setData({ showEmoji: !this.data.showEmoji, commentSheetFocus: false })
   },
 
   addEmoji: function (e) {
@@ -206,7 +224,7 @@ Page({
         mp.showToast({ title: '暂无可@的好友', icon: 'none' })
         return
       }
-      self.setData({ mentionPickerList: filtered, showMentionPicker: true, commentFocus: false, showEmoji: false })
+      self.setData({ mentionPickerList: filtered, showMentionPicker: true, commentSheetFocus: false, showEmoji: false })
     }).catch(function () {
       mp.hideLoading()
       mp.showToast({ title: '加载失败', icon: 'none' })
@@ -216,7 +234,7 @@ Page({
   closeMentionPicker: function () {
     const self = this
     this.setData({ showMentionPicker: false, mentionPickerList: [] })
-    setTimeout(function () { self.setData({ commentFocus: true }) }, 100)
+    setTimeout(function () { self.setData({ commentSheetFocus: true }) }, 100)
   },
 
   confirmMention: function (e) {
@@ -233,7 +251,7 @@ Page({
       commentInput: next,
       showMentionPicker: false
     })
-    setTimeout(function () { self.setData({ commentFocus: true }) }, 120)
+    setTimeout(function () { self.setData({ commentSheetFocus: true }) }, 120)
   },
 
   chooseCommentImage: function () {
@@ -291,8 +309,9 @@ Page({
       self.setData({
         commentInput: '',
         commentImages: [],
+        showCommentSheet: false,
+        commentSheetFocus: false,
         showEmoji: false,
-        commentFocus: false,
         sending: false,
         replyTo: null,
         mentionUserIds: []

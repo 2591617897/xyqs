@@ -151,6 +151,9 @@ Page({
     }, 120)
   },
 
+  /* 空实现：弹层容器 catchtap 阻止冒泡，避免「无 stop 方法」告警 */
+  stop: function () {},
+
   closeCommentSheet: function () {
     this.setData({
       showCommentSheet: false,

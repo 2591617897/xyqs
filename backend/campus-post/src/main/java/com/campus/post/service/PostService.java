@@ -296,6 +296,11 @@ public class PostService {
             if (parentComment == null || !postId.equals(parentComment.getPostId())) {
                 throw new BizException("要回复的评论不存在");
             }
+            // 楼中楼只有两层：回复「子回复」时拍平挂到其顶层评论下（否则组树时永远查不到），
+            // 被回复人快照仍记目标本人，前端展示「A 回复 B」
+            if (parentComment.getParentId() != null && parentComment.getParentId() > 0) {
+                comment.setParentId(parentComment.getParentId());
+            }
             comment.setReplyToName(StringUtils.hasText(parentComment.getUserName()) ? parentComment.getUserName() : "校园用户");
         }
         comment.setContent(text);

@@ -30,17 +30,6 @@
       <text class="tag" wx:if="{{post.mine}}">我发布的</text>
       <text class="muted">仅同校可见 · 匿名展示</text>
     </view>
-
-    <view class="actions">
-      <view class="action {{post.liked ? 'liked' : ''}}" catchtap="toggleLike">
-        <text class="act-icon">{{post.liked ? '♥' : '♡'}}</text>
-        <text>{{post.likeCount ? post.likeCount : '点赞'}}</text>
-      </view>
-      <view class="action" bindtap="focusInput">
-        <text class="act-icon">💬</text>
-        <text>{{post.commentCount ? post.commentCount : '评论'}}</text>
-      </view>
-    </view>
   </view>
 
   <!-- 评论区 -->
@@ -82,7 +71,7 @@
         <!-- 楼中楼回复 -->
         <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
           <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
-            <view class="c-avatar reply-avatar {{rp.avatarClass}}">💬</view>
+          
             <view class="flex1">
               <view class="c-head">
                 <text class="c-name">{{rp.anonName}}</text>
@@ -126,9 +115,37 @@
 
   <view class="bottom-space"></view>
 
-  <!-- 底部输入栏 -->
-  <view class="comment-bar">
-    <!-- 已选图片 -->
+  <!-- 底部悬停操作栏：写评论 + 点赞 / 评论 / 分享 -->
+  <view class="bottom-bar">
+    <view class="bar-input" bindtap="openCommentSheet">
+      <text class="bar-input-icon">✏️</text>
+      <text class="bar-input-hint">写评论</text>
+    </view>
+    <view class="bar-acts">
+      <view class="bar-act {{post.liked ? 'on' : ''}}" catchtap="toggleLike">
+        <text class="bar-icon">{{post.liked ? '💗' : '🤍'}}</text>
+        <text class="bar-num">{{post.likeCount || 0}}</text>
+      </view>
+      <view class="bar-act" catchtap="openCommentSheet">
+        <text class="bar-icon">💬</text>
+        <text class="bar-num">{{post.commentCount || 0}}</text>
+      </view>
+      <button class="bar-act bar-share" open-type="share" plain style="width: 89rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
+        <text class="bar-icon">↗️</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 评论抽屉：底部半屏弹起（点「评论」或「回复」弹出） -->
+  <view class="mask pc-comment-mask" wx:if="{{showCommentSheet}}" catchtap="closeCommentSheet"></view>
+  <view class="pc-comment-sheet {{showCommentSheet ? 'on' : ''}}" catchtap="stop">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head">
+      <text class="sheet-head-title">{{replyTo ? '回复 @' + replyTo.name : '匿名评论'}}</text>
+      <text class="sheet-head-close" catchtap="closeCommentSheet">✕</text>
+    </view>
+
+    <!-- 待发送配图 -->
     <view class="pending-imgs" wx:if="{{commentImages.length}}">
       <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
         <image class="p-thumb" src="{{item}}" mode="aspectFill" />
@@ -137,31 +154,36 @@
       <text class="p-tip">最多 3 张</text>
     </view>
 
-    <!-- 回复状态条：回复某人时显示，可取消 -->
-    <view class="reply-bar" wx:if="{{replyTo}}">
-      <text class="reply-bar-text">回复 @{{replyTo.name}}</text>
-      <text class="reply-bar-cancel" catchtap="cancelReply">✕</text>
-    </view>
-
-    <view class="input-row">
-      <view class="tool" catchtap="chooseCommentImage">🖼</view>
-      <view class="tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
-      <view class="tool {{showMentionPicker ? 'on' : ''}}" catchtap="openMentionPicker">@</view>
-      <input
-        class="comment-input"
-        placeholder="{{replyTo ? '回复 ' + replyTo.name : '匿名评论，温柔一点'}}"
+    <!-- 主输入 -->
+    <view class="sheet-input-area">
+      <textarea
+        class="sheet-textarea"
+        placeholder="{{replyTo ? '回复 @' + replyTo.name + '，温柔一点…' : '匿名评论，温柔一点…'}}"
         placeholder-class="placeholder"
         value="{{commentInput}}"
-        focus="{{commentFocus}}"
+        auto-height
         maxlength="500"
+        focus="{{commentSheetFocus}}"
         confirm-type="send"
         bindinput="onCommentInput"
         bindconfirm="sendComment"
-        bindfocus="focusInput"
-        bindblur="onInputBlur"
-        adjust-position="{{true}}"
       />
-      <view class="send-btn {{commentInput || commentImages.length ? 'active' : ''}}" bindtap="sendComment">发送</view>
+      <view class="sheet-count">{{commentInput.length || 0}}/500</view>
+    </view>
+
+    <!-- 工具行 + 发布 -->
+    <view class="sheet-toolbar">
+      <view class="sheet-tools">
+        <view class="sheet-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
+        <view class="sheet-tool" catchtap="chooseCommentImage">🖼</view>
+        <view class="sheet-tool" catchtap="openMentionPicker">@</view>
+      </view>
+      <view class="sheet-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发布</view>
+    </view>
+
+    <!-- 已 @ 人员标签 -->
+    <view class="mention-tags" wx:if="{{mentionUserIds.length}}">
+      <view class="mention-tag">已 @ {{mentionUserIds.length}} 人</view>
     </view>
 
     <!-- 表情面板 -->
@@ -175,11 +197,6 @@
           data-emoji="{{item}}"
         >{{item}}</view>
       </view>
-    </view>
-
-    <!-- 已 @ 人员标签 -->
-    <view class="mention-tags" wx:if="{{mentionUserIds.length}}">
-      <view class="mention-tag">已 @ {{mentionUserIds.length}} 人</view>
     </view>
   </view>
 
