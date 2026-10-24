@@ -122,53 +122,6 @@
         <text class="cc-count">{{goods.commentCount || 0}}</text>
       </view>
 
-      <!-- 回复状态条 -->
-      <view class="reply-bar" wx:if="{{replyTo}}">
-        <text class="reply-bar-text">回复 @{{replyTo.name}}</text>
-        <text class="reply-bar-cancel" catchtap="cancelReply">✕</text>
-      </view>
-
-      <!-- 待发送配图 -->
-      <view class="pending-imgs" wx:if="{{commentImages.length}}">
-        <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
-          <image class="p-thumb" src="{{item}}" mode="aspectFill" />
-          <view class="p-del" catchtap="removeCommentImage" data-index="{{index}}">✕</view>
-        </view>
-        <text class="p-tip">最多 3 张</text>
-      </view>
-
-      <!-- 输入行 -->
-      <view class="cc-input-row">
-        <input
-          class="cc-input"
-          placeholder="{{replyTo ? '回复 ' + replyTo.name : '写下你的评论…'}}"
-          placeholder-class="placeholder"
-          value="{{commentInput}}"
-          focus="{{commentFocus}}"
-          maxlength="500"
-          confirm-type="send"
-          bindinput="onCommentInput"
-          bindconfirm="sendComment"
-          bindfocus="focusInput"
-        />
-        <view class="cc-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
-        <view class="cc-tool" catchtap="chooseCommentImage">🖼</view>
-        <view class="cc-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发送</view>
-      </view>
-
-      <!-- 表情面板 -->
-      <view class="emoji-panel" wx:if="{{showEmoji}}">
-        <view class="emoji-grid">
-          <view
-            class="emoji-item"
-            wx:for="{{emojiList}}"
-            wx:key="*this"
-            catchtap="addEmoji"
-            data-emoji="{{item}}"
-          >{{item}}</view>
-        </view>
-      </view>
-
       <!-- 评论列表 -->
       <view class="cc-list" wx:if="{{comments.length}}">
         <view class="comment-item" wx:for="{{comments}}" wx:for-index="cindex" wx:key="id">
@@ -236,6 +189,15 @@
         <text class="empty-icon">💬</text>
         <text>还没有评论，来抢沙发</text>
       </view>
+
+      <!-- 入口：点击弹出评论抽屉 -->
+      <view class="cc-entry" bindtap="openCommentSheet">
+        <text class="cc-entry-hint">{{replyTo ? '回复 @' + replyTo.name : '写评论…'}}</text>
+        <view class="cc-entry-tools">
+          <text class="cc-entry-icon">😊</text>
+          <text class="cc-entry-icon">🖼</text>
+        </view>
+      </view>
     </view>
 
     <!-- 校友问答（有真实提问数据时才展示） -->
@@ -265,6 +227,65 @@
   </view>
 
   <view class="bottom-space"></view>
+
+  <!-- 评论抽屉：底部半屏弹起 -->
+  <view class="mask comment-mask" wx:if="{{showCommentSheet}}" catchtap="closeCommentSheet"></view>
+  <view class="comment-sheet {{showCommentSheet ? 'on' : ''}}" catchtap="stop">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head">
+      <text class="sheet-head-title">{{replyTo ? '回复 @' + replyTo.name : '发表评论'}}</text>
+      <text class="sheet-head-close" catchtap="closeCommentSheet">✕</text>
+    </view>
+
+    <!-- 待发送配图 -->
+    <view class="pending-imgs" wx:if="{{commentImages.length}}">
+      <view class="p-item" wx:for="{{commentImages}}" wx:key="*this">
+        <image class="p-thumb" src="{{item}}" mode="aspectFill" />
+        <view class="p-del" catchtap="removeCommentImage" data-index="{{index}}">✕</view>
+      </view>
+      <text class="p-tip">最多 3 张</text>
+    </view>
+
+    <!-- 主输入 -->
+    <view class="sheet-input-area">
+      <textarea
+        class="sheet-textarea"
+        placeholder="{{replyTo ? '回复 ' + replyTo.name + '，说点什么…' : '说点什么，或者配张图吧…'}}"
+        placeholder-class="placeholder"
+        value="{{commentInput}}"
+        auto-height
+        maxlength="500"
+        focus="{{commentSheetFocus}}"
+        confirm-type="send"
+        bindinput="onCommentInput"
+        bindconfirm="sendComment"
+      />
+      <view class="sheet-count">{{commentInput.length || 0}}/500</view>
+    </view>
+
+    <!-- 工具行 + 发送 -->
+    <view class="sheet-toolbar">
+      <view class="sheet-tools">
+        <view class="sheet-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
+        <view class="sheet-tool" catchtap="chooseCommentImage">🖼</view>
+        <view class="sheet-tool" catchtap="insertAt">@</view>
+      </view>
+      <view class="sheet-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发布</view>
+    </view>
+
+    <!-- 表情面板 -->
+    <view class="emoji-panel" wx:if="{{showEmoji}}">
+      <view class="emoji-grid">
+        <view
+          class="emoji-item"
+          wx:for="{{emojiList}}"
+          wx:key="*this"
+          catchtap="addEmoji"
+          data-emoji="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+  </view>
 
   <!-- 底部操作栏：左侧图标动作组 + 右侧主次双按钮 -->
   <view class="bottom-bar">

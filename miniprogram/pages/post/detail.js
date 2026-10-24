@@ -22,7 +22,8 @@ Page({
     commentSort: 'default',
     commentInput: '',
     commentImages: [],
-    commentFocus: false,
+    showCommentSheet: false,
+    commentSheetFocus: false,
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
@@ -99,15 +100,11 @@ Page({
   /* ---------- 楼中楼回复 ---------- */
   replyComment: function (e) {
     const ds = e.currentTarget.dataset
-    const replyTo = { id: ds.id, name: ds.name }
-    // 先置 false 再置 true：刚发过评论时输入框往往仍处于聚焦态，
-    // 直接设 true 不会产生 false→true 跳变，WeChat 不会重新弹键盘，
-    // 表现为「点了回复却输入不了」。延迟一帧再聚焦，稳。
-    this.setData({ replyTo: replyTo, commentFocus: false, showEmoji: false })
-    const self = this
-    setTimeout(function () {
-      self.setData({ commentFocus: true })
-    }, 150)
+    this.setData({
+      replyTo: { id: ds.id, name: ds.name },
+      showEmoji: false
+    })
+    this.openCommentSheet()
   },
 
   cancelReply: function () {
@@ -137,13 +134,31 @@ Page({
     }).catch(function () {})
   },
 
-  /* ---------- 评论 ---------- */
+  /* ---------- 评论抽屉 ---------- */
   focusInput: function () {
-    this.setData({ commentFocus: true, showEmoji: false })
+    this.setData({ commentSheetFocus: true, showEmoji: false })
   },
 
-  onInputBlur: function () {
-    this.setData({ commentFocus: false })
+  openCommentSheet: function () {
+    this.setData({ showCommentSheet: true, commentSheetFocus: false, showEmoji: false })
+    const self = this
+    setTimeout(function () {
+      self.setData({ commentSheetFocus: true })
+    }, 120)
+  },
+
+  closeCommentSheet: function () {
+    this.setData({
+      showCommentSheet: false,
+      commentSheetFocus: false,
+      showEmoji: false,
+      replyTo: null
+    })
+  },
+
+  insertAt: function () {
+    const next = this.data.commentInput + '@'
+    this.setData({ commentInput: next, commentSheetFocus: true })
   },
 
   onCommentInput: function (e) {
@@ -151,7 +166,12 @@ Page({
   },
 
   toggleEmoji: function () {
-    this.setData({ showEmoji: !this.data.showEmoji, commentFocus: false })
+    const willShow = !this.data.showEmoji
+    this.setData({ showEmoji: willShow, commentSheetFocus: false })
+    if (!willShow) {
+      const self = this
+      setTimeout(function () { self.setData({ commentSheetFocus: true }) }, 100)
+    }
   },
 
   addEmoji: function (e) {
@@ -214,9 +234,10 @@ Page({
         commentInput: '',
         commentImages: [],
         showEmoji: false,
-        commentFocus: false,
         sending: false,
-        replyTo: null
+        replyTo: null,
+        showCommentSheet: false,
+        commentSheetFocus: false
       })
       self.loadComments()
       self.load()

@@ -709,6 +709,151 @@
   display: flex;
   align-items: flex-end;
 }
+
+/* 评论入口行：卡片底部的「写评论…」触发条 */
+.cc-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding: 22rpx 28rpx;
+  background: #f5f7f9;
+  border-radius: 999rpx;
+}
+.cc-entry-hint {
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+.cc-entry-tools {
+  display: flex;
+  gap: 14rpx;
+}
+.cc-entry-icon {
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+/* 评论遮罩 + 半屏抽屉 */
+.comment-mask {
+  z-index: 90;
+  background: rgba(15, 23, 42, 0.48);
+  transition: opacity 0.2s ease;
+}
+.comment-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 91;
+  max-height: 78vh;
+  background: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  transform: translateY(100%);
+  transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -12rpx 40rpx rgba(15, 23, 42, 0.08);
+}
+.comment-sheet.on {
+  transform: translateY(0);
+}
+.sheet-handle {
+  width: 72rpx;
+  height: 8rpx;
+  margin: 14rpx auto 6rpx;
+  background: #e2e8f0;
+  border-radius: 4rpx;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 28rpx 10rpx;
+}
+.sheet-head-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+.sheet-head-close {
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #94a3b8;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+
+/* 主输入：textarea + 右下角计数 */
+.sheet-input-area {
+  position: relative;
+  margin: 6rpx 24rpx 0;
+  padding: 20rpx 24rpx 40rpx;
+  background: #f8fafc;
+  border-radius: 20rpx;
+}
+.sheet-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  max-height: 360rpx;
+  font-size: 30rpx;
+  line-height: 1.55;
+  color: #0f172a;
+  background: transparent;
+  padding: 0;
+  box-sizing: border-box;
+}
+.sheet-count {
+  position: absolute;
+  right: 20rpx;
+  bottom: 10rpx;
+  font-size: 22rpx;
+  color: #cbd5e1;
+}
+
+/* 工具行 + 发布按钮 */
+.sheet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx 20rpx;
+}
+.sheet-tools {
+  display: flex;
+  gap: 20rpx;
+}
+.sheet-tool {
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  font-size: 30rpx;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: background 0.15s, color 0.15s;
+}
+.sheet-tool.on {
+  background: #edf9f3;
+  color: #047857;
+}
+.sheet-send {
+  padding: 0 40rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 999rpx;
+  background: #e2e8f0;
+  color: #94a3b8;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.sheet-send.on {
+  background: linear-gradient(135deg, #10b981, #047857);
+  color: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(16, 185, 129, 0.3);
+}
+
 .sheet {
   width: 100%;
   background: #ffffff;

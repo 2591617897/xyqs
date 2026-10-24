@@ -30,7 +30,8 @@ Page({
     comments: [],
     commentInput: '',
     commentImages: [],
-    commentFocus: false,
+    showCommentSheet: false,
+    commentSheetFocus: false,
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
@@ -322,7 +323,33 @@ Page({
   },
 
   focusInput: function () {
-    this.setData({ commentFocus: true, showEmoji: false })
+    this.setData({ commentSheetFocus: true, showEmoji: false })
+  },
+
+  openCommentSheet: function () {
+    // 先 false 再 true 让 WeChat 触发键盘弹起
+    this.setData({ showCommentSheet: true, commentSheetFocus: false, showEmoji: false })
+    const self = this
+    setTimeout(function () {
+      self.setData({ commentSheetFocus: true })
+    }, 120)
+  },
+
+  closeCommentSheet: function () {
+    this.setData({
+      showCommentSheet: false,
+      commentSheetFocus: false,
+      showEmoji: false,
+      replyTo: null
+    })
+  },
+
+  insertAt: function () {
+    const self = this
+    mp.getUserProfile ? mp.showToast({ title: '登录后可 @TA', icon: 'none' }) : null
+    const next = this.data.commentInput + '@'
+    this.setData({ commentInput: next, commentSheetFocus: true })
+    setTimeout(function () { self.setData({ commentSheetFocus: true }) }, 50)
   },
 
   onCommentInput: function (e) {
@@ -330,7 +357,16 @@ Page({
   },
 
   toggleEmoji: function () {
-    this.setData({ showEmoji: !this.data.showEmoji, commentFocus: false })
+    const willShow = !this.data.showEmoji
+    this.setData({
+      showEmoji: willShow,
+      commentSheetFocus: false
+    })
+    // 切回输入时再聚焦
+    if (!willShow) {
+      const self = this
+      setTimeout(function () { self.setData({ commentSheetFocus: true }) }, 100)
+    }
   },
 
   addEmoji: function (e) {
@@ -369,18 +405,11 @@ Page({
 
   replyComment: function (e) {
     const ds = e.currentTarget.dataset
-    // 先置 false 再置 true：刚发过评论时输入框往往仍处于聚焦态，
-    // 直接设 true 不会产生 false→true 跳变，WeChat 不会重新弹键盘。
-    // 延迟一帧再聚焦，避免「点了回复却输入不了」。
     this.setData({
       replyTo: { id: ds.id, name: ds.name },
-      commentFocus: false,
       showEmoji: false
     })
-    const self = this
-    setTimeout(function () {
-      self.setData({ commentFocus: true })
-    }, 150)
+    this.openCommentSheet()
   },
 
   cancelReply: function () {
@@ -423,9 +452,10 @@ Page({
         commentInput: '',
         commentImages: [],
         showEmoji: false,
-        commentFocus: false,
         sending: false,
-        replyTo: null
+        replyTo: null,
+        showCommentSheet: false,
+        commentSheetFocus: false
       })
       self.loadComments()
       self.load(true)
