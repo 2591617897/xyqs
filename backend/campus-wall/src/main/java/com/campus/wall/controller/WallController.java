@@ -31,6 +31,7 @@ public class WallController {
     /**
      * 表白墙列表（未登录可浏览，登录后返回点赞/本人标记）。
      * scope=school（默认）：本校；scope=city：city 指定城市（缺省取用户学校所在市）下所有高校。
+     * userId 存在：按作者过滤，只返回该作者 status=1 的表白（忽略 school/city/category 范围）。
      */
     @GetMapping
     public R<R.Page<WallPost>> page(@RequestParam(required = false, name = "schoolId") Long schoolId,
@@ -39,13 +40,18 @@ public class WallController {
                                     @RequestParam(required = false, name = "sort") String sort,
                                     @RequestParam(required = false, name = "category") String category,
                                     @RequestParam(required = false, name = "scope") String scope,
-                                    @RequestParam(required = false, name = "city") String city) {
+                                    @RequestParam(required = false, name = "city") String city,
+                                    @RequestParam(required = false, name = "userId") Long userId) {
+        Long viewerId = UserContext.userId();
+        if (userId != null) {
+            return R.ok(wallService.pageByUser(userId, viewerId, page, size));
+        }
         Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
         if ("city".equalsIgnoreCase(scope)) {
             String targetCity = city != null && !city.isBlank() ? city : wallService.cityOfSchool(schoolScope);
-            return R.ok(wallService.pageByCity(targetCity, UserContext.userId(), page, size, sort, category));
+            return R.ok(wallService.pageByCity(targetCity, viewerId, page, size, sort, category));
         }
-        return R.ok(wallService.page(schoolScope, UserContext.userId(), page, size, sort, category));
+        return R.ok(wallService.page(schoolScope, viewerId, page, size, sort, category));
     }
 
     @PostMapping

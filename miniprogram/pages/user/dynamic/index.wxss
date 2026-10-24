@@ -1,0 +1,187 @@
+/* ===== 我的动态 · 时间线页 ===== */
+.page {
+  min-height: 100vh;
+  background: #f7f9fb;
+  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
+}
+
+/* ---------- 统计条 ---------- */
+.stat-bar {
+  display: flex;
+  background: #ffffff;
+  padding: 28rpx 0;
+  margin-bottom: 16rpx;
+  border-bottom: 1rpx solid #eef2f6;
+}
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+.stat-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+.stat-label {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+/* ---------- 空状态 ---------- */
+.empty {
+  padding: 180rpx 60rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+.empty-icon {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64rpx;
+}
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+.empty-desc {
+  font-size: 26rpx;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.loading {
+  padding: 120rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+/* ---------- 时间线 ---------- */
+.timeline {
+  padding: 16rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.t-card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(15, 23, 42, 0.04);
+}
+
+.tc-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+  flex-wrap: wrap;
+}
+.tc-type-badge {
+  height: 40rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tc-type-badge.post {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.tc-type-badge.wall {
+  background: #fce7f3;
+  color: #be185d;
+}
+.tc-channel {
+  font-size: 22rpx;
+  color: #64748b;
+  padding: 0 16rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  background: #f1f5f9;
+  border-radius: 6rpx;
+}
+.tc-wall-label {
+  font-size: 22rpx;
+  color: #94a3b8;
+  font-style: italic;
+}
+.tc-time {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.tc-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-content {
+  font-size: 28rpx;
+  color: #334155;
+  line-height: 1.6;
+  max-height: 160rpx;
+  overflow: hidden;
+}
+
+.tc-images {
+  margin-top: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8rpx;
+}
+.tc-img {
+  width: 100%;
+  height: 200rpx;
+  border-radius: 12rpx;
+  background: #f1f5f9;
+}
+.tc-images image:first-child:nth-last-child(1) {
+  grid-column: span 2;
+  grid-row: span 2;
+  height: 408rpx;
+}
+.tc-images image:first-child:nth-last-child(2) {
+  grid-column: span 2;
+}
+
+.tc-foot {
+  margin-top: 18rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+.tc-foot-right {
+  margin-left: auto;
+}
+.tc-off-shelf {
+  font-size: 22rpx;
+  color: #f97316;
+  background: #fff7ed;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+}

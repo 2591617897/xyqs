@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
+import com.campus.common.client.FollowClient;
+import com.campus.common.client.NotificationClient;
 import com.campus.common.client.UserClient;
+import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
@@ -44,6 +47,8 @@ public class PostService {
     private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
+    private final FollowClient followClient;
+    private final NotificationClient notificationClient;
 
     public List<Channel> channels(Long schoolId) {
         LambdaQueryWrapper<Channel> w = Wrappers.lambdaQuery();
@@ -219,7 +224,27 @@ public class PostService {
         like.setUserId(userId);
         likeMapper.insert(like);
         postMapper.incrLike(postId, 1);
+        // 点赞通知：跳过自赞
+        tryNotifyLikePost(post, userId);
         return true;
+    }
+
+    /** 点赞帖子后异步发通知，失败不阻塞主事务 */
+    private void tryNotifyLikePost(Post post, Long actorId) {
+        Long receiverId = post.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("LIKE_POST");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("POST");
+            req.setTargetId(post.getId());
+            req.setContentSnapshot(post.getTitle());
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] likePost failed postId={} actorId={}: {}", post.getId(), actorId, e.getMessage());
+        }
     }
 
     public List<PostComment> comments(Long postId, Long userId) {
@@ -249,7 +274,7 @@ public class PostService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long addComment(Long postId, String content, List<String> images, Long parentId) {
+    public Long addComment(Long postId, String content, List<String> images, Long parentId, List<Long> mentionUserIds) {
         Long userId = UserContext.requireVerifiedUserId();
         Post post = postMapper.selectById(postId);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
@@ -289,7 +314,58 @@ public class PostService {
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(imgs));
+        // 评论通知：通知原帖作者（跳过自评）
+        tryNotifyCommentPost(post, userId, text);
+        // @ 通知：只能 @ 评论者已关注的人（后端强校验 + 批量发）
+        tryNotifyMention(userId, mentionUserIds, "POST", post.getId(), text);
         return comment.getId();
+    }
+
+    /** 通用 @ 通知：批量校验 + 发 MENTION 通知。校验合法的才发，失败不阻塞主事务 */
+    private void tryNotifyMention(Long actorId, List<Long> mentionIds, String targetType, Long targetId, String content) {
+        if (mentionIds == null || mentionIds.isEmpty()) return;
+        // 过滤掉自己（@ 自己没意义）
+        List<Long> toValidate = mentionIds.stream().filter(id -> !id.equals(actorId)).toList();
+        if (toValidate.isEmpty()) return;
+        try {
+            // 后端强校验：只能 @ 评论者已关注的人
+            R<List<Long>> res = followClient.check(actorId, toValidate);
+            if (res == null || res.getData() == null || res.getData().isEmpty()) return;
+            for (Long mentionedId : res.getData()) {
+                try {
+                    NotifyReq req = new NotifyReq();
+                    req.setType("MENTION");
+                    req.setReceiverId(mentionedId);
+                    req.setActorId(actorId);
+                    req.setTargetType(targetType);
+                    req.setTargetId(targetId);
+                    req.setContentSnapshot(content);
+                    notificationClient.send(req);
+                } catch (Exception e) {
+                    log.warn("[notify] mentionPost failed receiverId={}: {}", mentionedId, e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[notify] mentionPost check failed actorId={}: {}", actorId, e.getMessage());
+        }
+    }
+
+    /** 评论帖子后通知原帖作者（跳过自评自） */
+    private void tryNotifyCommentPost(Post post, Long actorId, String content) {
+        Long receiverId = post.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("COMMENT_POST");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("POST");
+            req.setTargetId(post.getId());
+            req.setContentSnapshot(content);
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] commentPost failed postId={}: {}", post.getId(), e.getMessage());
+        }
     }
 
     /** 删除自己的评论（删顶层评论时级联删除其下回复） */

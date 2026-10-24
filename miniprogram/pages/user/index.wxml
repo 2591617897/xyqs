@@ -43,7 +43,7 @@
         <view class="stat-num">{{user.soldCount || 0}}</view>
         <view class="stat-label">已卖出</view>
       </view>
-      <view class="stat" bindtap="demoEntry" data-name="我的动态">
+      <view class="stat" bindtap="goMyDynamic">
         <view class="stat-num">{{user.postCount || 0}}</view>
         <view class="stat-label">我的动态</view>
       </view>
@@ -76,9 +76,9 @@
   <view class="section">
     <view class="section-head">
       <view class="section-bar"></view>
-      <text class="section-title">我的交易</text>
+      <text class="section-title">闲置</text>
       <view class="flex1"></view>
-      <text class="section-more" bindtap="openOrders">全部订单 ›</text>
+      <text class="section-more" bindtap="openOrders">全部记录 ›</text>
     </view>
     <view class="grid4">
       <view class="grid-item" bindtap="openOrders">
@@ -93,7 +93,7 @@
       </view>
       <view class="grid-item" bindtap="goMyGoods">
         <view class="grid-icon gi-gray">📦</view>
-        <view class="grid-label">在售闲置</view>
+        <view class="grid-label">我的闲置</view>
         <view class="grid-sub">{{user.activeCount || 0}} 件</view>
       </view>
       <view class="grid-item" bindtap="openOrders">

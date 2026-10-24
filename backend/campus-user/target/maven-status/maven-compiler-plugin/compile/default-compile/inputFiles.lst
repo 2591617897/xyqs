@@ -3,6 +3,7 @@ F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\client\PostCou
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\client\WallCountClient.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\config\WebConfig.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\FollowController.java
+F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\InternalFollowController.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\InternalUserController.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\UploadController.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\controller\UserController.java

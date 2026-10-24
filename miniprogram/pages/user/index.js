@@ -215,6 +215,14 @@ Page({
     mp.navigateTo({ url: '/pages/user/follow/index?tab=following' })
   },
 
+  /**
+   * 「我的动态」入口：帖子 + 表白墙合并时间线。
+   */
+  goMyDynamic: function () {
+    if (!this.guard()) return
+    mp.navigateTo({ url: '/pages/user/dynamic/index' })
+  },
+
   openOrders: function () {
     if (!this.guard()) return
     this.setData({ showOrders: true })

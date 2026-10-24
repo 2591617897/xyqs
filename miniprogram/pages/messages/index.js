@@ -32,20 +32,31 @@ Page({
   load: function () {
     const self = this
     this.setData({ loading: true })
-    http.get('/messages', null, { silent: true }).then(function (res) {
+    // 并行拉会话列表 + 通知未读统计
+    const convosPromise = http.get('/messages', null, { silent: true }).catch(function () { return {} })
+    const notifyPromise = http.get('/messages/notifications/unread', null, { silent: true }).catch(function () { return null })
+    Promise.all([convosPromise, notifyPromise]).then(function (results) {
+      const res = results[0] || {}
+      const unread = results[1] || {}
       const all = (res.convos || []).map(function (c) {
         c.timeText = shortTime(c.lastTime)
         c.id = String(c.id)
         return c
       })
+      // 映射通知未读 → summary badge
+      const summary = Object.assign({}, self.data.summary, res.summary || {}, {
+        likes: unread.like || 0,
+        followers: unread.follow || 0,
+        mentions: (unread.commentPost || 0) + (unread.commentWall || 0) + (unread.mention || 0),
+        notice: unread.system || 0,
+        system: unread.system || 0
+      })
       self.setData({
-        summary: res.summary || self.data.summary,
+        summary: summary,
         allConvos: all,
         loading: false
       })
       self.applyFilter()
-    }).catch(function () {
-      self.setData({ loading: false })
     })
   },
 
@@ -85,9 +96,53 @@ Page({
     this.setData({ showTip: false })
   },
 
-  /** 快捷入口（赞与收藏等）：演示占位 */
+  /** 快捷入口：点分类 badge 弹通知抽屉 */
   onQuick: function (e) {
-    mp.showToast({ title: '「' + e.currentTarget.dataset.name + '」即将上线', icon: 'none' })
+    const self = this
+    const name = e.currentTarget.dataset.name
+    const typeMap = {
+      '赞与收藏': ['LIKE_GOODS', 'LIKE_POST', 'LIKE_WALL'],
+      '新增粉丝': ['NEW_FOLLOWER'],
+      '评论与@': ['COMMENT_POST', 'COMMENT_WALL', 'MENTION'],
+      '官方通知': ['SYSTEM']
+    }
+    const types = typeMap[name] || []
+    this.setData({ notifyDrawerTitle: name, notifyDrawerLoading: true, notifyDrawerItems: [] })
+    mp.showModal({
+      title: name,
+      content: '点击查看完整通知列表',
+      success: function (res) {
+        // 简单实现：弹 action-sheet 让用户选
+        mp.showActionSheet({
+          itemList: ['查看全部通知', '标为已读'],
+          success: function (r) {
+            if (r.tapIndex === 0) {
+              self.fetchAndShowNotifyList(types)
+            } else if (r.tapIndex === 1) {
+              // 批量标记已读：对每个 type 分别调 /read/{type}
+              const m = Promise.all(types.map(function (t) {
+                return http.post('/messages/notifications/read/' + t, null, { silent: true })
+              }))
+              m.then(function () {
+                mp.showToast({ title: '已标记已读', icon: 'none' })
+                self.load()
+              })
+            }
+          }
+        })
+      }
+    })
+  },
+
+  /** 拉取该类通知并在控制台打印（临时验证后端通路，后续改成 bottom-sheet 渲染） */
+  fetchAndShowNotifyList: function (types) {
+    const self = this
+    // 先拉全部类型，前端 filter
+    http.get('/messages/notifications?size=20', null, { silent: true }).then(function (res) {
+      const items = (res.records || []).filter(function (n) { return types.indexOf(n.type) >= 0 })
+      console.log('[notify] ' + types.join(',') + ' count=' + items.length, items)
+      mp.showToast({ title: name + ' ' + items.length + ' 条', icon: 'none' })
+    })
   },
 
   markAllRead: function () {

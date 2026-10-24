@@ -18,4 +18,10 @@ public class CommentReq {
 
     /** 回复的父评论 id，空 / 0 表示直接评论 */
     private Long parentId;
+
+    /**
+     * 评论中 @ 的用户 id 列表。
+     * 后端强校验：只能 @ 当前评论者已关注的人。
+     */
+    private List<Long> mentionUserIds;
 }

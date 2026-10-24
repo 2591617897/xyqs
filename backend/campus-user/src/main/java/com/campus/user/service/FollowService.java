@@ -1,6 +1,8 @@
 package com.campus.user.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.campus.common.client.NotificationClient;
+import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.exception.BizException;
 import com.campus.user.dto.FollowResp;
 import com.campus.user.dto.FollowUserVO;
@@ -31,6 +33,7 @@ public class FollowService {
 
     private final FollowMapper followMapper;
     private final UserMapper userMapper;
+    private final NotificationClient notificationClient;
 
     /**
      * 关注。幂等：已关注直接返回成功，不重复计数。
@@ -67,11 +70,27 @@ public class FollowService {
             }
             userMapper.incrFans(followeeId, 1);
             userMapper.incrFollow(followerId, 1);
+            tryNotifyNewFollower(followerId, followeeId);
         }
         FollowResp resp = new FollowResp();
         resp.setFollowing(true);
         resp.setFansCount(fansCountOf(followeeId));
         return resp;
+    }
+
+    /** 新关注关系建立后通知被关注者（跳过自关注，上面已拦截 followerId==followeeId） */
+    private void tryNotifyNewFollower(Long followerId, Long followeeId) {
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("NEW_FOLLOWER");
+            req.setReceiverId(followeeId);
+            req.setActorId(followerId);
+            req.setTargetType("FOCUS");
+            req.setTargetId(followeeId);
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] newFollower failed followerId={} followeeId={}: {}", followerId, followeeId, e.getMessage());
+        }
     }
 
     /**

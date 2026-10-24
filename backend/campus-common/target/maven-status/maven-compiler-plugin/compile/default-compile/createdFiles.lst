@@ -1,4 +1,7 @@
 com\campus\common\mybatis\MybatisPlusConfig.class
+com\campus\common\client\dto\NotifyReq.class
+com\campus\common\client\NotificationClient.class
+com\campus\common\client\FollowClient.class
 com\campus\common\security\UserContext.class
 com\campus\common\client\dto\LoginOrCreateReq.class
 com\campus\common\exception\GlobalExceptionHandler.class

@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
+import com.campus.common.client.FollowClient;
+import com.campus.common.client.NotificationClient;
+import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
 import com.campus.common.social.Like;
@@ -16,6 +19,7 @@ import com.campus.wall.mapper.WallCommentMapper;
 import com.campus.wall.mapper.WallPostMapper;
 import com.campus.wall.mapper.SchoolRegionMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WallService {
@@ -38,6 +43,8 @@ public class WallService {
     private final WallCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
+    private final FollowClient followClient;
+    private final NotificationClient notificationClient;
 
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size) {
         return page(schoolId, userId, page, size, null, null);
@@ -63,6 +70,24 @@ public class WallService {
                 .eq(WallPost::getStatus, 1)
                 .eq(StringUtils.hasText(category), WallPost::getCategory, category));
         return cnt == null ? 0 : cnt;
+    }
+
+    /**
+     * 按作者分页（个人主页 / 我的动态）。
+     * 只返回 status=1 已发布，按 createdAt 倒序。
+     */
+    public R.Page<WallPost> pageByUser(Long userId, Long viewerId, long page, long size) {
+        Page<WallPost> p = postMapper.selectPage(new Page<>(page, size),
+                Wrappers.<WallPost>lambdaQuery()
+                        .eq(WallPost::getUserId, userId)
+                        .eq(WallPost::getStatus, 1)
+                        .orderByDesc(WallPost::getCreatedAt));
+        Set<Long> liked = likedIds(p.getRecords().stream().map(WallPost::getId).toList(), viewerId);
+        p.getRecords().forEach(post -> {
+            decorate(post, viewerId);
+            post.setLiked(liked.contains(post.getId()));
+        });
+        return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
     /** 市域范围：同一城市所有高校的表白 */
@@ -154,7 +179,25 @@ public class WallService {
         like.setUserId(userId);
         likeMapper.insert(like);
         postMapper.incrLike(postId, 1);
+        tryNotifyLikeWall(post, userId);
         return true;
+    }
+
+    private void tryNotifyLikeWall(WallPost post, Long actorId) {
+        Long receiverId = post.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("LIKE_WALL");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("WALL");
+            req.setTargetId(post.getId());
+            req.setContentSnapshot(post.getContent());
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] likeWall failed postId={}: {}", post.getId(), e.getMessage());
+        }
     }
 
     public List<WallComment> comments(Long postId, Long userId) {
@@ -217,7 +260,53 @@ public class WallService {
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(images));
+        tryNotifyCommentWall(post, userId, content);
+        tryNotifyMention(userId, req.getMentionUserIds(), "WALL", post.getId(), content);
         return comment.getId();
+    }
+
+    /** 通用 @ 通知，复用 Wall 的场景 */
+    private void tryNotifyMention(Long actorId, java.util.List<Long> mentionIds, String targetType, Long targetId, String content) {
+        if (mentionIds == null || mentionIds.isEmpty()) return;
+        java.util.List<Long> toValidate = mentionIds.stream().filter(id -> !id.equals(actorId)).toList();
+        if (toValidate.isEmpty()) return;
+        try {
+            R<java.util.List<Long>> res = followClient.check(actorId, toValidate);
+            if (res == null || res.getData() == null || res.getData().isEmpty()) return;
+            for (Long mentionedId : res.getData()) {
+                try {
+                    NotifyReq req = new NotifyReq();
+                    req.setType("MENTION");
+                    req.setReceiverId(mentionedId);
+                    req.setActorId(actorId);
+                    req.setTargetType(targetType);
+                    req.setTargetId(targetId);
+                    req.setContentSnapshot(content);
+                    notificationClient.send(req);
+                } catch (Exception e) {
+                    log.warn("[notify] mentionWall failed receiverId={}: {}", mentionedId, e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[notify] mentionWall check failed actorId={}: {}", actorId, e.getMessage());
+        }
+    }
+
+    private void tryNotifyCommentWall(WallPost post, Long actorId, String content) {
+        Long receiverId = post.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("COMMENT_WALL");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("WALL");
+            req.setTargetId(post.getId());
+            req.setContentSnapshot(content);
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] commentWall failed postId={}: {}", post.getId(), e.getMessage());
+        }
     }
 
     /**

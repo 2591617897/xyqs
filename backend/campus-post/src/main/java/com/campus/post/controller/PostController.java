@@ -97,7 +97,7 @@ public class PostController {
 
     @PostMapping("/posts/{id}/comments")
     public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid ContentReq req) {
-        return R.ok(postService.addComment(id, req.getContent(), req.getImages(), req.getParentId()));
+        return R.ok(postService.addComment(id, req.getContent(), req.getImages(), req.getParentId(), req.getMentionUserIds()));
     }
 
     /** 删除自己的评论 */
@@ -119,5 +119,8 @@ public class PostController {
 
         /** 回复的父评论 id，空 / 0 表示直接评论 */
         private Long parentId;
+
+        /** 评论中 @ 的用户 id 列表，后端强校验必须是评论者已关注的人 */
+        private List<Long> mentionUserIds;
     }
 }

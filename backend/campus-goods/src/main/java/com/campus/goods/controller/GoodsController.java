@@ -131,7 +131,7 @@ public class GoodsController {
     /** 发表评论 / 回复 */
     @PostMapping("/{id}/comments")
     public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid CommentReq req) {
-        return R.ok(goodsService.addComment(id, req.getContent(), req.getImages(), req.getParentId()));
+        return R.ok(goodsService.addComment(id, req.getContent(), req.getImages(), req.getParentId(), req.getMentionUserIds()));
     }
 
     /** 删除自己的评论 */
@@ -153,5 +153,8 @@ public class GoodsController {
 
         /** 回复的父评论 id，空 / 0 表示直接评论 */
         private Long parentId;
+
+        /** 评论中 @ 的用户 id 列表，后端强校验必须是评论者已关注的人 */
+        private List<Long> mentionUserIds;
     }
 }

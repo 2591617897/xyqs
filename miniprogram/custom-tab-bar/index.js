@@ -12,9 +12,9 @@ Component({
     hidden: false,
     list: [
       { key: 'home', pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
-      { key: 'goods', pagePath: '/pages/goods/list', text: '二手闲置', icon: '🏷️' },
+      { key: 'goods', pagePath: '/pages/goods/list', text: '闲置', icon: '🏷️' },
       { key: 'plus', pagePath: '', text: '', icon: '', plus: true },
-      { key: 'wall', pagePath: '/pages/wall/index', text: '表白墙', icon: '💌' },
+      { key: 'wall', pagePath: '/pages/wall/index', text: '我想说', icon: '💌' },
       { key: 'mine', pagePath: '/pages/user/index', text: '我的', icon: '👤' }
     ]
   },

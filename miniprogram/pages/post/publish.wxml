@@ -13,7 +13,7 @@
   </view>
 
   <view class="card">
-    <input
+    <input style="height: 100rpx; display: block; box-sizing: border-box; left: 0rpx; top: 0rpx"
       class="title-input"
       placeholder="标题：紫金港食堂测评，这 5 个窗口闭眼入"
       placeholder-class="placeholder"
@@ -22,7 +22,7 @@
       data-field="title"
       bindinput="onInput"
     />
-    <textarea
+    <textarea style="position: relative; left: 0rpx; top: 7rpx; height: 407rpx; display: block; box-sizing: border-box"
       class="textarea content-input"
       placeholder="分享你的校园见闻、攻略或吐槽…"
       placeholder-class="placeholder"

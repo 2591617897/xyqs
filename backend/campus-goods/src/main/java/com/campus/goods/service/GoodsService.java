@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
+import com.campus.common.client.FollowClient;
+import com.campus.common.client.NotificationClient;
 import com.campus.common.client.UserClient;
+import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
@@ -54,6 +57,8 @@ public class GoodsService {
     private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
+    private final FollowClient followClient;
+    private final NotificationClient notificationClient;
 
     public List<CategoryVO> categories() {
         return CATEGORIES;
@@ -225,7 +230,25 @@ public class GoodsService {
         like.setUserId(userId);
         likeMapper.insert(like);
         goodsMapper.incrLike(goodsId, 1);
+        tryNotifyLikeGoods(goods, userId);
         return true;
+    }
+
+    private void tryNotifyLikeGoods(Goods goods, Long actorId) {
+        Long receiverId = goods.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("LIKE_GOODS");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("GOODS");
+            req.setTargetId(goods.getId());
+            req.setContentSnapshot(goods.getTitle());
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] likeGoods failed goodsId={}: {}", goods.getId(), e.getMessage());
+        }
     }
 
     /* ================= 评论（含楼中楼回复） ================= */
@@ -258,7 +281,7 @@ public class GoodsService {
 
     /** 发表评论 / 回复（parentId>0 时为楼中楼回复） */
     @Transactional(rollbackFor = Exception.class)
-    public Long addComment(Long goodsId, String content, List<String> images, Long parentId) {
+    public Long addComment(Long goodsId, String content, List<String> images, Long parentId, List<Long> mentionUserIds) {
         Long userId = UserContext.requireVerifiedUserId();
         Goods goods = goodsMapper.selectById(goodsId);
         if (goods == null) {
@@ -301,7 +324,53 @@ public class GoodsService {
         goodsMapper.incrComment(goodsId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(imgs));
+        tryNotifyCommentGoods(goods, userId, text);
+        tryNotifyMention(userId, mentionUserIds, "GOODS", goodsId, text);
         return comment.getId();
+    }
+
+    /** 通用 @ 通知（Goods 场景） */
+    private void tryNotifyMention(Long actorId, List<Long> mentionIds, String targetType, Long targetId, String content) {
+        if (mentionIds == null || mentionIds.isEmpty()) return;
+        List<Long> toValidate = mentionIds.stream().filter(id -> !id.equals(actorId)).toList();
+        if (toValidate.isEmpty()) return;
+        try {
+            R<List<Long>> res = followClient.check(actorId, toValidate);
+            if (res == null || res.getData() == null || res.getData().isEmpty()) return;
+            for (Long mentionedId : res.getData()) {
+                try {
+                    NotifyReq req = new NotifyReq();
+                    req.setType("MENTION");
+                    req.setReceiverId(mentionedId);
+                    req.setActorId(actorId);
+                    req.setTargetType(targetType);
+                    req.setTargetId(targetId);
+                    req.setContentSnapshot(content);
+                    notificationClient.send(req);
+                } catch (Exception e) {
+                    log.warn("[notify] mentionGoods failed receiverId={}: {}", mentionedId, e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[notify] mentionGoods check failed actorId={}: {}", actorId, e.getMessage());
+        }
+    }
+
+    private void tryNotifyCommentGoods(Goods goods, Long actorId, String content) {
+        Long receiverId = goods.getUserId();
+        if (receiverId == null || receiverId.equals(actorId)) return;
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("COMMENT_GOODS");
+            req.setReceiverId(receiverId);
+            req.setActorId(actorId);
+            req.setTargetType("GOODS");
+            req.setTargetId(goods.getId());
+            req.setContentSnapshot(content);
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[notify] commentGoods failed goodsId={}: {}", goods.getId(), e.getMessage());
+        }
     }
 
     /** 删除自己的评论（删顶层评论时级联删除其下回复） */
