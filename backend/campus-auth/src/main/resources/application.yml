@@ -36,8 +36,10 @@ campus:
     secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
     expire-hours: 168
   auth:
-    # 本地没有小程序 appid 时开启 mock：用 code / devOpenid 直接生成 openid
-    mock: ${AUTH_MOCK:true}
+    # mock=true 时不会调用微信 code2Session，而是直接用请求里的 devOpenid（或按 code 哈希）
+    # 当 openid —— 所有宿主账号会落到同一个用户，**只能本地单人演示**。
+    # 默认关闭（AUTH_MOCK=false），否则多个微信登录会变成同一个账号。
+    mock: ${AUTH_MOCK:false}
   geo:
     # 腾讯位置服务 key（小程序定位后逆地理出城市）。
     # 注意：key 需在腾讯位置服务控制台「key 设置」中勾选开通 WebServiceAPI，
@@ -45,8 +47,9 @@ campus:
     # 前端自动回退到「学校所在市」。申请/管理：https://lbs.qq.com/
     qqmap-key: ${QQMAP_KEY:R3GBZ-74NLJ-FULFO-DWKJE-QVEY5-SPBJ2}
   wx:
-    # 微信小程序（当前主端）
-    appid: ${WX_APPID:}
+    # 微信小程序（当前主端）。appid 与 project.config.json 保持一致；
+    # appsecret 必须由环境变量 WX_APPSECRET 提供（不要写进仓库）。
+    appid: ${WX_APPID:wx2cac838bfcc963d7}
     appsecret: ${WX_APPSECRET:}
   qq:
     # QQ 小程序（保留兼容，需要时填上即可）

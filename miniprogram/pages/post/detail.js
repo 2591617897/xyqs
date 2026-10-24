@@ -40,6 +40,18 @@ Page({
     this.loadComments()
   },
 
+  /** 底部分享按钮 / 右上角菜单转发 */
+  onShareAppMessage: function () {
+    const post = this.data.post
+    const title = post
+      ? (post.title || (post.content || '校园趣事').substring(0, 30))
+      : '校园趣事'
+    return {
+      title: title,
+      path: '/pages/post/detail?id=' + this.postId
+    }
+  },
+
   load: function () {
     const self = this
     http.get('/posts/' + this.postId, null, { silent: true }).then(function (post) {
@@ -319,9 +331,21 @@ Page({
     })
   },
 
-  previewCommentImage: function (e) {
-    const url = e.currentTarget.dataset.url
-    mp.previewImage({ current: url, urls: [url] })
+  previewComment: function (e) {
+    const ds = e.currentTarget.dataset
+    const comment = this.data.comments[ds.pindex]
+    if (!comment) return
+    // 楼中楼图片优先用该条回复自己的图集（带 rindex），否则用主评论图集
+    let urls = comment.imageList || []
+    if (ds.rindex !== undefined) {
+      const reply = (comment.repliesShown || [])[ds.rindex]
+      if (reply && reply.imageList && reply.imageList.length) urls = reply.imageList
+    }
+    if (!urls.length) {
+      mp.previewImage({ current: ds.url, urls: [ds.url] })
+      return
+    }
+    mp.previewImage({ current: ds.url, urls: urls })
   },
 
   /* ---------- 自己的帖子：编辑 / 删除 ---------- */

@@ -1,0 +1,46 @@
+<view class="ob-mask" wx:if="{{show}}" bindtap="onSkip">
+  <view class="ob-sheet" catchtap="noop">
+    <view class="ob-head">
+      <view class="ob-title">你在哪所学校？</view>
+      <view class="ob-sub">选好后，首页 / 表白墙 / 二手默认只看本校内容</view>
+    </view>
+
+    <view class="ob-search">
+      <text class="ob-search-icon">🔍</text>
+      <input
+        class="ob-search-input"
+        value="{{keyword}}"
+        placeholder="搜索学校名或城市"
+        placeholder-class="ob-search-ph"
+        confirm-type="search"
+        bindinput="onKeyword"
+      />
+    </view>
+
+    <scroll-view class="ob-list" scroll-y>
+      <view
+        class="ob-item {{pickedId === item._key ? 'on' : ''}}"
+        wx:for="{{filtered}}"
+        wx:key="_key"
+        data-id="{{item._key}}"
+        bindtap="onPick"
+      >
+        <view class="ob-item-main">
+          <view class="ob-item-name">{{item.name}}</view>
+          <view class="ob-item-city" wx:if="{{item.city}}">{{item.city}}</view>
+        </view>
+        <view class="ob-item-check" wx:if="{{pickedId === item._key}}">
+          {{saving ? '提交中…' : '✓'}}
+        </view>
+      </view>
+
+      <view class="ob-empty" wx:if="{{loading}}">加载学校列表中…</view>
+      <view class="ob-empty" wx:elif="{{!filtered.length}}">
+        {{schools.length ? '没有匹配的学校，换个关键词试试' : '暂未配置学校，请稍后再试'}}
+      </view>
+    </scroll-view>
+
+    <view class="ob-skip" bindtap="onSkip">暂不选择</view>
+    <view class="ob-tip">以后可在「我的 → 学籍认证」里更换学校</view>
+  </view>
+</view>

@@ -129,3 +129,25 @@
   - **插槽里的 `catchtap` 属父组件作用域**（组件内 `onActionTap` 不触发）→ 父组件按钮直接 `catchtap` 父方法
 - **聊天页只有「我发的」消息可左滑撤回**，对方消息走 `wx:else` 普通渲染（无左滑）
 - 消息中心筛选改**本地过滤**（`allConvos` 全量缓存），不再每次筛选都打接口
+
+## 登录 / 游客浏览 / 新用户引导（2026-10-24 交付）
+- **游客可浏览是设计**：网关 `AuthGlobalFilter` 白名单 `/api/auth/`、`/api/schools`、`/uploads`；
+  公开读 = `GET` + 前缀 `/api/goods`、`/api/wall`、`/api/posts`、`/api/channels`
+  （排除含 `/mine`、`/orders`、`/favorite`）+ 精确 `GET /api/user/{id}/profile`。其余需 JWT
+- **前端没有启动即登录**：`app.js onLaunch` 只读缓存；`auth.ensureLogin()` 只在交互点触发
+  （点赞/关注/评论/发布/我的/认证，共 12 处）。`wx.login` 静默无授权弹窗；
+  `getUserInfo/getUserProfile` 静默授权已废弃，头像昵称必须 `chooseAvatar` + `input type=nickname`
+- **建号默认值**：`UserService.loginOrCreate` → 昵称「校园用户XXXX」、`schoolId=null`、`verifyStatus=0`
+- **`schoolId` 为 null 会让「本校」筛选失效**：列表服务写的是
+  `.eq(schoolId != null, Post::getSchoolId, schoolId)`，为空时**不加过滤** → 看到全站内容。
+  任何新增列表过滤都要注意这个退化分支
+- **`PUT /user/me` 的 `schoolId` 只给未认证用户用**（新用户引导）：`verifyStatus==2` 抛
+  「已完成学籍认证，如需更换学校请重新提交认证」，防绕过学生证审核；换校仍走 `/user/verify`
+- **改 `schoolId` 必须重签 token**：schoolId 是登录时写进 JWT 的快照，网关只信 token 里的
+  `X-School-Id`。流程：`PUT /user/me` → `auth.ensureLogin(true)` 重签 → `auth.updateUser()`
+  回填 `schoolName/schoolCity`（`UserBrief` 不含 schoolName，不 merge 会把胶囊打回「选择学校」）
+- **引导组件 `components/school-onboard/`**：首页 `onShow` → `checkOnboard()`；
+  选完写 storage 无跳过标记才弹，点「暂不选择」写 `onboardSkipped=1`；
+  `openScope` 在无 schoolId 时改为打开它；z-index 1100（高于 scope-sheet 的 1000）
+- **id 类型陷阱**：后端雪花 id 是字符串、mock 是数字 → 组件内统一 `_key = String(id)`
+  再做选中态比较，否则高亮不生效

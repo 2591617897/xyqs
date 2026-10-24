@@ -45,7 +45,8 @@ public class AuthService {
     @Value("${campus.wx.appsecret:}")
     private String wxAppsecret;
 
-    @Value("${campus.auth.mock:true}")
+    /** 默认关闭 mock：mock 不校验真实身份，会让多个微信账号合并成同一个用户 */
+    @Value("${campus.auth.mock:false}")
     private boolean mock;
 
     /** 腾讯位置服务 key（逆地理编码用），未配置时位置解析优雅降级 */
@@ -58,6 +59,8 @@ public class AuthService {
         }
         String platform = normalizePlatform(req.getPlatform());
         Session session = code2Session(platform, req.getCode(), req.getDevOpenid());
+        // 便于核对：两个微信号登录应当打印出两个不同的 openid
+        log.info("登录 platform={} openid={}", platform, maskOpenid(session.openid()));
 
         LoginOrCreateReq createReq = new LoginOrCreateReq();
         createReq.setPlatform(platform);
@@ -131,19 +134,32 @@ public class AuthService {
     /**
      * 小程序 code2Session。微信与 QQ 的 URL/参数名一致，只有域名不同；
      * 微信额外返回 session_key（当前业务用不上，保留字段）。
-     * 未配置对应平台 appid 时走 mock，方便本地联调。
+     *
+     * mock 只用于本地单人演示：它不做真实的 code2Session，openid 来自请求里的
+     * devOpenid 或按 code 哈希，因此**多个微信账号会合并到同一个用户**。
+     * 之前这里在「appid 未配置」时也静默降级成 mock，正是多账号同号的根因，
+     * 现在改为明确报配置缺失，不再静默降级。
      */
     private Session code2Session(String platform, String code, String devOpenid) {
         boolean qq = "qq".equals(platform);
+        String label = qq ? "QQ" : "微信";
         String appid = qq ? qqAppid : wxAppid;
         String appsecret = qq ? qqAppsecret : wxAppsecret;
 
-        if (mock || !StringUtils.hasText(appid)) {
+        if (mock) {
             String openid = StringUtils.hasText(devOpenid)
                     ? devOpenid
                     : "mock_" + platform + "_" + Math.abs(String.valueOf(code).hashCode());
-            log.info("[mock] code2Session platform={} -> openid={}", platform, openid);
+            log.warn("[mock] code2Session platform={} openid={} —— mock 模式下不同宿主账号会落到同一用户，仅限单人演示",
+                    platform, maskOpenid(openid));
             return new Session(openid, null);
+        }
+
+        if (!StringUtils.hasText(appid) || !StringUtils.hasText(appsecret)) {
+            log.error("{} 登录缺少 appid/appsecret 配置（appid 是否为空={}，appsecret 是否为空={}）",
+                    label, !StringUtils.hasText(appid), !StringUtils.hasText(appsecret));
+            throw new BizException(label + "登录未配置：请设置环境变量 "
+                    + (qq ? "QQ_APPID / QQ_APPSECRET" : "WX_APPID / WX_APPSECRET"));
         }
 
         String url = qq
@@ -158,10 +174,18 @@ public class AuthService {
         if (body == null || body.get("openid") == null) {
             Object errmsg = body == null ? null : body.get("errmsg");
             log.warn("code2Session 失败 platform={} body={}", platform, body);
-            throw new BizException((qq ? "QQ" : "微信") + "登录失败：" + (errmsg == null ? "未知错误" : errmsg));
+            throw new BizException(label + "登录失败：" + (errmsg == null ? "未知错误" : errmsg));
         }
         return new Session(String.valueOf(body.get("openid")),
                 body.get("unionid") == null ? null : String.valueOf(body.get("unionid")));
+    }
+
+    /** openid 打码后再进日志：既能核对「不同微信是否落到不同 openid」，又不会把凭证原样落盘 */
+    private String maskOpenid(String openid) {
+        if (!StringUtils.hasText(openid) || openid.length() <= 10) {
+            return openid;
+        }
+        return openid.substring(0, 6) + "****" + openid.substring(openid.length() - 4);
     }
 
     private record Session(String openid, String unionid) {

@@ -144,33 +144,6 @@
     </view>
   </view>
 
-  <!-- ===== 校园便民 ===== -->
-  <view class="section">
-    <view class="section-head">
-      <view class="section-bar"></view>
-      <text class="section-title">校园便民</text>
-      <view class="flex1"></view>
-      <text class="section-more" bindtap="demoEntry" data-name="校内直通">校内直通 ›</text>
-    </view>
-    <view class="grid4">
-      <view class="grid-item" bindtap="demoEntry" data-name="跑腿互助">
-        <view class="grid-icon gi-green">🏃</view>
-        <view class="grid-label">跑腿互助</view>
-      </view>
-      <view class="grid-item" bindtap="demoEntry" data-name="自取柜租借">
-        <view class="grid-icon gi-gray">🪳</view>
-        <view class="grid-label">自取柜租借</view>
-      </view>
-      <view class="grid-item" bindtap="demoEntry" data-name="校历备忘">
-        <view class="grid-icon gi-gray">📅</view>
-        <view class="grid-label">校历备忘</view>
-      </view>
-      <view class="grid-item" bindtap="demoEntry" data-name="集市入场券">
-        <view class="grid-icon gi-orange">🎟️</view>
-        <view class="grid-label">集市入场券</view>
-      </view>
-    </view>
-  </view>
 
   <!-- ===== 账户与服务 ===== -->
   <view class="section">

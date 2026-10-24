@@ -54,6 +54,17 @@ module.exports = {
   USE_MOCK: env.mock,
   /** 请求超时（毫秒） */
   TIMEOUT: 15000,
-  /** 仅后端 campus-auth 的 campus.auth.mock=true 时生效（环境变量 AUTH_MOCK） */
+  /**
+   * 本地单人演示开关（默认 false）。
+   *
+   * true：登录时把下面的固定 DEV_OPENID 发给后端，配合后端 AUTH_MOCK=true 使用，
+   *       好处是开发者工具里能直接落到种子账号（林小满），看到演示数据。
+   *       代价是**所有微信账号都会登录成同一个人**。
+   * false：不带 devOpenid，后端走真实 code2Session，每个微信得到各自独立的账号。
+   *
+   * 真机 / 多账号测试必须保持 false。
+   */
+  DEV_LOGIN: false,
+  /** 仅 DEV_LOGIN=true 时随登录请求发送 */
   DEV_OPENID: 'dev_openid_guizhou_campus_001'
 }

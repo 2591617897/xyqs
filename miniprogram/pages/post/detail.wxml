@@ -34,73 +34,87 @@
     </view>
   </view>
 
-  <!-- 评论头 -->
-  <view class="comment-head">
-    <text class="ch-count">共 {{comments.length}} 回复</text>
-    <view class="ch-sorts">
-      <text class="ch-sort {{commentSort === 'default' ? 'on' : ''}}" bindtap="switchSort" data-sort="default">默认</text>
-      <text class="ch-sort {{commentSort === 'newest' ? 'on' : ''}}" bindtap="switchSort" data-sort="newest">最新</text>
+  <!-- 评论区 -->
+  <view class="comment-section">
+    <view class="section-head">
+      <view class="row gap12">
+        <text class="section-title">全部评论</text>
+        <text class="section-count">{{comments.length}}</text>
+      </view>
+      <view class="ch-sorts">
+        <text class="ch-sort {{commentSort === 'default' ? 'on' : ''}}" bindtap="switchSort" data-sort="default">默认</text>
+        <text class="ch-sort {{commentSort === 'newest' ? 'on' : ''}}" bindtap="switchSort" data-sort="newest">最新</text>
+      </view>
     </view>
-  </view>
 
-  <!-- 评论列表 -->
-  <view class="comment-list">
-    <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="cindex">
-      <view class="ci-avatar">
-        <image wx:if="{{item.userAvatar}}" class="ci-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
+    <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="pindex">
+      <view class="c-avatar">
+        <image wx:if="{{item.userAvatar}}" class="c-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
         <view wx:else class="avatar-default">
           <view class="ad-head"></view>
           <view class="ad-body"></view>
         </view>
       </view>
-      <view class="ci-body">
-        <view class="ci-name">{{item.userName || '校园用户'}}</view>
-        <view class="ci-text" wx:if="{{item.content}}">{{item.content}}</view>
+      <view class="flex1">
+        <view class="c-head">
+          <text class="c-name">{{item.userName || '校园用户'}}</text>
+          <view class="row gap12">
+            <text class="muted">{{item.timeText}}</text>
+            <text class="c-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">回复</text>
+            <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+          </view>
+        </view>
 
-        <view class="ci-imgs" wx:if="{{item.imageList.length}}">
+        <view class="c-text" wx:if="{{item.content}}">{{item.content}}</view>
+
+        <view class="c-imgs" wx:if="{{item.imageList.length}}">
           <image
             wx:for="{{item.imageList}}"
             wx:for-item="img"
+            wx:for-index="imgIndex"
             wx:key="*this"
-            class="ci-img"
+            class="c-img"
             src="{{img}}"
             mode="aspectFill"
-            catchtap="previewCommentImage"
+            catchtap="previewComment"
+            data-pindex="{{pindex}}"
             data-url="{{img}}"
           />
         </view>
 
-        <view class="ci-foot">
-          <text class="ci-time">{{item.timeText}}</text>
-          <view class="flex1"></view>
-          <text class="ci-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">回复</text>
-          <text class="ci-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
-        </view>
-
         <!-- 楼中楼回复 -->
-        <view class="ci-replies" wx:if="{{item.replies && item.replies.length}}">
-          <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:key="id">
-            <view class="ci-avatar">
-              <image wx:if="{{rp.userAvatar}}" class="ci-avatar-img" src="{{rp.userAvatar}}" mode="aspectFill" />
-              <view wx:else class="avatar-default">
-                <view class="ad-head"></view>
-                <view class="ad-body"></view>
+        <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
+          <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
+            <view class="flex1">
+              <view class="c-head">
+                <text class="c-name">{{rp.userName || '校园用户'}}</text>
+                <view class="row gap12">
+                  <text class="muted">{{rp.timeText}}</text>
+                  <text class="c-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">回复</text>
+                  <text class="c-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+                </view>
               </view>
-            </view>
-            <view class="ci-body">
-              <view class="ci-name">{{rp.userName || '校园用户'}}</view>
-              <view class="ci-text">
+              <view class="c-text">
                 <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
               </view>
-              <view class="ci-foot">
-                <text class="ci-time">{{rp.timeText}}</text>
-                <view class="flex1"></view>
-                <text class="ci-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">回复</text>
-                <text class="ci-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+              <view class="c-imgs" wx:if="{{rp.imageList.length}}">
+                <image
+                  wx:for="{{rp.imageList}}"
+                  wx:for-item="img"
+                  wx:for-index="imgIndex"
+                  wx:key="*this"
+                  class="c-img"
+                  src="{{img}}"
+                  mode="aspectFill"
+                  catchtap="previewComment"
+                  data-pindex="{{pindex}}"
+                  data-rindex="{{rindex}}"
+                  data-url="{{img}}"
+                />
               </view>
             </view>
           </view>
-          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{cindex}}">
+          <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
             查看全部 {{item.replyCount}} 条回复 ›
           </view>
         </view>
@@ -109,10 +123,8 @@
 
     <view class="comment-empty" wx:if="{{!comments.length}}">
       <text class="empty-icon">💬</text>
-      <text>还没有回复，来抢沙发</text>
+      <text>还没有评论，做第一个温柔的人</text>
     </view>
-
-    <view class="list-end" wx:if="{{comments.length}}">— 已经到底了 —</view>
   </view>
 
   <view class="bottom-space"></view>
@@ -202,15 +214,24 @@
     </view>
   </view>
 
-  <!-- 底部操作栏：只保留点赞 + 评论数两个主动作 -->
+  <!-- 底部悬停操作栏：写评论 + 点赞 / 评论 / 分享 -->
   <view class="bottom-bar">
-    <view class="bb-action {{liked ? 'on' : ''}}" catchtap="toggleLike">
-      <text class="bb-icon">👍</text>
-      <text class="bb-num">{{post.likeCount || 0}}</text>
+    <view class="bar-input" bindtap="openCommentSheet">
+      <text class="bar-input-icon">✏️</text>
+      <text class="bar-input-hint">写评论</text>
     </view>
-    <view class="bb-action" catchtap="openCommentSheet">
-      <text class="bb-icon">💬</text>
-      <text class="bb-num">{{post.commentCount || 0}}</text>
+    <view class="bar-acts">
+      <view class="bar-act {{liked ? 'on' : ''}}" catchtap="toggleLike">
+        <text class="bar-icon">{{liked ? '💗' : '🤍'}}</text>
+        <text class="bar-num">{{post.likeCount || 0}}</text>
+      </view>
+      <view class="bar-act" catchtap="openCommentSheet">
+        <text class="bar-icon">💬</text>
+        <text class="bar-num">{{post.commentCount || 0}}</text>
+      </view>
+      <button class="bar-act bar-share" open-type="share" plain style="width: 89rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
+        <text class="bar-icon">↗️</text>
+      </button>
     </view>
   </view>
 </view>

@@ -322,8 +322,9 @@
       </view>
       <view class="owner-acts">
         <button class="act-btn act-edit" hover-class="act-btn-hover" bindtap="goEdit" style="width: 171rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">编辑</button>
-        <button class="act-btn" hover-class="act-btn-hover" bindtap="toggleStatus" style="width: 171rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">{{goods.status === 1 ? '下架' : '上架'}}</button>
+    
         <button class="act-btn act-danger" hover-class="act-btn-hover" bindtap="removeGoods" style="width: 150rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">删除</button>
+        <button class="act-btn" hover-class="act-btn-hover" bindtap="toggleStatus" style="width: 171rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">{{goods.status === 1 ? '下架' : '上架'}}</button>
       </view>
     </block>
     <block wx:else>

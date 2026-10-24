@@ -247,4 +247,12 @@
     bind:select="onScopeSelect"
     bind:verify="onScopeVerify"
   />
+
+  <!-- 新用户引导：还没落学校时首次进入先选学校（不要求学籍认证） -->
+  <school-onboard
+    show="{{onboardShow}}"
+    saving="{{onboardSaving}}"
+    bind:select="onOnboardSelect"
+    bind:close="onOnboardClose"
+  />
 </view>

@@ -1,16 +1,15 @@
 const { mp, toast, PLATFORM, PLATFORM_NAME } = require('./util')
-const { DEV_OPENID, USE_MOCK } = require('./config')
+const { DEV_OPENID, DEV_LOGIN, USE_MOCK } = require('./config')
 const http = require('./request')
 
 let pending = null
 
 function exchange(code) {
-  // devOpenid 仅在后端 mock 模式生效，正式环境会被忽略
-  return http.post('/auth/login', {
-    code: code,
-    platform: PLATFORM,
-    devOpenid: DEV_OPENID
-  }).then(function (res) {
+  const payload = { code: code, platform: PLATFORM }
+  // 只在显式开启本地演示时才带 devOpenid：
+  // 后端 mock 分支会把它原样当 openid 用，常态发送会让不同微信账号合并成同一个用户
+  if (DEV_LOGIN) payload.devOpenid = DEV_OPENID
+  return http.post('/auth/login', payload).then(function (res) {
     mp.setStorageSync('token', res.token)
     mp.setStorageSync('user', res.user)
     const app = getApp()

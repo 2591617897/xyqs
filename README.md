@@ -210,10 +210,14 @@ node scripts/api-smoke-test.js
 > 上传的图片会落到 `backend/uploads/yyyy/MM/`，通过网关 `http://127.0.0.1:8888/uploads/...` 访问。
 > 该目录建议加入 `.gitignore`，生产环境请换成对象存储并修改 `campus.upload.*` 配置。
 
-> 本地无小程序 AppID 时，`campus-auth` 默认开启 mock：
-> 用固定的 `DEV_OPENID`（见 `miniprogram/utils/config.js`）生成 openid，
-> 保证反复登录都是同一个用户。接真实环境时把 `AUTH_MOCK=false`，
-> 并配置 `WX_APPID / WX_APPSECRET`（需要继续支持 QQ 小程序时再填 `QQ_APPID / QQ_APPSECRET`）。
+> 登录默认走**真实**微信 `code2Session`（`campus.auth.mock=false`）：
+> 必须提供环境变量 `WX_APPSECRET`（`WX_APPID` 已在 `campus-auth/application.yml`
+> 给了默认值 `wx2cac838bfcc963d7`，与 `project.config.json` 一致），
+> 否则登录会直接报「微信登录未配置」，不会静默降级成 mock。
+>
+> 只想本地单人演示、又要看到种子数据时，**两处同时打开**才生效：
+> 后端 `AUTH_MOCK=true` + `miniprogram/utils/config.js` 的 `DEV_LOGIN: true`。
+> 此时所有微信账号都会登录成同一个用户（`DEV_OPENID`），**禁止用于多账号联调**。
 
 ## 微信小程序接入
 

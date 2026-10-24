@@ -176,6 +176,17 @@ public class UserService {
         if (req.getBio() != null) {
             user.setBio(req.getBio());
         }
+        // 新用户引导「选学校」：只允许未完成学籍认证的用户走这条轻量通道。
+        // 已认证用户换校必须重新提交 /user/verify（学生证审核），否则等于绕过认证。
+        if (req.getSchoolId() != null) {
+            if (user.getVerifyStatus() != null && user.getVerifyStatus() == 2) {
+                throw new BizException("你已完成学籍认证，如需更换学校请重新提交认证");
+            }
+            if (userMapper.countSchool(req.getSchoolId()) == 0) {
+                throw new BizException("所选学校不存在，请重新选择");
+            }
+            user.setSchoolId(req.getSchoolId());
+        }
         userMapper.updateById(user);
         return me(userId);
     }

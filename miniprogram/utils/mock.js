@@ -2146,6 +2146,18 @@ function route(method, url, data) {
       if (q.gender !== undefined) p.gender = q.gender
       if (q.phone !== undefined) p.phone = q.phone
       if (q.bio !== undefined) p.bio = q.bio
+      // 与后端一致：未认证用户可借资料更新落学校（新用户引导）；
+      // 已认证用户换校必须重新提交 /user/verify，否则等于绕过审核
+      if (q.schoolId) {
+        if (p.verifyStatus === 2) {
+          throw { code: 400, msg: '你已完成学籍认证，如需更换学校请重新提交认证' }
+        }
+        const hit = db.schools.filter(function (x) {
+          return String(x.id) === String(q.schoolId)
+        })[0]
+        if (!hit) throw { code: 400, msg: '所选学校不存在，请重新选择' }
+        p.schoolId = Number(q.schoolId)
+      }
       save()
       return ok(meVO())
     }

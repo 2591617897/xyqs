@@ -15,6 +15,9 @@ Page({
     schoolCity: '',
     scopeShow: false,
     geoCity: null,
+    /** 新用户选学校引导 */
+    onboardShow: false,
+    onboardSaving: false,
     channels: [],
     channelId: '',
     categories: [],
@@ -38,6 +41,7 @@ Page({
     this.syncMe()
     this.loadData()
     this.loadUnread()
+    this.checkOnboard()
   },
 
   /** 用最新用户信息刷新胶囊文案与范围展示 */
@@ -50,6 +54,65 @@ Page({
       scopeCity: s.scope === 'city' ? s.city : '',
       scopeLabel: scopeMod.label(user && user.schoolName, user && user.schoolCity)
     })
+  },
+
+  /* ---------- 新用户引导：选学校 ---------- */
+  /**
+   * 首次进入检查：已登录但还没落学校时弹「选择学校」。
+   *
+   * 为什么必须补这一步：后端本校筛选写成 `.eq(schoolId != null, ...)`，
+   * schoolId 为空等于不过滤，新用户看到的是全站内容，「本校」范围形同虚设。
+   * 点过「暂不选择」记一个标记，本次不再打扰（清缓存后重置）。
+   */
+  checkOnboard: function () {
+    const self = this
+    if (mp.getStorageSync('onboardSkipped')) return
+    const cached = getApp().globalData.user
+    if (cached && cached.schoolId) return
+    // 首页原本不主动登录，这里为判断是否需要引导走一次静默登录（有缓存时零请求）
+    auth.ensureLogin().then(function (user) {
+      if (!user || user.schoolId) return
+      if (mp.getStorageSync('onboardSkipped')) return
+      self.setData({ onboardShow: true })
+    }).catch(function () {
+      // 登录失败不阻塞浏览
+    })
+  },
+
+  onOnboardSelect: function (e) {
+    const self = this
+    const school = e.detail && e.detail.school
+    if (!school || this.data.onboardSaving) return
+    this.setData({ onboardSaving: true })
+    // 组件可能在未登录时被打开（点胶囊进来），先确保有 token 再写库
+    auth.ensureLogin().then(function () {
+      return http.put('/user/me', { schoolId: school.id })
+    }).then(function (me) {
+      // schoolId 是登录时写进 JWT 的快照，改库后必须重签 token，
+      // 否则网关下发的 X-School-Id 还是旧值，本校筛选不会生效。
+      return auth.ensureLogin(true).then(function () {
+        return me
+      })
+    }).then(function (me) {
+      const merged = auth.updateUser({
+        id: me.id,
+        schoolId: me.schoolId,
+        schoolName: me.schoolName || school.name || '',
+        schoolCity: me.schoolCity || school.city || '',
+        verifyStatus: me.verifyStatus
+      })
+      self.setData({ onboardShow: false, onboardSaving: false })
+      self.applyUser(merged)
+      self.loadData()
+      toast('已切换到 ' + (me.schoolName || school.name || '本校'))
+    }).catch(function () {
+      self.setData({ onboardSaving: false })
+    })
+  },
+
+  onOnboardClose: function () {
+    mp.setStorageSync('onboardSkipped', 1)
+    this.setData({ onboardShow: false })
   },
 
   /**
@@ -277,6 +340,11 @@ Page({
   openScope: function () {
     const self = this
     const user = getApp().globalData.user
+    // 还没落学校：胶囊点了直接进「选学校」，此时本校/本市切换没有意义
+    if (!user || !user.schoolId) {
+      this.setData({ onboardShow: true })
+      return
+    }
     this.setData({
       scopeShow: true,
       schoolCity: (user && user.schoolCity) || ''

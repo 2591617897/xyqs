@@ -1,0 +1,129 @@
+/* 新用户选学校引导：底部抽屉，视觉与 scope-sheet 保持一致 */
+.ob-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+}
+
+.ob-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 36rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.ob-head {
+  text-align: center;
+}
+
+.ob-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ob-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9b9ba3;
+}
+
+.ob-search {
+  display: flex;
+  align-items: center;
+  margin-top: 28rpx;
+  height: 76rpx;
+  padding: 0 24rpx;
+  background: #f5f6f8;
+  border-radius: 999rpx;
+}
+
+.ob-search-icon {
+  font-size: 26rpx;
+  margin-right: 12rpx;
+  opacity: 0.6;
+}
+
+.ob-search-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 27rpx;
+  color: #1a1a1a;
+}
+
+.ob-search-ph {
+  color: #b3b3b8;
+}
+
+.ob-list {
+  max-height: 52vh;
+  margin-top: 16rpx;
+}
+
+.ob-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 20rpx;
+  border-bottom: 1rpx solid #f4f5f8;
+}
+
+.ob-item.on {
+  background: rgba(17, 168, 107, 0.06);
+  border-radius: 16rpx;
+}
+
+.ob-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ob-item-name {
+  font-size: 29rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.ob-item-city {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #9b9ba3;
+}
+
+.ob-item-check {
+  margin-left: 16rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #11a86b;
+  flex-shrink: 0;
+}
+
+.ob-empty {
+  padding: 60rpx 0;
+  text-align: center;
+  font-size: 25rpx;
+  color: #9b9ba3;
+}
+
+.ob-skip {
+  margin-top: 20rpx;
+  padding: 22rpx 0;
+  font-size: 28rpx;
+  color: #6b6b73;
+  text-align: center;
+  border-top: 1rpx solid #eef0f4;
+}
+
+.ob-tip {
+  padding-bottom: 8rpx;
+  font-size: 21rpx;
+  color: #b6bbc6;
+  text-align: center;
+}
