@@ -19,7 +19,13 @@ Page({
     ],
     filter: 'all',
     /** 当前处于左滑展开状态的会话 id（受控，保证同时只有一个展开） */
-    openSwipeId: ''
+    openSwipeId: '',
+    /** 通知抽屉 */
+    notifyDrawerOpen: false,
+    notifyDrawerTitle: '',
+    notifyDrawerItems: [],
+    notifyDrawerLoading: false,
+    notifyDrawerTypes: []
   },
 
   onLoad: function () {
@@ -96,53 +102,74 @@ Page({
     this.setData({ showTip: false })
   },
 
-  /** 快捷入口：点分类 badge 弹通知抽屉 */
+  /** 快捷入口：点分类 badge → 打开 bottom-sheet 通知列表 */
   onQuick: function (e) {
     const self = this
     const name = e.currentTarget.dataset.name
     const typeMap = {
       '赞与收藏': ['LIKE_GOODS', 'LIKE_POST', 'LIKE_WALL'],
       '新增粉丝': ['NEW_FOLLOWER'],
-      '评论与@': ['COMMENT_POST', 'COMMENT_WALL', 'MENTION'],
+      '评论与@': ['COMMENT_POST', 'COMMENT_WALL', 'COMMENT_GOODS', 'MENTION'],
       '官方通知': ['SYSTEM']
     }
     const types = typeMap[name] || []
-    this.setData({ notifyDrawerTitle: name, notifyDrawerLoading: true, notifyDrawerItems: [] })
-    mp.showModal({
-      title: name,
-      content: '点击查看完整通知列表',
-      success: function (res) {
-        // 简单实现：弹 action-sheet 让用户选
-        mp.showActionSheet({
-          itemList: ['查看全部通知', '标为已读'],
-          success: function (r) {
-            if (r.tapIndex === 0) {
-              self.fetchAndShowNotifyList(types)
-            } else if (r.tapIndex === 1) {
-              // 批量标记已读：对每个 type 分别调 /read/{type}
-              const m = Promise.all(types.map(function (t) {
-                return http.post('/messages/notifications/read/' + t, null, { silent: true })
-              }))
-              m.then(function () {
-                mp.showToast({ title: '已标记已读', icon: 'none' })
-                self.load()
-              })
-            }
-          }
+    this.setData({ notifyDrawerTitle: name, notifyDrawerTypes: types, notifyDrawerItems: [], notifyDrawerOpen: true, notifyDrawerLoading: true })
+    // 拉全部类型，前端过滤（后端无多 type OR 查询，先拉全量）
+    http.get('/messages/notifications?size=30', null, { silent: true }).then(function (res) {
+      const items = (res.records || [])
+        .filter(function (n) { return types.indexOf(n.type) >= 0 })
+        .map(function (n) {
+          n.timeText = shortTime(n.createdAt)
+          n.unread = Number(n.isRead) === 0
+          return n
         })
-      }
+      self.setData({ notifyDrawerItems: items, notifyDrawerLoading: false })
+    }).catch(function () {
+      self.setData({ notifyDrawerLoading: false })
+      mp.showToast({ title: '加载失败', icon: 'none' })
     })
   },
 
-  /** 拉取该类通知并在控制台打印（临时验证后端通路，后续改成 bottom-sheet 渲染） */
-  fetchAndShowNotifyList: function (types) {
+  closeNotifyDrawer: function () {
+    this.setData({ notifyDrawerOpen: false })
+  },
+
+  /** 抽屉内「全部标为已读」 */
+  onMarkCurrentRead: function () {
     const self = this
-    // 先拉全部类型，前端 filter
-    http.get('/messages/notifications?size=20', null, { silent: true }).then(function (res) {
-      const items = (res.records || []).filter(function (n) { return types.indexOf(n.type) >= 0 })
-      console.log('[notify] ' + types.join(',') + ' count=' + items.length, items)
-      mp.showToast({ title: name + ' ' + items.length + ' 条', icon: 'none' })
+    const types = this.data.notifyDrawerTypes
+    Promise.all(types.map(function (t) {
+      return http.post('/messages/notifications/read/' + t, null, { silent: true })
+    })).then(function () {
+      const items = self.data.notifyDrawerItems.map(function (n) { n.unread = false; return n })
+      self.setData({ notifyDrawerItems: items })
+      self.load()
+      mp.showToast({ title: '已全部标为已读', icon: 'none' })
     })
+  },
+
+  /** 点通知卡片跳关联详情 */
+  goNotifyDetail: function (e) {
+    const item = this.data.notifyDrawerItems[e.currentTarget.dataset.index]
+    if (!item) return
+    // 自动标记已读（乐观更新）
+    const items = this.data.notifyDrawerItems
+    items[e.currentTarget.dataset.index].unread = false
+    this.setData({ notifyDrawerItems: items })
+    // 后端标记单条
+    http.post('/messages/notifications/read/' + item.type, null, { silent: true })
+    // 路由跳转
+    let url = ''
+    const targetId = item.targetId
+    const actorId = item.actorId
+    switch (item.targetType) {
+      case 'GOODS': url = '/pages/goods/detail?id=' + targetId; break
+      case 'POST': url = '/pages/post/detail?id=' + targetId; break
+      case 'WALL': url = '/pages/wall/detail?id=' + targetId; break
+      case 'FOCUS': url = '/pages/user/space/space?id=' + actorId; break
+      default: break
+    }
+    if (url) mp.navigateTo({ url: url })
   },
 
   markAllRead: function () {

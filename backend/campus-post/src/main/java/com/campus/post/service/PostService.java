@@ -233,18 +233,17 @@ public class PostService {
     private void tryNotifyLikePost(Post post, Long actorId) {
         Long receiverId = post.getUserId();
         if (receiverId == null || receiverId.equals(actorId)) return;
-        try {
-            NotifyReq req = new NotifyReq();
-            req.setType("LIKE_POST");
-            req.setReceiverId(receiverId);
-            req.setActorId(actorId);
-            req.setTargetType("POST");
-            req.setTargetId(post.getId());
-            req.setContentSnapshot(post.getTitle());
-            notificationClient.send(req);
-        } catch (Exception e) {
-            log.warn("[notify] likePost failed postId={} actorId={}: {}", post.getId(), actorId, e.getMessage());
-        }
+        NotifyReq req = new NotifyReq();
+        req.setType("LIKE_POST");
+        req.setReceiverId(receiverId);
+        req.setActorId(actorId);
+        req.setTargetType("POST");
+        req.setTargetId(post.getId());
+        req.setContentSnapshot(post.getTitle());
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] likePost failed postId={} actorId={}: {}", post.getId(), actorId, e.getMessage()); }
+        });
     }
 
     public List<PostComment> comments(Long postId, Long userId) {
@@ -290,13 +289,14 @@ public class PostService {
         comment.setPostId(postId);
         comment.setUserId(userId);
         comment.setParentId(parentId == null ? 0L : parentId);
+        PostComment parentComment = null;
         // 回复评论：记录被回复人展示名快照，供「A 回复 B」展示
         if (comment.getParentId() > 0) {
-            PostComment parent = commentMapper.selectById(comment.getParentId());
-            if (parent == null || !postId.equals(parent.getPostId())) {
+            parentComment = commentMapper.selectById(comment.getParentId());
+            if (parentComment == null || !postId.equals(parentComment.getPostId())) {
                 throw new BizException("要回复的评论不存在");
             }
-            comment.setReplyToName(StringUtils.hasText(parent.getUserName()) ? parent.getUserName() : "校园用户");
+            comment.setReplyToName(StringUtils.hasText(parentComment.getUserName()) ? parentComment.getUserName() : "校园用户");
         }
         comment.setContent(text);
         comment.setImages(imgs);
@@ -318,32 +318,33 @@ public class PostService {
         tryNotifyCommentPost(post, userId, text);
         // @ 通知：只能 @ 评论者已关注的人（后端强校验 + 批量发）
         tryNotifyMention(userId, mentionUserIds, "POST", post.getId(), text);
+        // 楼中楼回复：同时通知被回复的那个评论作者
+        if (comment.getParentId() > 0 && parentComment != null) {
+            tryNotifyReplyComment("POST", post.getId(), parentComment.getUserId(), post.getUserId(), userId, text);
+        }
         return comment.getId();
     }
 
     /** 通用 @ 通知：批量校验 + 发 MENTION 通知。校验合法的才发，失败不阻塞主事务 */
     private void tryNotifyMention(Long actorId, List<Long> mentionIds, String targetType, Long targetId, String content) {
         if (mentionIds == null || mentionIds.isEmpty()) return;
-        // 过滤掉自己（@ 自己没意义）
         List<Long> toValidate = mentionIds.stream().filter(id -> !id.equals(actorId)).toList();
         if (toValidate.isEmpty()) return;
         try {
-            // 后端强校验：只能 @ 评论者已关注的人
             R<List<Long>> res = followClient.check(actorId, toValidate);
             if (res == null || res.getData() == null || res.getData().isEmpty()) return;
             for (Long mentionedId : res.getData()) {
-                try {
-                    NotifyReq req = new NotifyReq();
-                    req.setType("MENTION");
-                    req.setReceiverId(mentionedId);
-                    req.setActorId(actorId);
-                    req.setTargetType(targetType);
-                    req.setTargetId(targetId);
-                    req.setContentSnapshot(content);
-                    notificationClient.send(req);
-                } catch (Exception e) {
-                    log.warn("[notify] mentionPost failed receiverId={}: {}", mentionedId, e.getMessage());
-                }
+                NotifyReq req = new NotifyReq();
+                req.setType("MENTION");
+                req.setReceiverId(mentionedId);
+                req.setActorId(actorId);
+                req.setTargetType(targetType);
+                req.setTargetId(targetId);
+                req.setContentSnapshot(content);
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try { notificationClient.send(req); }
+                    catch (Exception e) { log.warn("[notify] mentionPost failed receiverId={}: {}", mentionedId, e.getMessage()); }
+                });
             }
         } catch (Exception e) {
             log.warn("[notify] mentionPost check failed actorId={}: {}", actorId, e.getMessage());
@@ -354,18 +355,40 @@ public class PostService {
     private void tryNotifyCommentPost(Post post, Long actorId, String content) {
         Long receiverId = post.getUserId();
         if (receiverId == null || receiverId.equals(actorId)) return;
-        try {
-            NotifyReq req = new NotifyReq();
-            req.setType("COMMENT_POST");
-            req.setReceiverId(receiverId);
-            req.setActorId(actorId);
-            req.setTargetType("POST");
-            req.setTargetId(post.getId());
-            req.setContentSnapshot(content);
-            notificationClient.send(req);
-        } catch (Exception e) {
-            log.warn("[notify] commentPost failed postId={}: {}", post.getId(), e.getMessage());
-        }
+        NotifyReq req = new NotifyReq();
+        req.setType("COMMENT_POST");
+        req.setReceiverId(receiverId);
+        req.setActorId(actorId);
+        req.setTargetType("POST");
+        req.setTargetId(post.getId());
+        req.setContentSnapshot(content);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] commentPost failed postId={}: {}", post.getId(), e.getMessage()); }
+        });
+    }
+
+    /** 楼中楼回复通知：通知被回复的评论作者 */
+    private void tryNotifyReplyComment(String targetType, Long targetId, Long parentAuthorId, Long contentAuthorId, Long actorId, String content) {
+        if (parentAuthorId == null || parentAuthorId.equals(actorId)) return;
+        if (parentAuthorId.equals(contentAuthorId)) return;
+        String type = switch (targetType) {
+            case "GOODS" -> "COMMENT_GOODS";
+            case "POST" -> "COMMENT_POST";
+            case "WALL" -> "COMMENT_WALL";
+            default -> "COMMENT";
+        };
+        NotifyReq req = new NotifyReq();
+        req.setType(type);
+        req.setReceiverId(parentAuthorId);
+        req.setActorId(actorId);
+        req.setTargetType(targetType);
+        req.setTargetId(targetId);
+        req.setContentSnapshot(content);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] replyComment failed targetType={} targetId={} replyTo={}: {}", targetType, targetId, parentAuthorId, e.getMessage()); }
+        });
     }
 
     /** 删除自己的评论（删顶层评论时级联删除其下回复） */

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
+import com.campus.common.client.UserClient;
+import com.campus.common.client.dto.UserBrief;
 import com.campus.message.dto.NotifyReq;
 import com.campus.message.entity.Notification;
 import com.campus.message.mapper.NotificationMapper;
@@ -13,6 +15,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 通知中心：
@@ -26,6 +31,7 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
+    private final UserClient userClient;
 
     private static final int SNAPSHOT_LEN = 300;
 
@@ -62,14 +68,42 @@ public class NotificationService {
         for (NotifyReq r : reqs) send(r);
     }
 
-    /** 按接收人 + 类型分页（前端 tab 拉取） */
+    /** 按接收人 + 类型分页，列表触发者 enrich 昵称头像（1 次 Feign 批量） */
     public R.Page<Notification> list(Long userId, String type, long page, long size) {
         LambdaQueryWrapper<Notification> q = Wrappers.<Notification>lambdaQuery()
                 .eq(Notification::getReceiverId, userId)
                 .eq(type != null && !type.isBlank(), Notification::getType, type)
                 .orderByDesc(Notification::getCreatedAt);
         Page<Notification> p = notificationMapper.selectPage(new Page<>(page, size), q);
+        enrichActors(p.getRecords());
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
+    }
+
+    /** 批量 enrich 触发者昵称头像（1 次 Feign 避免 N+1） */
+    private void enrichActors(List<Notification> records) {
+        if (records == null || records.isEmpty()) return;
+        List<Long> ids = records.stream()
+                .map(Notification::getActorId)
+                .filter(Objects::nonNull)
+                .distinct().toList();
+        if (ids.isEmpty()) return;
+        Map<Long, UserBrief> briefMap = Map.of();
+        try {
+            R<List<UserBrief>> r = userClient.getBriefs(ids);
+            if (r != null && r.getData() != null) {
+                briefMap = r.getData().stream().collect(Collectors.toMap(UserBrief::getId, b -> b));
+            }
+        } catch (Exception e) {
+            log.warn("[notify] enrich actors failed: {}", e.getMessage());
+        }
+        final Map<Long, UserBrief> m = briefMap;
+        records.forEach(n -> {
+            UserBrief b = m.get(n.getActorId());
+            if (b != null) {
+                n.setActorName(b.getNickname());
+                n.setActorAvatar(b.getAvatar());
+            }
+        });
     }
 
     /** 各 tab 未读数 */

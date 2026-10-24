@@ -31,7 +31,11 @@ Page({
     showEdit: false,
     editContent: '',
     editImages: [],
-    saving: false
+    saving: false,
+    /** @ 选择器 */
+    mentionUserIds: [],
+    mentionPickerList: [],
+    showMentionPicker: false
   },
 
   onLoad: function (options) {
@@ -191,6 +195,47 @@ Page({
     this.setData({ commentInput: next })
   },
 
+  openMentionPicker: function () {
+    const self = this
+    mp.showLoading({ title: '加载好友中', mask: true })
+    http.get('/user/follow/list', { type: 'following' }, { silent: true }).then(function (res) {
+      mp.hideLoading()
+      const list = (res && res.list) ? res.list : []
+      const filtered = list.filter(function (u) { return !self.data.mentionUserIds.some(function (m) { return m === u.id }) })
+      if (!filtered.length) {
+        mp.showToast({ title: '暂无可@的好友', icon: 'none' })
+        return
+      }
+      self.setData({ mentionPickerList: filtered, showMentionPicker: true, commentFocus: false, showEmoji: false })
+    }).catch(function () {
+      mp.hideLoading()
+      mp.showToast({ title: '加载失败', icon: 'none' })
+    })
+  },
+
+  closeMentionPicker: function () {
+    const self = this
+    this.setData({ showMentionPicker: false, mentionPickerList: [] })
+    setTimeout(function () { self.setData({ commentFocus: true }) }, 100)
+  },
+
+  confirmMention: function (e) {
+    const self = this
+    const idx = e.currentTarget.dataset.index
+    const user = this.data.mentionPickerList[idx]
+    if (!user) return
+    const newIds = this.data.mentionUserIds.concat([user.id])
+    const remaining = this.data.mentionPickerList.filter(function (_, i) { return i !== idx })
+    const next = this.data.commentInput + '@' + (user.nickname || user.name || '校友') + ' '
+    this.setData({
+      mentionUserIds: newIds,
+      mentionPickerList: remaining,
+      commentInput: next,
+      showMentionPicker: false
+    })
+    setTimeout(function () { self.setData({ commentFocus: true }) }, 120)
+  },
+
   chooseCommentImage: function () {
     const self = this
     const rest = 3 - this.data.commentImages.length
@@ -236,7 +281,8 @@ Page({
       if (images.length) mp.hideLoading()
       const payload = {
         content: content,
-        images: urls
+        images: urls,
+        mentionUserIds: self.data.mentionUserIds
       }
       // 回复评论时带上父评论 id
       if (self.data.replyTo) payload.parentId = self.data.replyTo.id
@@ -248,7 +294,8 @@ Page({
         showEmoji: false,
         commentFocus: false,
         sending: false,
-        replyTo: null
+        replyTo: null,
+        mentionUserIds: []
       })
       self.loadComments()
       const patch = {}

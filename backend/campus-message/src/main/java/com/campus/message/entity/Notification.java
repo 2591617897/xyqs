@@ -42,4 +42,10 @@ public class Notification {
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
+
+    /** Enrich 字段：触发者昵称 / 头像（非数据库列，由 Service 层填充） */
+    @TableField(exist = false)
+    private String actorName;
+    @TableField(exist = false)
+    private String actorAvatar;
 }

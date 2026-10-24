@@ -158,4 +158,62 @@
     <text class="end-title">已加载全部私信对话</text>
     <text class="end-sub">友善交流，共筑可信温暖的校园圈子 🌱</text>
   </view>
+
+  <!-- ========== 通知抽屉 bottom-sheet ========== -->
+  <view class="mask" wx:if="{{notifyDrawerOpen}}" catchtap="closeNotifyDrawer"></view>
+  <view class="notify-drawer {{notifyDrawerOpen ? 'on' : ''}}">
+    <view class="nd-head">
+      <text class="nd-title">{{notifyDrawerTitle}}</text>
+      <view class="nd-actions">
+        <text class="nd-mark" bindtap="onMarkCurrentRead" wx:if="{{notifyDrawerItems.length}}">全部标为已读</text>
+        <text class="nd-close" bindtap="closeNotifyDrawer">✕</text>
+      </view>
+    </view>
+
+    <view class="nd-list" wx:if="{{!notifyDrawerLoading}}">
+      <view
+        class="nd-item {{item.unread ? 'unread' : ''}}"
+        wx:for="{{notifyDrawerItems}}"
+        wx:key="id"
+        bindtap="goNotifyDetail"
+        data-index="{{index}}"
+      >
+        <!-- 头像 -->
+        <view class="ndi-avatar-wrap">
+          <image wx:if="{{item.actorAvatar}}" class="ndi-avatar" src="{{item.actorAvatar}}" mode="aspectFill" />
+          <view wx:else class="ndi-avatar default">
+            <text wx:if="{{item.type === 'SYSTEM'}}">🏫</text>
+            <text wx:else>👤</text>
+          </view>
+          <view class="ndi-dot" wx:if="{{item.unread}}"></view>
+        </view>
+
+        <view class="ndi-main">
+          <view class="ndi-top">
+            <text class="ndi-name">{{item.actorName || '校园趣事'}}</text>
+            <text class="ndi-action">
+              <text wx:if="{{item.type === 'LIKE_GOODS' || item.type === 'LIKE_POST' || item.type === 'LIKE_WALL'}}">给你点了个赞</text>
+              <text wx:elif="{{item.type === 'NEW_FOLLOWER'}}">关注了你</text>
+              <text wx:elif="{{item.type === 'COMMENT_GOODS' || item.type === 'COMMENT_POST' || item.type === 'COMMENT_WALL'}}">评论了你</text>
+              <text wx:elif="{{item.type === 'MENTION'}}">@了你</text>
+              <text wx:elif="{{item.type === 'SYSTEM'}}">发来一条消息</text>
+              <text wx:else>发来通知</text>
+            </text>
+          </view>
+          <view class="ndi-snippet" wx:if="{{item.contentSnapshot}}">{{item.contentSnapshot}}</view>
+          <view class="ndi-bottom">
+            <text class="ndi-time">{{item.timeText}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="nd-empty" wx:if="{{!notifyDrawerItems.length}}">
+        <text class="nde-icon">✨</text>
+        <text>暂时没有{{notifyDrawerTitle}}</text>
+      </view>
+    </view>
+
+    <view class="nd-loading" wx:if="{{notifyDrawerLoading}}">加载中...</view>
+  </view>
+  </view>
 </view>

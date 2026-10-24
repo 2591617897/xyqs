@@ -78,19 +78,18 @@ public class FollowService {
         return resp;
     }
 
-    /** 新关注关系建立后通知被关注者（跳过自关注，上面已拦截 followerId==followeeId） */
+    /** 新关注关系建立后通知被关注者（发即忘，永不阻塞主事务） */
     private void tryNotifyNewFollower(Long followerId, Long followeeId) {
-        try {
-            NotifyReq req = new NotifyReq();
-            req.setType("NEW_FOLLOWER");
-            req.setReceiverId(followeeId);
-            req.setActorId(followerId);
-            req.setTargetType("FOCUS");
-            req.setTargetId(followeeId);
-            notificationClient.send(req);
-        } catch (Exception e) {
-            log.warn("[notify] newFollower failed followerId={} followeeId={}: {}", followerId, followeeId, e.getMessage());
-        }
+        NotifyReq req = new NotifyReq();
+        req.setType("NEW_FOLLOWER");
+        req.setReceiverId(followeeId);
+        req.setActorId(followerId);
+        req.setTargetType("FOCUS");
+        req.setTargetId(followeeId);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] newFollower failed followerId={} followeeId={}: {}", followerId, followeeId, e.getMessage()); }
+        });
     }
 
     /**

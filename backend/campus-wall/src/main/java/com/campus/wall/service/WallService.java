@@ -186,18 +186,17 @@ public class WallService {
     private void tryNotifyLikeWall(WallPost post, Long actorId) {
         Long receiverId = post.getUserId();
         if (receiverId == null || receiverId.equals(actorId)) return;
-        try {
-            NotifyReq req = new NotifyReq();
-            req.setType("LIKE_WALL");
-            req.setReceiverId(receiverId);
-            req.setActorId(actorId);
-            req.setTargetType("WALL");
-            req.setTargetId(post.getId());
-            req.setContentSnapshot(post.getContent());
-            notificationClient.send(req);
-        } catch (Exception e) {
-            log.warn("[notify] likeWall failed postId={}: {}", post.getId(), e.getMessage());
-        }
+        NotifyReq req = new NotifyReq();
+        req.setType("LIKE_WALL");
+        req.setReceiverId(receiverId);
+        req.setActorId(actorId);
+        req.setTargetType("WALL");
+        req.setTargetId(post.getId());
+        req.setContentSnapshot(post.getContent());
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] likeWall failed postId={}: {}", post.getId(), e.getMessage()); }
+        });
     }
 
     public List<WallComment> comments(Long postId, Long userId) {
@@ -245,13 +244,14 @@ public class WallService {
         comment.setParentId(req.getParentId() == null ? 0L : req.getParentId());
         comment.setContent(content);
         comment.setImages(images);
+        WallComment parentComment = null;
         // 回复评论：记录被回复人的匿名昵称快照，供「A 回复 B」展示
         if (comment.getParentId() > 0) {
-            WallComment parent = commentMapper.selectById(comment.getParentId());
-            if (parent == null || !postId.equals(parent.getPostId())) {
+            parentComment = commentMapper.selectById(comment.getParentId());
+            if (parentComment == null || !postId.equals(parentComment.getPostId())) {
                 throw new BizException("要回复的评论不存在");
             }
-            comment.setReplyToName(parent.getAnonName());
+            comment.setReplyToName(parentComment.getAnonName());
         } else {
             comment.setReplyToName(null);
         }
@@ -262,6 +262,10 @@ public class WallService {
         comment.setImageList(splitImages(images));
         tryNotifyCommentWall(post, userId, content);
         tryNotifyMention(userId, req.getMentionUserIds(), "WALL", post.getId(), content);
+        // 楼中楼回复：同时通知被回复的那个评论作者
+        if (comment.getParentId() > 0 && parentComment != null) {
+            tryNotifyReplyComment("WALL", post.getId(), parentComment.getUserId(), post.getUserId(), userId, content);
+        }
         return comment.getId();
     }
 
@@ -274,18 +278,17 @@ public class WallService {
             R<java.util.List<Long>> res = followClient.check(actorId, toValidate);
             if (res == null || res.getData() == null || res.getData().isEmpty()) return;
             for (Long mentionedId : res.getData()) {
-                try {
-                    NotifyReq req = new NotifyReq();
-                    req.setType("MENTION");
-                    req.setReceiverId(mentionedId);
-                    req.setActorId(actorId);
-                    req.setTargetType(targetType);
-                    req.setTargetId(targetId);
-                    req.setContentSnapshot(content);
-                    notificationClient.send(req);
-                } catch (Exception e) {
-                    log.warn("[notify] mentionWall failed receiverId={}: {}", mentionedId, e.getMessage());
-                }
+                NotifyReq req = new NotifyReq();
+                req.setType("MENTION");
+                req.setReceiverId(mentionedId);
+                req.setActorId(actorId);
+                req.setTargetType(targetType);
+                req.setTargetId(targetId);
+                req.setContentSnapshot(content);
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try { notificationClient.send(req); }
+                    catch (Exception e) { log.warn("[notify] mentionWall failed receiverId={}: {}", mentionedId, e.getMessage()); }
+                });
             }
         } catch (Exception e) {
             log.warn("[notify] mentionWall check failed actorId={}: {}", actorId, e.getMessage());
@@ -295,18 +298,40 @@ public class WallService {
     private void tryNotifyCommentWall(WallPost post, Long actorId, String content) {
         Long receiverId = post.getUserId();
         if (receiverId == null || receiverId.equals(actorId)) return;
-        try {
-            NotifyReq req = new NotifyReq();
-            req.setType("COMMENT_WALL");
-            req.setReceiverId(receiverId);
-            req.setActorId(actorId);
-            req.setTargetType("WALL");
-            req.setTargetId(post.getId());
-            req.setContentSnapshot(content);
-            notificationClient.send(req);
-        } catch (Exception e) {
-            log.warn("[notify] commentWall failed postId={}: {}", post.getId(), e.getMessage());
-        }
+        NotifyReq req = new NotifyReq();
+        req.setType("COMMENT_WALL");
+        req.setReceiverId(receiverId);
+        req.setActorId(actorId);
+        req.setTargetType("WALL");
+        req.setTargetId(post.getId());
+        req.setContentSnapshot(content);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] commentWall failed postId={}: {}", post.getId(), e.getMessage()); }
+        });
+    }
+
+    /** 楼中楼回复通知：通知被回复的评论作者 */
+    private void tryNotifyReplyComment(String targetType, Long targetId, Long parentAuthorId, Long contentAuthorId, Long actorId, String content) {
+        if (parentAuthorId == null || parentAuthorId.equals(actorId)) return;
+        if (parentAuthorId.equals(contentAuthorId)) return;
+        String type = switch (targetType) {
+            case "GOODS" -> "COMMENT_GOODS";
+            case "POST" -> "COMMENT_POST";
+            case "WALL" -> "COMMENT_WALL";
+            default -> "COMMENT";
+        };
+        NotifyReq req = new NotifyReq();
+        req.setType(type);
+        req.setReceiverId(parentAuthorId);
+        req.setActorId(actorId);
+        req.setTargetType(targetType);
+        req.setTargetId(targetId);
+        req.setContentSnapshot(content);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { notificationClient.send(req); }
+            catch (Exception e) { log.warn("[notify] replyComment failed targetType={} targetId={} replyTo={}: {}", targetType, targetId, parentAuthorId, e.getMessage()); }
+        });
     }
 
     /**

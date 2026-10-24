@@ -268,9 +268,14 @@
       <view class="sheet-tools">
         <view class="sheet-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
         <view class="sheet-tool" catchtap="chooseCommentImage">🖼</view>
-        <view class="sheet-tool" catchtap="insertAt">@</view>
+        <view class="sheet-tool" catchtap="openMentionPicker">@</view>
       </view>
       <view class="sheet-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发布</view>
+    </view>
+
+    <!-- 已 @ 人员标签（可选展示） -->
+    <view class="mention-tags" wx:if="{{mentionUserIds.length}}">
+      <view class="mention-tag">已 @ {{mentionUserIds.length}} 人</view>
     </view>
 
     <!-- 表情面板 -->
@@ -284,6 +289,27 @@
           data-emoji="{{item}}"
         >{{item}}</view>
       </view>
+    </view>
+  </view>
+
+  <!-- @ 好友选择 bottom-sheet -->
+  <view class="mask comment-mask" wx:if="{{showMentionPicker}}" catchtap="closeMentionPicker"></view>
+  <view class="mention-picker {{showMentionPicker ? 'on' : ''}}">
+    <view class="sheet-head">
+      <text class="sheet-head-title">选择要 @ 的好友</text>
+      <text class="sheet-head-close" catchtap="closeMentionPicker">✕</text>
+    </view>
+    <view class="mention-list">
+      <view class="mention-item" wx:for="{{mentionPickerList}}" wx:key="id" catchtap="confirmMention" data-index="{{index}}">
+        <image wx:if="{{item.avatar}}" class="mi-avatar" src="{{item.avatar}}" mode="aspectFill" />
+        <view wx:else class="mi-avatar default"></view>
+        <view class="mi-info">
+          <text class="mi-name">{{item.nickname || item.name}}</text>
+          <text class="mi-sub">{{item.school || '同学'}}</text>
+        </view>
+        <view class="mi-add">+ @</view>
+      </view>
+      <view class="mention-empty" wx:if="{{!mentionPickerList.length}}">没有更多好友可 @ 了</view>
     </view>
   </view>
 
