@@ -135,6 +135,7 @@
         <view class="feed-user-info" catchtap="goUserSpace" data-id="{{item.authorId}}">
           <view class="feed-name-row">
             <text class="feed-name">{{item.authorName}}</text>
+            <text wx:if="{{item.scopeBadge}}" class="scope-badge {{item.scopeBadge === '同校' ? 'scope-school' : 'scope-city'}}">{{item.scopeBadge}}</text>
           </view>
           <view class="feed-meta">
             <text class="feed-chip {{item.type === 'post' ? 'chip-amber' : 'chip-green'}}">{{item.badge}}</text>

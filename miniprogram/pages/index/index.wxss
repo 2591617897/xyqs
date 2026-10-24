@@ -259,6 +259,22 @@
   font-weight: 700;
   color: #1a1a1a;
 }
+/* 同市浏览范围下的关系徽标：同校（绿）/ 同市异校（蓝） */
+.scope-badge {
+  flex-shrink: 0;
+  font-size: 18rpx;
+  line-height: 1;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+}
+.scope-school {
+  color: #11a86b;
+  background: rgba(17, 168, 107, 0.12);
+}
+.scope-city {
+  color: #2f6fed;
+  background: rgba(47, 111, 237, 0.12);
+}
 .feed-meta {
   display: flex;
   align-items: center;

@@ -152,6 +152,7 @@ Page({
           authorId: p.userId,
           authorName: p.authorName || '校园用户',
           avatar: p.authorAvatar || '',
+          schoolId: p.schoolId || '',
           avatarText: (p.authorName || '校').substring(0, 1),
           timeText: timeAgo(p.createdAt),
           createdAt: p.createdAt || '',
@@ -179,6 +180,7 @@ Page({
           authorId: g.userId,
           authorName: g.sellerName || '校园用户',
           avatar: g.sellerAvatar || '',
+          schoolId: g.schoolId || '',
           avatarText: (g.sellerName || '校').substring(0, 1),
           timeText: timeAgo(g.createdAt),
           createdAt: g.createdAt || '',
@@ -204,6 +206,16 @@ Page({
       // 帖子与闲置按发布时间混排，形成信息流
       const feed = posts.concat(goods).sort(function (a, b) {
         return (b.createdAt || '').localeCompare(a.createdAt || '')
+      })
+
+      // 同市浏览范围下，标记同校 / 同市（异校）：同校帖子打绿标「同校」，其余同城异校打蓝标「同市」
+      const me = self.data.user || (getApp().globalData && getApp().globalData.user) || mp.getStorageSync('user') || {}
+      const mySchoolId = me.schoolId
+      const isCity = self.data.scopeMode === 'city'
+      feed.forEach(function (item) {
+        item.scopeBadge = ''
+        if (!isCity || !mySchoolId || !item.schoolId) return
+        item.scopeBadge = String(mySchoolId) === String(item.schoolId) ? '同校' : '同市'
       })
 
       self.setData({
