@@ -310,16 +310,6 @@
   font-size: 22rpx;
   font-weight: 700;
 }
-.follow-btn {
-  flex-shrink: 0;
-  padding: 8rpx 20rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 168, 107, 0.1);
-  color: #11a86b;
-  font-size: 22rpx;
-  font-weight: 700;
-}
-
 /* 正文主体：单图时左文右图 */
 .feed-body {
   margin-top: 16rpx;

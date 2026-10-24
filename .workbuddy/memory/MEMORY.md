@@ -164,6 +164,10 @@
   默认激活；profile 配置优先级高于主配置。换机器/新克隆需重建该文件，缺失时登录报「微信登录未配置」
 - **凭据有效性自检**（别等真机）：`GET https://api.weixin.qq.com/sns/jscode2session?appid=..&secret=..&js_code=test&grant_type=authorization_code`
   → `40029 invalid code` = 有效；`40125` = secret 错；`40013` = appid 错
+- **腾讯位置服务 key 若开了「签名校验」**：WebService 返回 `status=111`（签名验证失败）。请求必须带
+  `sig = MD5(path + "?" + 参数按名升序拼接 + SK)`。后端已支持：`campus.geo.qqmap-sk`（环境变量 `QQMAP_SK`），
+  留空则不带 sig。**签名串里的值只能做最小化 URL 编码**（`,` `:` `-` `.` `_` `~` 保留），
+  用 `URLEncoder` 会把 `location=39.98,116.30` 的逗号变成 `%2C`，签名必错
 - **`jscode2session` 响应头是 `text/plain`**（body 才是 JSON）→ 用 `RestTemplate.getForObject(url, Map.class)`
   会抛 `UnknownContentTypeException`。必须 `String.class` 取回再 `ObjectMapper` 解析（`AuthService.code2Session` 已这么写）。
   任何新增的第三方 JSON-over-text/plain 接口都按这个来
@@ -180,5 +184,19 @@
 - **没有 schoolId 时不要用 feedScope**：残留的 `city` 会让胶囊显示成「本市/某市 · 全市」，看起来像学校不对。
   `applyUser/applyScope` 无学校时强制按「选择学校」渲染；绑定学校成功后 `scopeMod.write({scope:'school'})` 回本校
 - 我页显示「已绑定学校 / 未绑定学校」与胶囊显示「城市 · 全市」是两回事，别混；胶囊文本 = `scopeMod.label()`
+
+## 布局铁律（踩过坑）
+- **`scroll-view` 放进 flex 列里必须写 `min-height: 0`**：flex 子项默认 `min-height: auto` 会被内容撑到全高，
+  scroll-view 拿不到受限高度就**不会滚动**（表现：弹层里的列表「滑不动」）。参考 `pages/chat/index.wxss .msgs`、
+  `pages/user/verify.wxss .school-scroll`。用 `max-height` 单独的（`order-scroll`、`school-onboard/.ob-list`）也可行
+- **弹层容器写死 `height: Xvh` 时必须配 `box-sizing: border-box`**，否则 Xvh + padding 超屏、底部被顶出可视区
+- 横向 `scroll-view`（`nav-scroll` / `cat-scroll` / `filter-scroll`）不需要高度约束
+
+## 「同校 / 同市」标签口径（唯一口径，别再写死）
+- 判定：`String(myUser.schoolId) === String(item.schoolId) ? '同校' : '同市'`（`myUser` 取
+  `globalData.user` 再回退 `storage.user`）；任一 schoolId 为空则**不显示**标签，不要瞎标
+- 已统一的位置：首页信息流卡片（`index.js` 的 `scopeBadge`，仅全市模式打标）、帖子详情（`post.schoolBadge`）、
+  表白墙详情（`post.sameSchool` → 「仅同校可见」/「同城可见」）
+- 注意 `POST /api/posts/{id}` 返回的 `schoolId` 是**字符串**（Long 全局序列化为 String），比较前统一 `String()`
 - 排查登录问题看 `campus-auth` 日志：`登录 platform=wx openid=xxxx****xxxx`
   —— 两个微信号应当打印出两个不同 openid

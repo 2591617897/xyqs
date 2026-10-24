@@ -28,7 +28,7 @@
 
     <view class="meta">
       <text class="tag" wx:if="{{post.mine}}">我发布的</text>
-      <text class="muted">仅同校可见 · 匿名展示</text>
+      <text class="muted">{{post.sameSchool ? '仅同校可见 · 匿名展示' : '同城可见 · 匿名展示'}}</text>
     </view>
   </view>
 

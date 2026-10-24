@@ -119,6 +119,8 @@
 .sheet {
   width: 100%;
   height: 76vh;
+  /* height 要把 padding 算进去，否则 76vh + 32rpx 上下内边距会超出屏幕，列表底部被顶出去 */
+  box-sizing: border-box;
   background: #ffffff;
   border-radius: 32rpx 32rpx 0 0;
   padding: 32rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
@@ -139,6 +141,10 @@
 }
 .school-scroll {
   flex: 1;
+  /* 关键：flex 子项默认 min-height:auto，会被内容撑到全高，
+     scroll-view 拿不到受限高度就不会滚动（表现为「列表滑不动」） */
+  min-height: 0;
+  overflow: hidden;
 }
 .school-item {
   display: flex;

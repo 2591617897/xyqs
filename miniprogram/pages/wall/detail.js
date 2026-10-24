@@ -459,5 +459,8 @@ function decorate(post) {
   post.avatarClass = 'anon-' + (post.anonAvatar || 1)
   post.avatarEmoji = AVATAR_EMOJI[(post.anonAvatar || 1) - 1] || '💌'
   post.imageList = resolveList(post.imageList)
+  // 全市范围下可能刷到外校的心事：与首页/帖子详情同口径，用 schoolId 对比
+  const me = (getApp() && getApp().globalData.user) || mp.getStorageSync('user') || {}
+  post.sameSchool = !!(me.schoolId && post.schoolId && String(me.schoolId) === String(post.schoolId))
   return post
 }

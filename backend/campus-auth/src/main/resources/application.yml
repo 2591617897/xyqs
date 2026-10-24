@@ -51,6 +51,9 @@ campus:
     # 后端逆地理才能解析成功；未开通/未配置时 /auth/geo/city 返回 available=false，
     # 前端自动回退到「学校所在市」。申请/管理：https://lbs.qq.com/
     qqmap-key: ${QQMAP_KEY:R3GBZ-74NLJ-FULFO-DWKJE-QVEY5-SPBJ2}
+    # key 若在控制台开启了「签名校验」，必须填 SK，否则 WebService 返回 status=111
+    # （控制台 → 该 key → 签名校验；关掉的话这里留空即可）
+    qqmap-sk: ${QQMAP_SK:SJhhXXNWWMTNIV59Ss4xrk79LDe5QKUj}
   wx:
     # 微信小程序（当前主端）。appid 与 project.config.json 保持一致；
     # appsecret 必须由环境变量 WX_APPSECRET 提供（不要写进仓库）。

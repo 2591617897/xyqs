@@ -57,9 +57,15 @@ Page({
     http.get('/posts/' + this.postId, null, { silent: true }).then(function (post) {
       post.timeText = timeAgo(post.createdAt)
       post.imageList = resolveList(post.imageList)
+      // 与首页信息流同一口径：只有拿得到「我的学校」和「帖子学校」时才区分，
+      // 全市范围下外校同学的帖子要标「同市」，不能一律写「同校」
+      const me = getApp().globalData.user || mp.getStorageSync('user') || {}
+      post.schoolBadge = ''
+      if (me.schoolId && post.schoolId) {
+        post.schoolBadge = String(me.schoolId) === String(post.schoolId) ? '同校' : '同市'
+      }
       // 头像快照可能落后于最新资料，自己的帖子用本地头像兜底
-      const me = getApp().globalData.user
-      if (post.mine && !post.authorAvatar && me && me.avatar) {
+      if (post.mine && !post.authorAvatar && me.avatar) {
         post.authorAvatar = me.avatar
       }
       self.setData({ post: post, loading: false, loadError: false, liked: !!post.liked })

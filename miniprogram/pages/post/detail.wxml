@@ -13,7 +13,8 @@
       <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
     </view>
     <view class="ab-btn" wx:if="{{post.mine}}" catchtap="openMore">管理</view>
-    <view class="ab-btn ghost" wx:else>同校</view>
+    <!-- 同校 / 同市 由 schoolId 对比得出（全市范围下作者可能是外校同学） -->
+    <view class="ab-btn ghost" wx:elif="{{post.schoolBadge}}">{{post.schoolBadge}}</view>
   </view>
 
   <!-- 正文 -->

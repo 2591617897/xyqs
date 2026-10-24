@@ -123,7 +123,7 @@
       hover-class="feed-hover"
       hover-stay-time="60"
     >
-      <!-- 作者行：头像 + 昵称 + 标签/关注（头像与昵称区 catchtap 阻止冒泡到卡片详情跳转） -->
+      <!-- 作者行：头像 + 昵称 + 标签（头像与昵称区 catchtap 阻止冒泡到卡片详情跳转） -->
       <view class="feed-user">
         <view class="feed-avatar" catchtap="goUserSpace" data-id="{{item.authorId}}">
           <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
@@ -143,9 +143,6 @@
           </view>
         </view>
         <text class="feed-status" wx:if="{{item.type === 'goods'}}">闲置中</text>
-        <view class="follow-btn" wx:else catchtap="onFollow" data-id="{{item.authorId}}">
-          {{followedAuthors[item.authorId].following ? '已关注' : '+ 关注'}}
-        </view>
       </view>
 
       <!-- 正文主体：单图时右侧缩略图 -->

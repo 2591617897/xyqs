@@ -10,7 +10,7 @@
     <!-- ===== 头像卡 ===== -->
     <view class="card">
       <view class="avatar-row">
-        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" style="width: 194rpx; display: block; box-sizing: border-box; left: -125rpx; top: 1rpx; position: relative">
           <image wx:if="{{user.avatar}}" class="avatar" src="{{user.avatar}}" mode="aspectFill" />
           <view wx:else class="avatar avatar-empty">👤</view>
         </button>

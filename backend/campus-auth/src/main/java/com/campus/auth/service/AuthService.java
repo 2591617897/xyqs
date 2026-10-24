@@ -20,9 +20,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Slf4j
 @Service
@@ -61,6 +64,14 @@ public class AuthService {
     @Value("${campus.geo.qqmap-key:}")
     private String qqmapKey;
 
+    /**
+     * 腾讯位置服务「签名校验」的 SK。
+     * key 在控制台开启了签名校验时必填，否则 WebService 会返回 status=111 签名验证失败；
+     * 未开启签名校验时留空即可（请求不带 sig）。
+     */
+    @Value("${campus.geo.qqmap-sk:}")
+    private String qqmapSk;
+
     public LoginResp login(LoginReq req) {
         if (!StringUtils.hasText(req.getCode()) && !StringUtils.hasText(req.getDevOpenid())) {
             throw new BizException("缺少登录凭证 code");
@@ -95,7 +106,11 @@ public class AuthService {
 
     /**
      * 位置信息 API：经纬度 → 省/市/区（腾讯位置服务 WebService 逆地理编码）。
-     * key 未配置或调用失败时返回 available=false，前端据此回退到「学校所在市」。
+     *
+     * key 若在控制台开启了「签名校验」，请求必须带 sig：
+     *   sig = MD5(请求路径?参数按名升序拼接 + SK)
+     * 否则返回 status=111（签名验证失败）。未配置 SK 时按不带签名请求发送。
+     * 任何失败都降级为 available=false，由前端回退到「学校所在市」。
      */
     public GeoCity resolveCity(double lat, double lng) {
         GeoCity resp = new GeoCity();
@@ -105,9 +120,28 @@ public class AuthService {
             return resp;
         }
         try {
-            String url = String.format(Locale.ROOT,
-                    "https://apis.map.qq.com/ws/geocoder/v1/?location=%s,%s&key=%s&output=json&get_poi=0",
-                    lat, lng, qqmapKey);
+            String path = "/ws/geocoder/v1/";
+            // TreeMap 天然按参数名升序，与腾讯签名要求的排序一致 —— 让请求串和签名串共用同一份拼接
+            Map<String, String> params = new TreeMap<>();
+            params.put("key", qqmapKey);
+            params.put("location", String.format(Locale.ROOT, "%s,%s", lat, lng));
+            params.put("output", "json");
+            params.put("get_poi", "0");
+
+            StringBuilder qs = new StringBuilder();
+            for (Map.Entry<String, String> e : params.entrySet()) {
+                if (qs.length() > 0) {
+                    qs.append('&');
+                }
+                qs.append(e.getKey()).append('=').append(encodeValue(e.getValue()));
+            }
+            String query = qs.toString();
+            if (StringUtils.hasText(qqmapSk)) {
+                // 参与签名的只有 path + 排序后的参数（不含 sig 自身）
+                query = query + "&sig=" + md5Hex(path + "?" + query + qqmapSk);
+            }
+
+            String url = "https://apis.map.qq.com" + path + "?" + query;
             // 同样先取字符串再解析：腾讯位置服务偶尔也会返回 text/plain，
             // 直接要 Map 会抛转换异常并被下面的 catch 静默降级
             String raw = restTemplate.getForObject(url, String.class);
@@ -121,12 +155,57 @@ public class AuthService {
                 resp.setDistrict(asText(c.get("district")));
                 resp.setAvailable(StringUtils.hasText(resp.getCity()));
             } else {
-                log.warn("逆地理编码返回异常 body={}", body);
+                Object status = body == null ? null : body.get("status");
+                Object message = body == null ? null : body.get("message");
+                log.warn("逆地理编码返回异常 status={} message={}", status, message);
+                if ("111".equals(String.valueOf(status)) && !StringUtils.hasText(qqmapSk)) {
+                    log.warn("腾讯位置服务要求签名：请在控制台关闭该 key 的「签名校验」，"
+                            + "或把 SK 配到 campus.geo.qqmap-sk（环境变量 QQMAP_SK）");
+                }
             }
         } catch (Exception e) {
             log.warn("逆地理编码失败 lat={} lng={} {}", lat, lng, e.getMessage());
         }
         return resp;
+    }
+
+    /**
+     * 腾讯 WebService 签名用的最小化 URL 编码。
+     *
+     * 只转义会破坏 query 结构的字符，`,` `:` `-` `.` `_` `~` 一律保留原样 ——
+     * 腾讯官方示例里 `location=39.98,116.30` 的逗号是不编码的，
+     * 若直接用 URLEncoder 会把逗号变成 %2C，导致签名与请求串不一致、校验失败。
+     */
+    private String encodeValue(String v) {
+        if (v == null) {
+            return "";
+        }
+        return v.replace("%", "%25")
+                .replace(" ", "%20")
+                .replace("+", "%2B")
+                .replace("&", "%26")
+                .replace("=", "%3D")
+                .replace("#", "%23")
+                .replace("?", "%3F");
+    }
+
+    /** MD5 小写 32 位（腾讯 WebService 签名要求） */
+    private String md5Hex(String src) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(src.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                String h = Integer.toHexString(b & 0xFF);
+                if (h.length() == 1) {
+                    sb.append('0');
+                }
+                sb.append(h);
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new BizException("签名计算失败");
+        }
     }
 
     private String asText(Object o) {
