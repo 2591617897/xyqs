@@ -31,8 +31,8 @@
   </view>
 
   <view class="body">
-    <!-- 价格与标题卡 -->
-    <view class="card">
+    <!-- 价格与标题卡（上浮压住轮播底边，形成层次） -->
+    <view class="card price-card">
       <view class="price-row">
         <view class="price-main">
           <text class="price-symbol">¥</text>
@@ -266,7 +266,7 @@
 
   <view class="bottom-space"></view>
 
-  <!-- 底部操作栏：左侧圆形图标动作组 + 右侧双主按钮 -->
+  <!-- 底部操作栏：左侧图标动作组 + 右侧主次双按钮 -->
   <view class="bottom-bar">
     <block wx:if="{{isOwner}}">
       <view class="owner-status {{goods.status === 1 ? 'on' : (goods.status === 2 ? 'sold' : 'off')}}">
@@ -281,23 +281,22 @@
     </block>
     <block wx:else>
       <view class="bar-acts">
-        <view class="bar-act" hover-class="bar-act-hover" bindtap="toggleLike">
+        <view class="bar-act" hover-class="bar-act-hover" bindtap="toggleLike" aria-role="button" aria-label="{{liked ? '取消收藏' : '收藏'}}">
           <view class="bar-act-icon {{liked ? 'liked' : ''}}">{{liked ? '♥' : '♡'}}</view>
           <text class="bar-act-text">{{liked ? '已收藏' : '收藏'}}</text>
         </view>
-        <button class="bar-act" open-type="share" hover-class="bar-act-hover">
+        <button class="bar-act" open-type="share" hover-class="bar-act-hover" aria-label="分享">
           <view class="bar-act-icon">↗</view>
           <text class="bar-act-text">分享</text>
         </button>
       </view>
       <view class="bar-cta">
-        <view class="cta-chat" hover-class="cta-chat-hover" bindtap="goChat">
+        <view class="cta-chat" hover-class="cta-chat-hover" bindtap="goChat" aria-role="button" aria-label="和卖家聊一聊">
           <text class="cta-chat-emoji">💬</text>
           <text class="cta-chat-text">聊一聊</text>
-          <view class="cta-badge">极速回</view>
         </view>
-        <view class="cta-buy {{goods.status === 1 ? '' : 'off'}}" hover-class="cta-buy-hover" bindtap="openOrder">
-          <text>{{goods.status === 1 ? '申请自提' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
+        <view class="cta-buy {{goods.status === 1 ? '' : 'off'}}" hover-class="cta-buy-hover" bindtap="openOrder" aria-role="button" aria-label="申请自提">
+          <text class="cta-buy-text">{{goods.status === 1 ? '申请自提' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
         </view>
       </view>
     </block>

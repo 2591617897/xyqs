@@ -1,6 +1,10 @@
-/* ===== 商品详情 · 对齐设计稿 Item Detail ===== */
+/* ===== 商品详情 · 统一视觉规范 =====
+   主色 #10b981 / #047857 · 墨色 #0f172a · 次级 #64748b · 三级 #94a3b8
+   圆角：卡片 28rpx / 内块 18rpx / 胶囊 999rpx
+   阴影：1rpx 描边 + 大范围低透明度投影，避免灰块感
+*/
 .page {
-  background: #f7f9fb;
+  background: #f4f6f8;
   min-height: 100vh;
   padding-bottom: 1rpx;
 }
@@ -10,7 +14,7 @@
   position: relative;
   width: 100%;
   height: 560rpx;
-  background: #eceef0;
+  background: #e9edf1;
 }
 .gallery {
   width: 100%;
@@ -27,7 +31,7 @@
   align-items: center;
   justify-content: center;
   gap: 24rpx;
-  background: linear-gradient(135deg, #f7f9fc 0%, #eaeef7 100%);
+  background: linear-gradient(135deg, #f7f9fc 0%, #e8eef6 100%);
 }
 .gallery-emoji {
   font-size: 140rpx;
@@ -37,7 +41,7 @@
   align-items: center;
   justify-content: center;
   font-size: 120rpx;
-  background: linear-gradient(135deg, #f7f9fc 0%, #eaeef7 100%);
+  background: linear-gradient(135deg, #f7f9fc 0%, #e8eef6 100%);
 }
 .gallery-empty-tip {
   font-size: 24rpx;
@@ -60,95 +64,115 @@
   border-radius: 999rpx;
   font-size: 22rpx;
   font-weight: 600;
+  letter-spacing: 0.5rpx;
 }
 .gallery-tag.mint {
-  background: #10b981;
-  color: #00422b;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 6rpx 16rpx -6rpx rgba(5, 150, 105, 0.6);
 }
 .gallery-tag.mint .gt-check {
   font-size: 20rpx;
 }
 .gallery-tag.ghost {
-  background: rgba(255, 255, 255, 0.92);
-  color: #006c49;
-  backdrop-filter: blur(8rpx);
+  background: rgba(255, 255, 255, 0.86);
+  color: #047857;
+  backdrop-filter: blur(10rpx);
+  box-shadow: 0 4rpx 12rpx -6rpx rgba(15, 23, 42, 0.3);
 }
 .gallery-counter {
   position: absolute;
   right: 24rpx;
-  bottom: 24rpx;
-  padding: 6rpx 20rpx;
+  bottom: 64rpx;
+  padding: 4rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(45, 49, 51, 0.66);
-  color: #eff1f3;
+  background: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
   font-size: 22rpx;
   letter-spacing: 2rpx;
   z-index: 5;
+  backdrop-filter: blur(8rpx);
 }
 
-/* ---------- 主体卡片 ---------- */
+/* ---------- 主体：首卡上浮压住轮播 ---------- */
 .body {
-  padding: 24rpx 24rpx 0;
+  position: relative;
+  z-index: 2;
+  margin-top: -40rpx;
+  padding: 0 24rpx;
 }
 .card {
   background: #ffffff;
-  border-radius: 32rpx;
+  border-radius: 28rpx;
   padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(16, 185, 129, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1rpx 2rpx rgba(15, 23, 42, 0.03), 0 16rpx 36rpx -22rpx rgba(15, 23, 42, 0.22);
+}
+.price-card {
+  border-radius: 32rpx;
+  box-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.04), 0 20rpx 44rpx -26rpx rgba(15, 23, 42, 0.28);
 }
 
 /* 价格与标题 */
 .price-row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 16rpx;
 }
 .price-main {
   display: flex;
   align-items: baseline;
   gap: 4rpx;
+  min-width: 0;
 }
 .price-symbol {
   color: #f97316;
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 700;
 }
 .price-num {
   color: #f97316;
-  font-size: 56rpx;
+  font-size: 62rpx;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -1rpx;
+  font-variant-numeric: tabular-nums;
 }
 .price-origin {
-  margin-left: 16rpx;
+  margin-left: 14rpx;
   color: #94a3b8;
-  font-size: 24rpx;
+  font-size: 23rpx;
   text-decoration: line-through;
 }
 .save-pill {
-  padding: 6rpx 20rpx;
+  flex-shrink: 0;
+  margin-top: 8rpx;
+  padding: 6rpx 18rpx;
   border-radius: 999rpx;
-  background: #ffdbca;
-  color: #5c2400;
+  background: #fff1e6;
+  color: #c2410c;
   font-size: 22rpx;
   font-weight: 600;
 }
 .g-title {
-  margin-top: 20rpx;
-  font-size: 32rpx;
+  margin-top: 18rpx;
+  font-size: 34rpx;
   font-weight: 600;
-  line-height: 1.5;
-  color: #191c1e;
+  line-height: 1.45;
+  color: #0f172a;
+  letter-spacing: 0.5rpx;
 }
 .g-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 24rpx;
-  font-size: 24rpx;
-  color: #475569;
+  margin-top: 22rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f1f5f9;
+  font-size: 23rpx;
+  color: #64748b;
 }
 .g-loc {
   flex: 1;
@@ -160,9 +184,10 @@
 .g-stats {
   flex-shrink: 0;
   margin-left: 24rpx;
+  color: #94a3b8;
 }
 .g-stat-gap {
-  margin-left: 24rpx;
+  margin-left: 20rpx;
 }
 
 /* 卖家卡 */
@@ -176,17 +201,18 @@
   flex-shrink: 0;
 }
 .seller-avatar {
-  width: 96rpx;
-  height: 96rpx;
+  width: 104rpx;
+  height: 104rpx;
   border-radius: 50%;
   overflow: hidden;
-  background: #e6e8ea;
-  border: 4rpx solid rgba(16, 185, 129, 0.25);
+  background: #eef1f4;
+  border: 3rpx solid #ffffff;
+  box-shadow: 0 0 0 2rpx rgba(16, 185, 129, 0.2), 0 8rpx 20rpx -10rpx rgba(15, 23, 42, 0.3);
 }
 .seller-check {
   position: absolute;
-  right: -4rpx;
-  bottom: -4rpx;
+  right: -2rpx;
+  bottom: -2rpx;
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
@@ -205,67 +231,82 @@
 .seller-name-row {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 10rpx;
 }
 .seller-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #191c1e;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .seller-verified {
-  padding: 4rpx 12rpx;
+  flex-shrink: 0;
+  padding: 4rpx 10rpx;
   border-radius: 8rpx;
-  background: rgba(0, 108, 73, 0.1);
-  color: #006c49;
-  font-size: 20rpx;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 19rpx;
   font-weight: 600;
 }
 .seller-school {
   margin-top: 8rpx;
-  font-size: 24rpx;
-  color: #475569;
+  font-size: 23rpx;
+  color: #94a3b8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .follow-btn {
   flex-shrink: 0;
-  padding: 12rpx 32rpx;
+  height: 60rpx;
+  padding: 0 28rpx;
   border-radius: 999rpx;
-  background: #11a86b;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
-  font-size: 26rpx;
+  font-size: 25rpx;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 18rpx -10rpx rgba(5, 150, 105, 0.7);
 }
 
 /* 已关注：幽灵样式，再次点击取消 */
 .follow-btn.on {
   background: #f1f5f9;
   color: #64748b;
+  box-shadow: none;
 }
 .seller-metrics {
   display: flex;
-  margin-top: 24rpx;
-  padding: 20rpx;
+  margin-top: 26rpx;
+  padding: 22rpx 8rpx;
   border-radius: 20rpx;
-  background: #f2f4f6;
+  background: #f7faf9;
+  border: 1rpx solid #eef4f1;
 }
 .metric {
   flex: 1;
+  min-width: 0;
   text-align: center;
+}
+.metric + .metric {
+  border-left: 1rpx solid #e6eeea;
 }
 .metric-top {
   font-size: 24rpx;
   font-weight: 600;
-  color: #191c1e;
+  color: #0f172a;
 }
 .metric-top.brand {
-  color: #006c49;
+  color: #047857;
 }
 .metric-sub {
   margin-top: 6rpx;
-  font-size: 20rpx;
-  color: #475569;
+  font-size: 19rpx;
+  color: #94a3b8;
 }
 
 /* 卡片标题 */
@@ -280,111 +321,121 @@
 }
 .head-bar {
   width: 6rpx;
-  height: 32rpx;
+  height: 28rpx;
   border-radius: 999rpx;
-  background: #10b981;
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
 }
 .head-title {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
-  color: #191c1e;
+  color: #0f172a;
+  letter-spacing: 0.5rpx;
 }
 
 /* 规格 */
 .spec-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 .spec-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f2f4f6;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: #f8fafb;
+  border: 1rpx solid #f1f5f9;
   font-size: 24rpx;
 }
 .spec-label {
-  color: #475569;
+  color: #64748b;
   flex-shrink: 0;
 }
 .spec-value {
-  color: #191c1e;
+  color: #0f172a;
   font-weight: 600;
   text-align: right;
   margin-left: 24rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .spec-value.warn {
   color: #f97316;
 }
 .spec-value.brand {
-  color: #006c49;
+  color: #047857;
+  font-weight: 700;
 }
 
 /* 描述 */
 .desc {
   font-size: 28rpx;
-  line-height: 1.8;
-  color: #191c1e;
+  line-height: 1.85;
+  color: #334155;
   white-space: pre-wrap;
   word-break: break-all;
 }
 .desc-note {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f2f4f6;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #475569;
+  margin-top: 22rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: #f4faf7;
+  border-left: 4rpx solid rgba(16, 185, 129, 0.5);
+  font-size: 23rpx;
+  line-height: 1.75;
+  color: #3f6b5b;
 }
 
 /* 安全提示 */
 .safety {
   display: flex;
-  gap: 20rpx;
-  padding: 28rpx;
-  border-radius: 32rpx;
-  background: rgba(0, 108, 73, 0.06);
-  margin-bottom: 24rpx;
+  gap: 18rpx;
+  padding: 26rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #effaf3 0%, #f8fdfb 100%);
+  border: 1rpx solid rgba(16, 185, 129, 0.14);
+  margin-bottom: 20rpx;
 }
 .safety-icon {
-  font-size: 40rpx;
+  font-size: 36rpx;
   line-height: 1.2;
   flex-shrink: 0;
 }
 .safety-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #006c49;
+  color: #047857;
+  letter-spacing: 0.5rpx;
 }
 .safety-text {
   margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #475569;
+  font-size: 23rpx;
+  line-height: 1.65;
+  color: #5b7a6d;
 }
 
 /* 校友问答 */
 .qa-count {
-  font-size: 24rpx;
-  color: #475569;
+  font-size: 23rpx;
+  color: #94a3b8;
 }
 .qa-ask {
-  font-size: 24rpx;
-  color: #006c49;
+  font-size: 23rpx;
+  color: #047857;
   font-weight: 600;
 }
 .qa-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 12rpx;
 }
 .qa-item {
   padding: 24rpx;
-  border-radius: 20rpx;
-  background: #f2f4f6;
+  border-radius: 18rpx;
+  background: #f8fafb;
+  border: 1rpx solid #f1f5f9;
 }
 .qa-row {
   display: flex;
@@ -398,7 +449,7 @@
 .qa-badge {
   width: 40rpx;
   height: 40rpx;
-  border-radius: 50%;
+  border-radius: 12rpx;
   font-size: 20rpx;
   font-weight: 700;
   display: flex;
@@ -407,8 +458,8 @@
   flex-shrink: 0;
 }
 .qa-badge.q {
-  background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
+  background: #fff1e6;
+  color: #c2410c;
 }
 .qa-badge.a {
   background: #10b981;
@@ -416,23 +467,28 @@
 }
 .qa-text {
   flex: 1;
+  min-width: 0;
   font-size: 26rpx;
-  color: #191c1e;
+  color: #0f172a;
   font-weight: 500;
   line-height: 1.6;
+  word-break: break-all;
 }
 .qa-text.sub {
-  color: #475569;
+  color: #64748b;
   font-weight: 400;
 }
 .qa-time {
   margin-top: 12rpx;
   text-align: right;
   font-size: 20rpx;
-  color: #94a3b8;
+  color: #b6c0cc;
 }
 
-/* ---------- 底部操作栏 ---------- */
+/* ---------- 底部操作栏 ----------
+   结构：图标动作组（固定 82rpx×2）+ 主按钮区（弹性）
+   防溢出：所有子项显式 flex-basis + min-width:0，容器 overflow: hidden
+*/
 .bottom-space {
   height: 200rpx;
 }
@@ -442,23 +498,25 @@
   right: 0;
   bottom: 0;
   z-index: 40;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 10rpx;
-  padding: 16rpx 20rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.92);
+  padding: 14rpx 20rpx calc(14rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(24rpx);
-  border-top: 1rpx solid rgba(15, 23, 42, 0.05);
-  box-shadow: 0 -12rpx 40rpx -12rpx rgba(15, 23, 42, 0.12);
+  border-top: 1rpx solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 -14rpx 40rpx -20rpx rgba(15, 23, 42, 0.25);
 }
 
 /* 左侧：圆形图标动作组 */
 .bar-acts {
   display: flex;
   align-items: center;
-  gap: 4rpx;
-  flex-shrink: 0;
+  flex: 0 0 auto;
   padding-right: 12rpx;
+  margin-right: 12rpx;
   border-right: 1rpx solid #eef1f5;
 }
 .bar-act {
@@ -466,14 +524,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 84rpx;
-  flex-shrink: 0;
-  background: transparent;
+  flex: 0 0 82rpx;
+  width: 82rpx;
+  min-width: 82rpx;
+  max-width: 82rpx;
   padding: 6rpx 0;
   margin: 0;
-  line-height: 1;
+  background: transparent;
   border: none;
   border-radius: 20rpx;
+  line-height: 1;
   font-size: inherit;
   box-sizing: border-box;
 }
@@ -497,7 +557,7 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 .bar-act-icon.liked {
-  background: rgba(236, 72, 153, 0.12);
+  background: #fdf2f8;
   color: #ec4899;
 }
 .bar-act-text {
@@ -507,30 +567,31 @@
   white-space: nowrap;
 }
 
-/* 右侧：双主按钮 */
+/* 右侧：主次双按钮 */
 .bar-cta {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  margin-left: 4rpx;
 }
 .cta-chat {
-  position: relative;
-  flex: 0 0 196rpx;
+  flex: 0 1 180rpx;
+  min-width: 0;
+  max-width: 180rpx;
   height: 92rpx;
+  margin-right: 12rpx;
   border-radius: 999rpx;
   background: #eaf7f1;
-  border: 2rpx solid rgba(16, 185, 129, 0.25);
-  color: #006c49;
-  font-size: 28rpx;
+  border: 2rpx solid rgba(16, 185, 129, 0.22);
+  color: #047857;
+  font-size: 27rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6rpx;
   white-space: nowrap;
+  overflow: hidden;
   box-sizing: border-box;
 }
 .cta-chat-hover {
@@ -542,19 +603,6 @@
 }
 .cta-chat-text {
   letter-spacing: 1rpx;
-}
-.cta-badge {
-  position: absolute;
-  top: -12rpx;
-  right: 6rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #ff9a3d 0%, #f26a0a 100%);
-  color: #ffffff;
-  font-size: 18rpx;
-  font-weight: 700;
-  line-height: 1.5;
-  box-shadow: 0 4rpx 10rpx -2rpx rgba(242, 106, 10, 0.5);
 }
 .cta-buy {
   flex: 1 1 0;
@@ -569,14 +617,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 10rpx 24rpx -10rpx rgba(4, 120, 87, 0.65);
+}
+.cta-buy-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  box-shadow: 0 10rpx 26rpx -8rpx rgba(4, 120, 87, 0.6);
 }
 .cta-buy-hover {
   opacity: 0.88;
 }
 .cta-buy.off {
-  background: #cfd6dd;
+  background: #d3dae1;
   box-shadow: none;
   color: #ffffff;
 }
@@ -679,56 +732,62 @@
   gap: 20rpx;
   padding: 20rpx;
   border-radius: 20rpx;
-  background: #f2f4f6;
+  background: #f7f9fb;
+  border: 1rpx solid #f1f5f9;
   margin-bottom: 24rpx;
 }
 .sheet-cover {
   width: 96rpx;
   height: 96rpx;
-  border-radius: 20rpx;
+  border-radius: 18rpx;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 52rpx;
   flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.06);
 }
 .sheet-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #191c1e;
+  color: #0f172a;
 }
 .sheet-price {
   margin-top: 8rpx;
   color: #f97316;
   font-size: 32rpx;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .sheet-price .price-symbol {
   font-size: 22rpx;
   margin-right: 2rpx;
 }
 .sheet-input {
-  height: 88rpx;
+  height: 92rpx;
   padding: 0 28rpx;
   border-radius: 20rpx;
-  background: #f2f4f6;
+  background: #f7f9fb;
+  border: 1rpx solid #e8edf2;
   font-size: 28rpx;
   margin-bottom: 20rpx;
+  box-sizing: border-box;
 }
 .sheet-textarea {
   width: 100%;
-  min-height: 160rpx;
+  min-height: 168rpx;
   padding: 24rpx 28rpx;
   border-radius: 20rpx;
-  background: #f2f4f6;
+  background: #f7f9fb;
+  border: 1rpx solid #e8edf2;
   font-size: 28rpx;
   box-sizing: border-box;
 }
 .sheet-note {
   margin-top: 16rpx;
   text-align: center;
-  font-size: 22rpx;
+  font-size: 21rpx;
   color: #94a3b8;
 }
 
@@ -761,62 +820,70 @@
 
 /* ---------- 评论区（含楼中楼回复） ---------- */
 .comment-card {
-  margin-top: 20rpx;
+  margin-top: 0;
 }
 .cc-count {
-  font-size: 24rpx;
-  color: #b6bbc6;
-  margin-left: 4rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 21rpx;
+  font-weight: 600;
+  margin-left: 2rpx;
 }
 .cc-input-row {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  padding: 12rpx 0 4rpx;
+  padding: 4rpx 0;
 }
 .cc-input {
   flex: 1;
   min-width: 0;
-  height: 68rpx;
-  background: #f2f3f5;
+  height: 72rpx;
+  background: #f4f6f8;
   border-radius: 999rpx;
-  padding: 0 24rpx;
+  padding: 0 26rpx;
   font-size: 26rpx;
-  color: #1a1a1a;
+  color: #0f172a;
 }
 .cc-tool {
-  width: 56rpx;
-  height: 56rpx;
+  width: 60rpx;
+  height: 60rpx;
   border-radius: 50%;
-  background: #f2f3f5;
+  background: #f4f6f8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30rpx;
+  font-size: 28rpx;
   flex-shrink: 0;
+  transition: background 0.2s ease;
 }
 .cc-tool.on {
-  background: rgba(16, 185, 129, 0.12);
+  background: #e6f7f0;
 }
 .cc-send {
-  height: 56rpx;
-  line-height: 56rpx;
+  height: 60rpx;
+  line-height: 60rpx;
   padding: 0 26rpx;
   border-radius: 999rpx;
-  background: #e6e8ec;
-  color: #9ca3af;
-  font-size: 26rpx;
+  background: #eef1f4;
+  color: #9aa5b1;
+  font-size: 25rpx;
   flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 .cc-send.on {
-  background: #10b981;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   font-weight: 600;
+  box-shadow: 0 8rpx 18rpx -10rpx rgba(5, 150, 105, 0.8);
 }
 .emoji-panel {
-  margin-top: 12rpx;
-  background: #f7f8fa;
-  border-radius: 16rpx;
+  margin-top: 14rpx;
+  background: #f8fafb;
+  border-radius: 18rpx;
+  border: 1rpx solid #f1f5f9;
   padding: 16rpx;
 }
 .emoji-grid {
@@ -832,7 +899,8 @@
   justify-content: center;
   font-size: 40rpx;
   background: #ffffff;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
+  box-shadow: 0 2rpx 6rpx rgba(15, 23, 42, 0.05);
 }
 .pending-imgs {
   display: flex;
@@ -866,27 +934,27 @@
 }
 .p-tip {
   font-size: 20rpx;
-  color: #b6bbc6;
+  color: #b6c0cc;
 }
 .cc-list {
-  margin-top: 8rpx;
+  margin-top: 12rpx;
 }
 .comment-item {
   display: flex;
   gap: 18rpx;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #f6f7fb;
+  padding: 26rpx 0;
+  border-bottom: 1rpx solid #f4f6f9;
 }
 .comment-item:last-child {
   border-bottom: none;
 }
 .ci-avatar {
-  width: 64rpx;
-  height: 64rpx;
+  width: 68rpx;
+  height: 68rpx;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: #eef0f4;
+  background: #eef1f4;
 }
 .ci-avatar-img {
   width: 100%;
@@ -898,13 +966,13 @@
   min-width: 0;
 }
 .ci-name {
-  font-size: 25rpx;
-  color: #8c8c93;
+  font-size: 23rpx;
+  color: #94a3b8;
 }
 .ci-text {
   font-size: 28rpx;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: #1e293b;
   margin-top: 8rpx;
   word-break: break-all;
 }
@@ -922,28 +990,28 @@
 .ci-img {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 10rpx;
+  border-radius: 12rpx;
   background: #f2f3f5;
 }
 .ci-time {
-  font-size: 22rpx;
-  color: #b3b3b8;
+  font-size: 21rpx;
+  color: #b6c0cc;
 }
 .ci-del {
-  font-size: 22rpx;
-  color: #b3b3b8;
+  font-size: 21rpx;
+  color: #b6c0cc;
   padding-left: 16rpx;
 }
 .ci-reply-btn {
-  font-size: 22rpx;
-  color: #b3b3b8;
+  font-size: 21rpx;
+  color: #64748b;
   padding-left: 16rpx;
 }
 .ci-replies {
   margin-top: 16rpx;
-  background: #f6f8fb;
+  background: #f7f9fb;
   border-radius: 16rpx;
-  padding: 8rpx 16rpx;
+  padding: 8rpx 18rpx;
 }
 .reply-item {
   display: flex;
@@ -951,35 +1019,50 @@
   padding: 14rpx 0;
 }
 .reply-item + .reply-item {
-  border-top: 1rpx solid #eceff5;
+  border-top: 1rpx solid #edf1f6;
 }
 .reply-to {
-  color: #10b981;
+  color: #047857;
   font-weight: 600;
 }
 .reply-more {
-  padding: 14rpx 0 8rpx;
-  font-size: 24rpx;
-  color: #10b981;
+  padding: 14rpx 0 10rpx;
+  font-size: 23rpx;
+  color: #047857;
+  font-weight: 600;
 }
 .reply-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10rpx 20rpx;
-  background: #eef2f7;
-  border-radius: 12rpx 12rpx 0 0;
+  background: #f1f5f9;
+  border-radius: 14rpx 14rpx 0 0;
   font-size: 22rpx;
   color: #5b6472;
 }
 .reply-bar-cancel {
   padding: 4rpx 10rpx;
-  color: #b6bbc6;
+  color: #94a3b8;
   font-size: 24rpx;
 }
 .comment-empty {
-  padding: 60rpx 0;
+  padding: 56rpx 0 40rpx;
   text-align: center;
-  color: #9b9ba3;
-  font-size: 25rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14rpx;
+}
+.comment-empty .empty-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #f4f6f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
 }
