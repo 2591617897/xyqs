@@ -434,7 +434,7 @@
 
 /* ---------- 底部操作栏 ---------- */
 .bottom-space {
-  height: 180rpx;
+  height: 200rpx;
 }
 .bottom-bar {
   position: fixed;
@@ -444,92 +444,143 @@
   z-index: 40;
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20rpx);
-  box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.06);
+  gap: 10rpx;
+  padding: 16rpx 20rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24rpx);
+  border-top: 1rpx solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 -12rpx 40rpx -12rpx rgba(15, 23, 42, 0.12);
+}
+
+/* 左侧：圆形图标动作组 */
+.bar-acts {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  flex-shrink: 0;
+  padding-right: 12rpx;
+  border-right: 1rpx solid #eef1f5;
 }
 .bar-act {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 88rpx;
+  width: 84rpx;
   flex-shrink: 0;
   background: transparent;
-  padding: 0;
+  padding: 6rpx 0;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1;
   border: none;
+  border-radius: 20rpx;
   font-size: inherit;
+  box-sizing: border-box;
 }
 .bar-act::after {
   border: none;
 }
+.bar-act-hover {
+  background: #f4f6f9;
+}
 .bar-act-icon {
-  font-size: 40rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #f4f6f9;
   color: #475569;
-  line-height: 1.1;
+  font-size: 34rpx;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 .bar-act-icon.liked {
+  background: rgba(236, 72, 153, 0.12);
   color: #ec4899;
 }
 .bar-act-text {
-  margin-top: 4rpx;
+  margin-top: 6rpx;
   font-size: 20rpx;
-  color: #475569;
+  color: #64748b;
   white-space: nowrap;
 }
+
+/* 右侧：双主按钮 */
 .bar-cta {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
-  gap: 14rpx;
+  align-items: center;
+  gap: 12rpx;
+  margin-left: 4rpx;
 }
 .cta-chat {
   position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  height: 88rpx;
+  flex: 0 0 196rpx;
+  height: 92rpx;
   border-radius: 999rpx;
-  background: rgba(0, 108, 73, 0.1);
+  background: #eaf7f1;
+  border: 2rpx solid rgba(16, 185, 129, 0.25);
   color: #006c49;
   font-size: 28rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6rpx;
   white-space: nowrap;
-  overflow: hidden;
+  box-sizing: border-box;
+}
+.cta-chat-hover {
+  background: #ddf2e8;
+}
+.cta-chat-emoji {
+  font-size: 26rpx;
+  line-height: 1;
+}
+.cta-chat-text {
+  letter-spacing: 1rpx;
 }
 .cta-badge {
   position: absolute;
-  top: -10rpx;
-  right: 8rpx;
-  padding: 2rpx 12rpx;
+  top: -12rpx;
+  right: 6rpx;
+  padding: 2rpx 10rpx;
   border-radius: 999rpx;
-  background: #fd761a;
+  background: linear-gradient(135deg, #ff9a3d 0%, #f26a0a 100%);
   color: #ffffff;
   font-size: 18rpx;
   font-weight: 700;
+  line-height: 1.5;
+  box-shadow: 0 4rpx 10rpx -2rpx rgba(242, 106, 10, 0.5);
 }
 .cta-buy {
   flex: 1 1 0;
   min-width: 0;
-  height: 88rpx;
+  height: 92rpx;
   border-radius: 999rpx;
-  background: #006c49;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
   color: #ffffff;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  overflow: hidden;
-  box-shadow: 0 8rpx 28rpx -4rpx rgba(0, 108, 73, 0.4);
+  box-shadow: 0 10rpx 26rpx -8rpx rgba(4, 120, 87, 0.6);
 }
+.cta-buy-hover {
+  opacity: 0.88;
+}
+.cta-buy.off {
+  background: #cfd6dd;
+  box-shadow: none;
+  color: #ffffff;
+}
+
 /* 卖家管理操作条：状态胶囊 + 右侧操作按钮 */
 .owner-status {
   display: flex;
@@ -569,19 +620,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 64rpx;
+  height: 72rpx;
   margin: 0;
-  padding: 0 26rpx;
+  padding: 0 30rpx;
   border: none;
   border-radius: 999rpx;
   background: #f2f4f6;
   color: #191c1e;
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 .act-btn::after {
   border: none;
+}
+.act-btn-hover {
+  opacity: 0.8;
+}
+.act-btn.act-edit {
+  background: rgba(16, 185, 129, 0.12);
+  color: #006c49;
 }
 .act-btn.act-danger {
   background: rgba(255, 77, 79, 0.08);

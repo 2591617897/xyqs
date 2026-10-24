@@ -43,19 +43,19 @@
     <!-- 统计条 -->
     <view class="stat-bar">
       <view class="stat" bindtap="goMyGoods">
-        <view class="stat-num">38</view>
+        <view class="stat-num">{{user.goodsCount || 0}}</view>
         <view class="stat-label">我发布的</view>
       </view>
       <view class="stat" bindtap="demoEntry" data-name="已卖出">
-        <view class="stat-num">12</view>
+        <view class="stat-num">{{user.soldCount || 0}}</view>
         <view class="stat-label">已卖出</view>
       </view>
       <view class="stat" bindtap="demoEntry" data-name="我的动态">
-        <view class="stat-num">6</view>
+        <view class="stat-num">{{user.postCount || 0}}</view>
         <view class="stat-label">我的动态</view>
       </view>
       <view class="stat" bindtap="goFavorites">
-        <view class="stat-num">156</view>
+        <view class="stat-num">{{user.favoriteCount || 0}}</view>
         <view class="stat-label">赞与收藏</view>
       </view>
     </view>
@@ -66,8 +66,8 @@
     <view class="credit-top">
       <view class="credit-title-row">
         <text class="credit-shield">🛡️</text>
-        <text class="credit-title">校园信用分 785</text>
-        <view class="credit-pill">极好</view>
+        <text class="credit-title">校园信用分 {{user.creditScore || 0}}</text>
+        <view class="credit-pill">{{creditLevel || '一般'}}</view>
       </view>
       <text class="credit-arrow">信用特权 ›</text>
     </view>
@@ -89,24 +89,24 @@
     </view>
     <view class="grid4">
       <view class="grid-item" bindtap="openOrders">
-        <view class="grid-icon gi-orange">🛍️<view class="grid-badge">2</view></view>
+        <view class="grid-icon gi-orange">🛍️</view>
         <view class="grid-label">我买到的</view>
-        <view class="grid-sub">3 件</view>
+        <view class="grid-sub">{{user.buyOrderCount || 0}} 件</view>
       </view>
       <view class="grid-item" bindtap="demoEntry" data-name="我卖出的">
         <view class="grid-icon gi-green">🏷️</view>
         <view class="grid-label">我卖出的</view>
-        <view class="grid-sub">12 单</view>
+        <view class="grid-sub">{{user.sellOrderCount || 0}} 单</view>
       </view>
       <view class="grid-item" bindtap="goMyGoods">
         <view class="grid-icon gi-gray">📦</view>
         <view class="grid-label">在售闲置</view>
-        <view class="grid-sub">{{stats.goods}} 件</view>
+        <view class="grid-sub">{{user.activeCount || 0}} 件</view>
       </view>
       <view class="grid-item" bindtap="openOrders">
-        <view class="grid-icon gi-blue">✉️<view class="grid-badge">2</view></view>
+        <view class="grid-icon gi-blue">✉️</view>
         <view class="grid-label">意向单</view>
-        <view class="grid-sub">待发布</view>
+        <view class="grid-sub">{{user.intentCount || 0}} 单</view>
       </view>
     </view>
   </view>
@@ -124,21 +124,21 @@
         <view class="g2-icon gi-pink">💗</view>
         <view class="g2-main">
           <view class="g2-title">发起的表白</view>
-          <view class="g2-sub">2 条表白 · 1 回应</view>
+          <view class="g2-sub">{{user.confessionCount || 0}} 条表白</view>
         </view>
       </view>
       <view class="g2-item" bindtap="goMessages">
         <view class="g2-icon gi-teal">💬</view>
         <view class="g2-main">
           <view class="g2-title">树洞秘语</view>
-          <view class="g2-sub">匿名保护中（4条）</view>
+          <view class="g2-sub">匿名保护中（{{user.treeholeCount || 0}}条）</view>
         </view>
       </view>
       <view class="g2-item" bindtap="goFavorites">
         <view class="g2-icon gi-amber">🔖</view>
         <view class="g2-main">
           <view class="g2-title">收藏与赞</view>
-          <view class="g2-sub">{{stats.favorites}} 个帖子闲置</view>
+          <view class="g2-sub">{{user.favoriteCount || 0}} 个收藏</view>
         </view>
       </view>
       <view class="g2-item" bindtap="goMyFollows">

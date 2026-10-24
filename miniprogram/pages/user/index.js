@@ -15,7 +15,8 @@ Page({
     schoolCity: '',
     scopeShow: false,
     geoCity: null,
-    stats: { goods: 0, favorites: 0, orders: 0 },
+    // 信用等级文案（由 loadMe 根据 creditScore 计算）
+    creditLevel: '',
     // 关注 / 粉丝数（来自 /user/me）
     fansCount: 0,
     followCount: 0,
@@ -40,7 +41,6 @@ Page({
     this.applyScope()
     if (http.getToken()) {
       this.loadMe()
-      this.loadStats()
       this.loadOrders()
     } else {
       this.setData({ loading: false })
@@ -99,7 +99,8 @@ Page({
         logged: true,
         loading: false,
         fansCount: me.fansCount || 0,
-        followCount: me.followCount || 0
+        followCount: me.followCount || 0,
+        creditLevel: creditLevelText(me.creditScore)
       })
       auth.updateUser({
         id: me.id,
@@ -121,21 +122,10 @@ Page({
     })
   },
 
-  loadStats: function () {
-    const self = this
-    http.get('/goods/mine', null, { silent: true }).then(function (list) {
-      self.setData({ 'stats.goods': (list || []).length })
-    }).catch(function () {})
-    http.get('/goods/favorites', null, { silent: true }).then(function (list) {
-      self.setData({ 'stats.favorites': (list || []).length })
-    }).catch(function () {})
-  },
-
   loadOrders: function () {
     const self = this
     http.get('/goods/orders/mine', { role: 'buyer' }, { silent: true }).then(function (list) {
-      const buyer = (list || []).map(decorateOrder)
-      self.setData({ buyerOrders: buyer, 'stats.orders': buyer.length })
+      self.setData({ buyerOrders: (list || []).map(decorateOrder) })
     }).catch(function () {})
     http.get('/goods/orders/mine', { role: 'seller' }, { silent: true }).then(function (list) {
       self.setData({ sellerOrders: (list || []).map(decorateOrder) })
@@ -148,7 +138,6 @@ Page({
     auth.ensureLogin(true).then(function (user) {
       self.setData({ logged: true, user: user })
       self.loadMe()
-      self.loadStats()
       self.loadOrders()
       toast('登录成功')
     }).catch(function () {
@@ -188,7 +177,6 @@ Page({
         self.setData({
           logged: false,
           user: null,
-          stats: { goods: 0, favorites: 0, orders: 0 },
           fansCount: 0,
           followCount: 0,
           buyerOrders: [],
@@ -314,4 +302,13 @@ function decorateOrder(o) {
   o.timeText = timeAgo(o.createdAt)
   o.statusText = STATUS_TEXT[o.status] || '待处理'
   return o
+}
+
+/** 信用分 → 等级文案（与后端 creditScore 规则一致） */
+function creditLevelText(score) {
+  if (score == null) return '暂无'
+  if (score >= 800) return '极好'
+  if (score >= 700) return '良好'
+  if (score >= 600) return '一般'
+  return '待提升'
 }

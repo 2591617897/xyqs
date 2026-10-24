@@ -1,8 +1,6 @@
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\mapper\GoodsOrderMapper.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\mapper\GoodsCommentMapper.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\controller\InternalGoodsController.java
-F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\controller\GoodsController.java
-F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\dto\GoodsOrderReq.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\dto\GoodsReq.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\entity\Goods.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\entity\GoodsOrder.java
@@ -10,3 +8,6 @@ F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\service\GoodsSer
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\GoodsApplication.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\entity\GoodsComment.java
 F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\mapper\GoodsMapper.java
+F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\controller\GoodsController.java
+F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\dto\GoodsOrderReq.java
+F:\校园趣事\backend\campus-goods\src\main\java\com\campus\goods\mapper\SchoolRegionMapper.java

@@ -6,6 +6,7 @@ import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.client.GoodsCountClient;
 import com.campus.user.client.PostCountClient;
+import com.campus.user.client.WallCountClient;
 import com.campus.user.dto.LoginOrCreateReq;
 import com.campus.user.dto.ProfileVO;
 import com.campus.user.dto.SchoolRegion;
@@ -37,6 +38,7 @@ public class UserService {
     private final FollowService followService;
     private final GoodsCountClient goodsCountClient;
     private final PostCountClient postCountClient;
+    private final WallCountClient wallCountClient;
 
     @Value("${campus.verify.auto-approve:true}")
     private boolean autoApprove;
@@ -111,6 +113,18 @@ public class UserService {
         vo.setFansCount(nz(user.getFansCount()));
         vo.setFollowCount(nz(user.getFollowCount()));
         vo.setCreatedAt(user.getCreatedAt());
+        // 「我的」页统计：跨服务 Feign 聚合，失败各自降级 0，不打崩个人中心
+        vo.setGoodsCount(goodsCount(userId, null));
+        vo.setActiveCount(goodsCount(userId, 1));
+        vo.setSoldCount(goodsCount(userId, 2));
+        vo.setPostCount(postCount(userId));
+        vo.setFavoriteCount(favoriteCount(userId));
+        vo.setBuyOrderCount(orderCount(userId, "buyer", null));
+        vo.setSellOrderCount(orderCount(userId, "seller", null));
+        vo.setIntentCount(orderCount(userId, "buyer", 0));
+        vo.setConfessionCount(wallCount(userId, "love"));
+        vo.setTreeholeCount(wallCount(userId, "tree"));
+        vo.setCreditScore(creditScore(user, vo));
         return vo;
     }
 
@@ -248,6 +262,56 @@ public class UserService {
             log.warn("聚合帖子计数失败 userId={}: {}", userId, e.getMessage());
         }
         return 0;
+    }
+
+    /** 商品收藏计数聚合；Feign 失败降级 0 并打 warn */
+    private int favoriteCount(Long userId) {
+        try {
+            R<Long> res = goodsCountClient.favoritesCount(userId);
+            if (res != null && res.getData() != null && res.getData() > 0) {
+                return res.getData().intValue();
+            }
+        } catch (Exception e) {
+            log.warn("聚合收藏计数失败 userId={}: {}", userId, e.getMessage());
+        }
+        return 0;
+    }
+
+    /** 订单计数聚合（role=buyer/seller，status 可空）；Feign 失败降级 0 并打 warn */
+    private int orderCount(Long userId, String role, Integer status) {
+        try {
+            R<Long> res = goodsCountClient.ordersCount(userId, role, status);
+            if (res != null && res.getData() != null && res.getData() > 0) {
+                return res.getData().intValue();
+            }
+        } catch (Exception e) {
+            log.warn("聚合订单计数失败 userId={}, role={}: {}", userId, role, e.getMessage());
+        }
+        return 0;
+    }
+
+    /** 表白墙计数聚合（category 可空）；Feign 失败降级 0 并打 warn */
+    private int wallCount(Long userId, String category) {
+        try {
+            R<Long> res = wallCountClient.count(userId, category);
+            if (res != null && res.getData() != null && res.getData() > 0) {
+                return res.getData().intValue();
+            }
+        } catch (Exception e) {
+            log.warn("聚合表白墙计数失败 userId={}, category={}: {}", userId, category, e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * 校园信用分：基础 600 + 已认证 185 + 活跃度加成（发布+卖出+帖子，最多 50）。
+     * 折合范围约 600~835，与「极好 / 良好 / 一般」档位配合展示。
+     */
+    private int creditScore(User user, UserVO vo) {
+        boolean verified = user.getVerifyStatus() != null && user.getVerifyStatus() == 2;
+        int base = verified ? 785 : 600;
+        int activity = Math.min(vo.getGoodsCount() + vo.getSoldCount() + vo.getPostCount(), 50);
+        return base + activity;
     }
 
     /** 计数字段兜底：历史行 / 空值统一为 0 */

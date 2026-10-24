@@ -56,6 +56,15 @@ public class WallService {
         return schoolId == null ? null : schoolRegionMapper.selectCityBySchoolId(schoolId);
     }
 
+    /** 该作者表白墙帖子数（category 可空 = 全部；仅计 status=1 已发布） */
+    public long countByUser(Long userId, String category) {
+        Long cnt = postMapper.selectCount(Wrappers.<WallPost>lambdaQuery()
+                .eq(WallPost::getUserId, userId)
+                .eq(WallPost::getStatus, 1)
+                .eq(StringUtils.hasText(category), WallPost::getCategory, category));
+        return cnt == null ? 0 : cnt;
+    }
+
     /** 市域范围：同一城市所有高校的表白 */
     public R.Page<WallPost> pageByCity(String city, Long userId, long page, long size, String sort, String category) {
         return pageInternal(null, city, userId, page, size, sort, category);

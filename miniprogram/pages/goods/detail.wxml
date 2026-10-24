@@ -266,7 +266,7 @@
 
   <view class="bottom-space"></view>
 
-  <!-- 底部操作栏 -->
+  <!-- 底部操作栏：左侧圆形图标动作组 + 右侧双主按钮 -->
   <view class="bottom-bar">
     <block wx:if="{{isOwner}}">
       <view class="owner-status {{goods.status === 1 ? 'on' : (goods.status === 2 ? 'sold' : 'off')}}">
@@ -274,26 +274,29 @@
         <text>{{goods.status === 1 ? '在售中' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
       </view>
       <view class="owner-acts">
-        <button class="act-btn" bindtap="goEdit">编辑</button>
-        <button class="act-btn" bindtap="toggleStatus">{{goods.status === 1 ? '下架' : '上架'}}</button>
-        <button class="act-btn act-danger" bindtap="removeGoods">删除</button>
+        <button class="act-btn act-edit" hover-class="act-btn-hover" bindtap="goEdit">编辑</button>
+        <button class="act-btn" hover-class="act-btn-hover" bindtap="toggleStatus">{{goods.status === 1 ? '下架' : '上架'}}</button>
+        <button class="act-btn act-danger" hover-class="act-btn-hover" bindtap="removeGoods">删除</button>
       </view>
     </block>
     <block wx:else>
-      <view class="bar-act" bindtap="toggleLike">
-        <text class="bar-act-icon {{liked ? 'liked' : ''}}">{{liked ? '♥' : '♡'}}</text>
-        <text class="bar-act-text">{{liked ? '已收藏' : '收藏'}}</text>
+      <view class="bar-acts">
+        <view class="bar-act" hover-class="bar-act-hover" bindtap="toggleLike">
+          <view class="bar-act-icon {{liked ? 'liked' : ''}}">{{liked ? '♥' : '♡'}}</view>
+          <text class="bar-act-text">{{liked ? '已收藏' : '收藏'}}</text>
+        </view>
+        <button class="bar-act" open-type="share" hover-class="bar-act-hover">
+          <view class="bar-act-icon">↗</view>
+          <text class="bar-act-text">分享</text>
+        </button>
       </view>
-      <button class="bar-act" open-type="share" hover-class="none">
-        <text class="bar-act-icon">↗</text>
-        <text class="bar-act-text">分享</text>
-      </button>
       <view class="bar-cta">
-        <view class="cta-chat" bindtap="goChat">
-          <text>💬 聊一聊</text>
+        <view class="cta-chat" hover-class="cta-chat-hover" bindtap="goChat">
+          <text class="cta-chat-emoji">💬</text>
+          <text class="cta-chat-text">聊一聊</text>
           <view class="cta-badge">极速回</view>
         </view>
-        <view class="cta-buy" bindtap="openOrder">
+        <view class="cta-buy {{goods.status === 1 ? '' : 'off'}}" hover-class="cta-buy-hover" bindtap="openOrder">
           <text>{{goods.status === 1 ? '申请自提' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
         </view>
       </view>

@@ -4,6 +4,7 @@ F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\mapper\UserMapper.
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\client\PostCountClient.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\entity\Follow.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\ProfileVO.java
+F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\client\WallCountClient.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\LoginOrCreateReq.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\UpdateProfileReq.java
 F:\校园趣事\backend\campus-user\src\main\java\com\campus\user\dto\UserVO.java

@@ -115,6 +115,23 @@ public class GoodsService {
         return cnt == null ? 0 : cnt;
     }
 
+    /** 该作者商品收藏数（t_like target=GOODS） */
+    public long countFavorites(Long userId) {
+        Long cnt = likeMapper.selectCount(Wrappers.<Like>lambdaQuery()
+                .eq(Like::getTargetType, TARGET)
+                .eq(Like::getUserId, userId));
+        return cnt == null ? 0 : cnt;
+    }
+
+    /** 该作者订单数：role=buyer/seller，status 可选（不传 = 全部） */
+    public long countOrders(Long userId, String role, Integer status) {
+        Long cnt = orderMapper.selectCount(Wrappers.<GoodsOrder>lambdaQuery()
+                .eq("seller".equalsIgnoreCase(role), GoodsOrder::getSellerId, userId)
+                .eq(!"seller".equalsIgnoreCase(role), GoodsOrder::getBuyerId, userId)
+                .eq(status != null, GoodsOrder::getStatus, status));
+        return cnt == null ? 0 : cnt;
+    }
+
     public Goods detail(Long id, Long userId) {
         Goods goods = goodsMapper.selectById(id);
         if (goods == null) {

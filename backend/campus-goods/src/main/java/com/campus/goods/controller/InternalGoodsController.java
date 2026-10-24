@@ -25,4 +25,18 @@ public class InternalGoodsController {
                          @RequestParam(required = false, name = "status") Integer status) {
         return R.ok(goodsService.countByUser(userId, status));
     }
+
+    /** 该作者商品收藏数 */
+    @GetMapping("/favorites/count")
+    public R<Long> favoritesCount(@RequestParam("userId") Long userId) {
+        return R.ok(goodsService.countFavorites(userId));
+    }
+
+    /** 该作者订单数：role=buyer/seller，status 可选（不传 = 全部） */
+    @GetMapping("/orders/count")
+    public R<Long> ordersCount(@RequestParam("userId") Long userId,
+                               @RequestParam("role") String role,
+                               @RequestParam(required = false, name = "status") Integer status) {
+        return R.ok(goodsService.countOrders(userId, role, status));
+    }
 }

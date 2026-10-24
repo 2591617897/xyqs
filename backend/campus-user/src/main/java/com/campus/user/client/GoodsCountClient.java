@@ -16,4 +16,14 @@ public interface GoodsCountClient {
     @GetMapping("/count")
     R<Long> count(@RequestParam("userId") Long userId,
                   @RequestParam(value = "status", required = false) Integer status);
+
+    /** 该作者商品收藏数 */
+    @GetMapping("/favorites/count")
+    R<Long> favoritesCount(@RequestParam("userId") Long userId);
+
+    /** 该作者订单数：role=buyer/seller，status 可选（不传 = 全部） */
+    @GetMapping("/orders/count")
+    R<Long> ordersCount(@RequestParam("userId") Long userId,
+                        @RequestParam("role") String role,
+                        @RequestParam(value = "status", required = false) Integer status);
 }
