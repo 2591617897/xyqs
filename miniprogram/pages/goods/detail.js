@@ -32,6 +32,8 @@ Page({
     commentImages: [],
     showCommentSheet: false,
     commentSheetFocus: false,
+    /** 键盘高度：底部弹层是 fixed 定位，不手动上移会被键盘挡住输入框 */
+    keyboardHeight: 0,
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
@@ -267,7 +269,7 @@ Page({
   },
 
   closeOrder: function () {
-    this.setData({ showOrder: false })
+    this.setData({ showOrder: false, keyboardHeight: 0 })
   },
 
   onMessage: function (e) {
@@ -344,8 +346,20 @@ Page({
       showCommentSheet: false,
       commentSheetFocus: false,
       showEmoji: false,
-      replyTo: null
+      replyTo: null,
+      keyboardHeight: 0
     })
+  },
+
+  /**
+   * 键盘高度变化 → 弹层整体上移，避免输入框和按钮被键盘挡住。
+   * fixed 定位的元素不会被微信的 adjust-position 顶起，所以输入框上关掉它、手动抬。
+   */
+  onKeyboardHeight: function (e) {
+    const h = (e.detail && e.detail.height) || 0
+    if (h !== this.data.keyboardHeight) {
+      this.setData({ keyboardHeight: h })
+    }
   },
 
   openMentionPicker: function () {
@@ -494,7 +508,8 @@ Page({
         replyTo: null,
         mentionUserIds: [],
         showCommentSheet: false,
-        commentSheetFocus: false
+        commentSheetFocus: false,
+        keyboardHeight: 0
       })
       self.loadComments()
       self.load(true)

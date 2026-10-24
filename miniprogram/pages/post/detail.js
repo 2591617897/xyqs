@@ -24,6 +24,8 @@ Page({
     commentImages: [],
     showCommentSheet: false,
     commentSheetFocus: false,
+    /** 键盘高度：抽屉定位在 bottom，键盘弹出时必须整体上移，否则输入框会被挡住 */
+    keyboardHeight: 0,
     showEmoji: false,
     emojiList: EMOJIS,
     sending: false,
@@ -178,8 +180,22 @@ Page({
       commentSheetFocus: false,
       showEmoji: false,
       replyTo: null,
-      mentionUserIds: []
+      mentionUserIds: [],
+      keyboardHeight: 0
     })
+  },
+
+  /**
+   * 键盘高度变化 → 把抽屉整体上移，避免输入框和「发布」被键盘挡住。
+   *
+   * 抽屉是 `position: fixed; bottom: 0`，微信的 adjust-position 只会滚动页面、
+   * 不会移动 fixed 元素，所以 textarea 上关掉 adjust-position，改用手动抬升。
+   */
+  onKeyboardHeight: function (e) {
+    const h = (e.detail && e.detail.height) || 0
+    if (h !== this.data.keyboardHeight) {
+      this.setData({ keyboardHeight: h })
+    }
   },
 
   openMentionPicker: function () {
@@ -300,7 +316,8 @@ Page({
         replyTo: null,
         mentionUserIds: [],
         showCommentSheet: false,
-        commentSheetFocus: false
+        commentSheetFocus: false,
+        keyboardHeight: 0
       })
       self.loadComments()
       self.load()

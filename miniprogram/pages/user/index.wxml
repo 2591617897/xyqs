@@ -49,7 +49,8 @@
         <view class="stat-label">已卖出</view>
       </view>
       <view class="stat" bindtap="goMyDynamic">
-        <view class="stat-num">{{user.postCount || 0}}</view>
+        <!-- dynamicCount = 帖子 + 表白墙，与「我的动态」页的「全部动态」同一口径 -->
+        <view class="stat-num">{{user.dynamicCount || 0}}</view>
         <view class="stat-label">我的动态</view>
       </view>
       <view class="stat" bindtap="goFavorites">

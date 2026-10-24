@@ -117,7 +117,11 @@ public class UserService {
         vo.setGoodsCount(goodsCount(userId, null));
         vo.setActiveCount(goodsCount(userId, 1));
         vo.setSoldCount(goodsCount(userId, 2));
-        vo.setPostCount(postCount(userId));
+        int postCnt = postCount(userId);
+        vo.setPostCount(postCnt);
+        // 我的动态 = 帖子 + 表白墙全部类别，和「我的动态」页的「全部动态」对齐，
+        // 否则一边 1 一边 2（只算帖子会漏掉表白/树洞）
+        vo.setDynamicCount(postCnt + wallCount(userId, null));
         vo.setFavoriteCount(favoriteCount(userId));
         vo.setBuyOrderCount(orderCount(userId, "buyer", null));
         vo.setSellOrderCount(orderCount(userId, "seller", null));

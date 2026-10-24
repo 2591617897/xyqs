@@ -64,8 +64,14 @@ public class UserVO {
     /** 在售闲置（status=1） */
     private Integer activeCount;
 
-    /** 我的动态（帖子数） */
+    /** 帖子数（仅统计帖子，不含表白墙） */
     private Integer postCount;
+
+    /**
+     * 我的动态（帖子 + 表白墙，与「我的动态」页的「全部动态」同一口径）。
+     * 只拿 postCount 会导致两处数字对不上。
+     */
+    private Integer dynamicCount;
 
     /** 赞与收藏（商品收藏数） */
     private Integer favoriteCount;

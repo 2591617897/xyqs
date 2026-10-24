@@ -133,7 +133,7 @@
 
   <!-- 评论抽屉：底部半屏弹起 -->
   <view class="mask pc-comment-mask" wx:if="{{showCommentSheet}}" catchtap="closeCommentSheet"></view>
-  <view class="pc-comment-sheet {{showCommentSheet ? 'on' : ''}}" catchtap="stop">
+  <view class="pc-comment-sheet {{showCommentSheet ? 'on' : ''}}" style="bottom: {{keyboardHeight}}px" catchtap="stop">
     <view class="sheet-handle"></view>
     <view class="sheet-head">
       <text class="sheet-head-title">{{replyTo ? '回复 @' + replyTo.name : '发表回复'}}</text>
@@ -160,6 +160,8 @@
         maxlength="500"
         focus="{{commentSheetFocus}}"
         confirm-type="send"
+        adjust-position="{{false}}"
+        bindkeyboardheightchange="onKeyboardHeight"
         bindinput="onCommentInput"
         bindconfirm="sendComment"
       />

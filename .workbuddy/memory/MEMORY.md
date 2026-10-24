@@ -77,6 +77,11 @@
   一次 IN 查询覆盖，快照仅在取不到时兜底。**新增内容类表也要照此处理**
 - 子模块编译报「找不到符号 FollowClient / NotificationClient」= 本地仓库的 `campus-common` jar 过期，
   先 `mvn -pl campus-common -DskipTests install` 再编译其它模块
+- **同一指标只允许一个口径**：「我的动态」= 帖子 + 表白墙全部类别（`UserVO.dynamicCount`，
+  由 `postCount` + `wallCount(userId, null)` 在后端算好）。**别在前端用 `postCount + confessionCount + treeholeCount` 相加**
+  —— 表白墙还有 find/findp 等类别会漏计。新增统计项照此办理：后端算好，前端只绑定
+- 内部计数接口（不经网关，直连服务）：`GET :8105/internal/posts/count`、`GET :8104/internal/wall/posts/count?category=`
+  —— 排查计数不一致时可直接 curl 这两个对照
 - **ID 一律以字符串传输**：雪花 ID 是 19 位 Long，超出 JS 安全整数（2^53-1）。
   `campus-common` 的 `JacksonConfig` 已把 `Long/long` 全局序列化为字符串；
   前端**不要对 id 做 `Number()`**（会丢精度 → 详情 404）。计数类是 `Integer`，仍是数字。
@@ -192,6 +197,13 @@
   再由 `auth.relogin()` 重建会话；**判定条件必须锁死 `/user/me`**，否则「看已删用户主页」会把浏览者踢下线。
   后端 `requireUser` 只在行不存在时返回 404（封禁用户仍返回行），所以不会出现 404→重登→404 死循环，但仍用
   `_reloginTried` 标记兜一层
+- **JWT 里的 `schoolId` / `vs`(verifyStatus) 都是登录时的快照**，改库后必须重签 token：
+  - 改学校（`PUT /user/me` 的 schoolId）→ `auth.ensureLogin(true)`
+  - 认证通过（`/user/verify` 返回新 token）→ 立即存下并 `auth.markTokenFresh()`
+  - 症状对照：**页面显示已认证/已绑定学校，但写操作 403 或本校筛选不生效** = token 快照过期。
+    `ensureVerified` 已改为先 `/user/me` 以服务端为准、必要时重签一次
+  - 自测手段：用项目 JWT secret 手搓 HS256 token（python hmac+base64）分别带 `vs=0/2`、`schoolId` 打接口，
+    能快速区分「鉴权问题」还是「业务问题」
 - **没有 schoolId 时不要用 feedScope**：残留的 `city` 会让胶囊显示成「本市/某市 · 全市」，看起来像学校不对。
   `applyUser/applyScope` 无学校时强制按「选择学校」渲染；绑定学校成功后 `scopeMod.write({scope:'school'})` 回本校
 - 我页显示「已绑定学校 / 未绑定学校」与胶囊显示「城市 · 全市」是两回事，别混；胶囊文本 = `scopeMod.label()`
@@ -202,6 +214,13 @@
   `pages/user/verify.wxss .school-scroll`。用 `max-height` 单独的（`order-scroll`、`school-onboard/.ob-list`）也可行
 - **弹层容器写死 `height: Xvh` 时必须配 `box-sizing: border-box`**，否则 Xvh + padding 超屏、底部被顶出可视区
 - 横向 `scroll-view`（`nav-scroll` / `cat-scroll` / `filter-scroll`）不需要高度约束
+- **底部弹层里的输入框必须手动避让键盘**：`position: fixed; bottom: 0` 的元素不会被微信
+  `adjust-position`（默认 true）顶起，键盘一弹就把输入框盖住。统一做法：
+  1. `textarea/input` 加 `adjust-position="{{false}}"` + `bindkeyboardheightchange="onKeyboardHeight"`
+  2. `keyboardHeight` 存进 data，`bottom: 0` 的抽屉用 `style="bottom: {{keyboardHeight}}px"`；
+     `flex + align-items: flex-end` 的遮罩用 `style="padding-bottom: {{keyboardHeight}}px"`
+  3. 关闭/发送成功时把 `keyboardHeight` 归零
+  已覆盖：`wall/detail`、`post/detail`（评论抽屉）、`goods/detail`（评论抽屉 + 购买意向弹层）
 
 ## 图片加载（真机灰块）
 - **`<image>` 与 `wx.previewImage` 是两条下载通道**：真机上 `http://192.168.x.x` 的 `<image>` 会**静默失败**

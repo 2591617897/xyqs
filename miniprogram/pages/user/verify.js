@@ -126,6 +126,7 @@ Page({
       if (res.token) {
         mp.setStorageSync('token', res.token)
         getApp().globalData.token = res.token
+        auth.markTokenFresh()
       }
       return http.get('/user/me', null, { silent: true }).then(function (me) {
         auth.updateUser({

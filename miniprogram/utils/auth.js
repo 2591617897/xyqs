@@ -4,6 +4,9 @@ const http = require('./request')
 
 let pending = null
 
+/** 本次运行里是否已经为「已认证」换回过新 token（token 里的 vs 是登录快照，可能过期） */
+let verifiedTokenReady = false
+
 function exchange(code) {
   const payload = { code: code, platform: PLATFORM }
   // 只在显式开启本地演示时才带 devOpenid：
@@ -15,6 +18,8 @@ function exchange(code) {
     const app = getApp()
     app.globalData.token = res.token
     app.globalData.user = res.user
+    // 登录时后端按库里的最新状态签发 token（含 schoolId / verifyStatus），视为最新
+    verifiedTokenReady = true
     return res.user
   })
 }
@@ -56,10 +61,43 @@ function ensureLogin(force) {
   return pending
 }
 
-/** 发布类操作：必须已完成校园身份认证 */
+/**
+ * 发布类操作：必须已完成校园身份认证。
+ *
+ * 注意：认证状态在 JWT 里是**登录时的快照**（claim `vs`）。用户在别处/之后完成认证、
+ * 或认证接口换回来的 token 没落到本地时，库里已经是 2，旧 token 仍会被后端判成未认证，
+ * 报「请先完成校园身份认证后再发布内容」。所以这里先以 `/user/me`（库里的真实状态）为准，
+ * 发现已认证就把 token 重签一次，再放行。
+ */
 function ensureVerified() {
+  let cachedUser = null
   return ensureLogin().then(function (user) {
-    if (user && user.verifyStatus === 2) return user
+    cachedUser = user
+    // 服务端为准；请求失败（网络异常）时退回缓存判断，不误拦发布
+    return http.get('/user/me', null, { silent: true }).catch(function () {
+      return user
+    })
+  }).then(function (profile) {
+    if (profile && profile.verifyStatus === 2) {
+      // 只写入服务端确实返回的字段：/user/me 失败时 profile 可能是缓存里的 UserBrief，
+      // 它没有 schoolName，盲目写空串会把胶囊打回「选择学校」
+      const patch = { verifyStatus: 2 }
+      if (profile.id) patch.id = profile.id
+      else if (cachedUser && cachedUser.id) patch.id = cachedUser.id
+      if (profile.schoolId !== undefined && profile.schoolId !== null) patch.schoolId = profile.schoolId
+      if (typeof profile.schoolName === 'string') patch.schoolName = profile.schoolName
+      if (typeof profile.schoolCity === 'string') patch.schoolCity = profile.schoolCity
+      updateUser(patch)
+      // 一次会话内只重签一次，避免每次发布都多走一次 wx.login；
+      // 失败不置位，下次发布还能再试
+      if (!verifiedTokenReady) {
+        return ensureLogin(true).then(function (fresh) {
+          verifiedTokenReady = true
+          return fresh
+        })
+      }
+      return getApp().globalData.user
+    }
     toast('请先完成校园身份认证')
     setTimeout(function () {
       mp.navigateTo({ url: '/pages/user/verify' })
@@ -111,6 +149,14 @@ function updateUser(user) {
 }
 
 /**
+ * 标记「本地 token 已是最新」（认证接口换回来的新 token 也走这里）。
+ * 用于避免 `ensureVerified` 反复重签。
+ */
+function markTokenFresh() {
+  verifiedTokenReady = true
+}
+
+/**
  * 清掉本地登录态并重新静默登录。
  *
  * 典型场景：数据库被重置（t_user 清空）后，本地还留着指向旧用户的 token，
@@ -139,5 +185,6 @@ module.exports = {
   updateUser,
   doLogin,
   relogin,
+  markTokenFresh,
   platformInfo
 }

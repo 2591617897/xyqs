@@ -230,7 +230,7 @@
 
   <!-- 评论抽屉：底部半屏弹起 -->
   <view class="mask comment-mask" wx:if="{{showCommentSheet}}" catchtap="closeCommentSheet"></view>
-  <view class="comment-sheet {{showCommentSheet ? 'on' : ''}}" catchtap="stop">
+  <view class="comment-sheet {{showCommentSheet ? 'on' : ''}}" style="bottom: {{keyboardHeight}}px" catchtap="stop">
     <view class="sheet-handle"></view>
     <view class="sheet-head">
       <text class="sheet-head-title">{{replyTo ? '回复 @' + replyTo.name : '发表评论'}}</text>
@@ -257,6 +257,8 @@
         maxlength="500"
         focus="{{commentSheetFocus}}"
         confirm-type="send"
+        adjust-position="{{false}}"
+        bindkeyboardheightchange="onKeyboardHeight"
         bindinput="onCommentInput"
         bindconfirm="sendComment"
       />
@@ -351,7 +353,7 @@
   </view>
 
   <!-- 购买意向弹层 -->
-  <view class="mask" wx:if="{{showOrder}}" bindtap="closeOrder">
+  <view class="mask" wx:if="{{showOrder}}" style="padding-bottom: {{keyboardHeight}}px" bindtap="closeOrder">
     <view class="sheet" catchtap="stop">
       <view class="sheet-head">
         <text class="h2">申请自提 · 联系卖家</text>
@@ -364,8 +366,8 @@
           <view class="sheet-price"><text class="price-symbol">¥</text>{{goods.priceText}}</view>
         </view>
       </view>
-      <input class="sheet-input" placeholder="留个联系方式（QQ / 微信 / 手机号）" placeholder-class="placeholder" value="{{contact}}" bindinput="onContact" />
-      <textarea class="sheet-textarea" placeholder="想对卖家说点什么（选填）" placeholder-class="placeholder" value="{{message}}" bindinput="onMessage" maxlength="200" />
+      <input class="sheet-input" placeholder="留个联系方式（QQ / 微信 / 手机号）" placeholder-class="placeholder" value="{{contact}}" bindinput="onContact" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
+      <textarea class="sheet-textarea" placeholder="想对卖家说点什么（选填）" placeholder-class="placeholder" value="{{message}}" bindinput="onMessage" maxlength="200" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
       <button class="btn btn-primary mt24" loading="{{submitting}}" bindtap="submitOrder">发送购买意向</button>
       <view class="sheet-note">卖家确认后会主动联系你</view>
     </view>
