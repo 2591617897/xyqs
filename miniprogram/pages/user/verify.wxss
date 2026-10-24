@@ -152,6 +152,17 @@
   padding: 22rpx 4rpx;
   border-bottom: 1rpx solid #f6f7fb;
 }
+
+/* 分组标题：IP 定位到的同城推荐 / 全部学校 */
+.school-group {
+  padding: 18rpx 4rpx 8rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #94a3b8;
+}
+.school-group.near {
+  color: #0e9a60;
+}
 .school-name {
   font-size: 28rpx;
   color: #1f2329;

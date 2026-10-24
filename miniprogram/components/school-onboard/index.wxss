@@ -14,8 +14,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  /* 用 max-height + flex 让列表自己滚动，避免在小屏上整块超出被裁掉 */
-  max-height: 86vh;
+  /* 必须是「确定高度」而不是 max-height：max-height 是内容驱动，
+     里面 flex:1 的 scroll-view 会拿到内容高度，列表再长也不滚动、
+     还会盖住底部「暂不选择」。定高 + flex 列 + 子项 min-height:0 才是可靠写法
+     （与 pages/user/verify 的学校弹层保持一致）。 */
+  height: 78vh;
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -70,9 +73,11 @@
 }
 
 .ob-list {
-  /* flex 子项必须 min-height:0，否则会被内容撑高、scroll-view 不滚动 */
+  /* 父容器已定高，这里只需 flex 撑满剩余空间；min-height:0 是关键，
+     否则 flex 子项默认 min-height:auto 会被内容撑高 → scroll-view 不滚动 */
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   margin-top: 16rpx;
 }
 
@@ -81,6 +86,18 @@
   align-items: center;
   padding: 24rpx 20rpx;
   border-bottom: 1rpx solid #f4f5f8;
+}
+
+/* 分组标题：IP 定位到的同城推荐 / 全部学校 */
+.ob-group {
+  padding: 18rpx 20rpx 8rpx;
+  font-size: 23rpx;
+  font-weight: 600;
+  color: #9b9ba3;
+}
+
+.ob-group.near {
+  color: #11a86b;
 }
 
 .ob-item.on {

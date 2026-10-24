@@ -1,12 +1,16 @@
 const http = require('../../utils/request')
 const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const schoolMod = require('../../utils/school')
 
 Page({
   data: {
     schools: [],
-    filtered: [],
+    // 选择器里渲染的列表（含「同城推荐 / 全部学校」分组标题）
+    list: [],
     keyword: '',
+    /** IP 定位到的城市，用于把同城学校提到最前；为空则不分组 */
+    geoCity: '',
     schoolId: null,
     schoolName: '',
     studentNo: '',
@@ -35,14 +39,43 @@ Page({
   loadSchools: function () {
     const self = this
     http.get('/schools', null, { silent: true }).then(function (list) {
-      self.setData({ schools: list || [], filtered: list || [] })
+      self.setData({ schools: list || [] })
+      self.render()
     }).catch(function () {
       toast('学校列表加载失败')
     })
   },
 
+  /** 按当前关键词 + 定位城市重算选择器列表 */
+  render: function () {
+    const kw = this.data.keyword
+    const all = this.data.schools || []
+    if (kw) {
+      // 搜索时不分组：用户已经在缩小范围，再插标题反而碍事
+      this.setData({ list: schoolMod.buildList(schoolMod.search(all, kw), '') })
+      return
+    }
+    this.setData({ list: schoolMod.buildList(all, this.data.geoCity) })
+  },
+
+  /**
+   * IP 定位（后端读请求来源 IP，用户无感，不需要授权）。
+   * 拿到城市就把同城学校提到最前；拿不到就维持原始顺序，不做任何提示。
+   * 结果在 utils/school 里做进程内缓存，重复打开弹层不会重复请求。
+   */
+  ensureIpCity: function () {
+    const self = this
+    schoolMod.ipCity().then(function (city) {
+      if (!city || city === self.data.geoCity) return
+      self.setData({ geoCity: city })
+      self.render()
+    })
+  },
+
   openPicker: function () {
-    this.setData({ showPicker: true, keyword: '', filtered: this.data.schools })
+    this.setData({ showPicker: true, keyword: '' })
+    this.render()
+    this.ensureIpCity()
   },
 
   closePicker: function () {
@@ -50,13 +83,8 @@ Page({
   },
 
   onKeyword: function (e) {
-    const kw = e.detail.value.trim()
-    const filtered = kw
-      ? this.data.schools.filter(function (s) {
-          return s.name.indexOf(kw) >= 0 || (s.city && s.city.indexOf(kw) >= 0)
-        })
-      : this.data.schools
-    this.setData({ keyword: kw, filtered: filtered })
+    this.setData({ keyword: e.detail.value.trim() })
+    this.render()
   },
 
   pickSchool: function (e) {

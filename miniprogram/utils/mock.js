@@ -2127,6 +2127,11 @@ function route(method, url, data) {
     // 位置信息 API 的模拟：返回演示账号所在城市（真实模式走后端逆地理）
     return ok({ province: '浙江', city: '杭州', district: '西湖区', available: true })
   }
+  if (s[0] === 'auth' && s[1] === 'geo' && s[2] === 'ip-city' && M === 'GET') {
+    // IP 定位的模拟：真实模式由后端读请求来源 IP 调腾讯位置服务。
+    // 故意带「市」后缀，用来验证与库里「杭州」的归一匹配
+    return ok({ province: '浙江省', city: '杭州市', district: '西湖区', available: true })
+  }
   if (s[0] === 'schools' && M === 'GET') {
     const kw = q.keyword ? String(q.keyword) : ''
     const list = db.schools.filter(function (x) {

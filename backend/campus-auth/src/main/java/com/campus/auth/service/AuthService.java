@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -38,6 +39,11 @@ public class AuthService {
      * Jackson 转换器（它只认 application/json），只能取字符串后手动解析。
      */
     private static final ObjectMapper JSON = new ObjectMapper();
+
+    /** IP 定位缓存：TTL 6 小时、最多 512 个 IP —— 腾讯 key 每日配额有限，能复用就复用 */
+    private static final long IP_GEO_TTL_MS = 6 * 60 * 60 * 1000L;
+    private static final int IP_GEO_CACHE_MAX = 512;
+    private final Map<String, CachedGeo> ipGeoCache = new ConcurrentHashMap<>();
 
     private final SchoolMapper schoolMapper;
     private final UserClient userClient;
@@ -115,21 +121,83 @@ public class AuthService {
     public GeoCity resolveCity(double lat, double lng) {
         GeoCity resp = new GeoCity();
         resp.setAvailable(false);
-        if (!StringUtils.hasText(qqmapKey)) {
-            log.info("campus.geo.qqmap-key 未配置，逆地理编码降级为不可用");
+        // TreeMap 天然按参数名升序，与腾讯签名要求的排序一致
+        Map<String, String> params = new TreeMap<>();
+        params.put("location", String.format(Locale.ROOT, "%s,%s", lat, lng));
+        params.put("get_poi", "0");
+
+        Map<?, ?> body = qqmapGet("/ws/geocoder/v1/", params);
+        Object result = body == null ? null : body.get("result");
+        Object comp = result instanceof Map ? ((Map<?, ?>) result).get("address_component") : null;
+        if (comp instanceof Map) {
+            Map<?, ?> c = (Map<?, ?>) comp;
+            resp.setProvince(asText(c.get("province")));
+            resp.setCity(asText(c.get("city")));
+            resp.setDistrict(asText(c.get("district")));
+            resp.setAvailable(StringUtils.hasText(resp.getCity()));
+        }
+        return resp;
+    }
+
+    /**
+     * IP 定位：客户端 IP → 省/市/区（腾讯位置服务 IP 定位）。
+     *
+     * 相比 wx.getLocation：不需要用户授权、不弹隐私授权框，代价是精度只到城市级 ——
+     * 正好够「推荐同城学校」。内网/回环地址不传 ip 参数，让腾讯按请求来源解析
+     * （本地开发时就是开发机出口 IP，方便在开发者工具里直接看效果）。
+     * 任何失败都降级 available=false，前端静默不显示推荐区。
+     */
+    public GeoCity resolveCityByIp(String ip) {
+        GeoCity resp = new GeoCity();
+        resp.setAvailable(false);
+        String cacheKey = StringUtils.hasText(ip) ? ip.trim() : "local";
+        CachedGeo hit = ipGeoCache.get(cacheKey);
+        if (hit != null && System.currentTimeMillis() - hit.at() < IP_GEO_TTL_MS) {
+            return hit.geo();
+        }
+        Map<String, String> params = new TreeMap<>();
+        if (StringUtils.hasText(ip) && !isPrivateOrLoopbackIp(ip)) {
+            params.put("ip", ip.trim());
+        }
+        Map<?, ?> body = qqmapGet("/ws/location/v1/ip", params);
+        Object result = body == null ? null : body.get("result");
+        Object ad = result instanceof Map ? ((Map<?, ?>) result).get("ad_info") : null;
+        if (!(ad instanceof Map)) {
+            // 失败不缓存：下次打开还能重试（腾讯 key 有每日配额，配额耗尽时别反复打）
             return resp;
         }
+        Map<?, ?> info = (Map<?, ?>) ad;
+        resp.setProvince(asText(info.get("province")));
+        resp.setCity(asText(info.get("city")));
+        resp.setDistrict(asText(info.get("district")));
+        resp.setAvailable(StringUtils.hasText(resp.getCity()));
+        if (resp.getAvailable() && ipGeoCache.size() < IP_GEO_CACHE_MAX) {
+            ipGeoCache.put(cacheKey, new CachedGeo(resp, System.currentTimeMillis()));
+        }
+        return resp;
+    }
+
+    /** IP 定位结果缓存：一整个校园网通常共用一个出口 IP，没必要每个用户都查一次（省腾讯配额） */
+    private record CachedGeo(GeoCity geo, long at) {}
+
+    /**
+     * 调腾讯位置服务 WebService：自动补 key/output、按参数名排序、按需加 sig。
+     *
+     * 未配置 key、网络异常、status != 0 统一返回 null 由调用方降级 ——
+     * 位置能力只做锦上添花，永远不许打崩业务。
+     */
+    private Map<?, ?> qqmapGet(String path, Map<String, String> params) {
+        if (!StringUtils.hasText(qqmapKey)) {
+            log.info("campus.geo.qqmap-key 未配置，位置能力降级为不可用");
+            return null;
+        }
         try {
-            String path = "/ws/geocoder/v1/";
-            // TreeMap 天然按参数名升序，与腾讯签名要求的排序一致 —— 让请求串和签名串共用同一份拼接
-            Map<String, String> params = new TreeMap<>();
-            params.put("key", qqmapKey);
-            params.put("location", String.format(Locale.ROOT, "%s,%s", lat, lng));
-            params.put("output", "json");
-            params.put("get_poi", "0");
+            Map<String, String> sorted = new TreeMap<>(params);
+            sorted.put("key", qqmapKey);
+            sorted.put("output", "json");
 
             StringBuilder qs = new StringBuilder();
-            for (Map.Entry<String, String> e : params.entrySet()) {
+            for (Map.Entry<String, String> e : sorted.entrySet()) {
                 if (qs.length() > 0) {
                     qs.append('&');
                 }
@@ -142,31 +210,58 @@ public class AuthService {
             }
 
             String url = "https://apis.map.qq.com" + path + "?" + query;
-            // 同样先取字符串再解析：腾讯位置服务偶尔也会返回 text/plain，
-            // 直接要 Map 会抛转换异常并被下面的 catch 静默降级
+            // 先取字符串再解析：腾讯位置服务偶尔返回 text/plain，
+            // 直接要 Map 会抛转换异常并被静默降级
             String raw = restTemplate.getForObject(url, String.class);
             Map<?, ?> body = StringUtils.hasText(raw) ? JSON.readValue(raw, Map.class) : null;
-            Object result = body == null ? null : body.get("result");
-            Object comp = result instanceof Map ? ((Map<?, ?>) result).get("address_component") : null;
-            if (comp instanceof Map) {
-                Map<?, ?> c = (Map<?, ?>) comp;
-                resp.setProvince(asText(c.get("province")));
-                resp.setCity(asText(c.get("city")));
-                resp.setDistrict(asText(c.get("district")));
-                resp.setAvailable(StringUtils.hasText(resp.getCity()));
-            } else {
-                Object status = body == null ? null : body.get("status");
-                Object message = body == null ? null : body.get("message");
-                log.warn("逆地理编码返回异常 status={} message={}", status, message);
+            Object status = body == null ? null : body.get("status");
+            if (body != null && status != null && !"0".equals(String.valueOf(status))) {
+                log.warn("腾讯位置服务返回异常 path={} status={} message={}", path, status, body.get("message"));
                 if ("111".equals(String.valueOf(status)) && !StringUtils.hasText(qqmapSk)) {
                     log.warn("腾讯位置服务要求签名：请在控制台关闭该 key 的「签名校验」，"
                             + "或把 SK 配到 campus.geo.qqmap-sk（环境变量 QQMAP_SK）");
                 }
+                return null;
             }
+            return body;
         } catch (Exception e) {
-            log.warn("逆地理编码失败 lat={} lng={} {}", lat, lng, e.getMessage());
+            log.warn("腾讯位置服务请求失败 path={} {}", path, e.getMessage());
+            return null;
         }
-        return resp;
+    }
+
+    /**
+     * 内网 / 回环 / 链路本地 / CGNAT 地址：这类 IP 拿去做定位只会得到机房城市，没有意义。
+     * 统一按「不可直接查询」处理，改为让腾讯按请求来源解析。
+     */
+    private boolean isPrivateOrLoopbackIp(String ip) {
+        if (!StringUtils.hasText(ip)) {
+            return true;
+        }
+        String v = ip.trim();
+        if (v.startsWith("::ffff:")) {
+            v = v.substring(7); // IPv4-mapped IPv6
+        }
+        if (v.indexOf(':') >= 0) {
+            return "::1".equals(v); // 其它 IPv6 不做处理
+        }
+        String[] parts = v.split("\\.");
+        if (parts.length != 4) {
+            return true;
+        }
+        try {
+            int a = Integer.parseInt(parts[0]);
+            int b = Integer.parseInt(parts[1]);
+            if (a == 127 || a == 10) return true;
+            if (a == 192 && b == 168) return true;
+            if (a == 169 && b == 254) return true;
+            if (a == 172 && b >= 16 && b <= 31) return true;
+            if (a == 100 && b >= 64 && b <= 127) return true; // CGNAT
+            if (a == 0) return true;
+            return false;
+        } catch (NumberFormatException e) {
+            return true;
+        }
     }
 
     /**

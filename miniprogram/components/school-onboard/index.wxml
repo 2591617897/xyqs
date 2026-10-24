@@ -18,24 +18,28 @@
     </view>
 
     <scroll-view class="ob-list" scroll-y>
-      <view
-        class="ob-item {{pickedId === item._key ? 'on' : ''}}"
-        wx:for="{{filtered}}"
-        wx:key="_key"
-        data-id="{{item._key}}"
-        bindtap="onPick"
-      >
-        <view class="ob-item-main">
-          <view class="ob-item-name">{{item.name}}</view>
-          <view class="ob-item-city" wx:if="{{item.city}}">{{item.city}}</view>
+      <!-- list 是「分组标题 + 学校」的扁平数组：IP 定位到城市时，同城学校排在最前。
+           用 block 承载 wx:for，不额外多一层 view 节点，避免影响 scroll-view 的高度计算 -->
+      <block wx:for="{{list}}" wx:key="_key">
+        <view class="ob-group {{item.tone}}" wx:if="{{item.group}}">{{item.group}}</view>
+        <view
+          wx:else
+          class="ob-item {{pickedId === item._key ? 'on' : ''}}"
+          data-id="{{item._key}}"
+          bindtap="onPick"
+        >
+          <view class="ob-item-main">
+            <view class="ob-item-name">{{item.name}}</view>
+            <view class="ob-item-city" wx:if="{{item.city}}">{{item.city}}</view>
+          </view>
+          <view class="ob-item-check" wx:if="{{pickedId === item._key}}">
+            {{saving ? '提交中…' : '✓'}}
+          </view>
         </view>
-        <view class="ob-item-check" wx:if="{{pickedId === item._key}}">
-          {{saving ? '提交中…' : '✓'}}
-        </view>
-      </view>
+      </block>
 
       <view class="ob-empty" wx:if="{{loading}}">加载学校列表中…</view>
-      <view class="ob-empty" wx:elif="{{!filtered.length}}">
+      <view class="ob-empty" wx:elif="{{!list.length}}">
         {{schools.length ? '没有匹配的学校，换个关键词试试' : '暂未配置学校，请稍后再试'}}
       </view>
     </scroll-view>

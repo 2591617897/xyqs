@@ -9,6 +9,7 @@
  */
 const http = require('../../utils/request')
 const { toast } = require('../../utils/util')
+const schoolMod = require('../../utils/school')
 
 Component({
   properties: {
@@ -20,8 +21,11 @@ Component({
 
   data: {
     schools: [],
-    filtered: [],
+    // 渲染列表（含「同城推荐 / 全部学校」分组标题）
+    list: [],
     keyword: '',
+    /** IP 定位到的城市；为空则不分组 */
+    geoCity: '',
     loading: false,
     /** 已点选、等待父页面落库的学校 id（字符串） */
     pickedId: ''
@@ -29,9 +33,12 @@ Component({
 
   observers: {
     show: function (visible) {
+      if (!visible) return
       // 首次打开才拉列表，之后复用；失败不重试（可关掉重开）
-      if (visible && !this.data.schools.length && !this.data.loading) {
+      if (!this.data.schools.length && !this.data.loading) {
         this.loadSchools()
+      } else {
+        this.ensureIpCity()
       }
     }
   },
@@ -46,22 +53,39 @@ Component({
         const arr = (list || []).map(function (s) {
           return Object.assign({}, s, { _key: String(s.id) })
         })
-        self.setData({ schools: arr, filtered: arr, loading: false })
+        self.setData({ schools: arr, loading: false })
+        self.render()
+        self.ensureIpCity()
       }).catch(function () {
         self.setData({ loading: false })
         toast('学校列表加载失败，请稍后重试')
       })
     },
 
-    onKeyword: function (e) {
-      const kw = (e.detail.value || '').trim()
+    /** 按当前关键词 + 定位城市重算列表 */
+    render: function () {
       const all = this.data.schools
-      const filtered = kw
-        ? all.filter(function (s) {
-          return (s.name && s.name.indexOf(kw) >= 0) || (s.city && s.city.indexOf(kw) >= 0)
-        })
-        : all
-      this.setData({ keyword: kw, filtered: filtered })
+      const kw = this.data.keyword
+      if (kw) {
+        this.setData({ list: schoolMod.buildList(schoolMod.search(all, kw), '') })
+        return
+      }
+      this.setData({ list: schoolMod.buildList(all, this.data.geoCity) })
+    },
+
+    /** IP 定位（后端解析请求来源 IP，用户无感）：同城学校提到最前，失败静默 */
+    ensureIpCity: function () {
+      const self = this
+      schoolMod.ipCity().then(function (city) {
+        if (!city || city === self.data.geoCity) return
+        self.setData({ geoCity: city })
+        self.render()
+      })
+    },
+
+    onKeyword: function (e) {
+      this.setData({ keyword: (e.detail.value || '').trim() })
+      this.render()
     },
 
     onPick: function (e) {

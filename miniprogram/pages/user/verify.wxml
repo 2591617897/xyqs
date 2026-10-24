@@ -85,14 +85,19 @@
         focus
       />
       <scroll-view class="school-scroll" scroll-y="true">
-        <view class="school-item" wx:for="{{filtered}}" wx:key="id" bindtap="pickSchool" data-id="{{item.id}}">
-          <view class="flex1">
-            <view class="school-name">{{item.name}}</view>
-            <view class="muted">{{item.province}} · {{item.city}}</view>
+        <!-- list 是「分组标题 + 学校」的扁平数组：IP 定位到城市时，同城学校排在最前。
+             用 block 承载 wx:for，不额外多一层节点 -->
+        <block wx:for="{{list}}" wx:key="_key">
+          <view class="school-group {{item.tone}}" wx:if="{{item.group}}">{{item.group}}</view>
+          <view class="school-item" wx:else bindtap="pickSchool" data-id="{{item.id}}">
+            <view class="flex1">
+              <view class="school-name">{{item.name}}</view>
+              <view class="muted">{{item.province}} · {{item.city}}</view>
+            </view>
+            <text class="school-check" wx:if="{{schoolId === item.id}}">✓</text>
           </view>
-          <text class="school-check" wx:if="{{schoolId === item.id}}">✓</text>
-        </view>
-        <view class="empty" wx:if="{{!filtered.length}}" style="padding: 60rpx 0;">
+        </block>
+        <view class="empty" wx:if="{{!list.length}}" style="padding: 60rpx 0;">
           <text>没找到这所学校，可联系管理员添加</text>
         </view>
       </scroll-view>

@@ -87,9 +87,16 @@
 - 凭据自检：`js_code=test` 打 `jscode2session` → 40029=有效 / 40125=secret 错 / 40013=appid 错
 - `jscode2session` 响应头是 `text/plain` → 必须 `RestTemplate.getForObject(url, String.class)` 再 ObjectMapper
 - 腾讯位置服务开签名校验时返回 111，需 `sig=MD5(path?params+SK)`（`campus.geo.qqmap-sk`）；签名串值只做最小编码（`,` 不能变 `%2C`）
+- **IP 定位**：`GET /api/auth/geo/ip-city`（后端读 XFF/X-Real-IP → `/ws/location/v1/ip`，城市在 `result.ad_info`）；
+  选学校用它推荐同城（`utils/school.js` 的 `ipCity/buildList`），**不用 wx.getLocation**（要授权+requiredPrivateInfos）。
+  结果后端缓存 6h/512 个 IP —— 腾讯 key **每日配额很小**（实测 121 超限），上线要申请配额
 
 ## 布局铁律
 - `scroll-view` 在 flex 列里必须 `min-height: 0`，否则不滚动（`chat/.msgs`、`verify/.school-scroll`）
+- **父容器必须是「定高」`height`，不能只给 `max-height`**：`max-height` 是内容驱动，里面 `flex:1` 的
+  scroll-view 会拿到「内容高度」→ 既不滚动也不裁剪，列表直接盖住底部按钮。踩过：`school-onboard` 的
+  `.ob-sheet` 原是 `max-height:86vh`，学校一多就滑不动；改成 `height:78vh` 立刻正常。
+  可用的两种写法：① 弹层定高（verify 76vh / onboard 78vh）；② **scroll-view 自己带 `max-height`**（`user/.order-scroll`）
 - **自定义 tabBar 压不住弹层**：`custom-tab-bar/` 是框架层渲染，页面 z-index 再高（mask 1100 vs tabbar 999）也盖不过，
   弹层底部会被底栏切掉。必须由页面 `getTabBar().setData({hidden:true})` 隐藏、关闭时恢复，
   并在 `onShow` 里 `hidden:false` 兜底。范式见 `pages/wall/index.js#toggleTabBar`，
