@@ -254,11 +254,11 @@
   <!-- 浏览范围切换：本校 / 本市（+ 定位城市），与首页共用 -->
   <scope-sheet
     show="{{scopeShow}}"
-    school-name="{{user.schoolName}}"
-    school-city="{{schoolCity}}"
+    school-name="{{(user && user.schoolName) || ''}}"
+    school-city="{{schoolCity || ''}}"
     geo-city="{{geoCity}}"
     current="{{scopeMode}}"
-    current-city="{{scopeCity}}"
+    current-city="{{scopeCity || ''}}"
     bind:close="closeScope"
     bind:select="onScopeSelect"
     bind:verify="onScopeVerify"

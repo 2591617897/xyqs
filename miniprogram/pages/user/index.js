@@ -37,9 +37,11 @@ Page({
     }
     mp.setNavigationBarTitle({ title: '我的' })
     const cached = getApp().globalData.user
+    const hasToken = !!http.getToken()
     this.setData({
-      logged: !!http.getToken(),
-      user: cached
+      logged: hasToken,
+      // 没有 token 时不要拿缓存渲染，否则会显示上一轮账号的昵称/学校（清库后尤其明显）
+      user: hasToken ? cached : null
     })
     this.applyScope()
     if (http.getToken()) {
@@ -52,8 +54,9 @@ Page({
 
   /** 胶囊文案：本校显示学校名，本市显示「城市 · 全市」 */
   applyScope: function () {
-    const s = scopeMod.read()
     const user = this.data.user || getApp().globalData.user
+    // 没有学校时忽略「本市」残留，直接显示「选择学校」
+    const s = (user && user.schoolId) ? scopeMod.read() : { scope: 'school', city: '' }
     this.setData({
       schoolCity: (user && user.schoolCity) || '',
       scopeMode: s.scope,
@@ -116,6 +119,18 @@ Page({
       })
       self.applyScope()
     }).catch(function (err) {
+      // 令牌指向的用户已不存在（清库/换环境）：重建会话后重拉，别停在幽灵数据上
+      if (err && err.code === 404 && !self._reloginTried) {
+        self._reloginTried = true
+        auth.relogin().then(function (u) {
+          self.setData({ logged: true, user: u })
+          self.loadMe()
+          self.loadOrders()
+        }).catch(function () {
+          self.setData({ loading: false, logged: false, user: null })
+        })
+        return
+      }
       // 只有 401 才能判定为未登录；网络异常时保留登录态
       if (err && err.code === 401) {
         self.setData({ loading: false, logged: false })
@@ -238,6 +253,8 @@ Page({
         verifyStatus: me.verifyStatus
       })
       self.setData({ onboardShow: false, onboardSaving: false })
+      // 绑定学校后范围回到「本校」，避免胶囊继续显示上一条「某市 · 全市」
+      scopeMod.write({ scope: 'school' })
       self.loadMe()
       self.applyScope()
       toast('已绑定 ' + (me.schoolName || school.name || '学校'))

@@ -172,5 +172,13 @@
   **判断一律以 `schoolId` 为准**，姓名 `schoolName` 只用于显示，查不到名时回退「已选择学校」
 - 未认证用户可选学校入口：首页引导弹层 + 我的页 `🎓 未绑定学校 去选择 ›`（都复用 `components/school-onboard`）；
   已认证用户换校必须走 `pages/user/verify`
+- **JWT 无状态 → 清库后旧 token 仍然「有效」**，服务端只是查不到用户（`/user/me` 404「用户不存在」）。
+  前端必须自愈：`utils/request.js` 对 `code===404 && url 以 /user/me 开头` 做 `cleanLogin()`，
+  再由 `auth.relogin()` 重建会话；**判定条件必须锁死 `/user/me`**，否则「看已删用户主页」会把浏览者踢下线。
+  后端 `requireUser` 只在行不存在时返回 404（封禁用户仍返回行），所以不会出现 404→重登→404 死循环，但仍用
+  `_reloginTried` 标记兜一层
+- **没有 schoolId 时不要用 feedScope**：残留的 `city` 会让胶囊显示成「本市/某市 · 全市」，看起来像学校不对。
+  `applyUser/applyScope` 无学校时强制按「选择学校」渲染；绑定学校成功后 `scopeMod.write({scope:'school'})` 回本校
+- 我页显示「已绑定学校 / 未绑定学校」与胶囊显示「城市 · 全市」是两回事，别混；胶囊文本 = `scopeMod.label()`
 - 排查登录问题看 `campus-auth` 日志：`登录 platform=wx openid=xxxx****xxxx`
   —— 两个微信号应当打印出两个不同 openid

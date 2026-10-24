@@ -46,7 +46,9 @@ Page({
 
   /** 用最新用户信息刷新胶囊文案与范围展示 */
   applyUser: function (user) {
-    const s = scopeMod.read()
+    // 没有学校时「本市」拿不到城市，没有意义 → 一律按「选择学校」展示，
+    // 避免残留的 feedScope=city 把胶囊显示成「某市 · 全市」
+    const s = (user && user.schoolId) ? scopeMod.read() : { scope: 'school', city: '' }
     this.setData({
       user: user,
       schoolCity: (user && user.schoolCity) || '',
@@ -102,6 +104,9 @@ Page({
         verifyStatus: me.verifyStatus
       })
       self.setData({ onboardShow: false, onboardSaving: false })
+      // 刚绑定学校时把浏览范围拉回「本校」：
+      // 之前若停在「本市」模式，胶囊会显示成「某市 · 全市」，看起来像没绑学校
+      scopeMod.write({ scope: 'school' })
       self.applyUser(merged)
       self.loadData()
       toast('已切换到 ' + (me.schoolName || school.name || '本校'))
@@ -140,8 +145,22 @@ Page({
         verifyStatus: me.verifyStatus
       })
       self.applyUser(merged)
-    }).catch(function () {
-      // 静默失败：保留缓存里的学校名，不打扰首页
+    }).catch(function (err) {
+      // 令牌指向的用户已不存在（清库 / 换环境）：重建会话后整页重来一次，
+      // 否则首页会一直拿上一轮的缓存显示旧的学校和浏览范围
+      if (err && err.code === 404 && !self._reloginTried) {
+        self._reloginTried = true
+        auth.relogin().then(function (u) {
+          self.applyUser(u)
+          self.syncMe()
+          self.loadData()
+          self.checkOnboard()
+        }).catch(function () {
+          self.setData({ user: null, scopeLabel: '选择学校' })
+        })
+        return
+      }
+      // 其余静默失败：保留缓存里的学校名，不打扰首页
     })
   },
 

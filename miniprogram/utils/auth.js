@@ -111,6 +111,20 @@ function updateUser(user) {
 }
 
 /**
+ * 清掉本地登录态并重新静默登录。
+ *
+ * 典型场景：数据库被重置（t_user 清空）后，本地还留着指向旧用户的 token，
+ * 请求 /user/me 会返回「404 用户不存在」。此时必须重建会话，否则页面会一直用
+ * 上一轮的缓存渲染出幽灵数据（旧昵称、旧学校、旧浏览范围）。
+ *
+ * @returns {Promise<Object>} 新的用户对象
+ */
+function relogin() {
+  http.cleanLogin()
+  return ensureLogin(true)
+}
+
+/**
  * 宿主平台说明（登录用）。
  * 注意：微信已废弃 getUserInfo / getUserProfile 的静默授权，取头像昵称必须由用户主动点击
  * `open-type="chooseAvatar"` 与 `input type="nickname"` 完成，见 pages/user/index。
@@ -124,5 +138,6 @@ module.exports = {
   ensureVerified,
   updateUser,
   doLogin,
+  relogin,
   platformInfo
 }

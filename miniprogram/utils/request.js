@@ -157,6 +157,16 @@ function request(options) {
           return
         }
 
+        // 令牌指向的用户已不存在（清库 / 换环境后残留的旧 token）。
+        // 不清掉就会一直用幽灵缓存渲染（学校、浏览范围全是上一轮的旧数据）。
+        // 注意：只认 /user/me，别把「看别人主页 404」也当成自己掉线。
+        if (body.code === 404 && url.indexOf('/user/me') === 0) {
+          cleanLogin()
+          console.info('[api] 本地登录态已失效（用户不存在），已清除，稍后会自动重新登录')
+          reject(makeError(404, body.msg || '用户不存在'))
+          return
+        }
+
         // 业务失败：把后端 msg 透传出来，便于定位（数据库/参数/权限等）
         console.error('[api] 业务失败', method, url, 'code=' + body.code, body.msg)
         if (body.code === undefined) {
