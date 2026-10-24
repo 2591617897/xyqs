@@ -1,0 +1,133 @@
+/* ===== 统一文档页样式 ===== */
+.page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding: 28rpx 28rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+/* 头部 */
+.doc-header {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 36rpx 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
+}
+.doc-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+.doc-meta {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+/* 重要提示条 */
+.doc-callout {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+  border-left: 6rpx solid #10b981;
+  box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.doc-callout.warn {
+  border-left-color: #f59e0b;
+}
+.doc-callout.safe {
+  border-left-color: #2563eb;
+  margin-top: 24rpx;
+}
+.doc-callout-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+.doc-callout-body {
+  font-size: 26rpx;
+  color: #475569;
+  line-height: 1.7;
+}
+
+/* 正文区块 */
+.doc-section {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
+}
+.doc-h2 {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 18rpx;
+  line-height: 1.4;
+}
+.doc-p {
+  font-size: 26rpx;
+  color: #475569;
+  line-height: 1.85;
+  margin-bottom: 14rpx;
+  text-align: justify;
+}
+.doc-p strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+.doc-list {
+  margin: 8rpx 0 14rpx 0;
+  padding-left: 8rpx;
+}
+.doc-li {
+  font-size: 26rpx;
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+  text-align: justify;
+}
+
+/* 表格（隐私政策用） */
+.doc-table {
+  margin-top: 10rpx;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+.doc-tr {
+  display: flex;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+.doc-tr:last-child {
+  border-bottom: none;
+}
+.doc-th {
+  background: #f8fafc;
+}
+.doc-td {
+  flex: 1;
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.6;
+  padding: 18rpx 14rpx;
+  box-sizing: border-box;
+}
+.doc-th .doc-td {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* 底部 */
+.doc-foot {
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 22rpx;
+  color: #94a3b8;
+}

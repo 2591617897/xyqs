@@ -251,6 +251,18 @@ Page({
     toast('「' + (e.currentTarget.dataset.name || '该功能') + '」即将上线，敬请期待')
   },
 
+  goAgreement: function () {
+    mp.navigateTo({ url: '/pages/legal/agreement' })
+  },
+
+  goPrivacy: function () {
+    mp.navigateTo({ url: '/pages/legal/privacy' })
+  },
+
+  goDisclaimer: function () {
+    mp.navigateTo({ url: '/pages/legal/disclaimer' })
+  },
+
   about: function () {
     mp.showModal({
       title: '校园趣事',

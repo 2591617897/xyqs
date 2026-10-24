@@ -1,0 +1,81 @@
+<view class="page">
+  <view class="doc-header">
+    <view class="doc-title">校园趣事 · 用户服务协议</view>
+    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">一、协议的接受与修改</view>
+    <view class="doc-p">1.1 欢迎使用「校园趣事」小程序（以下简称"本平台"）。本协议是您与本平台运营方之间关于使用本平台服务所订立的协议。请您在使用前务必仔细阅读本协议，一旦您开始使用本平台服务，即视为您已充分理解并同意本协议全部条款。</view>
+    <view class="doc-p">1.2 本平台有权根据需要不定期修改本协议内容，修改后的协议自公布之日起生效。若您继续使用本平台服务，即视为接受修改后的协议。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">二、服务定位</view>
+    <view class="doc-p">2.1 本平台是面向在校大学生的校园信息发布与兴趣交流社区，提供校园二手闲置、校园动态发布、匿名表白墙、私信互动等功能。</view>
+    <view class="doc-p">2.2 本平台<strong>不参与任何交易环节</strong>，不提供支付、担保、物流等交易服务。所有交易由用户在线下自行协商完成，本平台对交易安全、交易结果及可能产生的损失不承担任何责任。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">三、账户注册与身份认证</view>
+    <view class="doc-p">3.1 您可通过微信授权登录本平台。登录后请根据引导完成校园身份认证（上传学生证或校园卡照片），认证通过后方可发布信息、评论、私信及参与校园内互动。</view>
+    <view class="doc-p">3.2 您承诺提交的认证资料真实、有效，不得冒用他人身份或使用伪造材料。因虚假认证引起的一切后果由您自行承担。</view>
+    <view class="doc-p">3.3 您应妥善保管账户及登录信息，因您自身原因导致的账户被盗用、信息泄露等风险由您自行承担。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">四、用户行为规范</view>
+    <view class="doc-p">4.1 您在本平台发布的信息不得包含以下内容：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）违反宪法、法律法规或公序良俗的内容；</view>
+      <view class="doc-li">（2）涉及淫秽、暴力、赌博、毒品、邪教等违法信息；</view>
+      <view class="doc-li">（3）侮辱、诽谤、恐吓、骚扰他人的内容；</view>
+      <view class="doc-li">（4）虚假广告、诈骗信息或非法集资相关内容；</view>
+      <view class="doc-li">（5）侵犯他人知识产权、肖像权、名誉权等合法权益的内容；</view>
+      <view class="doc-li">（6）与校园场景明显不符、可能误导其他用户的内容。</view>
+    </view>
+    <view class="doc-p">4.2 您不得利用技术手段干扰本平台正常运行，不得批量注册账户、刷量、爬虫或从事其他损害平台安全的行为。</view>
+    <view class="doc-p">4.3 您在匿名表白墙发布内容时，请注意匿名仅在前台展示上生效，后台为内容安全审核及风控保留必要的追溯依据。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">五、信息内容与平台权力</view>
+    <view class="doc-p">5.1 本平台有权对用户发布的信息进行审核。对涉嫌违反法律法规或本协议的内容，平台可采取限制展示、屏蔽、删除等措施。</view>
+    <view class="doc-p">5.2 本平台在审核过程中可能对敏感内容进行人工复核，正常情况下 24 小时内完成。为保障信息时效性，部分内容采用机器预检后先上线，发现违规后再下架处理。</view>
+    <view class="doc-p">5.3 若您的账户或发布的信息被处理，您可通过"我的 → 在线客服与反馈"申请复核，平台将在 3 个工作日内回复。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">六、账户的暂停与终止</view>
+    <view class="doc-p">6.1 若您存在以下情形之一，本平台有权暂停或终止向您提供服务：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）发布违反法律法规或本协议的内容；</view>
+      <view class="doc-li">（2）冒用他人身份或以虚假资料通过认证；</view>
+      <view class="doc-li">（3）被其他用户多次有效投诉且经核实属实；</view>
+      <view class="doc-li">（4）存在其他损害平台或第三方利益的行为。</view>
+    </view>
+    <view class="doc-p">6.2 账户被终止后，您可申请注销账户。注销后您在本平台的所有数据将被永久删除且无法恢复。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">七、知识产权</view>
+    <view class="doc-p">7.1 您在本平台发布的内容，您保证拥有合法权利。您授予本平台一项全球免费的非独占许可，使本平台有权在服务范围内展示、传播、处理该内容。</view>
+    <view class="doc-p">7.2 本平台的软件、界面设计、Logo、文字、图片等，其知识产权归运营方所有，未经书面授权不得用于任何商业用途。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">八、协议终止</view>
+    <view class="doc-p">8.1 您有权随时停止使用本平台服务。本平台在因业务调整、合规要求等情况下，有权终止或变更全部或部分服务。</view>
+    <view class="doc-p">8.2 协议终止不免除双方在终止前已产生的权利和义务。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">九、适用法律与争议解决</view>
+    <view class="doc-p">9.1 本协议的订立、执行和解释及争议的解决均应适用中华人民共和国法律。</view>
+    <view class="doc-p">9.2 如双方就本协议内容或其执行发生任何争议，双方应尽力友好协商解决；协商不成时，任何一方均可向本平台运营方所在地有管辖权的人民法院提起诉讼。</view>
+  </view>
+
+  <view class="doc-foot">
+    <text>感谢您选择校园趣事 · 让校园更有趣</text>
+  </view>
+</view>

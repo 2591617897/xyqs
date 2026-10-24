@@ -1,0 +1,122 @@
+<view class="page">
+  <view class="doc-header">
+    <view class="doc-title">校园趣事 · 隐私政策</view>
+    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+  </view>
+
+  <view class="doc-callout">
+    <text class="doc-callout-title">🛡️ 一句话承诺</text>
+    <text class="doc-callout-body">除了让你能登录、认证、发帖、收私信所必需的最少数据之外，我们不搜集你任何多余信息。你发的匿名表白我们真的看不到你是谁——它只用于风控追溯，绝不对外展示。</text>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">一、我们收集哪些信息</view>
+    <view class="doc-p">我们仅会在你主动使用对应功能时收集以下信息：</view>
+    <view class="doc-table">
+      <view class="doc-tr doc-th">
+        <view class="doc-td">信息类型</view>
+        <view class="doc-td">用途</view>
+        <view class="doc-td">是否必填</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">微信昵称、头像</view>
+        <view class="doc-td">登录后展示身份</view>
+        <view class="doc-td">是（微信授权后自动获取）</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">学校名称、学号、学生证照片</view>
+        <view class="doc-td">校园身份认证，过滤校外用户</view>
+        <view class="doc-td">是（发帖/评论/私信前）</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">你发布的文字、图片、联系方式</view>
+        <view class="doc-td">在本平台展示</view>
+        <view class="doc-td">按需填写（你决定发什么）</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">你在本平台的点赞、关注、私信</view>
+        <view class="doc-td">社交互动、消息通知</view>
+        <view class="doc-td">按需使用对应功能时产生</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">设备信息、IP 地址</view>
+        <view class="doc-td">安全风控、防刷、排查违规</view>
+        <view class="doc-td">系统自动收集</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">位置（仅你主动同意时）</view>
+        <view class="doc-td">定位同城高校，展示同市信息流</view>
+        <view class="doc-td">否（默认关闭）</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">二、我们不收集什么</view>
+    <view class="doc-list">
+      <view class="doc-li">❌ 微信 OpenID 以外的朋友关系链、通讯录</view>
+      <view class="doc-li">❌ 微信支付记录、银行卡信息</view>
+      <view class="doc-li">❌ 相册中你未主动上传的任何照片</view>
+      <view class="doc-li">❌ 剪贴板、日历、健康数据</view>
+      <view class="doc-li">❌ 精确的实时地理位置（仅在你打开「同城」时使用模糊城市级定位）</view>
+    </view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">三、信息的使用</view>
+    <view class="doc-p">3.1 我们使用你的信息仅为了：让你能登录、完成认证、发布和接收消息、看到同校/同市内容、做安全风控。</view>
+    <view class="doc-p">3.2 我们<strong>不会</strong>将你的信息用于精准广告投放，也不会将你的信息出售或共享给任何第三方。</view>
+    <view class="doc-p">3.3 本平台部署在中国大陆境内的云服务器上，信息不会跨境传输。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">四、信息的存储与安全</view>
+    <view class="doc-p">4.1 你的数据存储在安全等级符合国家标准的云服务器上，数据库访问全程加密，敏感字段（如学号）在存储时做部分脱敏处理。</view>
+    <view class="doc-p">4.2 我们采用常规技术手段保障数据安全，但互联网环境并非绝对安全，如发生信息泄露，我们将第一时间通知你并采取补救措施。</view>
+    <view class="doc-p">4.3 我们仅为你本人授权的用途留存数据，不再需要的信息我们会及时删除。平台账号注销后，所有个人数据在 30 天内彻底清除。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">五、你对数据的权利</view>
+    <view class="doc-list">
+      <view class="doc-li">✅ 查看与修改：进入"我的 → 个人信息"可修改昵称、头像、自我介绍</view>
+      <view class="doc-li">✅ 删除：你可以删除自己发布的帖子、闲置、评论、私信</view>
+      <view class="doc-li">✅ 撤回：2 分钟内可撤回已发送的私信（双方可见提示）</view>
+      <view class="doc-li">✅ 注销账户：进入"我的 → 设置 → 注销账户"申请，30 天内冻结后彻底删除</view>
+      <view class="doc-li">✅ 查询/导出：若你需要获取你在本平台的全部个人信息，可通过"在线客服"联系我们，7 个工作日内提供</view>
+    </view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">六、匿名内容的特别说明</view>
+    <view class="doc-p">6.1 你在表白墙发布的匿名帖子，前台任何人都看不到你的身份信息（包括其他用户）。</view>
+    <view class="doc-p">6.2 后台仅在以下场景下会调阅匿名内容对应的发布者：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）内容涉嫌违法违规，公安机关或网信部门依法要求协查；</view>
+      <view class="doc-li">（2）收到司法机构的有效法律文书；</view>
+      <view class="doc-li">（3）平台内部安全审核发现高危内容，需要进一步追溯。</view>
+    </view>
+    <view class="doc-p">6.3 除上述情形外，我们的运营人员无法在后台看到匿名发布者是谁。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">七、未成年人保护</view>
+    <view class="doc-p">7.1 本平台面向已完成校园身份认证的在校学生群体，默认用户年龄不低于 16 周岁。</view>
+    <view class="doc-p">7.2 若你是未满 16 周岁的未成年人，请在监护人的指导下使用本平台，并在使用前让监护人阅读本政策。</view>
+    <view class="doc-p">7.3 我们不会主动收集未成年人的个人信息。若我们发现违反本政策收集了未成年人信息，将尽快删除相关数据。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">八、政策的更新</view>
+    <view class="doc-p">本政策可能不定期更新。更新后会在本页顶部公布"更新日期"和"生效日期"，重大变更会通过站内通知的方式告知你。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">九、联系我们</view>
+    <view class="doc-p">如你对本隐私政策有任何疑问、意见或建议，或想行使你的数据权利，可通过"我的 → 在线客服与反馈"与我们联系，我们将在 3 个工作日内回复。</view>
+  </view>
+
+  <view class="doc-foot">
+    <text>📧 隐私投诉专用邮箱：privacy@xiaoyuanquishi.example</text>
+  </view>
+</view>

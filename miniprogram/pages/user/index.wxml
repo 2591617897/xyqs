@@ -198,9 +198,25 @@
         <text class="mi-tip">校内值班中</text>
         <text class="mi-arrow">›</text>
       </view>
+      <view class="menu-item" bindtap="goAgreement">
+        <text class="mi-icon">📄</text>
+        <text class="mi-text">用户服务协议</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" bindtap="goPrivacy">
+        <text class="mi-icon">🛡️</text>
+        <text class="mi-text">隐私政策</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" bindtap="goDisclaimer">
+        <text class="mi-icon">⚠️</text>
+        <text class="mi-text">免责声明</text>
+        <text class="mi-tip">交易风险必读</text>
+        <text class="mi-arrow">›</text>
+      </view>
       <view class="menu-item" bindtap="about">
         <text class="mi-icon">ℹ️</text>
-        <text class="mi-text">关于校园趣事平台</text>
+        <text class="mi-text">关于校园趣事</text>
         <text class="mi-tip">v2.4.1</text>
         <text class="mi-arrow">›</text>
       </view>

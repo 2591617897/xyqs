@@ -1,0 +1,77 @@
+<view class="page">
+  <view class="doc-header">
+    <view class="doc-title">校园趣事 · 免责声明</view>
+    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+  </view>
+
+  <view class="doc-callout warn">
+    <text class="doc-callout-title">⚠️ 请在使用本平台前务必阅读</text>
+    <text class="doc-callout-body">本平台仅为校园信息发布的技术服务提供者，不参与任何实际交易、担保、支付、物流或身份真实性验证。使用本平台即视为你已理解并同意以下全部免责条款。</text>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">一、平台定位与角色</view>
+    <view class="doc-p">1.1 本平台（"校园趣事"）是一个面向在校大学生的<strong>信息发布与兴趣交流社区</strong>，为用户提供二手闲置发布、校园动态、匿名表白墙、私信等信息展示与沟通工具。</view>
+    <view class="doc-p">1.2 本平台<strong>不参与任何交易</strong>，不是交易方、不是居间方、不是担保方，不提供任何支付、担保、鉴定、物流、保险或售后服务。所有交易由用户自行在线下协商并完成。</view>
+    <view class="doc-p">1.3 本平台上所有信息、观点、商品价格、联系方式均由用户自行发布，不代表本平台立场。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">二、关于交易</view>
+    <view class="doc-p">2.1 <strong>一切交易风险由交易双方自行承担。</strong>本平台不承担任何因线上发布信息、线下当面交易或线上转账导致的损失或责任。</view>
+    <view class="doc-p">2.2 用户在交易过程中可能遭遇以下风险（包括但不限于）：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）发布者信息不真实、商品与描述不符；</view>
+      <view class="doc-li">（2）收到伪劣、破损、被盗抢或无法正常使用的商品；</view>
+      <view class="doc-li">（3）被要求脱离平台进行私下微信/支付宝转账后对方失联；</view>
+      <view class="doc-li">（4）以"小刀还价""预定保留"为名诱骗用户先转账；</view>
+      <view class="doc-li">（5）冒充本平台运营方或客服进行诈骗。</view>
+    </view>
+    <view class="doc-p">2.3 本平台已尽力通过以下方式降低交易风险，但不保证能完全杜绝：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）要求用户完成校园身份认证后才能发布与私信；</view>
+      <view class="doc-li">（2）系统对可疑内容（如明显异校、异常低价、含可疑联系方式）做标记；</view>
+      <view class="doc-li">（3）提供"安全提示"与举报入口，协助警方调查；</view>
+      <view class="doc-li">（4）拉黑/屏蔽违规用户。</view>
+    </view>
+    <view class="doc-p">2.4 <strong>一旦发生交易纠纷或涉嫌诈骗，请立即报警</strong>，同时可通过平台内"在线客服"提供相应线索，我们将积极配合司法机关调查，但不承担任何赔偿责任。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">三、关于信息与内容</view>
+    <view class="doc-p">3.1 本平台上的所有内容（包括但不限于帖子、闲置商品描述、表白墙内容、私信、评论、图片）均由用户自行创作与发布。我们不保证任何内容的真实性、准确性、完整性、合法性。</view>
+    <view class="doc-p">3.2 若你认为本平台上的某项内容侵犯了你的合法权益，请通过"在线客服"向我们提供详细说明与证据，我们将在 5 个工作日内依法处理。</view>
+    <view class="doc-p">3.3 本平台可能因系统维护、网络波动等原因造成信息丢失、延迟或错误展示，对此不承担责任。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">四、关于校园身份认证</view>
+    <view class="doc-p">4.1 本平台提供的校园身份认证功能仅用于"限制非本校用户互动"，<strong>不构成对发布者真实身份的法律担保</strong>。认证信息可能存在冒用、伪造、过期等情况。</view>
+    <view class="doc-p">4.2 你与他人交易或互动时，应自行通过合理方式核实对方真实身份（如约定在校园内公共场所面交、核对学生证原件等）。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">五、关于第三方链接与资源</view>
+    <view class="doc-p">5.1 本平台可能包含指向第三方网站、应用或联系方式的内容。这些第三方内容不在我们控制范围内，我们对其合法性、安全性、隐私政策不承担任何保证或责任。</view>
+    <view class="doc-p">5.2 请勿轻易点击不明链接、扫描陌生二维码或下载来路不明的 App，以免造成财产损失或信息泄露。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">六、不可抗力</view>
+    <view class="doc-p">因政府行为、法律法规变化、自然灾害、网络攻击、技术故障等不可抗力导致的服务中断或数据损失，本平台不承担责任。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">七、责任限制</view>
+    <view class="doc-p">在法律允许的最大范围内，本平台对任何间接损失、附带损失、特殊损失、衍生损失或惩罚性损失不承担责任。</view>
+  </view>
+
+  <view class="doc-callout safe">
+    <text class="doc-callout-title">📍 平台建议的安全交易原则</text>
+    <text class="doc-callout-body">尽量选择与自己同校的用户交易；约定在宿舍楼下、食堂门口、图书馆大厅等公共场所面交；当面验货，确认无误后再付款；拒绝脱离平台的私下转账请求；贵重物品建议约同学陪同。</text>
+  </view>
+
+  <view class="doc-foot">
+    <text>使用本平台即代表你已阅读、理解并接受本声明的全部内容</text>
+  </view>
+</view>

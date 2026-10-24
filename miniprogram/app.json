@@ -14,7 +14,10 @@
     "pages/post/publish",
     "pages/user/verify",
     "pages/messages/index",
-    "pages/chat/index"
+    "pages/chat/index",
+    "pages/legal/agreement",
+    "pages/legal/privacy",
+    "pages/legal/disclaimer"
   ],
   "window": {
     "backgroundTextStyle": "dark",
