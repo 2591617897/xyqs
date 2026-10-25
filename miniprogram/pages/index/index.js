@@ -32,6 +32,16 @@ Page({
     zones: [],
     /** 闲置分类（校园闲置区的子筛选） */
     categories: [],
+    /**
+     * 首页 Banner：运营在后台「广告位管理」配置，按 code 拉取。
+     * 空数组是正常的（没投广告 / 未过审 / 定向没命中），此时整块不渲染。
+     */
+    banners: [],
+    /**
+     * 后台公告（运营在「通知公告」发布）。
+     * 有则替换掉默认的「跳蚤集市」运营位；为空时保留默认卡片，保证首屏不空缺。
+     */
+    notices: [],
     loading: true,
     loadError: false,
     errorMsg: ''
@@ -227,6 +237,8 @@ Page({
     const postParams = Object.assign({ page: 1, size: 16 }, scopeParams)
     const hotParams = Object.assign({ page: 1, size: 1, sort: 'hot' }, scopeParams)
     const wallParams = Object.assign({ page: 1, size: 6 }, scopeParams)
+    // Banner 的「城市定向」需要当前城市；未登录/未选学校时留空（那种情况只拿得到全国投放的广告）
+    const cityParam = (getApp().globalData.user || {}).schoolCity || ''
     const goodsParams = Object.assign({ page: 1, size: 6, sort: 'latest' }, scopeMod.goodsParams())
 
     Promise.all([
@@ -235,7 +247,11 @@ Page({
       http.get('/posts', hotParams, { silent: true }).catch(fail('hot')),
       http.get('/wall/posts', wallParams, { silent: true }).catch(fail('wall')),
       http.get('/goods', goodsParams, { silent: true }).catch(fail('goods')),
-      http.get('/goods/categories', null, { silent: true }).catch(fail('categories'))
+      http.get('/goods/categories', null, { silent: true }).catch(fail('categories')),
+      // 运营位：Banners 与公告。这两个是「锦上添花」，失败不影响功能区渲染，
+      // 所以不进 contentOk 的判定（否则后台没配广告时首页会被误判成整页加载失败）
+      http.get('/ads/home_banner', { city: cityParam }, { silent: true }).catch(fail('banners')),
+      http.get('/notices', null, { silent: true }).catch(fail('notices'))
     ]).then(function (res) {
       if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
       const channels = res[0] || []
@@ -253,8 +269,12 @@ Page({
         goods: res[4] || {}
       }, channels)
 
+      const banners = res[6] || []
+      const notices = res[7] || []
       self.setData({
         categories: res[5] || [],
+        banners: banners,
+        notices: notices,
         zones: built,
         loading: false,
         loadError: contentOk === 0,
@@ -383,6 +403,56 @@ Page({
       patch[base + '.likeText'] = fmtCount(cnt)
       self.setData(patch)
     }).catch(function () {})
+  },
+
+  /**
+   * Banner 图片加载失败：把这条从列表里摘掉，避免留一个灰块占位。
+   * 常见原因是素材图被删或用了局域网地址（真机 <image> 加载 http://192.168.x.x 会静默失败）。
+   */
+  onBannerError: function (e) {
+    const idx = e.currentTarget.dataset.index
+    if (idx == null) return
+    const list = (this.data.banners || []).slice()
+    if (idx < 0 || idx >= list.length) return
+    list.splice(idx, 1)
+    this.setData({ banners: list })
+  },
+
+  /**
+   * 点击 Banner：先上报点击数（失败静默，不影响跳转），再按 linkType 跳目标。
+   *
+   * linkType：0无跳转 1帖子 2商品 3外链 4小程序页面。
+   * 外链不能直接 navigateTo——小程序只能打开自身页面，外链复制链接让用户自行粘贴。
+   */
+  onAdTap: function (e) {
+    const ad = e.currentTarget.dataset.ad
+    if (!ad) return
+    if (ad.id) {
+      http.post('/ads/materials/' + ad.id + '/click').catch(function () {})
+    }
+    const lt = ad.linkType || 0
+    if (lt === 1 && ad.linkValue) {
+      mp.navigateTo({ url: '/pages/post/detail?id=' + ad.linkValue })
+    } else if (lt === 2 && ad.linkValue) {
+      mp.navigateTo({ url: '/pages/goods/detail?id=' + ad.linkValue })
+    } else if (lt === 4 && ad.linkValue) {
+      mp.navigateTo({ url: ad.linkValue })
+    } else if (lt === 3 && ad.linkValue) {
+      mp.setClipboardData({ data: ad.linkValue })
+    }
+  },
+
+  /** 公告：跳详情（目前公告详情页复用 legal 风格的通用页，先用 toast 兜住正文摘要） */
+  onNoticeTap: function (e) {
+    const n = e.currentTarget.dataset.notice
+    if (!n) return
+    mp.navigateTo({
+      url: '/pages/notice/index?id=' + n.id,
+      fail: function () {
+        // 详情页缺失时至少让用户看到内容，不至于点了没反应
+        mp.setClipboardData({ data: (n.title || '') + '\n' + (n.content || '') })
+      }
+    })
   },
 
   /**

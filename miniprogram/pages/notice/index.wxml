@@ -1,0 +1,18 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="state">加载中…</view>
+
+  <view wx:elif="{{errorMsg}}" class="state">{{errorMsg}}</view>
+
+  <block wx:else>
+    <view class="card">
+      <view class="tag-row">
+        <text class="tag level{{notice.level}}">{{notice.level === 3 ? '紧急' : (notice.level === 2 ? '重要' : '普通')}}</text>
+        <text class="tag type">{{notice.typeText}}</text>
+      </view>
+      <view class="title">{{notice.title}}</view>
+      <view class="meta">{{notice.publishText}}</view>
+      <view class="split"></view>
+      <view class="content">{{notice.content}}</view>
+    </view>
+  </block>
+</view>

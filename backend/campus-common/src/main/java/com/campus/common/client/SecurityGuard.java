@@ -98,6 +98,51 @@ public class SecurityGuard {
     }
 
     /**
+     * 本地敏感词净化：<b>拿返回值去落库</b>，这是 level 2（替换）能生效的唯一途径。
+     *
+     * <p>与 {@link #checkText} 的分工：
+     * <ul>
+     *   <li>{@code purify} —— 本地词表，同步、快、不依赖凭据。按字段调用，
+     *       命中 level 3 直接抛 400，命中 level 2 返回替换后的文本。</li>
+     *   <li>{@code checkText} —— 微信审核，覆盖语义与隐含表达。整体调用一次即可。</li>
+     * </ul>
+     * 典型写法（先在字段上净化，再整体送微信）：
+     * <pre>
+     *   String title = securityGuard.purify(userId, req.getTitle(), BIZ_POST);
+     *   String content = securityGuard.purify(userId, req.getContent(), BIZ_POST);
+     *   securityGuard.checkText(userId, title + "\n" + content, SCENE_FORUM, BIZ_POST);
+     *   post.setTitle(title); post.setContent(content);
+     * </pre>
+     *
+     * <p>本方法与 checkText 一样遵循 fail-open：auth 不可用时原样返回，
+     * 不会因为词典服务抖动就让内容发不出去。
+     *
+     * @param userId  提交者 id
+     * @param text    待净化文本（null / 空则原样返回）
+     * @param bizType 业务类型，取本类 BIZ_* 常量
+     * @return 处理后的文本
+     */
+    public String purify(Long userId, String text, String bizType) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+        try {
+            R<String> r = securityClient.purify(new MsgCheckReq(userId, text, null, bizType));
+            if (r != null && r.getCode() == 400) {
+                throw BizException.of(r.getMsg() == null ? "内容包含不允许发布的敏感词" : r.getMsg());
+            }
+            if (r != null && r.getData() != null) {
+                return r.getData();
+            }
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("[security-guard] 本地词净化不可用，按原文处理：{}", e.getMessage());
+        }
+        return text;
+    }
+
+    /**
      * 图片异步送审（不阻塞发布流程，也不会因为微信侧异常而让发布失败）。
      *
      * <p>注意这是<b>先发后审</b>：微信的媒体审核没有同步接口，结论通过回调返回。

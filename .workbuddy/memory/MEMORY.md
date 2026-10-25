@@ -1,165 +1,109 @@
-# 项目长期约定（精简版 · 2026-10-25 二次整理）
+# 项目长期约定（2026-10-25 三次整理）
 
-## 平台 / 环境
-- 业务只用 `utils/util.js` 导出的 `mp.*`，禁止直接判断 `wx`/`qq`（`PLATFORM` 在 util 内）
-- 登录带 platform：`POST /api/auth/login {code, platform, devOpenid}`；配置 `campus.wx/qq.appid|appsecret`、`campus.auth.mock`
-- `t_user` 唯一键 **`uk_platform_openid(platform, openid)`**（openid 只在平台内唯一），别改回单列
-- 头像 `open-type="chooseAvatar"`（临时路径，先上传再入库）+ 昵称 `input type="nickname"`（getUserInfo/UserProfile 已废弃）
+## 环境 / 基础设施
 - 库 `guizhou_campus_fun`/root/123456；MySQL 3306、Redis 6379、Nacos 8848、网关 8888（唯一入口，前缀 `/api`）
-- 端口：auth 8101 / user 8102 / goods 8103 / wall 8104 / post 8105 / message 8106
-- 线上域名 `https://campus-api.trkcwl.com`（该服务器跑多项目 → 子域名必带项目名）；`ACTIVE_ENV` 切 `'prod'`；Nginx 模板 `deploy/nginx-campus-api.trkcwl.com.conf`（443→8888，upstream `campus_gateway`）
-- 上域名后必须设 `UPLOAD_BASE_URL=<域名>`，否则 `UploadController` 按内网默认拼地址
-- **上传目录必须绝对路径**：`./uploads` 相对进程 cwd（systemd/IDE/nohup 三种 cwd 不同），已用 `UploadPaths` 统一写读；生产由 Nginx alias 直出 `/uploads/`（服务器路径 `/mnt/ssd/web/campus-api.trkcwl.com/uploads/`）
-- 图片地址**只在 `utils/request.js` 归一**（递归替换含 `/uploads/` 的字符串），页面不要再各自处理
-- 「上传成功但 404」先看 `curl -D -`：`200 + {"code":404}` = 写 A 读 B（相对路径 or Nacos 多个 campus-user 实例）；看启动日志 `[upload] 静态资源映射`
-- 微信后台须分别配 `request`/`uploadFile`/`downloadFile` 三个域名（无端口/路径/IP，需 ICP 备案）
-- 改端口/库名要同步：`docker-compose.yml`、`sql/schema.sql`、`sql/data.sql`、5 个 `application.yml`、`utils/config.js`、README、docs
+- 端口：auth 8101 / user 8102 / goods 8103 / wall 8104 / post 8105 / message 8106 / admin 8107
+- 线上 `https://campus-api.trkcwl.com`（服务器多项目 → 子域名带项目名）；`ACTIVE_ENV='prod'`；Nginx 模板 `deploy/nginx-campus-api.trkcwl.com.conf`（443→8888，upstream `campus_gateway`）
+- 上域名必须设 `UPLOAD_BASE_URL=<域名>`；上传目录必须**绝对路径**（`UploadPaths` 统一写读，`./uploads` 随 cwd 漂移）；生产 Nginx alias 直出 `/uploads/`（`/mnt/ssd/web/campus-api.trkcwl.com/uploads/`）
+- 图片地址只在 `miniprogram/utils/request.js` 归一（递归替换含 `/uploads/` 的字符串），页面别各自处理
+- 「上传成功但 404」→ `curl -D -`：`200 + code:404` = 写 A 读 B（相对路径 / Nacos 多实例）；看启动日志 `[upload] 静态资源映射`
+- 微信后台分别配 `request`/`uploadFile`/`downloadFile` 三域名（无端口路径 IP，需备案）；改端口/库名要同步 compose、schema.sql、data.sql、5 个 yml、config.js、README、docs
 
 ## 构建 / 启动
-- Maven 需 **JDK 17**：`JAVA_HOME='C:\Program Files\Java\jdk-17'`；本地仓库 `D:\apache-maven-3.6.3\MavenData`
-- 先 `cd backend && mvn -DskipTests clean install`（子模块否则取不到 `campus-common`）
-- 子模块是普通 jar → 只能 `mvn spring-boot:run`；`java -jar` 报「没有主清单属性」
-- `clean` 失败＝进程占用 target，先停服务再编译（否则坏 class → `NoClassDefFoundError: R`）
-- WorkBuddy 内启动加 `env -u SERVER__PORT`
-- 「找不到符号 XxxClient」＝common jar 过期 → `mvn -pl campus-common -DskipTests install`
-- 改网关路由**必须重启网关**（404=无路由，401=已路由只差登录）
-- 父 POM 必须保留 `-parameters`（未继承 spring-boot-starter-parent），否则 `@RequestParam` 全 400
+- Maven 需 JDK 17（`JAVA_HOME='C:\Program Files\Java\jdk-17'`，仓库 `D:\apache-maven-3.6.3\MavenData`）；先 `cd backend && mvn -DskipTests clean install`
+- 子模块是普通 jar → 只能 `mvn spring-boot:run`（`java -jar` 报无主清单）；`clean` 失败＝进程占用 target，先停服务（否则坏 class → `NoClassDefFoundError: R`）
+- WorkBuddy 内启动加 `env -u SERVER__PORT`；「找不到符号 XxxClient」＝common jar 过期 → `mvn -pl campus-common -DskipTests install`
+- 改网关路由**必须重启网关**（404=无路由，401=已路由只差登录）；父 POM 必须留 `-parameters`（否则 `@RequestParam` 全 400）
 
-## 后端约定
+## 后端 / 前端通用约定
 - 统一响应 `{code,msg,data}`，0 成功；401 未登录 / 403 未认证 / 404 不存在
-- **ID 一律字符串传输**（雪花 19 位超 JS 安全整数），`JacksonConfig` 全局 Long→String；前端别 `Number(id)`
-- 前端请求**不要再写 `/api` 前缀**（`BASE_URL` 已含；唯一例外 `config.js` 的 `UPLOAD_URL`）
+- **ID 一律字符串传输**（雪花 19 位），`JacksonConfig` 全局 Long→String；前端别 `Number(id)`
+- 前端请求不要再写 `/api` 前缀（`BASE_URL` 已含；唯一例外 `config.js` 的 `UPLOAD_URL`）
 - `Promise.all` 每个请求各自 `.catch`，否则一个失败吞整页
-- 作者名/头像不能只靠快照：`PostService#refreshAuthors`、`GoodsService#refreshSellers` 用 `UserSnapshotMapper` 覆盖；新内容表照办
-- 静态资源映射必须 `Path#toUri()`（`"file:"+"C:/x"` 静默失效 → 500 → 灰块）
-- `GlobalExceptionHandler` 已把 `NoResourceFoundException` 单独返回 404
-- 内部计数（直连）：`GET :8105/internal/posts/count`、`:8104/internal/wall/posts/count?category=`
+- 作者名/头像不能只靠快照：`PostService#refreshAuthors`、`GoodsService#refreshSellers` 用 `UserSnapshotMapper` 覆盖，新内容表照办
+- 静态资源映射必须 `Path#toUri()`（拼 `"file:"+"C:/x"` 静默失效 → 500 → 灰块）
 
-## 底部 tabBar（2026-10-25 调整后）
-- 结构：**首页 / 功能区 / ＋（发布面板） / 私信 / 我的**，共 4 个真实 tab 页 + 中间凸起发布钮
-- `app.json` 的 `tabBar.list` 现为：`pages/index/index`、`pages/zone/index`、`pages/messages/index`、`pages/user/index`
-  （**`pages/wall/index`、`pages/goods/list` 都已移出 tabBar** → 只能 navigateTo，禁止 switchTab）
-- 「功能区」= `pages/zone/index`，内容就是原首页金刚区：入口只来自 `utils/zones.js#buildEntries`（3 固定 + t_channel 动态），**首页不再渲染入口**
-- 点击「校园闲置」入口要清 `app.globalData.goodsMode`，否则会落在「我的闲置/收藏」筛选态
-- custom-tab-bar 自带 `unread` 角标：`refreshUnread()` 在 `attached` + `pageLifetimes.show` 拉 `GET /messages/unread`（无 token 直接归 0，不触发登录）；消息页 `load()` 后用 `summary.unreadTotal` 回写一次
-- ⚠️ 自定义 tabBar 压不住弹层：页面 z-index 再高也盖不过，必须由页面 `getTabBar().setData({hidden:true})` 隐藏、关闭恢复，并在 `onShow` 里 `hidden:false` 兜底（首页/我的选学校弹层、消息页通知抽屉已补）
-- 页面的 `getTabBar()` 只有 tab 页（index/zone/messages/user）才有；非 tab 页调它拿到 undefined，所以旧代码里 `setData({selected:N})` 要随 tab 归属一起清理
-
-## 首页 = 功能区布局（**没有频道 tab，也不再有金刚区**）
-- 结构：顶栏（范围胶囊/搜索/铃铛）→ 运营公告位 → 内容功能区（今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活）
-- **内容区一律「单列全宽」卡片**：`.zone-list` 纵向 flex，`.zcard` 为 `display:block; width:100%`；
-  **不要再写成横向 `scroll-view` + 固定宽度卡片**（以前 400/340/240rpx 看着像分了两栏，2026-10-25 改掉）
-- 单列后每区最多 3 张卡，由 `utils/zones.js` 的 **`ZONE_LIMIT`/`take()`** 收敛，其余走右上角「更多 ›」；
-  改卡片布局时记得同步 `zones.js` 的 limit 与两套自测断言（`==6` 已改 `<=3`）
-- 校园闲置卡是「左图右文」整行：图 200rpx 固定、右侧 `flex:1`，价格 `margin-top:auto` 贴底
-- **唯一配置源 = `miniprogram/utils/zones.js`**（buildEntries / buildZones / postItem / wallItem / goodsItem）；
-  `buildEntries` 现在只给 `pages/zone/index` 用，加功能＝加一条 zone 配置 + 选模板，不动 tabBar（名额是微信硬上限 5）
-- 公告区(channel 2001) 与生活区在前端按 channelId 拆同一次 `/posts` 响应；**空区不渲染**
-- 点赞按 kind 分流：post `/posts/{id}/like`、wall `/wall/posts/{id}/like`、goods `/goods/{id}/like`
-- 表白墙派生字段抽到 `utils/wall.js`（decorateWall / CAT_TAG），首页与表白墙页共用
-- 频道 2002「学习交流」已下线（迁移 `backend/sql/migration-20261025-home-zones.sql`）
-
-## 登录 / 游客
+## 平台 / 登录 / 游客
+- 业务只用 `utils/util.js` 的 `mp.*`，禁止直接判 `wx`/`qq`；登录 `POST /api/auth/login {code, platform, devOpenid}`
+- `t_user` 唯一键 **`uk_platform_openid(platform, openid)`**；头像 `open-type="chooseAvatar"`（先上传再入库）+ 昵称 `input type="nickname"`
 - 游客可浏览是设计；公开读 = GET + `/api/goods|wall|posts|channels`（排除 mine/orders/favorite）+ 精确 profile
-- 不在启动时登录；`ensureLogin()` 无 token 时先 `confirmLogin()` 征得同意，拒绝绝不建号；`ensureLogin(true)` 仅用于明确意图（点「一键登录」/404 自愈）
+- 不在启动时登录；`ensureLogin()` 无 token 先 `confirmLogin()` 征得同意，拒绝绝不建号；`ensureLogin(true)` 只给明确意图
 - 建号默认：昵称「校园用户XXXX」、schoolId=null、verifyStatus=0
-- **`schoolId=null` 会让「本校」筛选退化**（`.eq(cond,...)` 不加过滤 → 看全站），所以有选学校引导
+- **`schoolId=null` 让「本校」筛选退化**（不加过滤＝看全站）→ 所以有选学校引导
 - 「绑定学校」= schoolId != null；「学籍认证」= verifyStatus == 2，文案别混；`PUT /user/me` 的 schoolId 只给未认证用户
-- **JWT 里 schoolId/vs 是登录快照** → 改库后必须重签（`ensureLogin(true)` 或 `/user/verify` 返回的新 token + `markTokenFresh()`）
-- `request.js` 只对 `code===404 && url 以 /user/me 开头` 做 `cleanLogin()`（锁死条件，防止误踢浏览者）
-- 凭据在 `campus-auth/src/main/resources/application-local.yml`（gitignore）；自检 `js_code=test` → 40029 有效 / 40125 secret 错 / 40013 appid 错
-- `jscode2session` 响应头 `text/plain` → 用 `getForObject(url, String.class)` 再 ObjectMapper
-- 腾讯位置服务开签名校验需 `sig=MD5(path?params+SK)`；IP 定位 `GET /api/auth/geo/ip-city`（不选学校时推荐同城），**key 每日配额很小，上线要申请**
+- **JWT 的 schoolId/vs 是登录快照** → 改库后必须重签（`ensureLogin(true)` 或 `/user/verify` 新 token + `markTokenFresh()`）
+- `request.js` 只对 `code===404 && url 以 /user/me 开头` 做 `cleanLogin()`（锁死条件，防误踢浏览者）
+- 凭据在 `campus-auth/.../application-local.yml`（gitignore）；`js_code=test` 自检：40029 有效 / 40125 secret 错 / 40013 appid 错
+- `jscode2session` 响应是 `text/plain` → `getForObject(url, String.class)` 再 ObjectMapper
+- 腾讯位置服务签名 `sig=MD5(path?params+SK)`；`GET /api/auth/geo/ip-city`（未选学校推荐同城），**key 日配额小，上线要申请**
 
-## 计数口径
-- 「我的动态」＝ 帖子 + 表白墙全部类别，只认后端 `UserVO.dynamicCount`（前端相加会漏 find/findp）
-- 关注/粉丝数用 `t_user.fans_count`/`follow_count` 冗余，关系表操作与两条 UPDATE 同事务，`greatest(x+delta,0)` 防负
+## 小程序页面结构（tabBar / 首页 / 功能区）
+- tabBar 4 个真实页 + 中间凸起发布钮：`index` / `zone` / `messages` / `user`；**`wall/index`、`goods/list` 已移出 → 只能 navigateTo，禁止 switchTab**
+- 「功能区」= `pages/zone/index`，入口只来自 `utils/zones.js#buildEntries`（3 固定 + t_channel 动态）
+- 点「校园闲置」入口要清 `app.globalData.goodsMode`，否则落在「我的闲置/收藏」筛选态
+- 首页 = 功能区布局（**无频道 tab、无金刚区**）：顶栏 → 公告位 → 今日最热/我想说/校园闲置/校园公告/校园生活
+- 内容区一律**单列全宽**（`.zone-list` 纵向 flex，`.zcard` 100%），不要再写横向 scroll-view + 固定宽度卡
+- 每区最多 3 张卡，由 `ZONE_LIMIT`/`take()` 收敛，其余走「更多 ›」；改布局要同步 `zones.js` 与两套自测断言
+- 闲置卡是左图右文整行：图 200rpx、右侧 `flex:1`、价格 `margin-top:auto`
+- 公告区(2001) 与生活区按 channelId 拆同一次 `/posts` 响应；**空区不渲染**；频道 2002 已下线（`migration-20261025-home-zones.sql`）
+- 点赞按 kind 分流；表白墙派生字段在 `utils/wall.js`
+- custom-tab-bar 自带未读角标（`attached` + `pageLifetimes.show` 拉 `/messages/unread`，无 token 归 0）
+- ⚠️ 自定义 tabBar 压不住弹层：页面必须 `getTabBar().setData({hidden:true})`，`onShow` 里 `hidden:false` 兜底
+- `getTabBar()` 只有 tab 页有；非 tab 页拿到 undefined
 
-## 关注 / 粉丝 / 互关
-- `t_follow`：`uk_pair(follower_id, followee_id)`；迁移 `migration-20261025-follow-profile.sql`
-- 接口：`POST|DELETE /api/user/follow/{id}`、`/api/user/follow/status?userId=`、`/api/user/follow/list?type=following|fans`、`GET /api/user/{id}/profile`（公开）
-- `FollowUserVO`/`ProfileVO` 返回 `followedBy`；前端 `mutual = isFollowing && followedBy` → 「相互关注」
-- `DuplicateKeyException` 的 catch 必须直接 return（否则计数双插 +2 漂移）；粉丝数用 `select ... for update`
+## 布局 / 图片铁律
+- `scroll-view` 在 flex 列里必须 `min-height: 0`；**父容器要定高 `height` 不能只给 `max-height`**；弹层写死 `height:Xvh` 必须 `box-sizing: border-box`
+- 底部弹层输入框避键盘：`adjust-position="{{false}}"` + `bindkeyboardheightchange` → `bottom: {{keyboardHeight}}px`
+- tab 页底部留 ~110rpx + 安全区，非 tab 页不留
+- `<image>` 与 `previewImage` 是两条通道：真机 `http://192.168.x.x` 的 `<image>` 静默失败（灰块、binderror 不触发）；「真机调试」模式有已知问题，先用「预览」；局域网 IP 加不进 downloadFile 白名单 → 真机看图要 HTTPS
+- 查图顺序 `curl -D - -o f <url>`：`Content-Type: image/*` 才对，`application/json` = 后端没返图
+- 页面 4 件套；`.json` 必须显式 `"usingComponents": {}`（缺了整页白屏）；require 相对路径按深度数层级；自绘顶栏必须 `navigationStyle: custom`，图标用 SVG data-URI
 
-## 私信（campus-message 8106）
-- 会话 `t_message_conversation`（`user_a=min(id)`/`user_b=max(id)`，`goods_id=0`=非商品）、消息 `t_message`
-- 删会话＝**只对自己隐藏**（`t_message_conversation_hide`，uk 幂等，列表/未读用 not exists 排除）；对方发新消息或重新 start 自动取消隐藏
-- 撤回＝软删 `t_message.deleted`，仅本人；**撤回最后一条要回滚会话摘要**
-- 列表 `lastFrom`(me/peer) 走 `selectSenders` 批量查，失败 try/catch 降级
-- 左滑组件 `components/swipe-cell`：横向占优才接管手势、`open` 受控（页面 `openSwipeId`）、圆角/投影放宿主 class、插槽内 id 用 `swipe-id` 透传、插槽按钮直接 `catchtap` 父方法
-- 聊天页只有「我发的」可左滑撤回；**不要加快捷话术 chips**（用户明确要求）
-- 消息页已是 tab 页：刷新放 `onShow`，顶栏去掉返回箭头，游客态显示登录引导（`needLogin` + `goLogin`）
+## 接口坑（踩过别再犯）
+- **学校字典是 `/schools` 不是 `/auth/schools`**（`AuthController` 无类级 `@RequestMapping`）
+- **`GET /user/follow/list` 返回裸数组** → `Array.isArray(res) ? res : (res?.list || [])`
+- 网关公开只能**精确匹配**（`^/api/user/\d+/profile$`、`/api/user/follow/status`），禁止宽泛放行 `/api/user`
+- 跳转一律 `catchtap`（头像/昵称区）防冒泡；后端 `Post` 无 viewCount 字段，显示浏览数要 `wx:if` 兜住
+- 同校/同市：`String(myUser.schoolId) === String(item.schoolId) ? '同校' : '同市'`，任一为空不显示
 
-## 布局铁律
-- `scroll-view` 在 flex 列里必须 `min-height: 0`，否则不滚动
-- **父容器要定高 `height`，不能只给 `max-height`**（内容驱动 → flex:1 拿到内容高度 → 不滚动不裁剪）。可用写法：弹层定高（verify 76vh / onboard 78vh）或 scroll-view 自带 `max-height`（`user/.order-scroll`）
-- 弹层写死 `height:Xvh` 必须配 `box-sizing: border-box`
-- 底部弹层输入框手动避键盘：`adjust-position="{{false}}"` + `bindkeyboardheightchange` → `bottom: {{keyboardHeight}}px`
-- tab 页底部要给底栏留高度（约 110rpx + 安全区），非 tab 页不用留
+## 计数 / 关注 / 私信
+- 「我的动态」＝帖子+表白墙全部类别，只认后端 `UserVO.dynamicCount`；关注/粉丝用 `t_user.fans_count`/`follow_count` 冗余，同事务 + `greatest(x+delta,0)`
+- `t_follow`：`uk_pair(follower_id, followee_id)`；`DuplicateKeyException` 的 catch 必须直接 return（否则计数 +2 漂移）；粉丝数 `select ... for update`
+- 私信会话 `user_a=min(id)`/`user_b=max(id)`、`goods_id=0`=非商品；删会话＝只对自己隐藏（`t_message_conversation_hide`，对方发新消息自动取消）；撤回＝软删 `t_message.deleted`，撤回最后一条要回滚会话摘要
+- 左滑组件 `components/swipe-cell`：横向占优才接管、`open` 受控、圆角投影放宿主 class、插槽按钮直接 `catchtap`；**聊天页不要快捷话术 chips**（用户明确要求）
 
-## 图片
-- `<image>` 与 `previewImage` 是两条下载通道：真机 `http://192.168.x.x` 的 `<image>` 静默失败（灰块、binderror 不触发），previewImage 正常 → 不是代码问题
-- 「真机调试」模式 `<image>` 有已知问题，先用「预览」验证；局域网 IP 加不进 downloadFile 白名单 → 真机看图要 HTTPS
-- 排查顺序：`curl -D - -o f <url>`，`Content-Type: image/png|jpeg` 才对；`application/json` = 后端没返回图片
+## 内容安全（长期有效）
+- **任何 UGC 写入口落库前必须过 `SecurityGuard`**：`checkText(userId, text, SCENE_*, BIZ_*)`，带图再 `checkImages(...)`；新增发布入口必须加进 `scripts/content-security-check.js` 的 `ENTRIES`
+- 微信调用只允许在 `campus-auth`；业务侧走 Feign `SecurityClient`；文本同步拦（risky → 400 不落库），图片 `media_check_async` 先发后审，结论靠 `/api/wx/callback` 落 `t_media_check`
+- 违规事件写 `t_content_audit`：`source=2` 系统自动、`action=REJECT/WARN`、`target_id=0` 表示未落库
+- **fail-open**：微信异常一律放行 + warn → 「审核没生效」先查 IP 白名单（40164）与 `WX_SEC_CHECK`/`WX_APPSECRET`
+- 回调必须 **JSON + 明文模式**，Token 同 `WX_CALLBACK_TOKEN`（XML/安全模式解析不了）
 
-## 同校/同市标签
-- `String(myUser.schoolId) === String(item.schoolId) ? '同校' : '同市'`，任一为空不显示
-- 已统一：首页信息流（仅全市模式打标）、帖子详情、表白墙详情（`sameSchool`）
+## campus-admin 后台（8107）
+- 网关 `/api/admin/**`（剥 /api + /admin 两层）；直连 8107 不带 X-Admin-* 头
+- 独立 JWT：`campus.admin.jwt.secret`（与网关一致，HS256 密钥 ≥32 字节，否则 WeakKeyException），8h
+- 跨服务写走 `AdminWriteGateway`：优先 Feign `/internal/admin/**`，失败降级 `FallbackWriteMapper` 直写（大量降级＝服务发现有问题）
+- 举报工单 `t_report_ticket` 由 user 与 admin 共享（各持一份实体）；`target_brief` 创建时快照、varchar(500) 必截断；最终 status 由 `handleResult` 推导（req.status 仅兼容保留）
+- `t_notification` 正文列名是 **`content_snapshot`**
+- MySQL 结果在 Git Bash 带 `\r`，比对前 `tr -d '\r'`；bash 的 `UID` 是只读变量，别拿来存 user id
+- 未做（别以为有了）：敏感词库未接 UGC 拦截；广告位/素材、后台公告均无对外接口
 
-## 页面文件规范
-- 每页 4 件套；`.json` 必须显式写 `"usingComponents": {}`（缺了整页白屏）
-- require 相对路径按深度数层级（`pages/user/space/space.js` = `../../../utils/`），写错只白屏不报错
-- 自绘顶栏必须 `navigationStyle: custom`；图标用 SVG data-URI，别用 ←/✓/☰ 文本字符
-
-## 接口坑（踩过，别再犯）
-- **学校字典是 `/schools` 不是 `/auth/schools`**：`AuthController` 无类级 `@RequestMapping`，写错网关直接 404
-- **`GET /user/follow/list` 返回裸数组**（不是 `{list:[]}`）→ 一律 `Array.isArray(res) ? res : ((res && res.list) || [])`
-- 网关公开只能**精确匹配**（`^/api/user/\d+/profile$`、`/api/user/follow/status`），**禁止宽泛放行 `/api/user`**（会误开 /user/me）
-- 跳转一律 `catchtap`（头像/昵称区），否则冒泡进详情
-- 后端 `Post` 实体**没有 viewCount 字段**，显示浏览数要 `wx:if` 兜住
-
-## 视觉 / UI 重构（2026-10-25 拍板，进行中）
-- **自建 `ui-*` 轻量组件库，不引入 Vant / TDesign / WeUI**（无 package.json、无 CI，且已有 84 个公共 class / 渐变 Hero / CSS 画形头像 / 自研 swipe-cell 都无第三方对应物）
-- **主色森林绿 `--brand-500 #006C49`**（白字对比度 6.48 ✅）；樱花粉降级为情感子色 `--like-500 #FF4D7D`（表白墙/点赞/收藏）
-- token 单一来源 `styles/tokens.wxss`、图标 `styles/icons.wxss`，`app.wxss` 顶部 `@import`
-- 图标 = SVG data-URI + `-webkit-mask-image` + `background-color:currentColor`；命名 `ico-{语义}[-fill|-o]`，**尺寸不进 class**，走 ui-icon 的 `size`
-- 阴影只留 3 个 token `--shadow-1/2/3`（原 39 套），全部 `rgba(15,23,42,…)` 冷中性
-- 圆角 `--radius-lg 24rpx`；弹层高度 `--sheet-max-h 78vh`；tabbar 预留 `--tabbar-height 120rpx`（原 170/180/190 三档）
-- ⚠️ `page{}` 作用域的 CSS 变量对 `custom-tab-bar` **失效** → 必须在其 wxss 顶部冗余写一份 token 副本，否则底栏变黑
-- ⚠️ 所有 `var()` **必须带 fallback**（`--mac-cream` 未定义无 fallback 已静默失效一次）
-- `pages/user/index.wxss` 的 23 个 `--mac-*` 局部变量覆盖了 9 个全局同名变量 → 待删
+## admin-web 前端（Vue3 + Element Plus，长期有效）
+- 设计系统单一来源 `src/styles/tokens.scss`（颜色/圆角/阴影/动效）+ `src/styles/index.scss`（Element 全面接管），`main.js` 里 index.scss 必须在 `element-plus/dist/index.css` 之后
+- **主色薰衣草紫 `--brand-500 #7C63D8`，渐变 `--brand-gradient`**（取自宣传图「校聚一城」）；侧栏深紫 `--side-bg`；语义色仅 success/warning/danger
+- 组件里禁止写死色值，一律 `var(--brand-*)` / `var(--text-*)`；阴影只用 `--shadow-1/2/3`，全部 `rgba(34,30,54,…)`
+- ⚠️ **`el-container` 的竖排靠 `direction="vertical"`**：Element 靠 `vnode.type.name === 'ElHeader'` 判断，`Navbar` 是组件包装 → 检测不到就变左右并排（已显式指定）
+- ⚠️ **`el-pagination` 的 total 必须是 Number**：后端 `total` 是字符串，Element 用 `typeof v !== 'number'` 判「缺参」→ 整个分页静默不渲染（`PageTable` 已 `Number()` 兜底 + 类型放宽 `[Number, String]`）
+- ⚠️ 动态路由注册必须**幂等**（`router.hasRoute(name)`）：登录页已 `loadMenus`，布局里的 `ensureMenus` 看到菜单非空就跳过注册 → 除 `/dashboard` 外全部 404
+- 布局：`--side-w 232px` / `--side-w-mini 72px` / `--nav-h 60px`；`Navbar` 面包屑「控制台 › 当前页」；路由切换用 `<transition name="page">` 淡入上移
+- 侧栏菜单样式写在**非 scoped** `<style>` + `.sidebar-menu` 命名空间（Element 内部节点拿不到 scoped 属性）；折叠态子菜单 teleport 到 body，需全局补 `.el-menu--popup` 深色底
+- 卡片 `.page-card`、表格 `PageTable`（分页 + 自绘空状态）、筛选 `SearchForm`；指标卡 `StatCard` + 数字滚动 `CountUp`
+- 表格行动画只用 `opacity`：**别给 `tr` 加 transform**，会破坏 `fixed` 列的 sticky 定位
+- 深色登录页：双圆环 + 光斑 + 网格遮罩；卡片入场 `loginIn`，校验失败摇一摇 `shake`；`记住账号` 只存账号不存密码
 
 ## 演示数据 / 校验脚本
-- `config.js` 的 `DEV_OPENID` 对应 t_user 9001（林小满），改种子数据别破坏这个对应
-- 三套前端自测跑法一致：`node scripts/xxx.js`（node 用 `C:/Users/25916/.workbuddy/binaries/node/versions/22.22.2-6/node.exe`）
-  - `check-miniprogram.js`：结构完整性，**22 页**
-  - `mock-selftest.js`：模拟层，**154 断言**（含 zones 单列全宽「每区 ≤3 条」）
-  - `home-zones-selftest.js`：首页功能区回归，**35 断言**（含 zone 页 onShow 与跳转落点）
-  - `api-smoke-test.js`：后端 **45 项**，需 Nacos + 服务已启动，**跑完清演示数据**（删 `content='冒烟测试消息'` 并重置会话 last_*/unread_a）
-- 改首页卡片布局/条数时，三套里凡断言 `items.length === 6` 的地方必须同步改，否则必红
-
-## 内容安全（2026-10-25 补全，长期有效）
-- **任何 UGC 写入口落库前必须过 `SecurityGuard`**：文本 `checkText(userId, text, SCENE_*, BIZ_*)`；
-  带图再 `checkImages(userId, BIZ_*, bizId, urls)`。新增发布入口后必须把它加进
-  `scripts/content-security-check.js` 的 `ENTRIES`，否则「少一处就白做」（审核要求任意发布场景都生效）
-- 微信调用只允许在 `campus-auth`（持 appsecret + access_token 缓存）；业务侧一律走 Feign `SecurityClient`
-- 文本**同步拦**（risky → 400 不落库）；图片 `media_check_async` 是**先发后审**，只返回 trace_id，
-  结论靠 `/api/wx/callback` 回调落 `t_media_check`，下架由后台人工做
-- 违规事件统一写 `t_content_audit`：`source=2`（系统自动）、`action=REJECT/WARN`、`target_id=0` 表示未落库
-- **fail-open**：微信侧异常一律放行 + warn 日志。所以「审核没生效」往往表现为「一切正常」→
-  先查 IP 白名单（40164）与 `WX_SEC_CHECK`/`WX_APPSECRET`
-- 回调必须：消息推送 **JSON + 明文模式**，Token 同 `WX_CALLBACK_TOKEN`；XML/安全模式解析不了
-
-## 后台管理 campus-admin（2026-10-25 巡检后补充，长期有效）
-- 端口 **8107**；网关路由 `/api/admin/**`（剥 /api + /admin 两层）；不用有线某个 8107 curl 绕过了网关就不带 X-Admin-* 头
-- 独立令牌体系：`campus.admin.jwt.secret`（必须与网关一致，且 HS256 密钥 ≥32 字节否则启动 WeakKeyException），有效期 8h
-- 跨服务写统一走 `AdminWriteGateway`：优先 Feign 调各服务 `/internal/admin/**`，
-  失败才降级 `FallbackWriteMapper` 直写。**降级会打 WARN**，看到大量降级 = 服务发现有问题
-- 举报工单表 `t_report_ticket` 由 campus-user 与 campus-admin **共享**（各自持有一份实体，避免跨模块依赖）；
-  存在共享 t_content_audit(source=1 人工 / 2 系统自动)
-- 举报 `target_brief` 由 campus-user `ReportService#buildBrief()` 在**创建时**写入快照，字段 varchar(500) 必须截断
-- 受理/驳回的最终 status 由 `handleResult` 推导（「无违规」→2 驳回，其余→1 已处理），**req.status 只是兼容保留**
-- t_notification 正文列名是 **`content_snapshot`**（不是 content）
-- MySQL 查询结果在 Git Bash 里带 `\r`，做文件名/路径比对前务必 `tr -d '\r'`，否则全误判
-- bash 里 `UID` 是**只读变量**，不能用它存 user id（会静默赋值失败导致 404）
-- 还没做（半成品，别以为有了）：敏感词库未接 UGC 拦截；广告位/素材、后台公告均无对外接口（小程序拿不到）
+- `config.js` 的 `DEV_OPENID` 对应 t_user 9001（林小满），别破坏对应关系
+- 自测（node 用 `C:/Users/25916/.workbuddy/binaries/node/versions/22.22.2-6/node.exe`）：
+  `check-miniprogram.js` 结构 22 页 / `mock-selftest.js` 154 断言 / `home-zones-selftest.js` 35 断言 / `api-smoke-test.js` 后端 45 项（跑完清演示数据）
+- 改首页卡片条数时，三套里 `items.length === 6` 的断言必须同步改
+- 后台管理员默认 `admin / admin123`（`MD5(CONCAT('admin123','c4m2p9s1'))`）；`vite build` 在沙箱里会因 dist 文件数超阈值失败 → 加 `-- --emptyOutDir=false`

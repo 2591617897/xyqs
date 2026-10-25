@@ -1,0 +1,129 @@
+/**
+ * 设计令牌（单一来源）
+ * 组件里一律 var(--xxx) 引用，禁止再写死色值，改主题只改这里。
+ * 主色取自平台宣传图「校聚一城」的薰衣草紫，深浅两级用于渐变按钮。
+ */
+:root {
+  /* ---------- 品牌 & 语义色 ---------- */
+  --brand-50: #F5F2FE;
+  --brand-100: #EAE3FC;
+  --brand-200: #D6CAF8;
+  --brand-300: #BBA6F1;
+  --brand-400: #9E85E8;
+  --brand-500: #7C63D8;
+  --brand-600: #6B51C6;
+  --brand-700: #5740A4;
+  --brand-gradient: linear-gradient(135deg, #9581EC 0%, #7C63D8 52%, #5F49B8 100%);
+
+  --mint-400: #C9B7FF;
+  --sky-500: #3B7BF0;
+  --amber-500: #F59E0B;
+  --rose-500: #E4568B;
+
+  --success: #12B76A;
+  --warning: #F79009;
+  --danger: #EF4444;
+  --info: #64748B;
+
+  /* ---------- 中性色 ---------- */
+  --bg-page: #F5F3FB;
+  --bg-subtle: #FAF9FE;
+  --surface: #FFFFFF;
+  --text-1: #221E36;
+  --text-2: #5E5878;
+  --text-3: #9B95B2;
+  --line-soft: #EFEBF9;
+  --line: #E4DEF4;
+  --line-strong: #CFC7E8;
+
+  /* ---------- 侧边栏（深紫） ---------- */
+  --side-bg: linear-gradient(180deg, #2A2050 0%, #1F1840 55%, #171132 100%);
+  --side-text: rgba(232, 226, 252, .72);
+  --side-text-hover: #FFFFFF;
+  --side-hover: rgba(255, 255, 255, .08);
+  --side-active: linear-gradient(90deg, rgba(150, 126, 240, .92) 0%, rgba(110, 88, 200, .45) 100%);
+  --side-bar: #C9B7FF;
+
+  /* ---------- 圆角 ---------- */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* ---------- 阴影（冷中性，统一 rgba(15,23,42)） ---------- */
+  --shadow-1: 0 1px 2px rgba(34, 30, 54, .04), 0 1px 3px rgba(34, 30, 54, .03);
+  --shadow-2: 0 6px 16px -6px rgba(34, 30, 54, .10), 0 2px 6px -3px rgba(34, 30, 54, .05);
+  --shadow-3: 0 20px 44px -14px rgba(34, 30, 54, .20), 0 4px 12px -6px rgba(34, 30, 54, .06);
+  --shadow-brand: 0 10px 24px -10px rgba(124, 99, 216, .60);
+  --shadow-inset: inset 0 0 0 1px var(--line);
+
+  /* ---------- 间距（4px 基准） ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* ---------- 动效 ---------- */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* ---------- 布局尺寸 ---------- */
+  --nav-h: 60px;
+  --side-w: 232px;
+  --side-w-mini: 72px;
+}
+
+/**
+ * Element Plus 主题变量接管。
+ * 注意：必须在 element-plus/dist/index.css 之后加载（main.js 里已保证顺序）。
+ */
+:root {
+  --el-color-primary: var(--brand-500);
+  --el-color-primary-light-3: #A392E4;
+  --el-color-primary-light-5: #BEB1EC;
+  --el-color-primary-light-7: #D8D0F3;
+  --el-color-primary-light-8: #E5E0F7;
+  --el-color-primary-light-9: #F2EFFB;
+  --el-color-primary-dark-2: #634FAD;
+
+  --el-color-success: var(--success);
+  --el-color-warning: var(--warning);
+  --el-color-danger: var(--danger);
+  --el-color-error: var(--danger);
+  --el-color-info: var(--info);
+
+  --el-bg-color: #FFFFFF;
+  --el-bg-color-page: var(--bg-page);
+  --el-fill-color-blank: #FFFFFF;
+  --el-fill-color-light: var(--bg-subtle);
+  --el-fill-color-lighter: var(--bg-subtle);
+
+  --el-text-color-primary: var(--text-1);
+  --el-text-color-regular: var(--text-2);
+  --el-text-color-secondary: var(--text-3);
+  --el-text-color-placeholder: var(--text-3);
+
+  --el-border-color: var(--line);
+  --el-border-color-light: var(--line-soft);
+  --el-border-color-lighter: var(--line-soft);
+  --el-border-color-extra-light: var(--line-soft);
+
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 999px;
+  --el-box-shadow-light: var(--shadow-2);
+
+  --el-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  --el-font-size-base: 14px;
+  --el-transition-duration: .22s;
+  --el-transition-duration-fast: .14s;
+}

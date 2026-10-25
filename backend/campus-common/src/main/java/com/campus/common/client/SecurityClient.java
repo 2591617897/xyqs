@@ -16,9 +16,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "campus-auth", contextId = "campusSecurityClient", path = "/internal/security")
 public interface SecurityClient {
 
-    /** 文本同步校验；命中违规返回 code=400 */
+    /**
+     * 文本同步校验；命中违规返回 code=400。
+     *
+     * <p>内部会先过一遍本地敏感词（level 3 拦截），再调微信。
+     */
     @PostMapping("/msg-check")
     R<Void> msgCheck(@RequestBody MsgCheckReq req);
+
+    /**
+     * 本地敏感词净化，返回处理后的文本。
+     *
+     * <p>纯内存匹配、不调微信，所以可以按字段逐个调用；业务侧拿返回值落库。
+     */
+    @PostMapping("/purify")
+    R<String> purify(@RequestBody MsgCheckReq req);
 
     /** 图片/音频异步送审；返回实际提交成功的条数 */
     @PostMapping("/media-check")

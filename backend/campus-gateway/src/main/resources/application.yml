@@ -37,7 +37,7 @@ spring:
         - id: campus-post
           uri: lb://campus-post
           predicates:
-            - Path=/api/posts/**,/api/channels/**
+            - Path=/api/posts/**,/api/channels/**,/api/ads/**,/api/notices/**
           filters:
             - StripPrefix=1
         - id: campus-message

@@ -172,8 +172,14 @@ public class GoodsService {
         goods.setUserId(userId);
         goods.setSchoolId(schoolId);
         fillSeller(goods, userId);
-        securityGuard.checkText(userId,
-                (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
+        // 本地敏感词净化后回写，再整体送微信
+        String title = securityGuard.purify(userId,
+                goods.getTitle() == null ? "" : goods.getTitle(), SecurityGuard.BIZ_GOODS);
+        String description = securityGuard.purify(userId,
+                goods.getDescription() == null ? "" : goods.getDescription(), SecurityGuard.BIZ_GOODS);
+        goods.setTitle(title);
+        goods.setDescription(description);
+        securityGuard.checkText(userId, title + "\n" + description,
                 SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_GOODS);
         goods.setStatus(1);
         goods.setViewCount(0);
@@ -189,11 +195,17 @@ public class GoodsService {
         if (goods.getStatus() != null && goods.getStatus() == 2) {
             throw new BizException("已售出的商品不能修改");
         }
+        Long ownerId = UserContext.requireUserId();
         apply(goods, req);
-        securityGuard.checkText(UserContext.requireUserId(),
-                (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
+        String title = securityGuard.purify(ownerId,
+                goods.getTitle() == null ? "" : goods.getTitle(), SecurityGuard.BIZ_GOODS);
+        String description = securityGuard.purify(ownerId,
+                goods.getDescription() == null ? "" : goods.getDescription(), SecurityGuard.BIZ_GOODS);
+        goods.setTitle(title);
+        goods.setDescription(description);
+        securityGuard.checkText(ownerId, title + "\n" + description,
                 SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_GOODS);
-        securityGuard.checkImages(UserContext.requireUserId(), SecurityGuard.BIZ_GOODS, id,
+        securityGuard.checkImages(ownerId, SecurityGuard.BIZ_GOODS, id,
                 req.getImages());
         goodsMapper.updateById(goods);
     }
@@ -308,7 +320,8 @@ public class GoodsService {
         if (!StringUtils.hasText(text) && !StringUtils.hasText(imgs)) {
             throw new BizException("说点什么，或者配张图吧");
         }
-        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT,
+        String clean = securityGuard.purify(userId, text, SecurityGuard.BIZ_GOODS_COMMENT);
+        securityGuard.checkText(userId, clean, SecurityGuard.SCENE_COMMENT,
                 SecurityGuard.BIZ_GOODS_COMMENT);
         GoodsComment comment = new GoodsComment();
         comment.setGoodsId(goodsId);
@@ -327,7 +340,7 @@ public class GoodsService {
             }
             comment.setReplyToName(StringUtils.hasText(parentComment.getUserName()) ? parentComment.getUserName() : "校园用户");
         }
-        comment.setContent(text);
+        comment.setContent(clean);
         comment.setImages(imgs);
         try {
             R<UserBrief> res = userClient.getBrief(userId);

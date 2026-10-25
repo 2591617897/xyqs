@@ -50,7 +50,10 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      */
     private static final String WX_CALLBACK_PREFIX = "/api/wx/";
     private static final List<String> PUBLIC_READ_PREFIX =
-            List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels");
+            List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels",
+                    // 首页运营位：广告素材与后台公告要在游客首屏就可见，
+                    // 否则图片和公告永远只在后台存在、C 端看不到。两者都是只读。
+                    "/api/ads", "/api/notices");
     /** 这些前缀虽然是 GET，但属于「我的」私域数据，必须登录 */
     private static final List<String> PRIVATE_HINTS = List.of("/mine", "/orders", "/favorite");
     /**
@@ -58,6 +61,13 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      * 只放行精确匹配，不放宽 /api/user 前缀——否则 /user/me 等私域接口会被误开。
      */
     private static final Pattern PUBLIC_PROFILE = Pattern.compile("^/api/user/\\d+/profile$");
+    /**
+     * 广告点击上报：未登录用户点了 Banner 也该计入效果数据（否则投放转化率永远偏低），
+     * 但这是<b>写操作</b>，不能随 /api/ads 前缀一起进 PUBLIC_READ_PREFIX（那里只放行 GET）。
+     * 所以用正则精确匹配一个形状：/api/ads/materials/数字/click。
+     */
+    private static final Pattern PUBLIC_AD_CLICK =
+            Pattern.compile("^/api/ads/materials/\\d+/click$");
 
     /**
      * 后台管理路径前缀。
@@ -103,7 +113,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         // 公开读：GET /api/user/{数字}/profile 与 GET /api/user/follow/status（精确匹配，全等）
         boolean publicProfile = "GET".equals(method) && PUBLIC_PROFILE.matcher(path).matches();
         boolean publicFollowStatus = "GET".equals(method) && "/api/user/follow/status".equals(path);
-        boolean publicRead = publicProfile || publicFollowStatus
+        boolean publicAdClick = "POST".equals(method) && PUBLIC_AD_CLICK.matcher(path).matches();
+        boolean publicRead = publicProfile || publicFollowStatus || publicAdClick
                 || ("GET".equals(method)
                 && PUBLIC_READ_PREFIX.stream().anyMatch(path::startsWith)
                 && PRIVATE_HINTS.stream().noneMatch(path::contains));

@@ -1728,6 +1728,54 @@ function deleteWallComment(postId, commentId) {
 
 /* ---------- 频道 / 帖子 ---------- */
 
+/**
+ * 演示用广告素材。
+ *
+ * <p>真实环境返回后台 t_ad_material 里「上架 + 过审 + 投放期内 + 定向命中」的素材，
+ * 没有配置时返回空数组——首页按「没投广告」处理，整块不渲染。
+ *
+ * <p><b>这里刻意返回空数组</b>：mock 模式本来就是「不启后端也能看界面」，
+ * 而 Banner 是运营投放位，没有运营配置就理应不存在；硬塞两条没有真实图片的占位数据，
+ * 只会让 <image> 加载失败后被 {@code onBannerError} 摘掉，白白多一次无谓的渲染。
+ * 想预览 Banner 排版时，用真实后端 + manage 后台配一条 home_banner 素材即可。
+ */
+function mockAds(code) {
+  void code
+  return []
+}
+
+/**
+ * 演示用后台公告。level 越大越紧急（3紧急 / 2重要 / 1普通），列表按它倒序。
+ */
+function mockNotices() {
+  return [
+    {
+      id: '900101',
+      title: '校园聚社区规范上线啦',
+      content: '为了维护良好的校园社区氛围，我们上线了社区规范。请大家文明发言，友善交流。',
+      type: 1,
+      level: 2,
+      publishAt: '2026-10-25T20:00:00'
+    },
+    {
+      id: '900102',
+      title: '毕业季二手集市火热进行中',
+      content: '又到一年毕业季，闲置好物别浪费，快来二手广场发布你的宝贝吧。',
+      type: 2,
+      level: 1,
+      publishAt: '2026-10-25T18:30:00'
+    }
+  ]
+}
+
+function mockNotice(id) {
+  const list = mockNotices()
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].id === String(id)) return list[i]
+  }
+  return null
+}
+
 function channels() {
   load()
   return db.channels
@@ -2217,6 +2265,18 @@ function route(method, url, data) {
 
   // 频道 / 帖子
   if (s[0] === 'channels' && M === 'GET') return ok(channels())
+
+  // 运营位：广告素材（/ads/{code}）与后台公告（/notices）
+  // 真实环境由 campus-post 读 t_ad_slot / t_ad_material / t_admin_notice 提供；
+  // 这里是演示数据，供没有后端时的自测与真机预览使用。
+  if (s[0] === 'ads') {
+    if (s.length === 2 && M === 'GET') return ok(mockAds(s[1]))
+    if (s.length === 4 && s[1] === 'materials' && s[3] === 'click' && M === 'POST') return ok(null)
+  }
+  if (s[0] === 'notices') {
+    if (s.length === 1 && M === 'GET') return ok(mockNotices())
+    if (s.length === 2 && M === 'GET') return ok(mockNotice(s[1]))
+  }
   if (s[0] === 'posts') {
     if (s.length === 1 && M === 'GET') return ok(queryPosts(q))
     if (s.length === 1 && M === 'POST') return ok(createPost(q))

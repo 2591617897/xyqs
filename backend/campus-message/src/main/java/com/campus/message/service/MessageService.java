@@ -180,6 +180,8 @@ public class MessageService {
         // 文本同步拦（命中抛 400，消息不落库）；图片只提交异步送审（微信无同步媒体接口）；
         // 视频微信 media_check_async 不支持（只接受图片/音频），这里不送审，靠举报与人工处置。
         if ("text".equals(type)) {
+            // 私信净化后回写 content，保证落库与送审的都替换过敏感词
+            content = securityGuard.purify(userId, content, SecurityGuard.BIZ_MESSAGE);
             securityGuard.checkText(userId, content, SecurityGuard.SCENE_FORUM,
                     SecurityGuard.BIZ_MESSAGE);
         } else if ("image".equals(type)) {

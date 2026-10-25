@@ -39,15 +39,27 @@ export function buildRoutes (menus) {
   return { routes, flat }
 }
 
+/**
+ * 注册动态路由（幂等）。
+ * 以前用 dynamicAdded 布尔锁：登录页已经 loadMenus 过，布局里的 ensureMenus 看到菜单非空就跳过注册，
+ * 结果除静态的 /dashboard 外所有菜单都落 404。改成按 name 判断是否已注册。
+ */
 export function addDynamicRoutes (router, menus) {
-  if (dynamicAdded) return { flat: [] }
   const { routes, flat } = buildRoutes(menus)
-  routes.forEach((r) => router.addRoute('Layout', r))
-  router.addRoute({ path: '/:pathMatch(.*)*', name: 'NotFoundTail', component: () => import('../views/error/404.vue') })
+  routes.forEach((r) => {
+    if (!router.hasRoute(r.name)) router.addRoute('Layout', r)
+  })
+  if (!router.hasRoute('NotFoundTail')) {
+    router.addRoute({ path: '/:pathMatch(.*)*', name: 'NotFoundTail', component: () => import('../views/error/404.vue') })
+  }
   dynamicAdded = true
   return { flat }
 }
 
 export function resetDynamic () {
   dynamicAdded = false
+}
+
+export function hasDynamicRoutes () {
+  return dynamicAdded
 }

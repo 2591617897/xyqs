@@ -13,8 +13,60 @@
 
   <!-- 功能入口区已独立成页（底部「功能区」tab），首页不再放金刚区 -->
 
-  <!-- 运营公告位：跳蚤集市 -->
-  <view class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
+  <!-- 运营 Banner：运营在后台「广告位管理」配置（code=home_banner），
+       过审 + 上架 + 投放期内 + 定向命中才会返回；空数据整块不渲染，不留占位空白。 -->
+  <swiper
+    wx:if="{{banners.length}}"
+    class="banner"
+    indicator-dots="{{banners.length > 1}}"
+    indicator-color="rgba(255,255,255,0.5)"
+    indicator-active-color="#ffffff"
+    autoplay="{{banners.length > 1}}"
+    circular
+    interval="5000"
+    duration="400"
+  >
+    <swiper-item wx:for="{{banners}}" wx:key="id">
+      <image
+        class="banner-img"
+        src="{{item.image}}"
+        mode="aspectFill"
+        lazy-load
+        data-ad="{{item}}"
+        bindtap="onAdTap"
+        binderror="onBannerError"
+        data-index="{{index}}"
+      />
+    </swiper-item>
+  </swiper>
+
+  <!--
+    运营公告位：优先展示后台发布的公告（tap 进详情）；
+    后台没发公告时退回原来的「跳蚤集市」默认卡，保证首屏不空缺。
+  -->
+  <view
+    wx:if="{{notices.length}}"
+    class="announce"
+    bindtap="onNoticeTap"
+    data-notice="{{notices[0]}}"
+    hover-class="announce-hover"
+    hover-stay-time="60"
+  >
+    <view class="announce-icon">{{notices[0].level === 3 ? '⚠️' : '📢'}}</view>
+    <view class="announce-main">
+      <view class="announce-title-row">
+        <text class="announce-tag" wx:if="{{notices[0].level === 3}}">紧急</text>
+        <text class="announce-tag" wx:elif="{{notices[0].level === 2}}">重要</text>
+        <text class="announce-title">{{notices[0].title}}</text>
+      </view>
+      <view class="announce-sub">{{notices[0].content}}</view>
+    </view>
+    <view class="announce-btn" wx:if="{{notices.length > 1}}">全部 ›</view>
+    <view class="announce-btn" wx:else>详情 ›</view>
+  </view>
+
+  <!-- 后台暂无公告时的默认运营位：跳蚤集市 -->
+  <view wx:else class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
     <view class="announce-icon">🛍️</view>
     <view class="announce-main">
       <view class="announce-title-row">

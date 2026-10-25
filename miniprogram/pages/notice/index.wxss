@@ -1,0 +1,71 @@
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #f5f6f8;
+}
+
+.state {
+  padding: 80rpx 0;
+  text-align: center;
+  font-size: 27rpx;
+  color: #9b9ba3;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx 32rpx 40rpx;
+  box-shadow: 0 6rpx 20rpx rgba(15, 23, 42, 0.04);
+}
+
+.tag-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.tag {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  background: #f2f3f5;
+  color: #6b6b73;
+}
+
+/* 等级越高越醒目：紧急用红、重要用品牌绿 */
+.tag.level3 {
+  background: #fdecec;
+  color: #d93025;
+}
+.tag.level2 {
+  background: #e6f4ec;
+  color: #006c49;
+}
+
+.title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #171a1e;
+  line-height: 1.45;
+}
+
+.meta {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: #9b9ba3;
+}
+
+.split {
+  height: 1rpx;
+  background: #f0f1f3;
+  margin: 28rpx 0;
+}
+
+.content {
+  font-size: 29rpx;
+  line-height: 1.8;
+  color: #33373d;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

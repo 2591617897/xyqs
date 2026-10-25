@@ -144,7 +144,8 @@ public class WallService {
         WallPost post = new WallPost();
         post.setUserId(userId);
         post.setSchoolId(UserContext.schoolId());
-        post.setContent(req.getContent().trim());
+        // 本地敏感词净化：匿名内容同样要过词库（甚至更需要——这是最高风险的 UGC 场景）
+        post.setContent(securityGuard.purify(userId, req.getContent().trim(), SecurityGuard.BIZ_WALL));
         post.setImages(join(req.getImages()));
         post.setCategory(normalizeCategory(req.getCategory()));
         post.setStatus(1);
@@ -248,7 +249,8 @@ public class WallService {
         comment.setPostId(postId);
         comment.setUserId(userId);
         comment.setParentId(req.getParentId() == null ? 0L : req.getParentId());
-        comment.setContent(content);
+        String clean = securityGuard.purify(userId, content, SecurityGuard.BIZ_WALL_COMMENT);
+        comment.setContent(clean);
         comment.setImages(images);
         WallComment parentComment = null;
         // 回复评论：记录被回复人的匿名昵称快照，供「A 回复 B」展示
@@ -267,7 +269,7 @@ public class WallService {
             comment.setReplyToName(null);
         }
         comment.setAnonName(anonName(userId, postId));
-        securityGuard.checkText(userId, content, SecurityGuard.SCENE_COMMENT,
+        securityGuard.checkText(userId, clean, SecurityGuard.SCENE_COMMENT,
                 SecurityGuard.BIZ_WALL_COMMENT);
         commentMapper.insert(comment);
         securityGuard.checkImages(userId, SecurityGuard.BIZ_WALL_COMMENT, comment.getId(),
@@ -275,7 +277,7 @@ public class WallService {
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(images));
-        tryNotifyCommentWall(post, userId, content);
+        tryNotifyCommentWall(post, userId, clean);
         tryNotifyMention(userId, req.getMentionUserIds(), "WALL", post.getId(), content);
         // 楼中楼回复：同时通知被回复的那个评论作者
         if (comment.getParentId() > 0 && parentComment != null) {
@@ -395,12 +397,13 @@ public class WallService {
             throw BizException.forbidden("只能编辑自己发布的内容");
         }
         // 用 UpdateWrapper 显式 set，保证「清空图片」也能写回 null
-        securityGuard.checkText(userId, req.getContent().trim(), SecurityGuard.SCENE_FORUM,
+        String content = securityGuard.purify(userId, req.getContent().trim(), SecurityGuard.BIZ_WALL);
+        securityGuard.checkText(userId, content, SecurityGuard.SCENE_FORUM,
                 SecurityGuard.BIZ_WALL);
         securityGuard.checkImages(userId, SecurityGuard.BIZ_WALL, id, req.getImages());
         postMapper.update(null, Wrappers.<WallPost>lambdaUpdate()
                 .eq(WallPost::getId, id)
-                .set(WallPost::getContent, req.getContent().trim())
+                .set(WallPost::getContent, content)
                 .set(WallPost::getImages, join(req.getImages()))
                 .set(WallPost::getCategory, normalizeCategory(req.getCategory())));
     }

@@ -171,7 +171,12 @@ public class UserService {
     public UserVO updateProfile(Long userId, UpdateProfileReq req) {
         User user = requireUser(userId);
         if (StringUtils.hasText(req.getNickname())) {
-            user.setNickname(req.getNickname().trim());
+            // 先本地净化（level 2 替换生效），再送微信审核；命中 level 3 时 purify 直接抛 400
+            String nickname = securityGuard.purify(userId, req.getNickname().trim(),
+                    SecurityGuard.BIZ_NICKNAME);
+            securityGuard.checkText(userId, nickname, SecurityGuard.SCENE_PROFILE,
+                    SecurityGuard.BIZ_NICKNAME);
+            user.setNickname(nickname);
         }
         if (StringUtils.hasText(req.getAvatar())) {
             user.setAvatar(req.getAvatar());
@@ -195,10 +200,6 @@ public class UserService {
                 throw new BizException("所选学校不存在，请重新选择");
             }
             user.setSchoolId(req.getSchoolId());
-        }
-        if (StringUtils.hasText(req.getNickname())) {
-            securityGuard.checkText(userId, req.getNickname().trim(), SecurityGuard.SCENE_PROFILE,
-                    SecurityGuard.BIZ_NICKNAME);
         }
         userMapper.updateById(user);
         return me(userId);

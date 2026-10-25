@@ -21,7 +21,8 @@
     "pages/legal/agreement",
     "pages/legal/privacy",
     "pages/legal/disclaimer",
-    "pages/report/report"
+    "pages/report/report",
+    "pages/notice/index"
   ],
   "window": {
     "backgroundTextStyle": "dark",

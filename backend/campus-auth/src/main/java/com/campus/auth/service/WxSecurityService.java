@@ -3,7 +3,6 @@ package com.campus.auth.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.auth.entity.ContentAuditTrail;
 import com.campus.auth.entity.MediaCheck;
-import com.campus.auth.mapper.ContentAuditTrailMapper;
 import com.campus.auth.mapper.MediaCheckMapper;
 import com.campus.auth.mapper.WxOpenidMapper;
 import com.campus.common.client.dto.MediaCheckReq;
@@ -94,7 +93,7 @@ public class WxSecurityService {
     private final RestTemplate restTemplate;
     private final WxOpenidMapper wxOpenidMapper;
     private final MediaCheckMapper mediaCheckMapper;
-    private final ContentAuditTrailMapper auditTrailMapper;
+    private final ContentAuditTrailWriter auditWriter;
 
     @Value("${campus.wx.appid:}")
     private String appid;
@@ -418,25 +417,12 @@ public class WxSecurityService {
     /**
      * 写一条「系统自动」处置流水。
      *
-     * <p>落库失败只打日志：拦截动作本身已经生效（文本抛 400 / 图片状态已更新），
-     * 不能因为记录失败反而让用户看到 500。
+     * <p>统一走 {@link ContentAuditTrailWriter}，与本地敏感词共用的语义和入口，
+     * 避免两处实现漂移。
      */
     private void recordViolation(String targetType, Long targetId, Long authorId, String content,
                                  String action, String reason) {
-        try {
-            ContentAuditTrail t = new ContentAuditTrail();
-            t.setTargetType(StringUtils.hasText(targetType) ? targetType : "UNKNOWN");
-            t.setTargetId(targetId == null ? 0L : targetId);
-            t.setAuthorId(authorId);
-            t.setContentBrief(abbreviate(content));
-            t.setAction(action);
-            t.setReasonType("违规内容");
-            t.setReason(reason);
-            t.setSource(SOURCE_SYSTEM);
-            auditTrailMapper.insert(t);
-        } catch (Exception e) {
-            log.warn("[sec-check] 写处置流水失败：{}", e.getMessage());
-        }
+        auditWriter.record(targetType, targetId, authorId, content, action, reason);
     }
 
     private static String abbreviate(String s) {

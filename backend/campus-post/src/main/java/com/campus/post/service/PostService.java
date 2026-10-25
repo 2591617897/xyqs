@@ -161,15 +161,19 @@ public class PostService {
         post.setUserId(userId);
         post.setSchoolId(UserContext.schoolId());
         fillAuthor(post, userId);
-        post.setTitle(req.getTitle().trim());
-        post.setContent(req.getContent().trim());
+        // 本地敏感词净化：level 3 在这里抛 400，level 2 返回替换后的文本。
+        // 必须拿返回值落库，否则运营配的「替换」规则形同虚设。
+        String title = securityGuard.purify(userId, req.getTitle().trim(), SecurityGuard.BIZ_POST);
+        String content = securityGuard.purify(userId, req.getContent().trim(), SecurityGuard.BIZ_POST);
+        post.setTitle(title);
+        post.setContent(content);
         post.setImages(req.getImages() == null ? null : req.getImages().stream()
                 .filter(StringUtils::hasText).limit(9).collect(Collectors.joining(",")));
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setStatus(1);
         // 内容安全：标题与正文一起送审，命中违规直接 400，不落库
-        securityGuard.checkText(userId, post.getTitle() + "\n" + post.getContent(),
+        securityGuard.checkText(userId, title + "\n" + content,
                 SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_POST);
         postMapper.insert(post);
         // 图片异步送审：微信没有同步媒体审核接口，这里是「只提交、不等结论」，
@@ -196,14 +200,16 @@ public class PostService {
         }
         // 用 UpdateWrapper 显式 set，保证清空图片能写回 null
         // 内容安全：编辑同样要审，否则可以先发正常内容再改成违规内容绕过
-        securityGuard.checkText(userId, req.getTitle().trim() + "\n" + req.getContent().trim(),
+        String title = securityGuard.purify(userId, req.getTitle().trim(), SecurityGuard.BIZ_POST);
+        String content = securityGuard.purify(userId, req.getContent().trim(), SecurityGuard.BIZ_POST);
+        securityGuard.checkText(userId, title + "\n" + content,
                 SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_POST);
         securityGuard.checkImages(userId, SecurityGuard.BIZ_POST, id, req.getImages());
         postMapper.update(null, Wrappers.<Post>lambdaUpdate()
                 .eq(Post::getId, id)
                 .set(Post::getChannelId, req.getChannelId())
-                .set(Post::getTitle, req.getTitle().trim())
-                .set(Post::getContent, req.getContent().trim())
+                .set(Post::getTitle, title)
+                .set(Post::getContent, content)
                 .set(Post::getImages, req.getImages() == null ? null
                         : req.getImages().stream().filter(StringUtils::hasText)
                         .limit(9).collect(Collectors.joining(","))));
@@ -321,7 +327,8 @@ public class PostService {
             }
             comment.setReplyToName(StringUtils.hasText(parentComment.getUserName()) ? parentComment.getUserName() : "校园用户");
         }
-        comment.setContent(text);
+        String clean = securityGuard.purify(userId, text, SecurityGuard.BIZ_POST_COMMENT);
+        comment.setContent(clean);
         comment.setImages(imgs);
         try {
             R<UserBrief> res = userClient.getBrief(userId);
@@ -333,7 +340,7 @@ public class PostService {
             log.warn("获取用户信息失败 userId={}", userId);
         }
         comment.setUserName(comment.getUserName() == null ? "校园用户" : comment.getUserName());
-        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT,
+        securityGuard.checkText(userId, clean, SecurityGuard.SCENE_COMMENT,
                 SecurityGuard.BIZ_POST_COMMENT);
         commentMapper.insert(comment);
         // 评论配图同样送审（只发图不写字的评论是最容易夹带违规图的路径）

@@ -3,6 +3,7 @@ package com.campus.admin.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.admin.client.SecurityAdminClient;
 import com.campus.admin.entity.ContentAudit;
 import com.campus.admin.entity.SensitiveWord;
 import com.campus.admin.mapper.ContentAuditMapper;
@@ -37,21 +38,44 @@ public class SensitiveService {
 
     private final SensitiveWordMapper wordMapper;
     private final ContentAuditMapper contentAuditMapper;
+    private final SecurityAdminClient securityAdminClient;
 
     /** 只读缓存，reload 时整体替换引用，避免读写加锁 */
     @Getter
     private volatile List<SensitiveWord> cache = List.of();
 
+    /** 启动时只载入本机，不去打扰可能还没起来的 auth */
     @PostConstruct
     public void init() {
-        reload();
+        loadWords();
     }
 
+    /** 运营改词后调用：本机 + auth 一起刷新 */
     public void reload() {
+        loadWords();
+        pushRemote();
+    }
+
+    private void loadWords() {
         List<SensitiveWord> list = wordMapper.selectList(Wrappers.<SensitiveWord>lambdaQuery()
                 .eq(SensitiveWord::getStatus, 1));
         cache = list;
         log.info("[admin] 敏感词缓存已刷新，共 {} 条", list.size());
+    }
+
+    /**
+     * 通知 campus-auth 立即重载词库。
+     *
+     * <p>真正拦用户内容的是 auth 里的 {@code LocalSensitiveGuard}，它自己也每 60s 轮询一次，
+     * 这里只是把「运营改完词立刻生效」的等待抹掉。所以调用失败完全可以忽略——
+     * 顶多多等一个刷新周期，绝不能反过来让后台的增删改词失败。
+     */
+    private void pushRemote() {
+        try {
+            securityAdminClient.reloadWords();
+        } catch (Exception e) {
+            log.warn("[sensitive] 通知 campus-auth 刷新词库失败，将由定时刷新兜底：{}", e.getMessage());
+        }
     }
 
     public R.Page<SensitiveWord> pageWords(String keyword, Integer level, Integer status, long page, long size) {
