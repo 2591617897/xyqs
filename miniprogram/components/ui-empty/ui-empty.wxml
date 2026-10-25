@@ -1,0 +1,6 @@
+<view class="ui-empty">
+  <view class="ui-empty-ico ico ico-{{icon}}"></view>
+  <view class="ui-empty-text">{{text}}</view>
+  <view wx:if="{{desc}}" class="ui-empty-desc">{{desc}}</view>
+  <slot></slot>
+</view>

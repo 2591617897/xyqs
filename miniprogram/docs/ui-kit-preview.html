@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>校园趣事 · UI Kit 预览（不进包，仅本地预览）</title>
+<style>
+  :root{
+    /* ===== Design Tokens（与 styles/tokens.wxss 对齐，rpx→px 按 0.5 缩放） ===== */
+    --brand-50:#E8F5EF; --brand-100:#C6E8D8; --brand-200:#93D3B9;
+    --brand-300:#5FB894; --brand-500:#006C49; --brand-600:#005A3D; --brand-700:#00452F;
+    --like-50:#FFF0F4; --like-100:#FFD9E3; --like-500:#FF4D7D; --like-600:#E11D48;
+    --success-500:#059669; --warning-500:#D97706; --danger-500:#DC2626; --info-500:#2563EB;
+    --bg-page:#F5F7F6; --surface:#FFFFFF; --surface-2:#F0F3F2; --surface-3:#E8ECEA;
+    --border:#E3E8E6; --border-strong:#CBD5D1;
+    --text-1:#0F1A16; --text-2:#4B5A54; --text-3:#6B7A74; --text-4:#9AA8A3; --text-inverse:#fff;
+    --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-xl:32px; --radius-pill:999px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#EEF1F0;color:var(--text-1);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
+  h1{font-size:28px;margin:0 0 4px}
+  .sub{color:var(--text-2);margin:0 0 28px;font-size:14px}
+  h2{font-size:18px;margin:40px 0 16px;padding-left:10px;border-left:4px solid var(--brand-500)}
+  .grid{display:grid;gap:16px}
+  .g-tokens{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .g-comps{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .swatch{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#fff}
+  .swatch .c{height:64px}
+  .swatch .m{padding:8px 10px;font-size:12px}
+  .swatch .m b{display:block;font-weight:600}
+  .swatch .m span{color:var(--text-3)}
+  .card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px}
+  .card .label{font-size:12px;color:var(--text-3);margin-bottom:14px;font-weight:600;letter-spacing:.4px}
+  .demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+  /* ===== 图标系统（mask + currentColor，复用小程序同款 SVG data-URI） ===== */
+  .ico{display:inline-block;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;-webkit-mask-size:contain;
+    mask-repeat:no-repeat;mask-position:center;mask-size:contain;background-color:currentColor;width:1em;height:1em;vertical-align:middle}
+  .ico-back{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15.4,7.4 14,6 8,12 14,18 15.4,16.6 10.8,12z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15.4,7.4 14,6 8,12 14,18 15.4,16.6 10.8,12z'/%3E%3C/svg%3E")}
+  .ico-close{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M18.3,5.7 12,12 18.3,18.3 16.9,19.7 12,14.8 7.1,19.7 5.7,18.3 11.6,12 5.7,5.7 7.1,4.3 12,9.2 16.9,4.3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M18.3,5.7 12,12 18.3,18.3 16.9,19.7 12,14.8 7.1,19.7 5.7,18.3 11.6,12 5.7,5.7 7.1,4.3 12,9.2 16.9,4.3z'/%3E%3C/svg%3E")}
+  .ico-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15.5,14h-0.8l-0.3-0.3a6.5,6.5 0 1 0 -0.7,0.7l0.3,0.3v0.8l5,5 1.5-1.5zM10,14a4,4 0 1 1 0-8 4,4 0 0 1 0,8z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15.5,14h-0.8l-0.3-0.3a6.5,6.5 0 1 0 -0.7,0.7l0.3,0.3v0.8l5,5 1.5-1.5zM10,14a4,4 0 1 1 0-8 4,4 0 0 1 0,8z'/%3E%3C/svg%3E")}
+  .ico-like{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,21 10.6,19.7C5.4,15.1 2,12 2,8.5 2,5.4 4.4,3 7.5,3c1.7,0 3.4,0.8 4.5,2.1C13.1,3.8 14.8,3 16.5,3 19.6,3 22,5.4 22,8.5c0,3.5-3.4,6.6-8.6,11.2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,21 10.6,19.7C5.4,15.1 2,12 2,8.5 2,5.4 4.4,3 7.5,3c1.7,0 3.4,0.8 4.5,2.1C13.1,3.8 14.8,3 16.5,3 19.6,3 22,5.4 22,8.5c0,3.5-3.4,6.6-8.6,11.2z'/%3E%3C/svg%3E")}
+  .ico-like-o{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,20 10.6,18.8C5.4,14.3 2,11.3 2,7.9 2,5.1 4.2,3 6.9,3c1.5,0 3,0.7 4.1,1.9C12.1,3.7 13.6,3 15.1,3 17.8,3 20,5.1 20,7.9c0,3.4-3.4,6.4-8.6,10.9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,20 10.6,18.8C5.4,14.3 2,11.3 2,7.9 2,5.1 4.2,3 6.9,3c1.5,0 3,0.7 4.1,1.9C12.1,3.7 13.6,3 15.1,3 17.8,3 20,5.1 20,7.9c0,3.4-3.4,6.4-8.6,10.9z'/%3E%3C/svg%3E")}
+  .ico-comment{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4,4h16a2,2 0 0 1 2,2v9a2,2 0 0 1-2,2H9l-5,4v-4H4a2,2 0 0 1-2-2V6a2,2 0 0 1 2-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4,4h16a2,2 0 0 1 2,2v9a2,2 0 0 1-2,2H9l-5,4v-4H4a2,2 0 0 1-2-2V6a2,2 0 0 1 2-2z'/%3E%3C/svg%3E")}
+  .ico-share{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M14,9V5l7,7-7,7v-4.1c-5,0-8.5,1.6-11,5.1 1-5 4-10 11-11z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M14,9V5l7,7-7,7v-4.1c-5,0-8.5,1.6-11,5.1 1-5 4-10 11-11z'/%3E%3C/svg%3E")}
+  .ico-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.3 5.8,21 7,14.1 2,9.3 8.9,8.3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.3 5.8,21 7,14.1 2,9.3 8.9,8.3z'/%3E%3C/svg%3E")}
+  .ico-star-o{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,3 14.9,8.6 21,9.3 16,13.7 17.5,20 12,16.5 6.5,20 8,13.7 3,9.3 9.1,8.6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,3 14.9,8.6 21,9.3 16,13.7 17.5,20 12,16.5 6.5,20 8,13.7 3,9.3 9.1,8.6z'/%3E%3C/svg%3E")}
+  .ico-delete{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M6,7h12l-1,13a2,2 0 0 1-2,2H9a2,2 0 0 1-2-2zM9,4h6l1,2H8z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M6,7h12l-1,13a2,2 0 0 1-2,2H9a2,2 0 0 1-2-2zM9,4h6l1,2H8z'/%3E%3C/svg%3E")}
+  .ico-plus{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11,4h2v7h7v2h-7v7h-2v-7H4v-2h7z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11,4h2v7h7v2h-7v7h-2v-7H4v-2h7z'/%3E%3C/svg%3E")}
+  .ico-image{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,3h14a2,2 0 0 1 2,2v14a2,2 0 0 1-2,2H5a2,2 0 0 1-2-2V5a2,2 0 0 1 2-2zm0,4.5 4.5,4.5 3-3 4,4 3.5-3.5V19H5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,3h14a2,2 0 0 1 2,2v14a2,2 0 0 1-2,2H5a2,2 0 0 1-2-2V5a2,2 0 0 1 2-2zm0,4.5 4.5,4.5 3-3 4,4 3.5-3.5V19H5z'/%3E%3C/svg%3E")}
+  .ico-emoji{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a10,10 0 1 0 0,20 10,10 0 0 0 0-20zM8.5,9a1.5,1.5 0 1 1 0,3 1.5,1.5 0 0 1 0-3zM15.5,9a1.5,1.5 0 1 1 0,3 1.5,1.5 0 0 1 0-3zM12,17.5c-2.3,0-4.3-1.4-5-3.5h10c-0.7,2.1-2.7,3.5-5,3.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a10,10 0 1 0 0,20 10,10 0 0 0 0-20zM8.5,9a1.5,1.5 0 1 1 0,3 1.5,1.5 0 0 1 0-3zM15.5,9a1.5,1.5 0 1 1 0,3 1.5,1.5 0 0 1 0-3zM12,17.5c-2.3,0-4.3-1.4-5-3.5h10c-0.7,2.1-2.7,3.5-5,3.5z'/%3E%3C/svg%3E")}
+  .ico-at{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,12a3,3 0 1 1-3-3m0,0a3,3 0 1 1 3,3m-3-3v6m-5,3a8,8 0 1 0 0-12 8,8 0 0 0 0,12z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M12,12a3,3 0 1 1-3-3m0,0a3,3 0 1 1 3,3m-3-3v6m-5,3a8,8 0 1 0 0-12 8,8 0 0 0 0,12z'/%3E%3C/svg%3E")}
+  .ico-send{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,11 21,3 13,21 10,13zM3,11 10,13'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,11 21,3 13,21 10,13zM3,11 10,13'/%3E%3C/svg%3E")}
+  .ico-location{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a7,7 0 0 0-7,7c0,5 7,13 7,13s7-8 7-13a7,7 0 0 0-7-7zm0,9.5A2.5,2.5 0 1 1 12,6.5a2.5,2.5 0 0 1 0,5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a7,7 0 0 0-7,7c0,5 7,13 7,13s7-8 7-13a7,7 0 0 0-7-7zm0,9.5A2.5,2.5 0 1 1 12,6.5a2.5,2.5 0 0 1 0,5z'/%3E%3C/svg%3E")}
+  .ico-school{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,3 2,9v2h2v8h6v-5h4v5h6v-8h2V9zM10,17v-3h4v3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,3 2,9v2h2v8h6v-5h4v5h6v-8h2V9zM10,17v-3h4v3z'/%3E%3C/svg%3E")}
+  .ico-verified{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 9.8,4.2 6.6,4l-1,3.1L2.5,8.9 3.7,12 2.5,15.1 5.6,15.9 6.6,19l3.2-0.2L12,22l2.2-3.2 3.2,0.2 1-3.1 3.1-0.8L20.3,12 21.5,8.9 18.4,8.1 17.4,5l-3.2,0.2zM10.5,14.6 7.9,12l1.4-1.4 1.2,1.2 3.7-3.7 1.4,1.4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 9.8,4.2 6.6,4l-1,3.1L2.5,8.9 3.7,12 2.5,15.1 5.6,15.9 6.6,19l3.2-0.2L12,22l2.2-3.2 3.2,0.2 1-3.1 3.1-0.8L20.3,12 21.5,8.9 18.4,8.1 17.4,5l-3.2,0.2zM10.5,14.6 7.9,12l1.4-1.4 1.2,1.2 3.7-3.7 1.4,1.4z'/%3E%3C/svg%3E")}
+  .ico-bell{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,22a2,2 0 0 0 2-2h-4a2,2 0 0 0 2,2zm6-6V11a6,6 0 0 0-4-5.7V4a2,2 0 0 0-4,0v1.3A6,6 0 0 0 6,11v5l-2,2v1h16v-1z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,22a2,2 0 0 0 2-2h-4a2,2 0 0 0 2,2zm6-6V11a6,6 0 0 0-4-5.7V4a2,2 0 0 0-4,0v1.3A6,6 0 0 0 6,11v5l-2,2v1h16v-1z'/%3E%3C/svg%3E")}
+  .ico-message{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4,4h16v12H7l-3,3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4,4h16v12H7l-3,3z'/%3E%3C/svg%3E")}
+  .ico-user{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,12a4,4 0 1 0 0-8 4,4 0 0 0 0,8zm0,2c-4,0-8,2-8,5v1h16v-1c0-3-4-5-8-5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,12a4,4 0 1 0 0-8 4,4 0 0 0 0,8zm0,2c-4,0-8,2-8,5v1h16v-1c0-3-4-5-8-5z'/%3E%3C/svg%3E")}
+  .ico-store{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,8h14l1,3v2h-2a3,3 0 0 1-6,0 3,3 0 0 1-6,0H4V11zM4,14v5h2v-3h12v3h2v-5zM4,19v1h16v-1z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,8h14l1,3v2h-2a3,3 0 0 1-6,0 3,3 0 0 1-6,0H4V11zM4,14v5h2v-3h12v3h2v-5zM4,19v1h16v-1z'/%3E%3C/svg%3E")}
+  .ico-settings{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,8a4,4 0 1 0 0,8 4,4 0 0 0 0-8zm9,4-2.1-0.4-1-2.1 1-2.1-2-2-2.1,1-2.1-1L12,1.5 9.3,3.4 7.2,2.4l-2,2 1,2.1-1,2.1L3.1,11 1,12l2.1,1 1,2.1-1,2.1 2,2 2.1-1 2.1,1L12,22.5 14.7,20.6 16.8,21.6l2-2-1-2.1 1-2.1L21,13z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,8a4,4 0 1 0 0,8 4,4 0 0 0 0-8zm9,4-2.1-0.4-1-2.1 1-2.1-2-2-2.1,1-2.1-1L12,1.5 9.3,3.4 7.2,2.4l-2,2 1,2.1-1,2.1L3.1,11 1,12l2.1,1 1,2.1-1,2.1 2,2 2.1-1 2.1,1L12,22.5 14.7,20.6 16.8,21.6l2-2-1-2.1 1-2.1L21,13z'/%3E%3C/svg%3E")}
+  .ico-chevron-right{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9,6 15,12 9,18z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9,6 15,12 9,18z'/%3E%3C/svg%3E")}
+  .ico-chevron-left{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15,6 9,12 15,18z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M15,6 9,12 15,18z'/%3E%3C/svg%3E")}
+  .ico-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9,16.2 4.8,12l-1.4,1.4L9,19 21,7l-1.4-1.4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9,16.2 4.8,12l-1.4,1.4L9,19 21,7l-1.4-1.4z'/%3E%3C/svg%3E")}
+  .ico-check-circle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a10,10 0 1 0 0,20 10,10 0 0 0 0-20zm-1.2,14.2L6.5,11.9l1.4-1.4 2.9,2.9 5.2-5.2 1.4,1.4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2a10,10 0 1 0 0,20 10,10 0 0 0 0-20zm-1.2,14.2L6.5,11.9l1.4-1.4 2.9,2.9 5.2-5.2 1.4,1.4z'/%3E%3C/svg%3E")}
+  .ico-warning{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 2,20h20zM11,9v5h2V9zm0,7v2h2v-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,2 2,20h20zM11,9v5h2V9zm0,7v2h2v-2z'/%3E%3C/svg%3E")}
+  .ico-empty{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,7h6l2,2h10v10a2,2 0 0 1-2,2H5a2,2 0 0 1-2-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,7h6l2,2h10v10a2,2 0 0 1-2,2H5a2,2 0 0 1-2-2z'/%3E%3C/svg%3E")}
+  .ico-flag{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,3v18h2v-7h11l-2-3 2-3H7V3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5,3v18h2v-7h11l-2-3 2-3H7V3z'/%3E%3C/svg%3E")}
+  .ico-edit{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,17.2V21h3.8L18,9.8 14.2,6zM20.7,7.3a1,1 0 0 0 0-1.4l-2.6-2.6a1,1 0 0 0-1.4,0L15,5.5 18.5,9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,17.2V21h3.8L18,9.8 14.2,6zM20.7,7.3a1,1 0 0 0 0-1.4l-2.6-2.6a1,1 0 0 0-1.4,0L15,5.5 18.5,9z'/%3E%3C/svg%3E")}
+  .ico-qr{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,3h8v8H3zM5,5v4h4V5zM13,3h8v8h-8zM15,5v4h4V5zM3,13h8v8H3zM5,15v4h4v-4zM13,13h3v3h-3zM18,13h3v3h-3zM13,18h3v3h-3zM18,18h3v3h-3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3,3h8v8H3zM5,5v4h4V5zM13,3h8v8h-8zM15,5v4h4V5zM3,13h8v8H3zM5,15v4h4v-4zM13,13h3v3h-3zM18,13h3v3h-3zM13,18h3v3h-3zM18,18h3v3h-3z'/%3E%3C/svg%3E")}
+  .ico-heart-talk{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,21 10.6,19.7C5.4,15.1 2,12 2,8.5 2,5.4 4.4,3 7.5,3c1.7,0 3.4,0.8 4.5,2.1C13.1,3.8 14.8,3 16.5,3 19.6,3 22,5.4 22,8.5c0,3.5-3.4,6.6-8.6,11.2zM12,8.5c1.2-1.5 0.4-3.5-1.5-3.5-1,0-1.8,0.6-2.2,1.5h-1C6.7,4.8 8.7,4 10,4c1.9,0 3,1.4 2.2,3.2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,21 10.6,19.7C5.4,15.1 2,12 2,8.5 2,5.4 4.4,3 7.5,3c1.7,0 3.4,0.8 4.5,2.1C13.1,3.8 14.8,3 16.5,3 19.6,3 22,5.4 22,8.5c0,3.5-3.4,6.6-8.6,11.2zM12,8.5c1.2-1.5 0.4-3.5-1.5-3.5-1,0-1.8,0.6-2.2,1.5h-1C6.7,4.8 8.7,4 10,4c1.9,0 3,1.4 2.2,3.2z'/%3E%3C/svg%3E")}
+  .ico-more{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M6,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM12,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM18,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M6,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM12,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM18,10a2,2 0 1 0 0,4 2,2 0 0 0 0-4z'/%3E%3C/svg%3E")}
+  .ico-more-h{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M10,6a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM18,6a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM10,18a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM18,18a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM14,6a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM14,18a2,2 0 1 0 0,4 2,2 0 0 0 0-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M10,6a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM18,6a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM10,18a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM18,18a2,2 0 1 0-4,0 2,2 0 0 0 4,0zM14,6a2,2 0 1 0 0,4 2,2 0 0 0 0-4zM14,18a2,2 0 1 0 0,4 2,2 0 0 0 0-4z'/%3E%3C/svg%3E")}
+
+  /* ===== 组件样式（rpx→px /2，1:1 还原小程序视觉） ===== */
+  .ui-btn{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:15px;font-weight:600;line-height:1;border:1px solid transparent;cursor:pointer}
+  .ui-btn--primary{background:var(--brand-500);color:#fff}
+  .ui-btn--secondary{background:#E6F2EC;color:var(--brand-500)}
+  .ui-btn--text{background:transparent;color:var(--brand-500);padding:0 8px}
+  .ui-btn--danger{background:#EF4444;color:#fff}
+  .ui-btn--mini{height:28px;padding:0 12px;font-size:12px}
+  .ui-btn--block{display:flex;width:100%}
+  .ui-btn--disabled{opacity:.5}
+
+  .ui-tag{display:inline-flex;align-items:center;box-sizing:border-box;padding:2px 8px;border-radius:999px;font-size:11px;line-height:1.4;border:1px solid transparent}
+  .ui-tag--default{background:#F1F5F9;color:#475569}
+  .ui-tag--primary{background:var(--brand-500);color:#fff}
+  .ui-tag--success{background:#16A34A;color:#fff}
+  .ui-tag--warning{background:#F59E0B;color:#fff}
+  .ui-tag--danger{background:#EF4444;color:#fff}
+  .ui-tag--plain{background:transparent;border-color:currentColor}
+  .ui-tag--plain.ui-tag--primary{color:var(--brand-500)}
+  .ui-tag--plain.ui-tag--danger{color:#EF4444}
+
+  .ui-card{background:#fff;border-radius:12px;padding:14px}
+  .ui-card--bordered{box-shadow:0 1px 6px rgba(15,23,42,.06)}
+
+  .ui-avatar{position:relative;border-radius:50%;overflow:hidden;background:#E6F2EC}
+  .ui-avatar .ad-head{position:absolute;left:50%;top:19%;width:34%;height:34%;margin-left:-17%;border-radius:50%;background:#9DC3B0}
+  .ui-avatar .ad-body{position:absolute;left:50%;bottom:-12%;width:68%;height:44%;margin-left:-34%;border-radius:50% 50% 0 0;background:#9DC3B0}
+
+  .ui-field{display:flex;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F1F5F9}
+  .ui-field .lab{width:80px;flex:none;font-size:14px;color:#475569;padding-top:3px}
+  .ui-field .body{flex:1;min-width:0;color:var(--text-1)}
+
+  .ui-loading-spin{display:inline-block;width:24px;height:24px;border:2px solid #E2E8F0;border-top-color:var(--brand-500);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ui-skel{padding:4px 0}
+  .ui-skel .r{height:14px;margin:8px 0;border-radius:4px;background:linear-gradient(90deg,#EEF2F6 25%,#E2E8F0 37%,#EEF2F6 63%);background-size:400% 100%;animation:shine 1.3s ease infinite}
+  @keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
+
+  .ui-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+  .ui-empty .ic{font-size:60px;color:#CBD5D1}
+  .ui-empty .tx{margin-top:12px;font-size:14px;color:#64748B}
+  .ui-empty .ds{margin-top:4px;font-size:12px;color:#94A3B8}
+
+  .ui-modal-mask{position:relative;background:rgba(15,23,42,.5);border-radius:12px;padding:40px 20px;display:flex;align-items:center;justify-content:center}
+  .ui-modal{width:280px;background:#fff;border-radius:12px;padding:20px 16px 14px;box-sizing:border-box;text-align:center}
+  .ui-modal .t{font-size:16px;font-weight:700;margin-bottom:10px}
+  .ui-modal .b{font-size:14px;color:#475569;line-height:1.6;padding:4px 4px 16px}
+  .ui-modal .f{display:flex;gap:10px}
+  .ui-modal .f div{flex:1;height:40px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-size:15px;font-weight:600}
+  .ui-modal .cancel{background:#F1F5F9;color:#475569}
+  .ui-modal .ok{background:var(--brand-500);color:#fff}
+
+  .ui-toast{display:inline-flex;align-items:center;background:rgba(15,23,42,.85);color:#fff;padding:10px 16px;border-radius:10px;gap:6px;font-size:14px}
+  .ui-toast .ico{font-size:18px;color:#fff}
+
+  .ui-sheet-demo{position:relative;background:#0006;border-radius:12px;height:200px;overflow:hidden}
+  .ui-sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;padding:16px}
+  .ui-sheet .hd{display:flex;align-items:center;justify-content:space-between;font-weight:600;margin-bottom:12px}
+  .ui-sheet .hd .x{font-size:18px;color:#94A3B8}
+
+  .ui-navbar-demo{position:relative;width:100%;max-width:360px;height:120px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+  .ui-navbar-demo .bar{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:44px;font-weight:600}
+  .ui-navbar-demo .bk{position:absolute;bottom:0;left:8px;height:44px;display:flex;align-items:center;gap:2px;color:var(--brand-500)}
+  .ui-navbar-demo .bk .ico{font-size:19px}
+
+  .note{font-size:12px;color:var(--text-3);background:#fff;border:1px dashed var(--border);border-radius:10px;padding:10px 12px;margin-top:8px}
+  .phone{width:375px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>校园趣事 · UI Kit 预览</h1>
+  <p class="sub">批次 0 地基：12 个 <code>ui-*</code> 组件 + 设计令牌 + 图标系统。本文件仅本地预览，不进小程序包。</p>
+
+  <h2>设计令牌 · 色板</h2>
+  <div class="grid g-tokens">
+    <div class="swatch"><div class="c" style="background:var(--brand-500)"></div><div class="m"><b>--brand-500</b><span>#006C49 主色</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--brand-600)"></div><div class="m"><b>--brand-600</b><span>#005A3D 按下</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--brand-100)"></div><div class="m"><b>--brand-100</b><span>#C6E8D8</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--like-500)"></div><div class="m"><b>--like-500</b><span>#FF4D7D 情感色</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--success-500)"></div><div class="m"><b>--success-500</b><span>#059669</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--warning-500)"></div><div class="m"><b>--warning-500</b><span>#D97706</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--danger-500)"></div><div class="m"><b>--danger-500</b><span>#DC2626</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--info-500)"></div><div class="m"><b>--info-500</b><span>#2563EB</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--bg-page)"></div><div class="m"><b>--bg-page</b><span>#F5F7F6</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--surface)"></div><div class="m"><b>--surface</b><span>#FFFFFF</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--border)"></div><div class="m"><b>--border</b><span>#E3E8E6</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--text-1)"></div><div class="m"><b>--text-1</b><span>#0F1A16</span></div></div>
+    <div class="swatch"><div class="c" style="background:var(--text-2)"></div><div class="m"><b>--text-2</b><span>#4B5A54</span></div></div>
+  </div>
+
+  <h2>图标系统（SVG mask + currentColor）</h2>
+  <div class="card">
+    <div class="demo" id="iconGrid"></div>
+    <div class="note">颜色随 <code>color</code> 变化：<span style="color:var(--brand-500)"><i class="ico ico-like" style="font-size:20px"></i></span> <span style="color:var(--like-500)"><i class="ico ico-like" style="font-size:20px"></i></span> <span style="color:var(--danger-500)"><i class="ico ico-like" style="font-size:20px"></i></span></div>
+  </div>
+
+  <h2>组件画廊</h2>
+  <div class="grid g-comps">
+
+    <div class="card"><div class="label">ui-button</div><div class="demo">
+      <span class="ui-btn ui-btn--primary">主按钮</span>
+      <span class="ui-btn ui-btn--secondary">次按钮</span>
+      <span class="ui-btn ui-btn--text">文字</span>
+      <span class="ui-btn ui-btn--danger">危险</span>
+      <span class="ui-btn ui-btn--primary ui-btn--mini">迷你</span>
+      <span class="ui-btn ui-btn--primary ui-btn--disabled">禁用</span>
+    </div></div>
+
+    <div class="card"><div class="label">ui-tag</div><div class="demo">
+      <span class="ui-tag ui-tag--default">默认</span>
+      <span class="ui-tag ui-tag--primary">主色</span>
+      <span class="ui-tag ui-tag--success">成功</span>
+      <span class="ui-tag ui-tag--warning">警告</span>
+      <span class="ui-tag ui-tag--danger">危险</span>
+      <span class="ui-tag ui-tag--plain ui-tag--primary">描边</span>
+    </div></div>
+
+    <div class="card"><div class="label">ui-avatar</div><div class="demo">
+      <span class="ui-avatar" style="width:48px;height:48px"><i class="ad-head"></i><i class="ad-body"></i></span>
+      <span class="ui-avatar" style="width:64px;height:64px"><i class="ad-head"></i><i class="ad-body"></i></span>
+      <img class="ui-avatar" style="width:64px;height:64px;object-fit:cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%2393D3B9'/%3E%3C/svg%3E" alt=""/>
+    </div></div>
+
+    <div class="card"><div class="label">ui-card</div><div class="ui-card ui-card--bordered" style="margin-top:0">这是一张卡片，圆角 24rpx，带轻投影。可承载任意 slot 内容。</div></div>
+
+    <div class="card"><div class="label">ui-field</div><div class="ui-field"><span class="lab">昵称</span><span class="body">林小满</span></div><div class="ui-field" style="border-bottom:none"><span class="lab">学校</span><span class="body">贵州大学</span></div></div>
+
+    <div class="card"><div class="label">ui-loading</div><div class="demo">
+      <span class="ui-loading-spin"></span>
+      <div class="ui-skel" style="width:160px"><div class="r" style="width:90%"></div><div class="r" style="width:80%"></div><div class="r" style="width:95%"></div></div>
+    </div></div>
+
+    <div class="card"><div class="label">ui-empty</div><div class="ui-empty" style="padding:20px">
+      <i class="ico ico-empty ic"></i><div class="tx">这里还什么都没有</div><div class="ds">去发布第一条动态吧</div>
+    </div></div>
+
+    <div class="card"><div class="label">ui-modal</div><div class="ui-modal-mask"><div class="ui-modal">
+      <div class="t">确认删除</div><div class="b">删除后无法恢复，确定要删除这条内容吗？</div>
+      <div class="f"><div class="cancel">取消</div><div class="ok">确定</div></div>
+    </div></div></div>
+
+    <div class="card"><div class="label">ui-toast</div><div class="demo">
+      <span class="ui-toast"><i class="ico ico-check-circle"></i>操作成功</span>
+      <span class="ui-toast"><i class="ico ico-warning"></i>网络异常</span>
+    </div></div>
+
+    <div class="card"><div class="label">ui-sheet（底部弹层）</div><div class="ui-sheet-demo"><div class="ui-sheet">
+      <div class="hd"><span>选择操作</span><span class="x">✕</span></div>
+      <div class="demo" style="gap:12px"><span class="ui-btn ui-btn--primary">确认</span><span class="ui-btn ui-btn--text">取消</span></div>
+    </div></div></div>
+
+    <div class="card"><div class="label">ui-navbar（自定义导航栏，自适应状态栏）</div><div class="ui-navbar-demo"><div class="bk"><i class="ico ico-back"></i></div><div class="bar">帖子详情</div></div><div class="note">组件自动读取 statusBarHeight 与胶囊按钮位置，计算导航栏高度。</div></div>
+
+    <div class="card"><div class="label">ui-icon（任意尺寸/颜色）</div><div class="demo" style="font-size:16px;color:var(--brand-500)">
+      <i class="ico ico-like"></i><i class="ico ico-star"></i><i class="ico ico-comment"></i><i class="ico ico-share"></i>
+      <span style="font-size:28px;color:var(--like-500)"><i class="ico ico-heart-talk"></i></span>
+      <span style="font-size:36px;color:var(--brand-700)"><i class="ico ico-school"></i></span>
+    </div></div>
+
+  </div>
+
+  <p class="note" style="margin-top:32px">
+    使用约定：组件已在 <code>app.json</code> 全局注册，页面可直接 <code>&lt;ui-button&gt;…&lt;/ui-button&gt;</code>。
+    颜色一律走 <code>styles/tokens.wxss</code> 的 CSS 变量；图标走 <code>styles/icons.wxss</code> 的 <code>.ico.ico-xxx</code>（可变色、~16KB、无字体机型差异）。
+    <code>custom-tab-bar</code> 不在页面 DOM 树内，其 wxss 已冗余一份 token 副本，迁移时勿删。
+  </p>
+</div>
+
+<script>
+  // 自动铺满图标网格
+  const names = ['back','close','search','more','more-h','like','like-o','comment','share','star','star-o','delete','plus','image','emoji','at','send','location','school','verified','bell','message','user','store','heart-talk','settings','chevron-right','chevron-left','check','check-circle','warning','empty','arrow-down','qr','edit','flag'];
+  const grid = document.getElementById('iconGrid');
+  names.forEach(n=>{
+    const wrap = document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;width:64px;padding:8px;color:var(--brand-700)';
+    const i = document.createElement('i');
+    i.className='ico ico-'+n;
+    i.style.fontSize='24px';
+    const t=document.createElement('span');
+    t.textContent=n; t.style.cssText='font-size:10px;color:#94A3B8';
+    wrap.appendChild(i); wrap.appendChild(t);
+    grid.appendChild(wrap);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<view wx:if="{{visible}}" class="ui-mask" catchtap="onMask">
+  <view class="ui-modal" catchtap="stop">
+    <view wx:if="{{title}}" class="ui-modal-title">{{title}}</view>
+    <view class="ui-modal-body"><slot>{{content}}</slot></view>
+    <view class="ui-modal-foot">
+      <view class="ui-modal-btn ui-modal-cancel" catchtap="onCancel">{{cancelText}}</view>
+      <view class="ui-modal-btn ui-modal-ok" catchtap="onOk">{{confirmText}}</view>
+    </view>
+  </view>
+</view>

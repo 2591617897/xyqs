@@ -199,6 +199,12 @@ Page({
    * 聊一聊：先向后端发起（或复用）会话，拿到会话 id 再进聊天页。
    * 没有卖家 id 时（如匿名/异常数据）退回到纯展示会话。
    */
+  goReport: function () {
+    const g = this.data.goods
+    if (!g) return
+    mp.navigateTo({ url: '/pages/report/report?type=GOODS&id=' + g.id })
+  },
+
   goChat: function () {
     const self = this
     const g = this.data.goods
@@ -367,7 +373,9 @@ Page({
     mp.showLoading({ title: '加载好友中', mask: true })
     http.get('/user/follow/list', { type: 'following' }, { silent: true }).then(function (res) {
       mp.hideLoading()
-      const list = (res && res.list) ? res.list : []
+      // FollowController#list 返回 R<List<FollowUserVO>>，request 解包后是裸数组；
+      // 这里同时兼容未来改成 {list:[]} 分页对象的情况
+      const list = Array.isArray(res) ? res : ((res && res.list) || [])
       const filtered = list.filter(function (u) { return !self.data.mentionUserIds.some(function (m) { return m === u.id }) })
       if (!filtered.length) {
         mp.showToast({ title: '暂无可@的好友', icon: 'none' })

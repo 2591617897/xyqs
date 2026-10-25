@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
 import com.campus.common.client.FollowClient;
 import com.campus.common.client.NotificationClient;
+import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.UserClient;
 import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
@@ -52,6 +53,7 @@ public class PostService {
     private final UserClient userClient;
     private final FollowClient followClient;
     private final NotificationClient notificationClient;
+    private final SecurityGuard securityGuard;
 
     public List<Channel> channels(Long schoolId) {
         LambdaQueryWrapper<Channel> w = Wrappers.lambdaQuery();
@@ -166,6 +168,9 @@ public class PostService {
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setStatus(1);
+        // 内容安全：标题与正文一起送审，命中违规直接 400，不落库
+        securityGuard.checkText(userId, post.getTitle() + "\n" + post.getContent(),
+                SecurityGuard.SCENE_FORUM);
         postMapper.insert(post);
         return post.getId();
     }
@@ -187,6 +192,9 @@ public class PostService {
             throw new BizException("频道不存在");
         }
         // 用 UpdateWrapper 显式 set，保证清空图片能写回 null
+        // 内容安全：编辑同样要审，否则可以先发正常内容再改成违规内容绕过
+        securityGuard.checkText(userId, req.getTitle().trim() + "\n" + req.getContent().trim(),
+                SecurityGuard.SCENE_FORUM);
         postMapper.update(null, Wrappers.<Post>lambdaUpdate()
                 .eq(Post::getId, id)
                 .set(Post::getChannelId, req.getChannelId())
@@ -321,6 +329,7 @@ public class PostService {
             log.warn("获取用户信息失败 userId={}", userId);
         }
         comment.setUserName(comment.getUserName() == null ? "校园用户" : comment.getUserName());
+        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT);
         commentMapper.insert(comment);
         postMapper.incrComment(postId, 1);
         comment.setMine(true);

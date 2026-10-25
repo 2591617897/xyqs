@@ -59,6 +59,12 @@ campus:
     # appsecret 必须由环境变量 WX_APPSECRET 提供（不要写进仓库）。
     appid: ${WX_APPID:wx2cac838bfcc963d7}
     appsecret: ${WX_APPSECRET:}
+    sec-check:
+      # 内容安全审核（msg_sec_check v2）总开关。
+      # 默认 false：未配 appsecret 时不影响发帖；本地与 CI 不被外部依赖卡住。
+      # 生产启用条件：① WX_APPSECRET 已注入 ② 本开关置 true。
+      # 生效后发帖/评论/改昵称会先过微信内容安全，命中违规返回「内容涉嫌违规」。
+      enabled: ${WX_SEC_CHECK:false}
   qq:
     # QQ 小程序（保留兼容，需要时填上即可）
     appid: ${QQ_APPID:}

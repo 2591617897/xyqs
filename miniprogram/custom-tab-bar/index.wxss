@@ -1,3 +1,40 @@
+/* ==========================================================================
+ * 冗余 token 副本（防黑底栏）
+ * --------------------------------------------------------------------------
+ * custom-tab-bar 不在页面 DOM 树内，page{} 作用域的 CSS 变量对其无效。
+ * 批量迁移到 design tokens（var(--brand-500) 等）时，这里必须保留副本，
+ * 否则底栏会变黑。新增 token 请同步补到下面选择器。
+ * ========================================================================== */
+.tabbar,
+.pub-mask,
+.pub-sheet,
+.pub-big,
+.pub-half,
+.pub-line {
+  --brand-50: #E8F5EF;
+  --brand-100: #C6E8D8;
+  --brand-200: #93D3B9;
+  --brand-300: #5FB894;
+  --brand-500: #006C49;
+  --brand-600: #005A3D;
+  --brand-700: #00452F;
+  --like-500: #FF4D7D;
+  --like-600: #E11D48;
+  --danger-500: #DC2626;
+  --bg-page: #F5F7F6;
+  --surface: #FFFFFF;
+  --surface-2: #F0F3F2;
+  --border: #E3E8E6;
+  --text-1: #0F1A16;
+  --text-2: #4B5A54;
+  --text-3: #6B7A74;
+  --text-inverse: #FFFFFF;
+  --radius-lg: 24rpx;
+  --radius-xl: 32rpx;
+  --shadow-2: 0 8rpx 24rpx rgba(15, 26, 22, 0.06);
+  --shadow-3: 0 16rpx 48rpx rgba(15, 26, 22, 0.10);
+}
+
 /* 自定义底部导航 —— 白底 + 绿色主色 + 中间品牌发光凸起发布按钮（对齐设计稿） */
 .tabbar {
   position: fixed;

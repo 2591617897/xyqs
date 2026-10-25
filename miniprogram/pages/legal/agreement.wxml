@@ -1,7 +1,7 @@
 <view class="page">
   <view class="doc-header">
     <view class="doc-title">校园趣事 · 用户服务协议</view>
-    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+    <view class="doc-meta">更新日期：2026-10-25 · 生效日期：2026-10-25</view>
   </view>
 
   <view class="doc-section">
@@ -42,7 +42,7 @@
     <view class="doc-h2">五、信息内容与平台权力</view>
     <view class="doc-p">5.1 本平台有权对用户发布的信息进行审核。对涉嫌违反法律法规或本协议的内容，平台可采取限制展示、屏蔽、删除等措施。</view>
     <view class="doc-p">5.2 本平台在审核过程中可能对敏感内容进行人工复核，正常情况下 24 小时内完成。为保障信息时效性，部分内容采用机器预检后先上线，发现违规后再下架处理。</view>
-    <view class="doc-p">5.3 若您的账户或发布的信息被处理，您可通过"我的 → 在线客服与反馈"申请复核，平台将在 3 个工作日内回复。</view>
+    <view class="doc-p">5.3 若您的账户或发布的信息被处理，您可通过"我的 → 帮助与反馈"申请复核，或发送邮件至 {{contactEmail}}，平台将在 3 个工作日内回复。</view>
   </view>
 
   <view class="doc-section">

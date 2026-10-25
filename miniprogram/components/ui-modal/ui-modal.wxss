@@ -1,0 +1,43 @@
+.ui-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.ui-modal {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx 28rpx;
+  box-sizing: border-box;
+}
+.ui-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #191C1E;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+.ui-modal-body {
+  font-size: 28rpx;
+  color: #475569;
+  text-align: center;
+  line-height: 1.6;
+  padding: 8rpx 8rpx 32rpx;
+}
+.ui-modal-foot { display: flex; gap: 20rpx; }
+.ui-modal-btn {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.ui-modal-cancel { background: #F1F5F9; color: #475569; }
+.ui-modal-ok { background: #006C49; color: #fff; }

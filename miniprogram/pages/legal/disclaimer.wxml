@@ -1,7 +1,7 @@
 <view class="page">
   <view class="doc-header">
     <view class="doc-title">校园趣事 · 免责声明</view>
-    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+    <view class="doc-meta">更新日期：2026-10-25 · 生效日期：2026-10-25</view>
   </view>
 
   <view class="doc-callout warn">
@@ -31,16 +31,16 @@
     <view class="doc-list">
       <view class="doc-li">（1）要求用户完成校园身份认证后才能发布与私信；</view>
       <view class="doc-li">（2）系统对可疑内容（如明显异校、异常低价、含可疑联系方式）做标记；</view>
-      <view class="doc-li">（3）提供"安全提示"与举报入口，协助警方调查；</view>
+      <view class="doc-li">（3）在帖子 / 表白墙 / 闲置的详情页提供"举报"入口，配合核实与处置，并协助警方调查；</view>
       <view class="doc-li">（4）拉黑/屏蔽违规用户。</view>
     </view>
-    <view class="doc-p">2.4 <strong>一旦发生交易纠纷或涉嫌诈骗，请立即报警</strong>，同时可通过平台内"在线客服"提供相应线索，我们将积极配合司法机关调查，但不承担任何赔偿责任。</view>
+    <view class="doc-p">2.4 <strong>一旦发生交易纠纷或涉嫌诈骗，请立即报警</strong>，同时可通过内容详情页的"举报"入口或邮件 {{contactEmail}} 提供相应线索，我们将积极配合司法机关调查，但不承担任何赔偿责任。</view>
   </view>
 
   <view class="doc-section">
     <view class="doc-h2">三、关于信息与内容</view>
     <view class="doc-p">3.1 本平台上的所有内容（包括但不限于帖子、闲置商品描述、表白墙内容、私信、评论、图片）均由用户自行创作与发布。我们不保证任何内容的真实性、准确性、完整性、合法性。</view>
-    <view class="doc-p">3.2 若你认为本平台上的某项内容侵犯了你的合法权益，请通过"在线客服"向我们提供详细说明与证据，我们将在 5 个工作日内依法处理。</view>
+    <view class="doc-p">3.2 若你认为本平台上的某项内容侵犯了你的合法权益，请通过内容详情页的"举报"入口或邮件 {{contactEmail}} 向我们提供详细说明与证据，我们将在 5 个工作日内依法处理。</view>
     <view class="doc-p">3.3 本平台可能因系统维护、网络波动等原因造成信息丢失、延迟或错误展示，对此不承担责任。</view>
   </view>
 

@@ -234,7 +234,9 @@ Page({
     mp.showLoading({ title: '加载好友中', mask: true })
     http.get('/user/follow/list', { type: 'following' }, { silent: true }).then(function (res) {
       mp.hideLoading()
-      const list = (res && res.list) ? res.list : []
+      // FollowController#list 返回 R<List<FollowUserVO>>，request 解包后是裸数组；
+      // 这里同时兼容未来改成 {list:[]} 分页对象的情况
+      const list = Array.isArray(res) ? res : ((res && res.list) || [])
       const filtered = list.filter(function (u) { return !self.data.mentionUserIds.some(function (m) { return m === u.id }) })
       if (!filtered.length) {
         mp.showToast({ title: '暂无可@的好友', icon: 'none' })
@@ -377,6 +379,12 @@ Page({
         else if (res.tapIndex === 1) self.removePost()
       }
     })
+  },
+
+  goReport: function () {
+    const post = this.data.post
+    if (!post) return
+    mp.navigateTo({ url: '/pages/report/report?type=WALL&id=' + post.id })
   },
 
   openEdit: function () {

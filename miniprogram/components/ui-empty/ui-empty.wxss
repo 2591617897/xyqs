@@ -1,0 +1,10 @@
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+}
+.ui-empty-ico { font-size: 120rpx; color: #CBD5E1; }
+.ui-empty-text { margin-top: 24rpx; font-size: 28rpx; color: #64748B; }
+.ui-empty-desc { margin-top: 8rpx; font-size: 24rpx; color: #94A3B8; }

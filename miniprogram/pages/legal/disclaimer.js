@@ -1,11 +1,13 @@
 // pages/legal/disclaimer.js
+const { CONTACT_EMAIL } = require('../../utils/config')
+
 Page({
 
   /**
    * 页面的初始数据
    */
   data: {
-
+    contactEmail: CONTACT_EMAIL
   },
 
   /**

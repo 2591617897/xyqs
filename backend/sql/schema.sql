@@ -39,10 +39,14 @@ CREATE TABLE IF NOT EXISTS t_user (
   fans_count    INT          NOT NULL DEFAULT 0 COMMENT '粉丝数（关注关系计数器，与 t_follow 对账见 R19）',
   follow_count  INT          NOT NULL DEFAULT 0 COMMENT '关注数（关注关系计数器）',
   status        TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0封禁',
+  -- 禁言到期时间：只是投影列，事实源是后台的 t_user_mute，由 campus-admin 跨服务写入。
+  -- NULL = 未禁言；C 端判断只读这一列，后台改事实源后同事务同步到这里。
+  mute_until    DATETIME     DEFAULT NULL COMMENT '禁言到期时间，NULL 表示未禁言',
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_platform_openid (platform, openid),
-  KEY idx_school (school_id, verify_status)
+  KEY idx_school (school_id, verify_status),
+  KEY idx_mute_until (mute_until)
 ) COMMENT '用户';
 
 -- 关注关系（关注/粉丝）

@@ -1,0 +1,14 @@
+.ui-field {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid #F1F5F9;
+}
+.ui-field-label {
+  width: 160rpx;
+  flex: none;
+  font-size: 28rpx;
+  color: #475569;
+  padding-top: 6rpx;
+}
+.ui-field-body { flex: 1; min-width: 0; }

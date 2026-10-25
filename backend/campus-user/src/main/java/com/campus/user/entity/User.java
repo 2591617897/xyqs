@@ -54,7 +54,15 @@ public class User {
     /** 关注数（关注关系计数器，greatest 防负数） */
     private Integer followCount;
 
+    /** 1正常 0封禁 */
     private Integer status;
+
+    /**
+     * 禁言到期时间（t_user.mute_until）。由后台 campus-admin 通过
+     * /internal/admin/users/{id}/mute 写入，本服务只持有这一列、不负责维护事实
+     * —— 真正的禁言记录是 t_user_mute。NULL 表示未禁言。
+     */
+    private LocalDateTime muteUntil;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

@@ -1,0 +1,53 @@
+server:
+  port: 8107
+
+spring:
+  application:
+    name: campus-admin
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123456}
+    hikari:
+      pool-name: ${spring.application.name}HikariPool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 300000
+      connection-test-query: SELECT 1
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+campus:
+  jwt:
+    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
+  admin:
+    jwt:
+      # 必须与网关 campus.admin.jwt.secret 完全一致，否则网关注入的 admin token 在本服务解析不了。
+      # 注意：jjwt 的 Keys.hmacShaKeyFor 要求 HS256 密钥 >= 32 字节，改短会导致启动时 WeakKeyException。
+      secret: ${ADMIN_JWT_SECRET:campus-admin-jwt-secret-key-change-me-please-32+}
+      # 后台令牌远短于小程序令牌（168 小时）
+      expire-hours: ${ADMIN_JWT_EXPIRE_HOURS:8}
+    # 登录风控：连续失败达到 max-fail 次后锁定 lock-minutes 分钟
+    login:
+      max-fail: 5
+      lock-minutes: 15
+    upload:
+      # 广告素材上传：必须与 campus-user 的 campus.upload.dir 指向同一物理目录，
+      # 否则后台上传成功、图片访问 404。静态资源由网关 /uploads/** 路由到 campus-user 提供，本服务不需要映射。
+      dir: ${UPLOAD_DIR:./uploads}
+      base-url: ${UPLOAD_BASE_URL:http://127.0.0.1:8888}
+      max-size: ${ADMIN_UPLOAD_MAX_SIZE:5242880}

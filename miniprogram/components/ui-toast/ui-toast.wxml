@@ -1,0 +1,6 @@
+<view wx:if="{{visible}}" class="ui-toast">
+  <view class="ui-toast-box">
+    <view wx:if="{{icon}}" class="ico ico-{{icon}} ui-toast-ico"></view>
+    <text class="ui-toast-text">{{text}}</text>
+  </view>
+</view>

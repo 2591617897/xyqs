@@ -1,0 +1,6 @@
+.ui-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+}
+.ui-card--bordered { box-shadow: 0 2rpx 12rpx rgba(15, 23, 42, 0.06); }

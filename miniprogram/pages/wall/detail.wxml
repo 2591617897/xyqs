@@ -133,6 +133,10 @@
       <button class="bar-act bar-share" open-type="share" plain style="width: 89rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
         <text class="bar-icon">↗️</text>
       </button>
+      <view class="bar-act" catchtap="goReport">
+        <text class="bar-icon">⚐</text>
+        <text class="bar-num">举报</text>
+      </view>
     </view>
   </view>
 

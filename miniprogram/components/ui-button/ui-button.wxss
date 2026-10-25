@@ -1,0 +1,41 @@
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 80rpx;
+  padding: 0 36rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1;
+  border: 2rpx solid transparent;
+}
+.ui-btn--hover { opacity: 0.85; }
+.ui-btn--block { display: flex; width: 100%; }
+
+/* 主按钮 */
+.ui-btn--primary { background: #006C49; color: #fff; }
+/* 次按钮 */
+.ui-btn--secondary { background: #E6F2EC; color: #006C49; }
+/* 文字按钮 */
+.ui-btn--text { background: transparent; color: #006C49; padding: 0 16rpx; }
+/* 危险 */
+.ui-btn--danger { background: #EF4444; color: #fff; }
+
+/* 尺寸 */
+.ui-btn--default { height: 80rpx; font-size: 30rpx; }
+.ui-btn--mini { height: 56rpx; padding: 0 24rpx; font-size: 24rpx; }
+
+.ui-btn--disabled { opacity: 0.5; }
+
+.ui-btn-spin {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 12rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ui-btn-rotate 0.7s linear infinite;
+}
+@keyframes ui-btn-rotate { to { transform: rotate(360deg); } }

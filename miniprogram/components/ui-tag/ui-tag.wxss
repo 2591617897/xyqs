@@ -1,0 +1,21 @@
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  border: 2rpx solid transparent;
+}
+.ui-tag--default { background: #F1F5F9; color: #475569; }
+.ui-tag--primary { background: #006C49; color: #fff; }
+.ui-tag--success { background: #16A34A; color: #fff; }
+.ui-tag--warning { background: #F59E0B; color: #fff; }
+.ui-tag--danger { background: #EF4444; color: #fff; }
+.ui-tag--plain { background: transparent; border-color: currentColor; }
+.ui-tag--plain.ui-tag--primary { color: #006C49; }
+.ui-tag--plain.ui-tag--danger { color: #EF4444; }
+.ui-tag--plain.ui-tag--warning { color: #F59E0B; }
+.ui-tag--plain.ui-tag--success { color: #16A34A; }
+.ui-tag--plain.ui-tag--default { color: #475569; }

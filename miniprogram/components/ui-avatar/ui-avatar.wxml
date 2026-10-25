@@ -1,0 +1,7 @@
+<view class="ui-avatar" style="width:{{size}}rpx;height:{{size}}rpx">
+  <image wx:if="{{src && !failed}}" class="ui-avatar-img" src="{{src}}" mode="aspectFill" binderror="onErr" />
+  <view wx:else class="ui-avatar-def">
+    <view class="ad-head"></view>
+    <view class="ad-body"></view>
+  </view>
+</view>

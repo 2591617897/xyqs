@@ -1,0 +1,4 @@
+<view class="ui-field">
+  <text wx:if="{{label}}" class="ui-field-label">{{label}}</text>
+  <view class="ui-field-body"><slot></slot></view>
+</view>

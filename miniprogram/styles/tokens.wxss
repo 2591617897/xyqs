@@ -1,0 +1,185 @@
+/* ==========================================================================
+ * 校园趣事 · 设计令牌（Design Tokens）
+ * --------------------------------------------------------------------------
+ * 单一来源。所有页面 / 组件只允许引用这里的变量，不再新增字面量色值。
+ *
+ * 引入方式：app.wxss 顶部 @import "styles/tokens.wxss";（必须在所有规则之前）
+ *
+ * 三条铁律：
+ *   1) 变量定义在 page{} 作用域。custom-tab-bar 不在页面 DOM 树内，取不到这些变量，
+ *      它的 wxss 必须自己冗余写一份副本（否则底栏变黑）。
+ *   2) 任何 var() 都必须带 fallback：var(--brand-500, #006C49)。
+ *      历史上 --mac-cream 因缺 fallback 且未定义而静默失效。
+ *   3) 主色切换期（批次 1）不要删除旧的 --brand-primary / --mac-* 变量，
+ *      它们是存量页面的实际依赖；新代码一律只用本文件的 token。
+ *
+ * 品牌主色 #006C49（森林绿）：白字对比度 6.48:1，满足 WCAG AA（≥4.5:1）。
+ * ========================================================================== */
+
+page {
+  /* ===================== 品牌色 · 森林绿 ===================== */
+  --brand-50: #E8F5EF;               /* 极浅底：选中态、标签底 */
+  --brand-100: #C6E8D8;              /* 浅底：进度条槽、hover */
+  --brand-200: #93D3B9;              /* 描边、次级装饰 */
+  --brand-300: #5FB894;              /* 渐变亮端（注意：不可承载白字） */
+  --brand-500: #006C49;              /* 品牌主色 · 主按钮底 · 白字 6.48:1 */
+  --brand-600: #005A3D;              /* 按下态 */
+  --brand-700: #00452F;              /* 浅底上的深色文字 */
+
+  /* ===================== 情感子色 · 樱花粉降级 ===================== */
+  /* 只服务表白墙 / 点赞 / 收藏，不参与常规 CTA */
+  --like-50: #FFF0F4;
+  --like-100: #FFD9E3;
+  --like-500: #FF4D7D;               /* 图标、文字、浅底。白字仅 3.18:1，禁止填充承载白字 */
+  --like-600: #E11D48;               /* 需承载白字时用这个，4.70:1 */
+
+  /* ===================== 语义色 ===================== */
+  --success-50: #ECFDF5;
+  --success-500: #059669;
+  --warning-50: #FFFBEB;
+  --warning-500: #D97706;
+  --danger-50: #FEF2F2;
+  --danger-500: #DC2626;             /* 白字 4.83:1 */
+  --info-50: #EFF6FF;
+  --info-500: #2563EB;
+
+  /* ===================== 中性色 ===================== */
+  --bg-page: #F5F7F6;                /* 页面底（冷中性偏绿，替代原 #FFF8F5） */
+  --surface: #FFFFFF;                /* 卡片、弹层 */
+  --surface-2: #F0F3F2;              /* 卡内分区、输入框底 */
+  --surface-3: #E8ECEA;              /* 占位图底、骨架屏 */
+  --border: #E3E8E6;                 /* 常规分割线、描边 */
+  --border-strong: #CBD5D1;          /* 强调描边 */
+
+  /* ===================== 文本 ===================== */
+  --text-1: #0F1A16;                 /* 主文本 16.8:1 */
+  --text-2: #4B5A54;                 /* 次要文本 7.27:1 */
+  --text-3: #6B7A74;                 /* 辅助文本 4.50:1（AA 临界） */
+  --text-4: #9AA8A3;                 /* 仅 placeholder / 禁用态，正文禁用 */
+  --text-inverse: #FFFFFF;
+
+  /* ===================== 字号阶梯（8 级） ===================== */
+  --fs-1: 20rpx;                     /* 角标、极小说明 */
+  --fs-2: 22rpx;                     /* 辅助说明、元信息 */
+  --fs-3: 24rpx;                     /* 次要正文 */
+  --fs-4: 26rpx;                     /* 正文默认 */
+  --fs-5: 28rpx;                     /* 强调正文 */
+  --fs-6: 32rpx;                     /* 小标题 */
+  --fs-7: 36rpx;                     /* 区块标题 */
+  --fs-8: 44rpx;                     /* 页面大标题 / 关键数字 */
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.45;
+  --lh-loose: 1.65;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
+
+  /* ===================== 间距（4rpx 栅格） ===================== */
+  --sp-1: 4rpx;
+  --sp-2: 8rpx;
+  --sp-3: 12rpx;
+  --sp-4: 16rpx;
+  --sp-5: 24rpx;
+  --sp-6: 32rpx;
+  --sp-7: 48rpx;
+  --sp-8: 64rpx;
+
+  /* ===================== 圆角 ===================== */
+  --radius-pill: 999rpx;             /* 胶囊、标签、头像 */
+  --radius-sm: 8rpx;                 /* 小标签、缩略图 */
+  --radius-md: 16rpx;                /* 输入框、次级容器 */
+  --radius-lg: 24rpx;                /* 卡片默认 */
+  --radius-xl: 32rpx;                /* 弹层顶角、大卡 */
+
+  /* ===================== 阴影（仅 3 套） ===================== */
+  --shadow-1: 0 2rpx 8rpx rgba(15, 26, 22, 0.04);   /* 卡片静止 */
+  --shadow-2: 0 8rpx 24rpx rgba(15, 26, 22, 0.06);  /* 浮起卡片 */
+  --shadow-3: 0 16rpx 48rpx rgba(15, 26, 22, 0.10); /* 弹层、对话框 */
+
+  /* ===================== 布局 ===================== */
+  --page-x: 32rpx;                   /* 页面左右安全边距 */
+  --navbar-h: 88rpx;                 /* 自定义导航栏内容区高度（不含状态栏） */
+  --tabbar-h: 120rpx;                /* 自定义 tabBar 总高（含安全区） */
+  --sheet-max-h: 78vh;               /* 底部弹层最大高度 */
+  --tap-min: 88rpx;                  /* 最小可点击高度 */
+
+  /* ===================== 层级 ===================== */
+  --z-mask: 1000;
+  --z-sheet: 1010;
+  --z-modal: 1020;
+  --z-toast: 1030;
+
+  /* ===================== 动效 ===================== */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  /* ==========================================================================
+   * 兼容层（批次 1 过渡期 · 全量迁移完成后删除）
+   * --------------------------------------------------------------------------
+   * 中性 / 结构 / 语义「旧变量名」→ 新 token。app.wxss 已不再重定义这些名字，
+   * 故本层在 app.wxss 之前 @import，全站即可自动换色。
+   * 注意：--brand-primary / --brand-secondary / --mac-* 故意不在此桥接，
+   * 它们仍是粉色 shim，需在页面内逐处判断「品牌绿 vs 表白墙粉」后迁移。
+   * ========================================================================== */
+  --text-primary: var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-hint: var(--text-3);
+  --bg-card: var(--surface);
+  --bg-soft: var(--surface-2);
+  --bg-muted: var(--surface-2);
+  --bg-deep: var(--surface-2);
+  --divider: var(--border);
+  --shadow-card: var(--shadow-1);
+  --shadow-float: var(--shadow-2);
+  --price: var(--warning-500);
+  --success: var(--success-500);
+  --warn: var(--warning-500);
+  --danger: var(--danger-500);
+  --brand-accent: var(--warning-500);
+  --brand-gradient: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-300) 100%);
+  --brand-gradient-accent: linear-gradient(135deg, var(--brand-500) 0%, var(--like-500) 100%);
+}
+
+/* ==========================================================================
+ * 通用原子工具类（只放与业务无关的极小工具，不做样式框架）
+ * ========================================================================== */
+
+.ui-page {
+  min-height: 100vh;
+  background: var(--bg-page, #F5F7F6);
+  color: var(--text-1, #0F1A16);
+}
+
+.ui-hairline {
+  position: relative;
+}
+
+/* 1rpx 分割线：用 transform 缩放避免部分机型 1rpx 渲染成 2rpx */
+.ui-hairline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--border, #E3E8E6);
+  transform: scaleY(0.5);
+  transform-origin: 0 100%;
+}
+
+.ui-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

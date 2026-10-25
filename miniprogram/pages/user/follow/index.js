@@ -31,7 +31,12 @@ Page({
     Promise.all([
       request({ url: '/user/follow/list?type=following', silent: true }),
       request({ url: '/user/follow/list?type=fans', silent: true }),
-      request({ url: '/auth/schools', silent: true }).catch(function () { return [] })
+      // 后端 AuthController 无类级 @RequestMapping，学校字典端点是 /schools（不是 /auth/schools）。
+      // 写错会被网关 404，这里别再静默吞掉，至少留一条日志。
+      request({ url: '/schools', silent: true }).catch(function (e) {
+        console.warn('[follow] 学校字典加载失败', e)
+        return []
+      })
     ]).then(function (results) {
       const following = results[0] || []
       const fans = results[1] || []

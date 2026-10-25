@@ -19,7 +19,8 @@
     "pages/chat/index",
     "pages/legal/agreement",
     "pages/legal/privacy",
-    "pages/legal/disclaimer"
+    "pages/legal/disclaimer",
+    "pages/report/report"
   ],
   "window": {
     "backgroundTextStyle": "dark",
@@ -55,5 +56,20 @@
   },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "__usePrivacyCheck__": true,
+  "usingComponents": {
+    "ui-icon": "components/ui-icon/ui-icon",
+    "ui-button": "components/ui-button/ui-button",
+    "ui-empty": "components/ui-empty/ui-empty",
+    "ui-loading": "components/ui-loading/ui-loading",
+    "ui-toast": "components/ui-toast/ui-toast",
+    "ui-sheet": "components/ui-sheet/ui-sheet",
+    "ui-field": "components/ui-field/ui-field",
+    "ui-tag": "components/ui-tag/ui-tag",
+    "ui-card": "components/ui-card/ui-card",
+    "ui-navbar": "components/ui-navbar/ui-navbar",
+    "ui-modal": "components/ui-modal/ui-modal",
+    "ui-avatar": "components/ui-avatar/ui-avatar"
+  }
 }

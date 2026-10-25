@@ -46,6 +46,16 @@ spring:
             - Path=/api/messages/**
           filters:
             - StripPrefix=1
+        # 小程序后台管理：独立令牌体系（campus.admin.jwt.secret），
+        # AuthGlobalFilter 里只对 POST /api/admin/auth/login 精确放行，其余必须带管理员令牌。
+        # 注意这里剥两层：/api 是网关统一前缀，/admin 是后台服务前缀，
+        # 剥完后落到 campus-admin 的 /auth/login、/admins、/roles ...
+        - id: campus-admin
+          uri: lb://campus-admin
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=2
         # 上传后的图片由 user 服务的静态资源映射提供，不做前缀剥离
         - id: campus-file
           uri: lb://campus-user
@@ -57,8 +67,13 @@ spring:
 
 campus:
   jwt:
-    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
+    secret: ${JWT_SECRET:campus-fun-jwt-secret-key-please-change-in-prod-2026}
     expire-hours: 168
+  admin:
+    jwt:
+      # 后台管理员令牌专用密钥，必须与 campus-admin 服务的 campus.admin.jwt.secret 一致。
+      # HS256 要求密钥 >= 32 字节，改短会导致网关启动即抛 WeakKeyException。
+      secret: ${ADMIN_JWT_SECRET:campus-admin-jwt-secret-key-change-me-please-32+}
 
 logging:
   level:

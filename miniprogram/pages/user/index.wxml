@@ -166,10 +166,9 @@
         <text class="mi-tip orange">· 即时推送</text>
         <text class="mi-arrow">›</text>
       </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="demoEntry" data-name="在线客服与反馈">
+      <view class="menu-item" hover-class="tap-scale" bindtap="goFeedback">
         <text class="mi-icon">💬</text>
-        <text class="mi-text">在线客服与反馈</text>
-        <text class="mi-tip">校内值班中</text>
+        <text class="mi-text">帮助与反馈</text>
         <text class="mi-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="goAgreement">
@@ -180,6 +179,12 @@
       <view class="menu-item" hover-class="tap-scale" bindtap="goPrivacy">
         <text class="mi-icon">🛡️</text>
         <text class="mi-text">隐私政策</text>
+        <text class="mi-arrow">›</text>
+      </view>
+      <view class="menu-item" hover-class="tap-scale" bindtap="goPrivacySetting">
+        <text class="mi-icon">🔐</text>
+        <text class="mi-text">隐私设置</text>
+        <text class="mi-tip">授权管理</text>
         <text class="mi-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="goDisclaimer">

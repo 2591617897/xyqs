@@ -1,0 +1,4 @@
+<view wx:if="{{type === 'spinner'}}" class="ui-spin" style="width:{{size}}rpx;height:{{size}}rpx"></view>
+<view wx:else class="ui-skeleton">
+  <view wx:for="{{rows}}" wx:key="index" class="ui-skeleton-row" style="width:{{item}}%"></view>
+</view>

@@ -1,0 +1,8 @@
+<view wx:if="{{visible}}" class="ui-sheet-mask" catchtap="close"></view>
+<view class="ui-sheet {{visible ? 'on' : ''}}" style="padding-bottom:{{safeArea}}px">
+  <view wx:if="{{title}}" class="ui-sheet-head">
+    <text class="ui-sheet-title">{{title}}</text>
+    <text class="ui-sheet-close" catchtap="close">✕</text>
+  </view>
+  <slot></slot>
+</view>

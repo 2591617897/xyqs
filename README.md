@@ -20,7 +20,14 @@
 │   ├── campus-wall/      :8104  # 匿名表白墙、评论、点赞
 │   ├── campus-post/      :8105  # 频道、帖子、评论、点赞
 │   ├── campus-message/   :8106  # 私信会话、聊天记录、消息中心
-│   └── sql/                     # schema.sql / data.sql
+│   ├── campus-admin/     :8107  # 后台管理：独立管理员体系 + 内容/用户/互动/广告/公告/敏感词/看板
+│   └── sql/                     # schema.sql / data.sql + 各期 migration
+├── admin-web/                   # 后台前端（Vue3 + Element Plus + Vite），走网关 /api/admin/**
+│   ├── src/api/                 # content / user / operate / system
+│   └── src/views/               # 内容、用户、工单、聊天、广告、公告、敏感词、校区、看板
+├── scripts/mock-selftest.js     # 模拟数据层自测（96 条断言）
+├── scripts/api-smoke-test.js    # C 端接口自检
+├── scripts/admin-smoke-test.js  # 后台接口自检（56 项，含处置联动端到端）
 ├── miniprogram/                 # 微信小程序端
 │   ├── utils/mock.js            # 本地模拟数据层（假后端，可交互）
 │   ├── pages/index              # 发现首页
@@ -28,8 +35,8 @@
 │   ├── pages/wall/index         # 匿名表白墙
 │   ├── pages/post/*            # 频道帖列表 / 详情 / 发帖
 │   └── pages/user/*            # 我的 / 校园身份认证
-├── scripts/mock-selftest.js     # 模拟数据层自测（96 条断言）
 ├── docs/architecture.md         # 架构设计与关键取舍
+├── docs/admin.md                # 后台管理：模块划分、权限模型、跨服务写与降级
 ├── docs/api.md                  # 接口文档
 └── docker-compose.yml           # MySQL + Redis + Nacos
 ```
@@ -183,7 +190,8 @@ mvn -pl campus-goods   spring-boot:run     # 8103
 mvn -pl campus-wall    spring-boot:run     # 8104
 mvn -pl campus-post    spring-boot:run     # 8105
 mvn -pl campus-message spring-boot:run     # 8106
-mvn -pl campus-gateway spring-boot:run     # 8888 ← 小程序只访问这个
+mvn -pl campus-admin   spring-boot:run     # 8107 ← 后台管理（也要先跑 migration，见下）
+mvn -pl campus-gateway spring-boot:run     # 8888 ← 小程序与后台都只访问这个
 ```
 
 验证：`curl http://127.0.0.1:8888/api/schools` 应返回学校列表。
@@ -199,6 +207,33 @@ node scripts/api-smoke-test.js
 > 说明后端没有以 `-parameters` 编译。父 POM 已开启该参数，所有 `@RequestParam/@PathVariable`
 > 也已显式写死参数名；改完后必须 **先停服务 → `mvn clean install` → 再启动**，
 > 增量编译或旧进程都不会生效。
+
+### 2.1 跑后台（campus-admin + admin-web）
+
+后台是**独立的管理员体系**（独立表 `t_admin_user`、独立 JWT、独立登录接口），
+和小程序的 C 端账号完全不互通；所有请求统一走网关 `/api/admin/**`。
+
+```bash
+# 1) 建后台的表（P0 骨架 + P1 业务，幂等，可重复执行）
+mysql -uroot -p123456 guizhou_campus_fun < backend/sql/migration-20261025-campus-admin.sql
+mysql -uroot -p123456 guizhou_campus_fun < backend/sql/migration-20261025-admin-business.sql
+
+# 2) 起服务（默认账号 admin / admin123）
+mvn -pl campus-admin spring-boot:run       # 8107
+
+# 3) 起后台前端
+cd admin-web && npm install && npm run dev  # 默认 http://localhost:5173
+```
+
+自检（56 项，含「隐藏帖子→查流水→恢复」「禁言→投影→解除」这类端到端联动）：
+
+```bash
+node scripts/admin-smoke-test.js
+# ========== 通过 56 / 失败 0 ==========
+```
+
+> 脚本第 [6] 段会真实改动库里第一条帖子 / 第一个用户的状态，跑完立即还原；
+> 若中途异常退出，按脚本打印的 id 手工恢复即可。
 
 ### 3. 跑小程序（连接真实接口）
 

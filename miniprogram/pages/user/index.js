@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const { mp, toast, timeAgo } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
+const privacy = require('../../utils/privacy')
 const mock = require('../../utils/mock')
 
 Page({
@@ -381,6 +382,43 @@ Page({
 
   goPrivacy: function () {
     mp.navigateTo({ url: '/pages/legal/privacy' })
+  },
+
+  goFeedback: function () {
+    const self = this
+    auth.ensureLogin().then(function () {
+      mp.navigateTo({ url: '/pages/report/report?type=feedback' })
+    }).catch(function () {})
+  },
+
+  /**
+   * 隐私设置：查隐私授权状态并跳微信托管的隐私协议页。
+   * 真正的授权动作由微信官方弹窗完成（app.json 已开 __usePrivacyCheck__，
+   * 且有意不注册 onNeedPrivacyAuthorization），这里只做状态展示与协议查看。
+   */
+  goPrivacySetting: function () {
+    privacy.setting().then(function (s) {
+      if (!s.supported) {
+        toast('当前微信版本较低，请升级微信后再试')
+        return
+      }
+      if (s.needAuthorization) {
+        mp.showModal({
+          title: '隐私授权',
+          content: '你还没有同意' + s.contractName + '。使用头像、相册等功能时，微信会弹窗征得你的同意。',
+          confirmText: '查看协议',
+          cancelText: '知道了',
+          confirmColor: '#006C49',
+          success: function (res) {
+            if (res.confirm) privacy.openContract()
+          }
+        })
+        return
+      }
+      privacy.openContract().then(function (ok) {
+        if (!ok) toast('当前微信版本不支持查看隐私协议')
+      })
+    })
   },
 
   goDisclaimer: function () {

@@ -2,43 +2,19 @@
 /* 配色变量 —— 所有页面和组件复用此系统 */
 /* 适配基础库: 2.11.0+ (CSS 变量支持) */
 
+/* 新版设计令牌（单一来源）。@import 必须写在所有规则之前。 */
+@import "./styles/tokens.wxss";
+/* 统一图标系统（SVG mask + currentColor）。必须紧跟 tokens 之后。 */
+@import "./styles/icons.wxss";
+
 page {
-  /* ========== 马卡龙色系主题变量（可全局换肤） ========== */
-  --brand-primary: #FF8FA8;          /* 主按钮 / 主题强调色  —— 樱花粉深 */
-  --brand-secondary: #FFB5C5;        /* 次主色 / 渐变亮端    —— 樱花粉 */
-  --brand-accent: #E8925E;           /* 深强调色 / 认证色    —— 珊瑚橙 */
-  --brand-gradient: linear-gradient(135deg, #FF8FA8 0%, #FFB5C5 100%);
-  --brand-gradient-accent: linear-gradient(135deg, #D4B5FF 0%, #FFB5C5 50%, #FFC4B5 100%);
+  /* 品牌粉 shim（批次 1 过渡期保留，逐页迁移后删除） */
+  --brand-primary: #FF8FA8;          /* 旧主色（CTA→绿、点赞→粉，逐处判断） */
+  --brand-secondary: #FFB5C5;        /* 旧次主色 / 渐变亮端 */
 
-  /* 背景 */
-  --bg-page: #FFF8F5;                /* 页面奶油粉背景 */
-  --bg-card: #FFFFFF;
-  --bg-soft: #FFF0F3;                /* 柔和粉背景 */
-  --bg-muted: #FFE4EC;               /* 浅粉灰 */
-  --bg-deep: #F5E8EC;                /* 深一点的粉灰 */
-
-  /* 文字 */
-  --text-primary: #2D2D2D;
-  --text-secondary: #6b6b73;
-  --text-hint: #9b9ba3;
-  --text-inverse: #FFFFFF;
-
-  /* 语义色 */
-  --price: #E8925E;                  /* 价格用珊瑚橙 */
-  --success: #95C4A0;                /* 薄荷绿保留成功语义 */
-  --warn: #D97706;
-  --danger: #F472B6;
-
-  /* 分割线 */
-  --divider: #F5E8EC;
-
-  /* 阴影 */
-  --shadow-card: 0 4rpx 16rpx rgba(255, 143, 168, 0.08);
-  --shadow-float: 0 8rpx 32rpx rgba(255, 143, 168, 0.18);
-
-  /* ========== 全局基础样式 ========== */
-  background: var(--bg-page);
-  color: var(--text-primary);
+  /* ========== 全局基础样式（变量由 styles/tokens.wxss 提供） ========== */
+  background: var(--bg-page, #F5F7F6);
+  color: var(--text-1, #0F1A16);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -70,23 +46,23 @@ view, text, button, input, textarea {
 
 /* 卡片 */
 .card {
-  background: var(--bg-card);
-  border-radius: 32rpx;
+  background: var(--surface);
+  border-radius: var(--radius-lg, 24rpx);
   padding: 28rpx;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-1);
 }
 .card + .card { margin-top: 20rpx; }
 .card-flat {
-  background: var(--bg-card);
-  border-radius: 32rpx;
+  background: var(--surface);
+  border-radius: var(--radius-lg, 24rpx);
   overflow: hidden;
 }
 
 /* 文字 */
-.h1 { font-size: 40rpx; font-weight: 700; letter-spacing: -0.5rpx; color: var(--text-primary); }
-.h2 { font-size: 32rpx; font-weight: 700; color: var(--text-primary); }
-.sub { font-size: 26rpx; color: var(--text-secondary); }
-.muted { font-size: 24rpx; color: var(--text-hint); }
+.h1 { font-size: 40rpx; font-weight: 700; letter-spacing: -0.5rpx; color: var(--text-1); }
+.h2 { font-size: 32rpx; font-weight: 700; color: var(--text-1); }
+.sub { font-size: 26rpx; color: var(--text-2); }
+.muted { font-size: 24rpx; color: var(--text-3); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .clamp2 {
   display: -webkit-box;
@@ -119,22 +95,22 @@ view, text, button, input, textarea {
 }
 .btn::after { border: none; }
 .btn-primary {
-  background: var(--brand-gradient);
-  color: var(--text-inverse);
-  box-shadow: 0 4rpx 16rpx rgba(255, 143, 168, 0.3);
+  background: var(--brand-500, #006C49);
+  color: var(--text-inverse, #fff);
+  box-shadow: var(--shadow-2);
 }
 .btn-primary:active {
   transform: scale(0.97);
-  box-shadow: 0 2rpx 8rpx rgba(255, 143, 168, 0.2);
+  box-shadow: var(--shadow-1);
 }
 .btn-ghost {
-  background: var(--bg-card);
-  color: var(--brand-primary);
-  border: 2rpx solid rgba(255, 143, 168, 0.4);
+  background: var(--surface);
+  color: var(--brand-500, #006C49);
+  border: 2rpx solid var(--border-strong);
 }
 .btn-plain {
-  background: var(--bg-soft);
-  color: var(--text-primary);
+  background: var(--surface-2);
+  color: var(--text-1);
 }
 .btn-sm {
   height: 64rpx;
@@ -152,20 +128,20 @@ view, text, button, input, textarea {
   padding: 0 14rpx;
   border-radius: 16rpx;
   font-size: 22rpx;
-  background: var(--bg-soft);
-  color: var(--text-secondary);
+  background: var(--surface-2);
+  color: var(--text-2);
 }
 .tag-brand {
-  background: rgba(255, 143, 168, 0.15);
-  color: var(--brand-primary);
+  background: var(--brand-50);
+  color: var(--brand-500, #006C49);
 }
 .tag-mint {
-  background: rgba(255, 143, 168, 0.15);
-  color: var(--brand-primary);
+  background: var(--success-50);
+  color: var(--success-500);
 }
 .tag-warn {
-  background: rgba(232, 146, 94, 0.15);
-  color: var(--brand-accent);
+  background: var(--warning-50);
+  color: var(--warning-500, #D97706);
 }
 
 /* 头像 */
@@ -173,7 +149,7 @@ view, text, button, input, textarea {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: var(--bg-muted);
+  background: var(--surface-2);
   flex-shrink: 0;
 }
 .avatar-lg {
@@ -190,7 +166,7 @@ view, text, button, input, textarea {
   border-radius: inherit;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #FFE4EC 0%, #EFE4FF 100%);
+  background: linear-gradient(135deg, var(--brand-50) 0%, var(--brand-100) 100%);
 }
 .ad-head {
   position: absolute;
@@ -222,13 +198,13 @@ view, text, button, input, textarea {
   align-items: center;
   justify-content: center;
   gap: 10rpx;
-  background: linear-gradient(135deg, #FFF0F3 0%, #EFE4FF 100%);
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%);
 }
 .ce-icon {
   position: relative;
   width: 72rpx;
   height: 58rpx;
-  border: 4rpx solid var(--bg-deep);
+  border: 4rpx solid var(--surface-3);
   border-radius: 10rpx;
   overflow: hidden;
 }
@@ -239,7 +215,7 @@ view, text, button, input, textarea {
   width: 14rpx;
   height: 14rpx;
   border-radius: 50%;
-  background: var(--bg-deep);
+  background: var(--surface-3);
 }
 .ce-hill {
   position: absolute;
@@ -247,13 +223,13 @@ view, text, button, input, textarea {
   bottom: -14rpx;
   width: 58rpx;
   height: 32rpx;
-  background: var(--bg-deep);
+  background: var(--surface-3);
   border-radius: 6rpx;
   transform: rotate(45deg);
 }
 .ce-text {
   font-size: 22rpx;
-  color: var(--text-hint);
+  color: var(--text-3);
 }
 
 /* 匿名头像色块 —— 马卡龙色系 */
@@ -267,19 +243,19 @@ view, text, button, input, textarea {
   font-size: 32rpx;
   flex-shrink: 0;
 }
-.anon-1 { background: #FFE4EC; }
-.anon-2 { background: #E4F0FF; }
-.anon-3 { background: #EFE4FF; }
-.anon-4 { background: #FFF5E4; }
-.anon-5 { background: #E4F7EA; }
-.anon-6 { background: #FFE8E4; }
-.anon-7 { background: #FFEAD5; }
-.anon-8 { background: #F0E4FF; }
+.anon-1 { background: var(--like-50); }
+.anon-2 { background: var(--info-50); }
+.anon-3 { background: var(--brand-50); }
+.anon-4 { background: var(--warning-50); }
+.anon-5 { background: var(--success-50); }
+.anon-6 { background: var(--like-100); }
+.anon-7 { background: var(--brand-100); }
+.anon-8 { background: var(--info-500); }
 
 /* 分割线 */
 .divider {
   height: 1rpx;
-  background: var(--divider);
+  background: var(--border);
   margin: 20rpx 0;
 }
 
@@ -287,7 +263,7 @@ view, text, button, input, textarea {
 .empty {
   padding: 120rpx 40rpx;
   text-align: center;
-  color: var(--text-hint);
+  color: var(--text-3);
   font-size: 26rpx;
 }
 .empty-icon {
@@ -305,13 +281,13 @@ view, text, button, input, textarea {
   width: 112rpx;
   height: 112rpx;
   border-radius: 50%;
-  background: var(--brand-gradient);
+  background: var(--brand-500);
   color: #fff;
   font-size: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(255, 143, 168, 0.35);
+  box-shadow: var(--shadow-3);
   z-index: 20;
   transition: transform 200ms;
 }
@@ -320,12 +296,12 @@ view, text, button, input, textarea {
 /* 表单 */
 .field {
   padding: 28rpx 0;
-  border-bottom: 1rpx solid var(--divider);
+  border-bottom: 1rpx solid var(--border);
 }
 .field:last-child { border-bottom: none; }
 .field-label {
   font-size: 26rpx;
-  color: var(--text-secondary);
+  color: var(--text-2);
   width: 160rpx;
   flex-shrink: 0;
 }
@@ -333,16 +309,16 @@ view, text, button, input, textarea {
   flex: 1;
   font-size: 30rpx;
   text-align: right;
-  color: var(--text-primary);
+  color: var(--text-1);
 }
 .textarea {
   width: 100%;
   min-height: 220rpx;
   font-size: 30rpx;
   line-height: 1.7;
-  color: var(--text-primary);
+  color: var(--text-1);
 }
-.placeholder { color: var(--text-hint); }
+.placeholder { color: var(--text-3); }
 
 /* 底部安全区 */
 .safe-bottom { padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
@@ -352,11 +328,11 @@ view, text, button, input, textarea {
   background: var(--bg-page);
 }
 .feed-item {
-  background: var(--bg-card);
+  background: var(--surface);
   padding: 24rpx 28rpx 20rpx;
 }
 .feed-item + .feed-item {
-  border-top: 1rpx solid var(--divider);
+  border-top: 1rpx solid var(--border);
 }
 /* 作者行 */
 .feed-user {
@@ -376,11 +352,11 @@ view, text, button, input, textarea {
 .feed-name {
   font-size: 26rpx;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-1);
 }
 .feed-meta {
   font-size: 22rpx;
-  color: var(--text-hint);
+  color: var(--text-3);
   margin-top: 4rpx;
 }
 .feed-device {
@@ -388,8 +364,8 @@ view, text, button, input, textarea {
   align-items: center;
   gap: 4rpx;
   font-size: 22rpx;
-  color: var(--text-secondary);
-  background: var(--bg-soft);
+  color: var(--text-2);
+  background: var(--surface-2);
   padding: 2rpx 10rpx;
   border-radius: 8rpx;
 }
@@ -397,13 +373,13 @@ view, text, button, input, textarea {
 .feed-text {
   font-size: 29rpx;
   line-height: 1.65;
-  color: var(--text-primary);
+  color: var(--text-1);
   margin-top: 16rpx;
   white-space: pre-wrap;
   word-break: break-all;
 }
 .feed-more {
-  color: var(--brand-primary);
+  color: var(--brand-500, #006C49);
   font-size: 27rpx;
 }
 /* 图片九宫格 */
@@ -418,7 +394,7 @@ view, text, button, input, textarea {
   height: 200rpx;
   border-radius: 12rpx;
   overflow: hidden;
-  background: var(--bg-soft);
+  background: var(--surface-2);
 }
 .feed-img-wrap.single {
   width: 70%;
@@ -439,14 +415,14 @@ view, text, button, input, textarea {
   gap: 10rpx;
   margin-top: 16rpx;
   padding: 16rpx 18rpx;
-  background: var(--bg-soft);
+  background: var(--surface-2);
   border-radius: 16rpx;
   font-size: 25rpx;
-  color: var(--text-primary);
+  color: var(--text-1);
   line-height: 1.5;
 }
 .hot-comment .hc-name {
-  color: var(--brand-primary);
+  color: var(--brand-500, #006C49);
   flex-shrink: 0;
 }
 /* 操作栏 */
@@ -454,7 +430,7 @@ view, text, button, input, textarea {
   display: flex;
   align-items: center;
   margin-top: 18rpx;
-  color: var(--text-hint);
+  color: var(--text-3);
   font-size: 24rpx;
 }
 .feed-action {
@@ -462,10 +438,10 @@ view, text, button, input, textarea {
   align-items: center;
   gap: 8rpx;
   padding: 10rpx 14rpx;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 .feed-action.liked {
-  color: var(--brand-primary);
+  color: var(--like-500, #FF4D7D);
 }
 .feed-action-icon {
   font-size: 28rpx;

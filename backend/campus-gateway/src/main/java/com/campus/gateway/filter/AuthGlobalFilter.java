@@ -20,6 +20,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -50,11 +51,27 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      */
     private static final Pattern PUBLIC_PROFILE = Pattern.compile("^/api/user/\\d+/profile$");
 
+    /**
+     * 后台管理路径前缀。
+     *
+     * <p><strong>严禁把 ADMIN_PREFIX 加进上面的 WHITE_PREFIX</strong>：那样后台所有接口都会裸奔。
+     * 后台唯一不需要令牌的接口只有登录，且必须「方法 + 路径」双精确匹配。
+     */
+    private static final String ADMIN_PREFIX = "/api/admin";
+    private static final String ADMIN_LOGIN_EXACT = ADMIN_PREFIX + "/auth/login";
+    /** 后台令牌里的身份类型标记，用于防止小程序用户令牌串用进后台。 */
+    private static final String ADMIN_TOKEN_TYPE = "admin";
+
     private final SecretKey key;
+    /** 后台管理员令牌专用密钥，与 C 端 campus.jwt.secret 完全隔离。 */
+    private final SecretKey adminKey;
 
     public AuthGlobalFilter(@Value("${campus.jwt.secret:campus-fun-jwt-secret-key-please-change-in-prod-2026}")
-                            String secret) {
+                            String secret,
+                            @Value("${campus.admin.jwt.secret:campus-admin-jwt-secret-key-change-me-please-32+}")
+                            String adminSecret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.adminKey = Keys.hmacShaKeyFor(adminSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -62,6 +79,14 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getPath().value();
         String method = request.getMethod() == null ? "GET" : request.getMethod().name();
+
+        // 浏览器 CORS 预检不带凭证，必须放行。
+        // 管理台是浏览器应用且带 Authorization 头，跨域时会先发 OPTIONS；
+        // CorsWebFilter 是 WebFilter，理论上先于本 GlobalFilter 执行并直接 200 短路，
+        // 但网关链路顺序随版本可能变化，这里做一道防御，避免预检被打成 401 导致管理台全站跨域失败。
+        if ("OPTIONS".equals(method)) {
+            return chain.filter(exchange);
+        }
 
         boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith);
         // 公开读：GET /api/user/{数字}/profile 与 GET /api/user/follow/status（精确匹配，全等）
@@ -71,6 +96,29 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
                 || ("GET".equals(method)
                 && PUBLIC_READ_PREFIX.stream().anyMatch(path::startsWith)
                 && PRIVATE_HINTS.stream().noneMatch(path::contains));
+
+        // 后台管理：独立令牌体系（campus.admin.jwt.secret），除登录外全部要求管理员令牌
+        if (path.startsWith(ADMIN_PREFIX)) {
+            if ("POST".equals(method) && ADMIN_LOGIN_EXACT.equals(path)) {
+                return chain.filter(exchange.mutate().request(stripAdminHeaders(request).build()).build());
+            }
+            Claims adminClaims = parse(resolveToken(request), adminKey);
+            if (adminClaims == null) {
+                return unauthorized(exchange, "请先登录管理后台");
+            }
+            // 防 C 端令牌串用：即使密钥泄漏，没有 typ=admin 也进不了后台
+            if (!ADMIN_TOKEN_TYPE.equals(String.valueOf(adminClaims.get("typ")))) {
+                return unauthorized(exchange, "凭证类型不正确");
+            }
+            ServerHttpRequest.Builder adminBuilder = stripAdminHeaders(request);
+            adminBuilder.header("X-Admin-Id", adminClaims.getSubject());
+            // 账号名可能含中文，Header 只允许 ASCII，统一 URL 编码后再传
+            adminBuilder.header("X-Admin-Username", urlEncode(str(adminClaims.get("username"))));
+            adminBuilder.header("X-Admin-Super", str(adminClaims.get("super")));
+            adminBuilder.header("X-Admin-Scope", str(adminClaims.get("scope")));
+            adminBuilder.header("X-Admin-Regions", joinRegions(adminClaims.get("regions")));
+            return chain.filter(exchange.mutate().request(adminBuilder.build()).build());
+        }
 
         Claims claims = null;
         String token = resolveToken(request);
@@ -107,6 +155,65 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             }
         }
         return chain.filter(exchange.mutate().request(builder.build()).build());
+    }
+
+    /**
+     * 解析令牌，失败返回 null（admin 与 user 两套密钥不能混用）。
+     */
+    private Claims parse(String token, SecretKey secretKey) {
+        if (!StringUtils.hasText(token)) {
+            return null;
+        }
+        try {
+            return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+        } catch (Exception e) {
+            log.debug("token 解析失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 后台请求的身份头一律由本过滤器写入。先清除客户端可能伪造的同名头，
+     * 与 C 端 X-User-Id 的处理方式保持一致。
+     */
+    private ServerHttpRequest.Builder stripAdminHeaders(ServerHttpRequest request) {
+        ServerHttpRequest.Builder builder = request.mutate();
+        builder.headers(h -> {
+            h.remove("X-Admin-Id");
+            h.remove("X-Admin-Username");
+            h.remove("X-Admin-Super");
+            h.remove("X-Admin-Scope");
+            h.remove("X-Admin-Regions");
+        });
+        return builder;
+    }
+
+    private String urlEncode(String v) {
+        if (!StringUtils.hasText(v)) {
+            return "";
+        }
+        return URLEncoder.encode(v, StandardCharsets.UTF_8);
+    }
+
+    private String str(Object v) {
+        return v == null ? "" : String.valueOf(v);
+    }
+
+    /**
+     * claim 里的辖区 id 集合转逗号分隔字符串；空字符串表示「不限辖区」。
+     */
+    private String joinRegions(Object regions) {
+        if (!(regions instanceof java.util.Collection<?> list) || list.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Object o : list) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(o);
+        }
+        return sb.toString();
     }
 
     private String resolveToken(ServerHttpRequest request) {

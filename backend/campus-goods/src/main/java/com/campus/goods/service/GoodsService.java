@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
 import com.campus.common.client.FollowClient;
 import com.campus.common.client.NotificationClient;
+import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.UserClient;
 import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
@@ -62,6 +63,7 @@ public class GoodsService {
     private final UserClient userClient;
     private final FollowClient followClient;
     private final NotificationClient notificationClient;
+    private final SecurityGuard securityGuard;
 
     public List<CategoryVO> categories() {
         return CATEGORIES;
@@ -170,6 +172,9 @@ public class GoodsService {
         goods.setUserId(userId);
         goods.setSchoolId(schoolId);
         fillSeller(goods, userId);
+        securityGuard.checkText(userId,
+                (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
+                SecurityGuard.SCENE_FORUM);
         goods.setStatus(1);
         goods.setViewCount(0);
         goods.setLikeCount(0);
@@ -183,6 +188,9 @@ public class GoodsService {
             throw new BizException("已售出的商品不能修改");
         }
         apply(goods, req);
+        securityGuard.checkText(UserContext.requireUserId(),
+                (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
+                SecurityGuard.SCENE_FORUM);
         goodsMapper.updateById(goods);
     }
 
@@ -296,6 +304,7 @@ public class GoodsService {
         if (!StringUtils.hasText(text) && !StringUtils.hasText(imgs)) {
             throw new BizException("说点什么，或者配张图吧");
         }
+        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT);
         GoodsComment comment = new GoodsComment();
         comment.setGoodsId(goodsId);
         comment.setUserId(userId);

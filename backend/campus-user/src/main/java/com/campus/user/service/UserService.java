@@ -2,6 +2,7 @@ package com.campus.user.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.api.R;
+import com.campus.common.client.SecurityGuard;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.client.GoodsCountClient;
@@ -39,6 +40,7 @@ public class UserService {
     private final GoodsCountClient goodsCountClient;
     private final PostCountClient postCountClient;
     private final WallCountClient wallCountClient;
+    private final SecurityGuard securityGuard;
 
     @Value("${campus.verify.auto-approve:true}")
     private boolean autoApprove;
@@ -193,6 +195,9 @@ public class UserService {
                 throw new BizException("所选学校不存在，请重新选择");
             }
             user.setSchoolId(req.getSchoolId());
+        }
+        if (StringUtils.hasText(req.getNickname())) {
+            securityGuard.checkText(userId, req.getNickname().trim(), SecurityGuard.SCENE_PROFILE);
         }
         userMapper.updateById(user);
         return me(userId);

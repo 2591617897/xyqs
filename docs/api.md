@@ -151,6 +151,40 @@
 | GET | `/internal/users/briefs?ids=1,2,3` | 批量用户摘要（会话列表一次拉齐对端昵称/头像，避免 N+1；旧版本无此接口时自动退化为逐个查询） |
 | GET | `/internal/goods/count?userId=&status=` | campus-goods：按作者计商品数，`status` 可选（不传=全部，已物理删除的不计）。供个人主页「闲置在售/累计发布」聚合 |
 | GET | `/internal/posts/count?userId=` | campus-post：该作者 `status=1` 帖子数。供个人主页「帖子数」聚合 |
+| POST | `/internal/admin/posts/{id}/status` | campus-post：后台改帖子 status（1正常 0隐藏） |
+| DELETE | `/internal/admin/posts/comments/{id}` | campus-post：后台删评论，服务端回写 `t_post.comment_count` |
+| POST | `/internal/admin/wall/{id}/status` | campus-wall：后台改墙帖 status |
+| DELETE | `/internal/admin/wall/comments/{id}` | campus-wall：后台删墙评论 |
+| POST | `/internal/admin/goods/{id}/status` | campus-goods：后台改商品 status；已售出（status=2）拒绝改回在售 |
+| DELETE | `/internal/admin/goods/comments/{id}` | campus-goods：后台删商品评论 |
+| POST | `/internal/admin/users/{id}/status` | campus-user：后台封禁/解封 |
+| POST | `/internal/admin/users/{id}/mute` | campus-user：刷禁言投影 `mute_until`，传 null 表示解除 |
+| POST | `/internal/admin/users/{id}/verify` | campus-user：实名审核结论（2通过 3驳回，驳回必填原因） |
+| POST | `/internal/admin/messages/{id}/delete` | campus-message：后台删违规消息（软删 `deleted=1`，幂等） |
+
+> 这一组 `/internal/admin/**` 由 campus-admin 调用，**不经过网关**，走 Nacos 内直连。
+> 调用失败时 campus-admin 会降级为自己直写同一张表，最终结果一致。
+
+## 后台管理（campus-admin 8107，走网关 `/api/admin/**`）
+
+独立的**管理员体系**（`t_admin_user` + 独立 JWT），与小程序 C 端账号不互通。
+完整接口清单、权限点、数据权限与跨服务降级策略见 **[docs/admin.md](./admin.md)**，
+这里只列入口：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/admin/auth/login` | 🔓 管理员登录，默认 `admin` / `admin123` |
+| GET | `/api/admin/auth/info` `/auth/menus` | 当前管理员信息与可见菜单 |
+| GET | `/api/admin/content/**` | 内容管理：帖子 / 表白墙 / 商品 / 评论 / 处置流水 |
+| GET | `/api/admin/users/**` | 用户管理：列表、封禁、禁言、黑名单、实名审核 |
+| GET | `/api/admin/reports/**` | 举报工单受理 |
+| GET | `/api/admin/chat/**` | 会话与聊天记录查询、违规消息删除 |
+| GET | `/api/admin/ads/**` `/notices/**` `/sensitive/**` | 广告位 / 公告 / 敏感词 |
+| GET | `/api/admin/regions/**` | 校区地区树与负责人 |
+| GET | `/api/admin/dashboard/overview` `/daily` | 数据看板 |
+| GET | `/api/admin/logs/operations` `/logs/logins` | 操作日志 / 登录日志 |
+
+自检：`node scripts/admin-smoke-test.js`（56 项）。
 
 ## 错误码
 

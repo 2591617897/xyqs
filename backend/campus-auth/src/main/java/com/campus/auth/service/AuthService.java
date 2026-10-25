@@ -171,7 +171,7 @@ public class AuthService {
         resp.setCity(asText(info.get("city")));
         resp.setDistrict(asText(info.get("district")));
         resp.setAvailable(StringUtils.hasText(resp.getCity()));
-        if (resp.getAvailable() && ipGeoCache.size() < IP_GEO_CACHE_MAX) {
+        if (resp.isAvailable() && ipGeoCache.size() < IP_GEO_CACHE_MAX) {
             ipGeoCache.put(cacheKey, new CachedGeo(resp, System.currentTimeMillis()));
         }
         return resp;

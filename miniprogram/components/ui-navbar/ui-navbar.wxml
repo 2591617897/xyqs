@@ -1,0 +1,12 @@
+<view class="ui-navbar {{fixed ? 'ui-navbar--fixed' : ''}} {{transparent ? 'ui-navbar--transparent' : ''}}" style="height:{{totalHeight}}px;background:{{bg}};color:{{color}}">
+  <view class="ui-navbar-status" style="height:{{statusBarHeight}}px"></view>
+  <view class="ui-navbar-bar" style="height:{{navBarHeight}}px">
+    <view wx:if="{{showBack}}" class="ui-navbar-back" catchtap="onBack">
+      <view class="ico ico-back"></view>
+      <text wx:if="{{backText}}" class="ui-navbar-back-text">{{backText}}</text>
+    </view>
+    <view wx:if="{{title}}" class="ui-navbar-title">{{title}}</view>
+    <view class="ui-navbar-right"><slot name="right"></slot></view>
+  </view>
+  <slot></slot>
+</view>

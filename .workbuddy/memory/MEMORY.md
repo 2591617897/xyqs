@@ -131,3 +131,25 @@
 - 首页频道是**帖子分区**，商品不属于任何频道；选具体频道时不能混排闲置
 - 浏览范围：storage `feedScope`（`utils/scope.js`），`GET /posts|/wall/posts` 支持 `scope=school|city` + `city`；无 schoolId 时不要用残留 scope，胶囊按「选择学校」渲染
 - `campus-common` 与 `campus-user` 各有一个 `LoginOrCreateReq`，改字段两个都要改
+
+## 接口路径 / 返回结构（踩过坑，别再犯）
+- **学校字典是 `/schools`，不是 `/auth/schools`**：`AuthController` **无类级 `@RequestMapping`**，
+  只有 `@PostMapping("/auth/login")` 与 `@GetMapping("/schools")`。写 `/auth/schools` 网关直接 404
+- **`GET /user/follow/list` 返回裸数组**（`R<List<FollowUserVO>>` → request.js 解包后是 Array），
+  **不是 `{list:[]}`**。一律 `Array.isArray(res) ? res : ((res && res.list) || [])` 读
+
+## 视觉 / UI 重构（2026-10-25 拍板，进行中）
+- 决策：**自建 `ui-*` 轻量组件库，不引入 Vant / TDesign / WeUI**（项目无 package.json、无 CI，
+  且已有 84 个公共 class / 渐变 Hero / CSS 画形头像 / 自研 swipe-cell 都无第三方对应物）
+- **主色森林绿 `--brand-500 #006C49`**（白字对比度 6.48 ✅；原 `#FF8FA8` 只有 2.15，是硬指标不合格）。
+  樱花粉降级为**情感子色** `--like-500 #FF4D7D`，只服务表白墙 / 点赞 / 收藏
+- token 单一来源 `styles/tokens.wxss`、图标 `styles/icons.wxss`，`app.wxss` 顶部 `@import`
+- 图标统一 **SVG data-URI + `-webkit-mask-image` + `background-color:currentColor`**（可变色、
+  ~16KB、无字体机型差异）；命名 `ico-{语义}[-fill|-o]`，**尺寸不进 class**，走 ui-icon 的 `size`
+- ⚠️ **`page{}` 作用域的 CSS 变量对 `custom-tab-bar` 失效**（不在页面 DOM 树内）→ 必须在
+  `custom-tab-bar/index.wxss` 顶部**冗余写一份 token 副本**，否则底栏变黑
+- ⚠️ 所有 `var()` **必须带 fallback**（`--mac-cream` 未定义且无 fallback，已静默失效一次）
+- 阴影只留 3 个 token（原 39 套）：`--shadow-1/2/3` 全部 `rgba(15,23,42,…)` 冷中性
+- 卡片圆角统一 `--radius-lg 24rpx`；弹层高度统一 `--sheet-max-h 78vh`（原 7 档）；
+  tabbar 预留统一 `--tabbar-height 120rpx`（原 170/180/190 三档不一致）
+- `pages/user/index.wxss` 的 23 个 `--mac-*` 局部变量覆盖了 9 个全局同名变量 → 必须删

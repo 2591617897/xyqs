@@ -1,0 +1,4 @@
+<view class="ui-btn ui-btn--{{type}} ui-btn--{{size}} {{block ? 'ui-btn--block' : ''}} {{disabled ? 'ui-btn--disabled' : ''}} {{loading ? 'ui-btn--loading' : ''}}" hover-class="ui-btn--hover" catchtap="onTap">
+  <view wx:if="{{loading}}" class="ui-btn-spin"></view>
+  <slot></slot>
+</view>

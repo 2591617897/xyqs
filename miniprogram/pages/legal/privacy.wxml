@@ -1,7 +1,7 @@
 <view class="page">
   <view class="doc-header">
     <view class="doc-title">校园趣事 · 隐私政策</view>
-    <view class="doc-meta">更新日期：2026-09-01 · 生效日期：2026-09-01</view>
+    <view class="doc-meta">更新日期：2026-10-25 · 生效日期：2026-10-25</view>
   </view>
 
   <view class="doc-callout">
@@ -19,9 +19,9 @@
         <view class="doc-td">是否必填</view>
       </view>
       <view class="doc-tr">
-        <view class="doc-td">微信昵称、头像</view>
+        <view class="doc-td">昵称、头像</view>
         <view class="doc-td">登录后展示身份</view>
-        <view class="doc-td">是（微信授权后自动获取）</view>
+        <view class="doc-td">是（由你主动填写，我们不读取你的微信资料）</view>
       </view>
       <view class="doc-tr">
         <view class="doc-td">学校名称、学号、学生证照片</view>
@@ -44,9 +44,9 @@
         <view class="doc-td">系统自动收集</view>
       </view>
       <view class="doc-tr">
-        <view class="doc-td">位置（仅你主动同意时）</view>
-        <view class="doc-td">定位同城高校，展示同市信息流</view>
-        <view class="doc-td">否（默认关闭）</view>
+        <view class="doc-td">网络 IP 归属地（不含设备定位）</view>
+        <view class="doc-td">推荐同城高校、展示同市信息流</view>
+        <view class="doc-td">否（自动获取，可关闭）</view>
       </view>
     </view>
   </view>
@@ -83,7 +83,7 @@
       <view class="doc-li">✅ 删除：你可以删除自己发布的帖子、闲置、评论、私信</view>
       <view class="doc-li">✅ 撤回：2 分钟内可撤回已发送的私信（双方可见提示）</view>
       <view class="doc-li">✅ 注销账户：进入"我的 → 设置 → 注销账户"申请，30 天内冻结后彻底删除</view>
-      <view class="doc-li">✅ 查询/导出：若你需要获取你在本平台的全部个人信息，可通过"在线客服"联系我们，7 个工作日内提供</view>
+      <view class="doc-li">✅ 查询/导出：若你需要获取你在本平台的全部个人信息，可通过"我的 → 帮助与反馈"或邮件 {{contactEmail}} 联系我们，7 个工作日内提供</view>
     </view>
   </view>
 
@@ -112,11 +112,19 @@
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">九、联系我们</view>
-    <view class="doc-p">如你对本隐私政策有任何疑问、意见或建议，或想行使你的数据权利，可通过"我的 → 在线客服与反馈"与我们联系，我们将在 3 个工作日内回复。</view>
+    <view class="doc-h2">九、内容举报</view>
+    <view class="doc-p">9.1 帖子、表白墙、闲置的详情页右上角均有「举报」入口，你也可以在评论区举报不当评论。</view>
+    <view class="doc-p">9.2 可举报的情形包括：垃圾广告、色情低俗、人身攻击与网暴、违法违规、虚假信息等。</view>
+    <view class="doc-p">9.3 我们会在 7 个工作日内完成核实；对确认违规的内容采取限制展示、屏蔽或删除，并对账号视情节处理。</view>
+    <view class="doc-p">9.4 举报人信息仅用于本次处理，不会向被举报人披露。</view>
   </view>
 
-  <view class="doc-foot">
-    <text>📧 隐私投诉专用邮箱：privacy@xiaoyuanquishi.example</text>
+  <view class="doc-section">
+    <view class="doc-h2">十、联系我们</view>
+    <view class="doc-p">如你对本隐私政策有任何疑问、意见或建议，或想行使你的数据权利，可通过"我的 → 帮助与反馈"或邮件 {{contactEmail}} 与我们联系，我们将在 3 个工作日内回复。</view>
+  </view>
+
+  <view class="doc-foot" bindtap="copyEmail">
+    <text>📧 隐私投诉专用邮箱：{{contactEmail}}（点击复制）</text>
   </view>
 </view>

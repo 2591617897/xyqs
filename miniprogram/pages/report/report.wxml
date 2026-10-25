@@ -1,0 +1,38 @@
+<view class="rp">
+  <view class="rp-card">
+    <view class="rp-row">
+      <text class="rp-label">举报对象</text>
+      <text class="rp-value">{{targetLabel}}</text>
+    </view>
+    <view class="rp-tip" wx:if="{{isFeedback}}">你的每一条反馈我们都会认真查看</view>
+  </view>
+
+  <view class="rp-card">
+    <view class="rp-title">举报原因</view>
+    <view class="rp-reasons">
+      <view
+        wx:for="{{reasons}}"
+        wx:key="index"
+        class="rp-chip {{reasonIndex === index ? 'rp-chip--on' : ''}}"
+        data-index="{{index}}"
+        bindtap="chooseReason"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <view class="rp-card">
+    <view class="rp-title">补充说明（选填）</view>
+    <textarea
+      class="rp-textarea"
+      maxlength="500"
+      placeholder="请描述具体情况，便于我们更快处理"
+      value="{{reasonDesc}}"
+      bindinput="onDescInput"
+    ></textarea>
+  </view>
+
+  <button class="rp-submit" bindtap="submit" loading="{{submitting}}" disabled="{{submitting}}">
+    {{isFeedback ? '提交反馈' : '提交举报'}}
+  </button>
+  <view class="rp-foot">提交即代表你确认内容真实，恶意举报可能被限制账号功能</view>
+</view>

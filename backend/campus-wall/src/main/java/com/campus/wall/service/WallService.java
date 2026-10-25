@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
 import com.campus.common.client.FollowClient;
 import com.campus.common.client.NotificationClient;
+import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
@@ -45,6 +46,7 @@ public class WallService {
     private final LikeMapper likeMapper;
     private final FollowClient followClient;
     private final NotificationClient notificationClient;
+    private final SecurityGuard securityGuard;
 
     public R.Page<WallPost> page(Long schoolId, Long userId, long page, long size) {
         return page(schoolId, userId, page, size, null, null);
@@ -150,6 +152,8 @@ public class WallService {
         post.setCommentCount(0);
         post.setAnonName(anonName(userId, 0L));
         post.setAnonAvatar(anonAvatar(userId, 0L));
+        // 内容安全：匿名内容同样要拦，且这是最高风险的 UGC 场景
+        securityGuard.checkText(userId, post.getContent(), SecurityGuard.SCENE_FORUM);
         postMapper.insert(post);
 
         // 用帖子 id 再派生一次，保证同一个人在不同帖子下昵称不同，避免被串联
@@ -261,6 +265,7 @@ public class WallService {
             comment.setReplyToName(null);
         }
         comment.setAnonName(anonName(userId, postId));
+        securityGuard.checkText(userId, content, SecurityGuard.SCENE_COMMENT);
         commentMapper.insert(comment);
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
@@ -385,6 +390,7 @@ public class WallService {
             throw BizException.forbidden("只能编辑自己发布的内容");
         }
         // 用 UpdateWrapper 显式 set，保证「清空图片」也能写回 null
+        securityGuard.checkText(userId, req.getContent().trim(), SecurityGuard.SCENE_FORUM);
         postMapper.update(null, Wrappers.<WallPost>lambdaUpdate()
                 .eq(WallPost::getId, id)
                 .set(WallPost::getContent, req.getContent().trim())

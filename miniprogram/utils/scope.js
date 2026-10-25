@@ -5,8 +5,11 @@
  * - scope: 'city'   本市（同一城市所有高校的内容）
  * - city:  本市模式下的城市名；默认学校所在市，定位到异地时可为定位城市
  *
- * 位置信息 API：wx.getLocation 取经纬度 → 后端逆地理出城市（/auth/geo/city，
- * 腾讯位置服务），失败时返回 null，前端回退到学校所在市。
+ * 位置信息 API：取当前城市走「IP 归属地」（后端按请求来源 IP 解析，见
+ * /auth/geo/ip-city）。**不使用 wx.getLocation** —— 它自 2022-07-14 起属隐私接口，
+ * 必须在 app.json 声明 requiredPrivateInfos 并在 mp 后台申请开通，否则真机直接 fail；
+ * 而本场景只需要城市粒度，IP 归属地足够且用户完全无感。
+ * 失败时返回 null，前端回退到学校所在市。
  */
 const http = require('./request')
 const { mp } = require('./util')
@@ -57,29 +60,16 @@ function label(schoolName, schoolCity) {
 }
 
 /**
- * 位置信息 API：定位当前城市。任何一步失败都返回 null（静默降级，不打扰用户）。
+ * 位置信息 API：解析当前城市（IP 归属地，无需用户授权）。
+ * 任何一步失败都返回 null（静默降级，不打扰用户）。
  * @returns {Promise<{city: string, district: string}|null>}
  */
 function resolveGeoCity() {
-  return new Promise(function (resolve) {
-    mp.getLocation({
-      type: 'gcj02',
-      success: function (res) {
-        http.get('/auth/geo/city', {
-          lat: res.latitude,
-          lng: res.longitude
-        }, { silent: true }).then(function (geo) {
-          resolve(geo && geo.available && geo.city
-            ? { city: geo.city, district: geo.district || '' }
-            : null)
-        }).catch(function () {
-          resolve(null)
-        })
-      },
-      fail: function () {
-        resolve(null)
-      }
-    })
+  return http.get('/auth/geo/ip-city', null, { silent: true }).then(function (geo) {
+    if (!geo || !geo.available || !geo.city) return null
+    return { city: geo.city, district: geo.district || '' }
+  }).catch(function () {
+    return null
   })
 }
 
