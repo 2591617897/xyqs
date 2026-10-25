@@ -12,26 +12,34 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 微信内容安全：文本同步审核（msg_sec_check v2）+ 图片异步审核（media_check_async v2）。
  *
- * 放在 campus-auth 的原因：appid / appsecret 与全仓唯一的 RestTemplate 都在本模块，
+ * 放在 campus-auth 的原因：appid / appsecret 只在 auth 手里，
  * 业务服务只需要通过 {@code SecurityClient} 发一行 Feign 调用。
+ *
+ * <p><b>传输层注意</b>：这三个接口（token / msg_sec_check / media_check_async）都直接用
+ * JDK {@link HttpClient}，不走模块里的 {@code RestTemplate}。原因见 {@code AuthConfig}
+ * 的注释——Spring 的请求工厂会退化成 chunked，而微信对 chunked 的 POST 回 HTTP 412
+ * （无响应体），且会被 fail-open 吞成「放行」，极难排查。
  *
  * 设计取舍：
  * <ul>
@@ -41,7 +49,8 @@ import java.util.Map;
  *   <li><b>默认关闭</b>（campus.wx.sec-check.enabled=false）。未配 appsecret 时不报错、
  *       不影响发帖，避免本地与 CI 被外部依赖卡住。</li>
  *   <li>微信侧异常（网络、配额、未知 errcode）一律 <b>放行</b>（fail-open）并打日志：
- *       审核是增强能力，不能变成全站发不出内容的单点故障。</li>
+ *       审核是增强能力，不能变成全站发不出内容的单点故障。副作用是「配置错了也不报错」，
+ *       所以提供了 {@link #diagnose} 自检接口。</li>
  * </ul>
  *
  * <p>文本与图片的差别：文本同步出结论，命中就可以在落库前拦掉（REJECT）；
@@ -90,7 +99,19 @@ public class WxSecurityService {
     /** 来源：2 = 系统自动（与后台人工=1、举报=3 区分） */
     private static final int SOURCE_SYSTEM = 2;
 
-    private final RestTemplate restTemplate;
+    /**
+     * 微信接口专用客户端。
+     *
+     * <p>用 JDK HttpClient 而不是模块里的 RestTemplate：Spring 的请求工厂在写请求体时
+     * 长度未知 → 退化成 chunked → 微信 POST 接口回 <b>HTTP 412（无 body）</b>。
+     * {@code BodyPublishers.ofString(...)} 一定带 Content-Length，实测 200。
+     * 强制 HTTP/1.1：微信不支持 h2 升级。
+     */
+    private static final HttpClient HTTP = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
+
     private final WxOpenidMapper wxOpenidMapper;
     private final MediaCheckMapper mediaCheckMapper;
     private final ContentAuditTrailWriter auditWriter;
@@ -432,21 +453,30 @@ public class WxSecurityService {
         return s.length() <= BRIEF_LEN ? s : s.substring(0, BRIEF_LEN);
     }
 
-    /** 调微信接口；任何异常返回 null（由调用方按 fail-open 处理） */
+    /** 调微信接口；任何异常 / 非 200 返回 null（由调用方按 fail-open 处理） */
     private JsonNode postJson(String urlTemplate, String token, Map<String, Object> body) {
+        String url = String.format(urlTemplate, token);
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            String raw = restTemplate.postForObject(
-                    String.format(urlTemplate, token),
-                    new HttpEntity<>(body, headers),
-                    String.class);
-            if (!StringUtils.hasText(raw)) {
+            String json = JSON.writeValueAsString(body);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("Content-Type", "application/json; charset=UTF-8")
+                    .header("Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> resp = HTTP.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (resp.statusCode() != 200 || !StringUtils.hasText(resp.body())) {
+                // 412 不是 errcode：微信侧的连接层拒绝，多半是 chunked / 安全校验，
+                // 这种情况下"失败"会表现为"全部放行"，必须显式打出来
+                log.warn("[sec-check] 微信接口返回 HTTP {}（412 常见于 chunked 传输被拒）path={}",
+                        resp.statusCode(), pathOnly(url));
                 return null;
             }
-            return JSON.readTree(raw);
+            return JSON.readTree(resp.body());
         } catch (Exception e) {
-            log.warn("[sec-check] 调用微信内容安全接口失败：{}", e.getMessage());
+            log.warn("[sec-check] 调用微信内容安全接口失败：{}: {}",
+                    e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }
@@ -461,30 +491,64 @@ public class WxSecurityService {
         if (!forceRefresh && cachedToken != null && now < tokenExpireAt) {
             return cachedToken;
         }
-        try {
-            String raw = restTemplate.getForObject(
-                    String.format(TOKEN_URL, appid, appsecret), String.class);
-            if (!StringUtils.hasText(raw)) {
-                log.error("[sec-check] 获取 access_token 返回空");
-                return null;
-            }
-            JsonNode node = JSON.readTree(raw);
-            String token = node.path("access_token").asText("");
-            if (!StringUtils.hasText(token)) {
-                // 常见：40125 appsecret 错误 / 40164 IP 不在白名单
-                log.error("[sec-check] 获取 access_token 失败：errcode={} errmsg={}",
-                        node.path("errcode").asInt(-1), node.path("errmsg").asText(""));
-                return null;
-            }
-            cachedToken = token;
-            long expiresIn = node.path("expires_in").asLong(7200L);
-            tokenExpireAt = now + expiresIn * 1000L - TOKEN_SAFETY_MS;
-            log.info("[sec-check] access_token 已刷新，{}s 后过期", expiresIn);
-            return token;
-        } catch (Exception e) {
-            log.error("[sec-check] 获取 access_token 异常：{}", e.getMessage());
+        JsonNode node = fetchToken();
+        if (node == null) {
             return null;
         }
+        String token = node.path("access_token").asText("");
+        if (!StringUtils.hasText(token)) {
+            // 常见：40125 appsecret 错误 / 40164 IP 不在白名单
+            log.error("[sec-check] 获取 access_token 失败：errcode={} errmsg={}",
+                    node.path("errcode").asInt(-1), node.path("errmsg").asText(""));
+            return null;
+        }
+        cachedToken = token;
+        long expiresIn = node.path("expires_in").asLong(7200L);
+        tokenExpireAt = now + expiresIn * 1000L - TOKEN_SAFETY_MS;
+        log.info("[sec-check] access_token 已刷新，{}s 后过期", expiresIn);
+        return token;
+    }
+
+    /** 拉一次 access_token 的原始响应（自检要看 errcode/errmsg，不能只拿 null） */
+    private JsonNode fetchToken() {
+        String url = String.format(TOKEN_URL, appid, appsecret);
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(8))
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = HTTP.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (!StringUtils.hasText(resp.body())) {
+                log.error("[sec-check] 获取 access_token 返回空，HTTP {}", resp.statusCode());
+                return null;
+            }
+            return JSON.readTree(resp.body());
+        } catch (Exception e) {
+            log.error("[sec-check] 获取 access_token 异常：{}: {}",
+                    e.getClass().getSimpleName(), e.getMessage());
+            return null;
+        }
+    }
+
+    /** 日志里只留路径，别把 access_token / secret 打出去 */
+    private static String pathOnly(String url) {
+        int q = url == null ? -1 : url.indexOf('?');
+        return q > 0 ? url.substring(0, q) : url;
+    }
+
+    /** 把 access_token 接口的错误码翻译成「人话」，自检输出用 */
+    private static String tokenHint(int errcode, String errmsg) {
+        return switch (errcode) {
+            case 0 -> "凭据正常";
+            case 40013 -> "AppID 不合法：检查 WX_APPID 是否与小程序后台一致";
+            case 40125 -> "AppSecret 错误：去公众平台重置后更新 WX_APPSECRET（改完需重启 auth）";
+            case 40164 -> "调用 IP 不在白名单：公众平台 → 开发管理 → 开发设置 → IP 白名单，"
+                    + "把本机/服务器的公网出口 IP 加进去（errmsg 里通常带被拒的 IP）";
+            case 45009 -> "接口调用次数超限（每日 2000 次），明天重置或申请提额";
+            case 45011 -> "频率限制，稍后重试";
+            default -> "未知错误 errcode=" + errcode + " errmsg=" + errmsg;
+        };
     }
 
     private synchronized void invalidateToken() {
@@ -498,5 +562,152 @@ public class WxSecurityService {
                 "active=" + active(),
                 "mediaActive=" + mediaActive(),
                 "callbackReady=" + callbackReady());
+    }
+
+    // ==================== 自检 ====================
+
+    /** 探测文本：这几类内容模型判定很稳定，能区分「真通了」和「碰巧 pass」 */
+    private static final String PROBE_TEXT = "代开发票，需要的私聊";
+
+    /**
+     * 配置自检：一次回答四个问题 —— 开关开了吗、凭据对吗、IP 白名单过了吗、真能判出违规吗。
+     *
+     * <p>为什么需要它：msg_sec_check 是 <b>fail-open</b> 的，配置错了（secret 错、IP 没加白、
+     * 开关忘开）表现都是「发帖一切正常」，只有翻日志才看得到 warn。上线前跑一次这个接口，
+     * 就不用靠猜。
+     *
+     * <p>自检<b>不会</b>写 t_content_audit（用的是独立的探测请求，不经过 {@link #checkText}），
+     * 可以随时重复调用；每次消耗 1 次 msg_sec_check 配额。
+     *
+     * @param userId    可选，指定用哪个用户的 openid 探测；不传则取库里最新的微信用户
+     * @param probeText 可选，自定义探测文本；不传用内置的违规样本
+     */
+    public Map<String, Object> diagnose(Long userId, String probeText) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("enabled", enabled);
+        out.put("active", active());
+        out.put("appid", mask(appid));
+        out.put("secretConfigured", StringUtils.hasText(appsecret));
+        out.put("mediaActive", mediaActive());
+        out.put("callbackConfigured", callbackReady());
+
+        List<String> hints = new ArrayList<>();
+        if (!enabled) {
+            hints.add("总开关关着：设环境变量 WX_SEC_CHECK=true 后重启 campus-auth");
+        }
+        if (!StringUtils.hasText(appid)) {
+            hints.add("WX_APPID 为空，微信侧无法认定调用方");
+        }
+        if (!StringUtils.hasText(appsecret)) {
+            hints.add("WX_APPSECRET 为空：appid 与 appsecret 必须同时在位，缺一个整条链路都不生效");
+        }
+        if (!callbackReady()) {
+            hints.add("WX_CALLBACK_TOKEN 为空：图片审核结论回调会被拒绝（文本审核不受影响）");
+        }
+
+        Map<String, Object> tokenInfo = new LinkedHashMap<>();
+        Map<String, Object> probeInfo = new LinkedHashMap<>();
+
+        if (!active()) {
+            tokenInfo.put("ok", false);
+            tokenInfo.put("hint", "开关未开或凭据不全，未发起请求");
+        } else {
+            JsonNode node = fetchToken();
+            int errcode = node == null ? -1 : node.path("errcode").asInt(0);
+            String errmsg = node == null ? "no-response（网络不通或被墙）" : node.path("errmsg").asText("");
+            String token = node == null ? "" : node.path("access_token").asText("");
+            boolean tokenOk = StringUtils.hasText(token);
+            tokenInfo.put("ok", tokenOk);
+            tokenInfo.put("errcode", errcode);
+            tokenInfo.put("errmsg", errmsg);
+            tokenInfo.put("hint", tokenHint(errcode, errmsg));
+            if (!tokenOk) {
+                hints.add("access_token 拿不到 → " + tokenHint(errcode, errmsg));
+            } else {
+                // token 有效就顺手刷进缓存，省得业务请求再拉一次
+                synchronized (this) {
+                    cachedToken = token;
+                    long expiresIn = node.path("expires_in").asLong(7200L);
+                    tokenExpireAt = System.currentTimeMillis() + expiresIn * 1000L - TOKEN_SAFETY_MS;
+                }
+                // 用 int 而不是 long：项目全局把 Long 序列化成字符串，int 才保持数字
+                tokenInfo.put("expiresIn", node.path("expires_in").asInt(7200));
+                probe(token, userId, probeText, probeInfo, hints);
+            }
+        }
+
+        out.put("token", tokenInfo);
+        out.put("probe", probeInfo);
+        out.put("hints", hints);
+        out.put("ready", Boolean.TRUE.equals(tokenInfo.get("ok")) && Boolean.TRUE.equals(probeInfo.get("ok")));
+        return out;
+    }
+
+    /** 真发一次 msg_sec_check，看是不是能判出违规 */
+    private void probe(String token, Long userId, String probeText,
+                       Map<String, Object> probeInfo, List<String> hints) {
+        String openid = openidOf(userId);
+        if (!StringUtils.hasText(openid)) {
+            openid = wxOpenidMapper.selectAnyOpenid();
+        }
+        if (!StringUtils.hasText(openid)) {
+            probeInfo.put("ok", false);
+            probeInfo.put("hint", "库里没有可用的微信 openid，msg_sec_check v2 必须带 openid，无法探测");
+            hints.add("t_user 里没有 platform='wx' 的 openid：先在小程序里登录一次再自检");
+            return;
+        }
+        String text = StringUtils.hasText(probeText) ? probeText : PROBE_TEXT;
+        Map<String, Object> body = new HashMap<>(4);
+        body.put("content", text.length() > MAX_CONTENT_LEN ? text.substring(0, MAX_CONTENT_LEN) : text);
+        body.put("version", 2);
+        body.put("scene", 3);
+        body.put("openid", openid);
+
+        JsonNode resp = postJson(MSG_CHECK_URL, token, body);
+        int errcode = resp == null ? -1 : resp.path("errcode").asInt(0);
+        String errmsg = resp == null ? "no-response（网络不通 / 超时）" : resp.path("errmsg").asText("");
+        String suggest = resp == null ? "" : resp.path("result").path("suggest").asText("");
+        int label = resp == null ? 0 : resp.path("result").path("label").asInt(0);
+        boolean ok = resp != null && (errcode == 0 || errcode == ERR_RISKY);
+
+        probeInfo.put("ok", ok);
+        probeInfo.put("openid", mask(openid));
+        probeInfo.put("text", text);
+        probeInfo.put("errcode", errcode);
+        probeInfo.put("errmsg", errmsg);
+        probeInfo.put("suggest", suggest);
+        probeInfo.put("label", label);
+        probeInfo.put("verdict", verdictOf(errcode, suggest));
+
+        if (errcode != 0 && errcode != ERR_RISKY) {
+            hints.add("msg_sec_check 调用失败 errcode=" + errcode + " errmsg=" + errmsg
+                    + (errcode == 61010 ? "（该用户 2 年内未访问过小程序，openid 已失效）" : ""));
+            return;
+        }
+        // 通了但没结果字段，通常是打错了接口（v1 不返回 result.suggest）
+        if (errcode == 0 && !StringUtils.hasText(suggest)) {
+            hints.add("接口通了但没有 result.suggest：确认请求的是 /wxa/msg_sec_check 且 version=2");
+        }
+    }
+
+    private static String verdictOf(int errcode, String suggest) {
+        if (errcode == ERR_RISKY) {
+            return "risky";
+        }
+        if (errcode != 0) {
+            return "error";
+        }
+        return StringUtils.hasText(suggest) ? suggest : "unknown";
+    }
+
+    /** 凭据脱敏：保留首尾各 4 位，既能核对又不至于把密钥写进日志/响应体 */
+    private static String mask(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return "";
+        }
+        if (raw.length() <= 10) {
+            return raw.charAt(0) + "****";
+        }
+        return raw.substring(0, 4) + "****" + raw.substring(raw.length() - 4);
     }
 }

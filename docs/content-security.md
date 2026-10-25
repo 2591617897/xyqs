@@ -66,6 +66,7 @@
 ### 5.1 服务端
 
 ```bash
+WX_APPID=wx2cac838bfcc963d7
 WX_APPSECRET=<小程序 appsecret>
 WX_SEC_CHECK=true           # 内容安全总开关（默认 false）
 WX_MEDIA_CHECK=true         # 图片异步审核（默认跟随总开关）
@@ -73,6 +74,14 @@ WX_CALLBACK_TOKEN=<自定义 32 位随机串>
 ```
 
 `campus-auth/application.yml` 已接线：`campus.wx.sec-check.enabled / media-enabled / callback-token`。
+
+两种写法，任选其一：
+
+- **本地开发**：写进 `campus-auth/src/main/resources/application-local.yml`（已 gitignore，默认 profile 就是 local）
+- **服务器**：写进环境变量（systemd `Environment=` / docker-compose `environment:`）
+
+> ⚠️ 这些值**只在启动时读取一次**，改完必须重启 `campus-auth`（8101）才生效。
+> 业务服务（post / wall / goods / message / user）不用重启，它们只发 Feign。
 
 ### 5.2 微信公众平台
 
@@ -85,19 +94,84 @@ WX_CALLBACK_TOKEN=<自定义 32 位随机串>
    - 加密方式：**明文模式**（安全模式需 AES 解密，本项目未实现）
 3. 保存后微信会立即 GET 一次该 URL 验签，返回 `echostr` 才算通过。
 
-### 5.3 验证
+### 5.3 验证（自检接口，推荐）
+
+配置错了不会报错——**fail-open 会把「没生效」掩盖成「用户发帖一切正常」**。所以提供了一个自检接口，
+它会真拉一次 access_token、真发一条 msg_sec_check，把结论和修复建议一起返回：
 
 ```bash
-# 开关与凭据状态（Feign 直连 /internal/security/enabled，需绕过网关）
-curl http://<auth-host>:8101/internal/security/enabled
-# → {"code":0,"data":{"text":true,"media":true,"callback":true}}
+curl http://<auth-host>:8101/internal/security/selfcheck
 ```
 
-发一条含敏感词的帖子，应看到：HTTP 400 + 「内容涉嫌违规，请修改后再发布」，
+```jsonc
+{
+  "code": 0,
+  "data": {
+    "enabled": true,               // 开关（WX_SEC_CHECK）
+    "active": true,                // 开关 + 凭据齐备，业务侧才真的会审
+    "appid": "wx2c****963d7",      // 脱敏展示，确认没配错小程序
+    "secretConfigured": true,
+    "mediaActive": true,
+    "callbackConfigured": true,
+    "token": { "ok": true, "errcode": 0, "errmsg": "ok", "hint": "凭据正常", "expiresIn": 7200 },
+    "probe": {                     // 内置违规样本「代开发票，需要的私聊」
+      "ok": true, "openid": "oPi2****Czk", "errcode": 0,
+      "suggest": "risky", "label": 20006, "verdict": "risky"
+    },
+    "hints": [],                   // 有问题时这里是中文修复建议
+    "ready": true                  // 一行结论：整条链路可用
+  }
+}
+```
+
+判读方式：
+
+- `ready=true` → 收工，文本审核已在生效。
+- `active=false` → 看 `hints`：多半是 `WX_SEC_CHECK` 没开或 `WX_APPSECRET` 没注入。
+- `token.ok=false` → 看 `token.hint`，直接对应下面的错误码表。
+- `probe.suggest=pass` 而探测文本明明是违规样本 → openid 与 appid 不配套（用户是在别的小程序里留下的 openid）。
+
+自检**不写** `t_content_audit`（走独立探测请求），可反复调用；每次消耗 1 次接口配额。
+
+### 5.4 实测一个真实请求
+
+```bash
+curl -X POST http://<auth-host>:8101/internal/security/msg-check \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":9001,"content":"代开发票，需要的私聊","scene":3,"bizType":"POST"}'
+# → {"code":400,"msg":"内容涉嫌违规，请修改后再发布"}
+
+curl -X POST http://<auth-host>:8101/internal/security/msg-check \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":9001,"content":"今天食堂的糖醋排骨太好吃了","scene":3,"bizType":"POST"}'
+# → {"code":0}
+```
+
+小程序侧则是发一条含敏感词的帖子，应看到 HTTP 400 +「内容涉嫌违规，请修改后再发布」，
 且 `t_content_audit` 多一条 `source=2, action=REJECT`。
+
+### 5.5 错误码对照表（照着修）
+
+| errcode | 含义 | 怎么修 |
+|---|---|---|
+| `40164` | 调用 IP 不在白名单 | 公众平台 → 开发管理 → 开发设置 → IP 白名单，加服务器**公网出口 IP**（errmsg 会带被拒的 IP） |
+| `40125` | AppSecret 错误 | 后台重置 AppSecret → 更新 `WX_APPSECRET` / `application-local.yml` → **重启 auth** |
+| `40013` | AppID 不合法 | `WX_APPID` 与小程序后台不一致 |
+| `45009` | 接口调用次数超限 | 每日 2000 次额度用尽，次日恢复或申请提额 |
+| `61010` | openid 无效 | 该用户 2 年内没访问过小程序；换一个近期登录过的用户自检 |
+| `87014` | 内容违规（v1 语义） | 这是**正常结果**，代码按违规处理，返回 400 |
+| `-1` / 无响应 | 网络不通 | 服务器出不了公网 / DNS / 被墙 |
 
 ## 6. 已知边界（写清楚，不藏）
 
+- **传 输 层 坑（2026-10-26 修）**：微信 `msg_sec_check` / `media_check_async` 对
+  **分块传输（`Transfer-Encoding: chunked`）的 POST 直接返回 HTTP 412，且无响应体**。
+  Spring 的 `SimpleClientHttpRequestFactory` 与 `JdkClientHttpRequestFactory` 在写请求体时
+  长度未知，都会退化成 chunked，所以这两个接口**不能走 RestTemplate**——已在
+  `WxSecurityService` 里改成 JDK `HttpClient` + `BodyPublishers.ofString(...)`（一定带
+  Content-Length）。实测对比（同一 URL 同一 body）：
+  `HttpURLConnection 定长 → 200` / `HttpURLConnection 分块 → 412` / `JDK HttpClient → 200`。
+  症状极具欺骗性：412 被 fail-open 吞成「放行」，日志只有一行 warn，表现是「审核配好了但什么都拦不住」。
 - **fail-open**：微信侧超时/配额/异常时一律放行并打 warn。审核是增强能力，不能让它变成
   「auth 挂了全站发不出内容」的单点故障。生产要盯 `[sec-check]` / `[sec-media]` 日志错误率。
 - **图片先发后审**：违规图片在回调到达前已经可见（几十秒到几分钟）。回调命中后只落台账 +
@@ -107,3 +181,6 @@ curl http://<auth-host>:8101/internal/security/enabled
 - **本地联调**：`media_url` 必须公网可达，`localhost` / 局域网 IP 送审必然失败（会写 status=4），
   本地可置 `WX_MEDIA_CHECK=false` 关掉。
 - **review 不拦**：仅留痕。若运营发现某类 review 命中率过高，再考虑改成拦截。
+- **同一段文本结论会波动**：内容模型返回的 `suggest` 不是确定性函数（同样的「代开发票」今天
+  可能被判 risky，也可能 pass）。所以拦截只认「本次返回值」，自检也只看「接口通不通」，
+  不拿某一次 pass 当配置错误。

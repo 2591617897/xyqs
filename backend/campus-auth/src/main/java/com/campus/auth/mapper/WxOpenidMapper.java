@@ -17,4 +17,14 @@ public interface WxOpenidMapper {
 
     @Select("SELECT openid FROM t_user WHERE id = #{id}")
     String selectOpenid(@Param("id") Long id);
+
+    /**
+     * 随便取一个微信 openid，仅供 /internal/security/selfcheck 做连通性探测。
+     *
+     * <p>msg_sec_check v2 强制要求 openid，自检时不一定有现成的 userId 可传，
+     * 拿库里任意一个近期的微信用户即可走通整条链路。
+     */
+    @Select("SELECT openid FROM t_user WHERE platform = 'wx' AND openid IS NOT NULL "
+            + "AND openid <> '' ORDER BY id DESC LIMIT 1")
+    String selectAnyOpenid();
 }

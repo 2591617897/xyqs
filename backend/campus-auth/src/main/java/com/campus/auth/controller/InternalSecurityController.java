@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -79,6 +80,24 @@ public class InternalSecurityController {
                 "callback", wxSecurityService.callbackReady(),
                 // 本地词不依赖任何凭据，size>0 就意味着它在守着
                 "localWords", localSensitiveGuard.size()));
+    }
+
+    /**
+     * 配置自检：真发一次 msg_sec_check，把「开关 / 凭据 / IP 白名单 / 是否真能判违规」
+     * 一次性摊开，并给出中文修复建议（hints）。
+     *
+     * <p>存在意义：审核是 fail-open 的，配置错误的表现是「发帖完全正常」，
+     * 只有翻日志才看得到 warn。上线前跑一次这里就能确认到底通没通。
+     *
+     * <p>不写违规流水（不经过 checkText），可反复调用；每次消耗 1 次接口配额。
+     *
+     * @param userId 可选，指定用哪个用户的 openid 探测
+     * @param text   可选，自定义探测文本；默认用内置的违规样本
+     */
+    @GetMapping("/selfcheck")
+    public R<Map<String, Object>> selfcheck(@RequestParam(required = false) Long userId,
+                                            @RequestParam(required = false) String text) {
+        return R.ok(wxSecurityService.diagnose(userId, text));
     }
 
     /** 运营在后台改完词立刻调用；失败也不影响（服务端另有定时刷新兜底） */
