@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/zone/index",
     "pages/goods/list",
     "pages/wall/index",
     "pages/wall/detail",
@@ -25,7 +26,7 @@
   "window": {
     "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#FFFFFF",
-    "navigationBarTitleText": "校园趣事",
+    "navigationBarTitleText": "校园聚",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#F5F7F6"
   },
@@ -41,12 +42,12 @@
         "text": "发现"
       },
       {
-        "pagePath": "pages/goods/list",
-        "text": "二手"
+        "pagePath": "pages/zone/index",
+        "text": "功能"
       },
       {
         "pagePath": "pages/messages/index",
-        "text": "私信"
+        "text": "消息"
       },
       {
         "pagePath": "pages/user/index",

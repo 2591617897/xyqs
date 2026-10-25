@@ -3,7 +3,9 @@
   padding-bottom: calc(170rpx + env(safe-area-inset-bottom));
 }
 
-/* ===== 顶部：学校胶囊 + 搜索 + 通知 ===== */
+/* ===== 顶部：只剩学校范围胶囊 =====
+   搜索框 .search-box / 铃铛 .bell-btn 及其子块样式已随结构一起删除，
+   需要恢复时连同 index.wxml 的 topbar 结构一起加回。 */
 .topbar {
   position: sticky;
   top: 0;
@@ -39,97 +41,9 @@
   font-size: 20rpx;
   color: #9b9ba3;
 }
-.search-box {
-  flex: 1;
-  min-width: 0;
-  height: 64rpx;
-  background: #f2f3f5;
-  border-radius: 999rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 24rpx;
-  gap: 10rpx;
-}
-.search-icon {
-  font-size: 24rpx;
-  opacity: 0.55;
-}
-.search-placeholder {
-  font-size: 25rpx;
-  color: #b3b3b8;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bell-btn {
-  position: relative;
-  width: 56rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.bell-icon {
-  font-size: 34rpx;
-}
-.bell-dot {
-  position: absolute;
-  right: 8rpx;
-  top: 12rpx;
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
-  background: #ff4d4f;
-  border: 3rpx solid #ffffff;
-  box-sizing: content-box;
-}
 
-/* ===== 功能入口区（金刚区）=====
-   一屏看清所有功能；后台给 t_channel 加一行，这里自动多一个图标。
-   固定入口在前（我想说 / 校园闲置 / 校园频道），频道入口在后。 */
-.entries {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 8rpx 12rpx 20rpx;
-  background: #ffffff;
-}
-.entry {
-  width: 25%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12rpx;
-  padding: 20rpx 0;
-  box-sizing: border-box;
-}
-.entry-hover {
-  opacity: 0.7;
-}
-.entry-icon {
-  width: 92rpx;
-  height: 92rpx;
-  border-radius: 26rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  line-height: 1;
-}
-.tone-brand { background: var(--brand-50, #E8F5EF); }
-.tone-like { background: var(--like-50, #FFF0F4); }
-.tone-info { background: var(--info-50, #EFF6FF); }
-.tone-warn { background: var(--warning-50, #FFFBEB); }
-.tone-violet { background: #F3EEFF; }
-.entry-text {
-  font-size: 22rpx;
-  color: #4b4b52;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* ===== 功能入口区（金刚区）已移到 pages/zone/index =====
+   样式随页面一起搬走，首页不再有 .entries / .entry / .tone-* 定义。 */
 
 /* ===== 运营公告位：绿色横幅 ===== */
 .announce {
@@ -250,22 +164,18 @@
   font-weight: 600;
 }
 
-/* 横向滚动容器 */
-.zone-scroll {
-  white-space: nowrap;
-  width: 100%;
-}
-.zone-row {
-  display: inline-flex;
-  align-items: flex-start;
+/* 单列全宽列表：每张卡片横向铺满一屏（不分栏、不横向滚动） */
+.zone-list {
+  display: flex;
+  flex-direction: column;
   gap: 16rpx;
   padding: 0 24rpx 4rpx;
 }
 
 /* 通用卡片 */
 .zcard {
-  display: inline-block;
-  vertical-align: top;
+  display: block;
+  width: 100%;
   white-space: normal;
   background: #ffffff;
   border-radius: 20rpx;
@@ -329,14 +239,12 @@
 
 /* 帖子卡片 */
 .zcard-post {
-  width: 400rpx;
-  padding: 20rpx;
+  padding: 24rpx;
 }
 
 /* 我想说（表白墙）卡片 */
 .zcard-wall {
-  width: 340rpx;
-  padding: 20rpx;
+  padding: 24rpx;
 }
 .zcard-user {
   display: flex;
@@ -385,13 +293,18 @@
   border-radius: 8rpx;
 }
 
-/* 校园闲置卡片 */
+/* 校园闲置卡片：左图右文的整行卡片 */
 .zcard-goods {
-  width: 240rpx;
+  display: flex;
+  align-items: stretch;
+  gap: 20rpx;
+  padding: 16rpx;
 }
 .zcard-goods-img {
-  width: 240rpx;
+  width: 200rpx;
   height: 200rpx;
+  flex-shrink: 0;
+  border-radius: 14rpx;
   display: block;
   background: #f2f3f5;
 }
@@ -399,22 +312,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 44rpx;
+  font-size: 52rpx;
 }
 .zcard-goods-body {
-  padding: 16rpx 18rpx 18rpx;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4rpx 4rpx 4rpx 0;
 }
 .zcard-goods-title {
-  font-size: 25rpx;
+  font-size: 27rpx;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.4;
-  min-height: 70rpx;
 }
 .zcard-goods-price {
   display: flex;
   align-items: baseline;
-  margin-top: 10rpx;
+  margin-top: auto;
+  padding-top: 10rpx;
 }
 .zcard-price-symbol {
   font-size: 22rpx;

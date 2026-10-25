@@ -31,9 +31,8 @@ Page({
   },
 
   onShow: function () {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 1 })
-    }
+    // 「闲置」已不是底栏 tab（让位给「功能区」），本页从功能区/首页 navigateTo 进来，
+    // 没有 getTabBar 可设置，也不用管选中态
 
     const app = getApp()
     const mode = (app.globalData && app.globalData.goodsMode) || ''

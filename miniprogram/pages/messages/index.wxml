@@ -197,7 +197,7 @@
 
         <view class="ndi-main">
           <view class="ndi-top">
-            <text class="ndi-name">{{item.actorName || '校园趣事'}}</text>
+            <text class="ndi-name">{{item.actorName || '校园聚'}}</text>
             <text class="ndi-action">
               <text wx:if="{{item.type === 'LIKE_GOODS' || item.type === 'LIKE_POST' || item.type === 'LIKE_WALL'}}">给你点了个赞</text>
               <text wx:elif="{{item.type === 'NEW_FOLLOWER'}}">关注了你</text>

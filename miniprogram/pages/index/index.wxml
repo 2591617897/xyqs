@@ -1,35 +1,17 @@
 <view class="page">
-  <!-- 顶部：范围胶囊（本校/本市） + 搜索 + 通知 -->
+  <!-- 顶部：只留「学校范围胶囊（本校/本市）」
+       已按需求去掉右侧的搜索框与通知铃铛：
+       - 搜索框原本只是跳转二手广场（goSearch → openGoods('')），入口在闲置页里还有；
+       - 铃铛只是私信入口 + 未读角标，私信本身就是底栏第 3 个 tab，且 custom-tab-bar 自带 unread 角标。
+       需要恢复时，把 .search-box / .bell-btn 结构和 wxss 一并加回，并在 js 里补回 goSearch / goMessages 与 loadUnread。 -->
   <view class="topbar">
     <view class="school-pill" bindtap="openScope">
       <text class="school-name">{{scopeLabel}}</text>
       <text class="school-arrow">▾</text>
     </view>
-    <view class="search-box" bindtap="goSearch">
-      <text class="search-icon">🔍</text>
-      <text class="search-placeholder">搜帖子、闲置好物...</text>
-    </view>
-    <view class="bell-btn" bindtap="goMessages">
-      <text class="bell-icon">🔔</text>
-      <view class="bell-dot" wx:if="{{unread > 0}}"></view>
-    </view>
   </view>
 
-  <!-- 功能入口区（金刚区）：一屏看清所有功能。后台给频道加一行，这里自动多一个图标 -->
-  <view class="entries">
-    <view
-      class="entry"
-      wx:for="{{entries}}"
-      wx:key="key"
-      bindtap="goEntry"
-      data-url="{{item.url}}"
-      hover-class="entry-hover"
-      hover-stay-time="60"
-    >
-      <view class="entry-icon tone-{{item.tone}}">{{item.icon}}</view>
-      <text class="entry-text">{{item.title}}</text>
-    </view>
-  </view>
+  <!-- 功能入口区已独立成页（底部「功能区」tab），首页不再放金刚区 -->
 
   <!-- 运营公告位：跳蚤集市 -->
   <view class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
@@ -44,7 +26,7 @@
     <view class="announce-btn">去逛逛 ›</view>
   </view>
 
-  <!-- 内容功能区：每个模块一个横向卡片行，配置见 utils/zones.js -->
+  <!-- 内容功能区：每个模块一段单列全宽卡片（不分栏、不横向滚动），配置见 utils/zones.js -->
   <view class="zones">
     <view class="zone" wx:for="{{zones}}" wx:for-item="zone" wx:for-index="zi" wx:key="key">
 
@@ -132,79 +114,75 @@
 
       <!-- 帖子型（校园公告 / 校园生活） -->
       <block wx:if="{{zone.type === 'post'}}">
-        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
-          <view class="zone-row">
-            <view
-              class="zcard zcard-post"
-              wx:for="{{zone.items}}"
-              wx:for-item="it"
-              wx:for-index="ii"
-              wx:key="key"
-              bindtap="goZoneDetail"
-              data-kind="{{it.kind}}"
-              data-id="{{it.id}}"
-              hover-class="zcard-hover"
-              hover-stay-time="60"
-            >
-              <view class="zcard-top">
-                <text class="zcard-badge">{{it.badge}}</text>
-                <text class="zcard-time">{{it.timeText}}</text>
+        <view class="zone-list">
+          <view
+            class="zcard zcard-post"
+            wx:for="{{zone.items}}"
+            wx:for-item="it"
+            wx:for-index="ii"
+            wx:key="key"
+            bindtap="goZoneDetail"
+            data-kind="{{it.kind}}"
+            data-id="{{it.id}}"
+            hover-class="zcard-hover"
+            hover-stay-time="60"
+          >
+            <view class="zcard-top">
+              <text class="zcard-badge">{{it.badge}}</text>
+              <text class="zcard-time">{{it.timeText}}</text>
+            </view>
+            <view class="zcard-title clamp2">{{it.title}}</view>
+            <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
+            <view class="zcard-foot">
+              <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
+                <text>{{it.likeText}}</text>
               </view>
-              <view class="zcard-title clamp2">{{it.title}}</view>
-              <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
-              <view class="zcard-foot">
-                <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                  <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
-                  <text>{{it.likeText}}</text>
-                </view>
-                <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-                  <text class="zcard-act-icon">💬</text>
-                  <text>{{it.commentText}}</text>
-                </view>
+              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                <text class="zcard-act-icon">💬</text>
+                <text>{{it.commentText}}</text>
               </view>
             </view>
           </view>
-        </scroll-view>
+        </view>
       </block>
 
       <!-- 我想说（表白墙）：匿名心事卡片 -->
       <block wx:if="{{zone.type === 'wall'}}">
-        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
-          <view class="zone-row">
-            <view
-              class="zcard zcard-wall"
-              wx:for="{{zone.items}}"
-              wx:for-item="it"
-              wx:for-index="ii"
-              wx:key="key"
-              bindtap="goZoneDetail"
-              data-kind="{{it.kind}}"
-              data-id="{{it.id}}"
-              hover-class="zcard-hover"
-              hover-stay-time="60"
-            >
-              <view class="zcard-user">
-                <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
-                <view class="zcard-user-info">
-                  <text class="zcard-name">{{it.anonName}}</text>
-                  <text class="zcard-meta">{{it.timeText}} · {{it.flair}}</text>
-                </view>
+        <view class="zone-list">
+          <view
+            class="zcard zcard-wall"
+            wx:for="{{zone.items}}"
+            wx:for-item="it"
+            wx:for-index="ii"
+            wx:key="key"
+            bindtap="goZoneDetail"
+            data-kind="{{it.kind}}"
+            data-id="{{it.id}}"
+            hover-class="zcard-hover"
+            hover-stay-time="60"
+          >
+            <view class="zcard-user">
+              <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
+              <view class="zcard-user-info">
+                <text class="zcard-name">{{it.anonName}}</text>
+                <text class="zcard-meta">{{it.timeText}} · {{it.flair}}</text>
               </view>
-              <text class="zcard-tag">{{it.tags[0]}}</text>
-              <view class="zcard-excerpt clamp3">{{it.content}}</view>
-              <view class="zcard-foot">
-                <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                  <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💗' : '🤍'}}</text>
-                  <text>{{it.likeText}}</text>
-                </view>
-                <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-                  <text class="zcard-act-icon">💬</text>
-                  <text>{{it.commentText}}</text>
-                </view>
+            </view>
+            <text class="zcard-tag">{{it.tags[0]}}</text>
+            <view class="zcard-excerpt clamp3">{{it.content}}</view>
+            <view class="zcard-foot">
+              <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💗' : '🤍'}}</text>
+                <text>{{it.likeText}}</text>
+              </view>
+              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                <text class="zcard-act-icon">💬</text>
+                <text>{{it.commentText}}</text>
               </view>
             </view>
           </view>
-        </scroll-view>
+        </view>
       </block>
 
       <!-- 校园闲置：带分类子筛选 -->
@@ -224,33 +202,31 @@
             </view>
           </view>
         </scroll-view>
-        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
-          <view class="zone-row">
-            <view
-              class="zcard zcard-goods"
-              wx:for="{{zone.items}}"
-              wx:for-item="it"
-              wx:for-index="ii"
-              wx:key="key"
-              bindtap="goZoneDetail"
-              data-kind="{{it.kind}}"
-              data-id="{{it.id}}"
-              hover-class="zcard-hover"
-              hover-stay-time="60"
-            >
-              <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
-              <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
-              <view class="zcard-goods-body">
-                <view class="zcard-goods-title clamp2">{{it.title}}</view>
-                <view class="zcard-goods-price">
-                  <text class="zcard-price-symbol">¥</text>
-                  <text class="zcard-price-num">{{it.priceText}}</text>
-                </view>
-                <text class="zcard-goods-loc ellipsis">{{it.location}}</text>
+        <view class="zone-list">
+          <view
+            class="zcard zcard-goods"
+            wx:for="{{zone.items}}"
+            wx:for-item="it"
+            wx:for-index="ii"
+            wx:key="key"
+            bindtap="goZoneDetail"
+            data-kind="{{it.kind}}"
+            data-id="{{it.id}}"
+            hover-class="zcard-hover"
+            hover-stay-time="60"
+          >
+            <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
+            <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+            <view class="zcard-goods-body">
+              <view class="zcard-goods-title clamp2">{{it.title}}</view>
+              <view class="zcard-goods-price">
+                <text class="zcard-price-symbol">¥</text>
+                <text class="zcard-price-num">{{it.priceText}}</text>
               </view>
+              <text class="zcard-goods-loc ellipsis">{{it.location}}</text>
             </view>
           </view>
-        </scroll-view>
+        </view>
       </block>
 
     </view>

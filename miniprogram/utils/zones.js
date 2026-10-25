@@ -13,13 +13,13 @@ const { decorateWall } = require('./wall')
  *   1. 顶部栏（学校范围胶囊 / 搜索 / 通知）
  *   2. 功能入口区（金刚区）—— 一排图标直达各功能，由 buildEntries 生成
  *   3. 运营公告位
- *   4. 内容功能区 —— 每个模块一个横向卡片行，由 buildZones 生成
+ *   4. 内容功能区 —— 每个模块一段单列全宽卡片，由 buildZones 生成
  *
  * 后期加一个新功能的步骤：
  *   1. 在 ZONES 里加一条模块配置（title/icon/desc/more/size）
  *   2. 若是独立功能页，在 ENTRIES 里加一条入口（会出现在金刚区）
  *   3. 在 pages/index/index.wxml 里给它选一个卡片模板
- *      （type=post / wall / goods 三选一）
+ *      （type=post / wall / goods 三选一，都是单列全宽卡片）
  *   首页的加载、点赞、更多入口逻辑全部自动生效，不用改导航、不用改 tabBar。
  */
 
@@ -28,6 +28,13 @@ const NOTICE_CHANNEL_ID = 2001
 
 /** 校园生活区排除的频道（同 NOTICE_CHANNEL_ID） */
 const EXCLUDE_CHANNEL_ID = NOTICE_CHANNEL_ID
+
+/**
+ * 每个功能区最多展示几张卡片。
+ * 卡片是「单列全宽」，不像以前的横向卡片行一屏能塞两三张，
+ * 所以必须收敛条数，否则首页一屏一卡要滑很久；剩下的走各区右上角「更多」。
+ */
+const ZONE_LIMIT = 3
 
 /** 金刚区固定入口（不含频道，频道入口由后端 t_channel 动态生成） */
 const ENTRIES = [
@@ -102,7 +109,7 @@ function buildZones(src, channels) {
       icon: '💌',
       desc: '匿名把心里话说出来',
       more: '/pages/wall/index',
-      items: wallRecords.map(wallItem)
+      items: take(wallRecords).map(wallItem)
     })
   }
 
@@ -114,7 +121,7 @@ function buildZones(src, channels) {
       icon: '🛍️',
       desc: '闲置流转，低碳又省钱',
       more: '/pages/goods/list',
-      items: goodsRecords.map(goodsItem)
+      items: take(goodsRecords).map(goodsItem)
     })
   }
 
@@ -131,7 +138,7 @@ function buildZones(src, channels) {
       icon: (noticeChannel && noticeChannel.icon) || '📢',
       desc: (noticeChannel && noticeChannel.description) || '失物招领 · 校园通知',
       more: '/pages/post/list?channelId=' + NOTICE_CHANNEL_ID,
-      items: notice.map(postItem)
+      items: take(notice).map(postItem)
     })
   }
 
@@ -147,7 +154,7 @@ function buildZones(src, channels) {
       icon: '🎪',
       desc: '吃喝玩乐 · 树洞吐槽 · 运动搭子',
       more: '/pages/post/list',
-      items: life.map(postItem)
+      items: take(life).map(postItem)
     })
   }
 
@@ -156,6 +163,11 @@ function buildZones(src, channels) {
 
 function records(res) {
   return (res && res.records) || []
+}
+
+/** 单列全宽卡片，每区只留前 ZONE_LIMIT 条 */
+function take(list) {
+  return (list || []).slice(0, ZONE_LIMIT)
 }
 
 function findChannel(channels, id) {

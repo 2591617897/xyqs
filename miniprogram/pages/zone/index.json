@@ -1,0 +1,9 @@
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "功能区",
+  "navigationBarTextStyle": "black",
+  "navigationBarBackgroundColor": "#FFFFFF",
+  "backgroundColor": "#F5F7F6",
+  "backgroundTextStyle": "dark",
+  "enablePullDownRefresh": true
+}

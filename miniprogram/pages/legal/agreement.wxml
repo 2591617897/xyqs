@@ -1,12 +1,12 @@
 <view class="page">
   <view class="doc-header">
-    <view class="doc-title">校园趣事 · 用户服务协议</view>
+    <view class="doc-title">校园聚 · 用户服务协议</view>
     <view class="doc-meta">更新日期：2026-10-25 · 生效日期：2026-10-25</view>
   </view>
 
   <view class="doc-section">
     <view class="doc-h2">一、协议的接受与修改</view>
-    <view class="doc-p">1.1 欢迎使用「校园趣事」小程序（以下简称"本平台"）。本协议是您与本平台运营方之间关于使用本平台服务所订立的协议。请您在使用前务必仔细阅读本协议，一旦您开始使用本平台服务，即视为您已充分理解并同意本协议全部条款。</view>
+    <view class="doc-p">1.1 欢迎使用「校园聚」小程序（以下简称"本平台"）。本协议是您与本平台运营方之间关于使用本平台服务所订立的协议。请您在使用前务必仔细阅读本协议，一旦您开始使用本平台服务，即视为您已充分理解并同意本协议全部条款。</view>
     <view class="doc-p">1.2 本平台有权根据需要不定期修改本协议内容，修改后的协议自公布之日起生效。若您继续使用本平台服务，即视为接受修改后的协议。</view>
   </view>
 
@@ -76,6 +76,6 @@
   </view>
 
   <view class="doc-foot">
-    <text>感谢您选择校园趣事 · 让校园更有趣</text>
+    <text>感谢您选择校园聚 · 让校园更有趣</text>
   </view>
 </view>

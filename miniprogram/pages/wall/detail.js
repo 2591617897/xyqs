@@ -61,7 +61,7 @@ Page({
   onShareAppMessage: function () {
     const post = this.data.post
     return {
-      title: post ? (post.content || '匿名心事').substring(0, 30) : '校园趣事 · 匿名心事',
+      title: post ? (post.content || '匿名心事').substring(0, 30) : '校园聚 · 匿名心事',
       path: '/pages/wall/detail?id=' + this.data.id
     }
   },

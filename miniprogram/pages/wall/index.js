@@ -184,7 +184,7 @@ Page({
     const post = id
       ? (this.data.posts || []).find(function (p) { return String(p.id) === String(id) })
       : null
-    let title = '匿名表白墙 · 校园趣事'
+    let title = '匿名表白墙 · 校园聚'
     if (post && post.content) {
       const brief = post.content.replace(/\s+/g, ' ').trim()
       title = brief.length > 24 ? brief.slice(0, 24) + '…' : brief

@@ -23,9 +23,13 @@
   </block>
 </view>
 
-<!-- 发布弹层（仿参考图：彩色大卡 + 黑色圆形关闭） -->
+<!-- 发布弹层（底部磨砂玻璃面板 + 彩色大卡 + 浅色幽灵关闭键）
+     结构：pub-mask（深色遮罩 + backdrop 虚化） > pub-sheet（磨砂面板，圆角顶） > 卡片 / 关闭键 -->
 <view class="pub-mask" wx:if="{{showSheet}}" bindtap="closeSheet">
   <view class="pub-sheet" catchtap="stop">
+    <!-- 拖拽提示条：告诉用户这是从底部上来的面板 -->
+    <view class="pub-grab"></view>
+
     <view class="pub-big" bindtap="goPage" data-url="/pages/post/publish" hover-class="card-press">
       <view class="pub-big-head">
         <text class="pub-big-title">发布帖子</text>
@@ -65,7 +69,8 @@
       <text class="pub-line-title">我的发布与收藏</text>
       <text class="pub-line-arrow">›</text>
     </view>
-  </view>
 
-  <view class="pub-close" bindtap="closeSheet">✕</view>
+    <!-- 关闭键放进面板内：面板有圆角与磨砂底，放在外面会像贴在遮罩上的黑块 -->
+    <view class="pub-close" bindtap="closeSheet" hover-class="close-hover" hover-stay-time="60">✕</view>
+  </view>
 </view>

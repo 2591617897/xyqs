@@ -319,15 +319,15 @@ Page({
 
   goMyGoods: function () {
     if (!this.guard()) return
-    // tabBar 页面不能用 navigateTo，用全局标记传递展示模式
+    // 「闲置」已不是 tab 页（底栏换成「功能区」）→ navigateTo，模式仍靠 globalData 传递
     getApp().globalData.goodsMode = 'mine'
-    mp.switchTab({ url: '/pages/goods/list' })
+    mp.navigateTo({ url: '/pages/goods/list' })
   },
 
   goFavorites: function () {
     if (!this.guard()) return
     getApp().globalData.goodsMode = 'fav'
-    mp.switchTab({ url: '/pages/goods/list' })
+    mp.navigateTo({ url: '/pages/goods/list' })
   },
 
   /**
@@ -427,7 +427,7 @@ Page({
 
   about: function () {
     mp.showModal({
-      title: '校园趣事',
+      title: '校园聚',
       content: '一个只属于同校同学的闲置流转与心事角落。发布内容需完成校园身份认证。',
       showCancel: false,
       confirmText: '知道啦'

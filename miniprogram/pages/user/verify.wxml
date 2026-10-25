@@ -66,7 +66,7 @@
     </view>
 
     <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">提交认证</button>
-    <view class="agree">提交即表示同意《校园趣事社区规范》与《隐私政策》</view>
+    <view class="agree">提交即表示同意《校园聚社区规范》与《隐私政策》</view>
   </block>
 
   <!-- 学校选择弹层 -->

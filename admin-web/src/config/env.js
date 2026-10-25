@@ -8,7 +8,7 @@
 const rawServer = import.meta.env.VITE_API_SERVER || ''
 // 去掉结尾多余的斜杠，避免拼出 https://x.com//api
 export const SERVER = String(rawServer).replace(/\/$/, '')
-export const APP_TITLE = import.meta.env.VITE_APP_TITLE || '校园趣事管理台'
+export const APP_TITLE = import.meta.env.VITE_APP_TITLE || '校园聚管理台'
 
 export const BASE_URL = SERVER + '/api'
 export const ADMIN_API = BASE_URL + '/admin'

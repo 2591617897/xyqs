@@ -2,7 +2,7 @@
   "name": "campus-admin-web",
   "version": "1.0.0",
   "private": true,
-  "description": "校园趣事 · 小程序后台管理台",
+  "description": "校园聚 · 小程序后台管理台",
   "type": "module",
   "scripts": {
     "dev": "vite",

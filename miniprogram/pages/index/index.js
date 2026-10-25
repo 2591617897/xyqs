@@ -9,11 +9,11 @@ const zoneMod = require('../../utils/zones')
  *
  * 结构自上而下：
  *   1. 顶部栏：学校范围胶囊 / 搜索 / 通知
- *   2. 功能入口区（金刚区）：一排图标直达各功能
- *   3. 运营公告位
- *   4. 内容功能区：今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活
+ *   2. 运营公告位
+ *   3. 内容功能区：今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活
  *
- * 各区配置集中在 utils/zones.js，加新功能不用动这里的导航逻辑。
+ * 功能入口区（原顶部金刚区）已独立成 `pages/zone/index`（底部「功能区」tab），
+ * 首页不再放功能选择，避免与底栏重复。入口配置仍只在 utils/zones.js#buildEntries 一处。
  */
 Page({
   data: {
@@ -28,16 +28,13 @@ Page({
     /** 新用户选学校引导 */
     onboardShow: false,
     onboardSaving: false,
-    /** 功能入口区（金刚区） */
-    entries: [],
-    /** 内容功能区 */
+    /** 内容功能区（功能入口已独立成「功能区」tab 页，首页不再持有 entries） */
     zones: [],
     /** 闲置分类（校园闲置区的子筛选） */
     categories: [],
     loading: true,
     loadError: false,
-    errorMsg: '',
-    unread: 0
+    errorMsg: ''
   },
 
   onLoad: function () {
@@ -53,7 +50,6 @@ Page({
     this.applyUser(getApp().globalData.user)
     this.syncMe()
     this.loadData()
-    this.loadUnread()
     this.checkOnboard()
   },
 
@@ -193,19 +189,8 @@ Page({
     })
   },
 
-  /** 铃铛角标：未读私信数，失败静默（未登录/离线时不打搅首页） */
-  loadUnread: function () {
-    const self = this
-    if (!getApp().globalData.user) {
-      this.setData({ unread: 0 })
-      return
-    }
-    http.get('/messages/unread', null, { silent: true }).then(function (res) {
-      self.setData({ unread: (res && res.unread) || 0 })
-    }).catch(function () {
-      self.setData({ unread: 0 })
-    })
-  },
+  /* 顶部铃铛的未读角标已随铃铛一起移除（私信入口改由底栏 tab 承担，
+     custom-tab-bar 自己的 unread 角标更准，这里不再重复拉 /messages/unread） */
 
   onPullDownRefresh: function () {
     this.loadData(true)
@@ -269,7 +254,6 @@ Page({
       }, channels)
 
       self.setData({
-        entries: zoneMod.buildEntries(channels),
         categories: res[5] || [],
         zones: built,
         loading: false,
@@ -352,11 +336,6 @@ Page({
 
   /* ---------- 功能区交互 ---------- */
 
-  /** 金刚区入口 */
-  goEntry: function (e) {
-    navigate(e.currentTarget.dataset.url)
-  },
-
   /** 功能区右上角「更多」 */
   goZoneMore: function (e) {
     navigate(e.currentTarget.dataset.url)
@@ -406,30 +385,26 @@ Page({
     }).catch(function () {})
   },
 
-  openGoodsTab: function (mode, categoryId) {
+  /**
+   * 打开闲置广场。
+   * 「闲置」已不在底栏（让位给「功能区」），goods/list 不再是 tab 页 → 走 navigateTo。
+   * 展示模式（全部/我的闲置/我的收藏）仍靠 globalData.goodsMode 传递。
+   */
+  openGoods: function (mode, categoryId) {
     const app = getApp()
     if (app.globalData) app.globalData.goodsMode = mode || ''
     if (categoryId) mp.setStorageSync('pendingCategory', categoryId)
-    mp.switchTab({ url: '/pages/goods/list' })
-  },
-
-  goSearch: function () {
-    this.openGoodsTab('')
+    mp.navigateTo({ url: '/pages/goods/list' })
   },
 
   /** 校园闲置区里的分类筛选 → 跳二手广场并带上分类 */
   goCategory: function (e) {
-    this.openGoodsTab('', e.currentTarget.dataset.id)
+    this.openGoods('', e.currentTarget.dataset.id)
   },
 
   /** 公告位：跳蚤集市 → 闲置广场 */
   onAnnounce: function () {
-    this.openGoodsTab('')
-  },
-
-  /** 铃铛 → 私信（已是 tab 页，必须 switchTab，navigateTo 会被框架拒绝） */
-  goMessages: function () {
-    mp.switchTab({ url: '/pages/messages/index' })
+    this.openGoods('')
   },
 
   goStatus: function () {
@@ -462,7 +437,7 @@ Page({
 
   onShareAppMessage: function () {
     return {
-      title: '校园趣事 · 校园闲置与圈子社区',
+      title: '校园聚 · 校园闲置与圈子社区',
       path: '/pages/index/index'
     }
   }
@@ -479,7 +454,7 @@ function fmtCount(n) {
 /** 底部 tabBar 的页面路径：这些页必须 switchTab，不能 navigateTo */
 const TAB_PAGES = [
   '/pages/index/index',
-  '/pages/goods/list',
+  '/pages/zone/index',
   '/pages/messages/index',
   '/pages/user/index'
 ]

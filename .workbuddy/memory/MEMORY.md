@@ -36,16 +36,24 @@
 - 内部计数（直连）：`GET :8105/internal/posts/count`、`:8104/internal/wall/posts/count?category=`
 
 ## 底部 tabBar（2026-10-25 调整后）
-- 结构：**首页 / 闲置 / ＋（发布面板） / 私信 / 我的**，共 4 个真实 tab 页 + 中间凸起发布钮
-- `app.json` 的 `tabBar.list` 现为：`pages/index/index`、`pages/goods/list`、`pages/messages/index`、`pages/user/index`（**`pages/wall/index` 已移出**）
-- 表白墙不再是 tab 页 → 跳转一律 `navigateTo`（金刚区「我想说」入口、功能区 more、发布面板「写匿名心事」走 `goNav`）；tab 页才用 `switchTab`
+- 结构：**首页 / 功能区 / ＋（发布面板） / 私信 / 我的**，共 4 个真实 tab 页 + 中间凸起发布钮
+- `app.json` 的 `tabBar.list` 现为：`pages/index/index`、`pages/zone/index`、`pages/messages/index`、`pages/user/index`
+  （**`pages/wall/index`、`pages/goods/list` 都已移出 tabBar** → 只能 navigateTo，禁止 switchTab）
+- 「功能区」= `pages/zone/index`，内容就是原首页金刚区：入口只来自 `utils/zones.js#buildEntries`（3 固定 + t_channel 动态），**首页不再渲染入口**
+- 点击「校园闲置」入口要清 `app.globalData.goodsMode`，否则会落在「我的闲置/收藏」筛选态
 - custom-tab-bar 自带 `unread` 角标：`refreshUnread()` 在 `attached` + `pageLifetimes.show` 拉 `GET /messages/unread`（无 token 直接归 0，不触发登录）；消息页 `load()` 后用 `summary.unreadTotal` 回写一次
 - ⚠️ 自定义 tabBar 压不住弹层：页面 z-index 再高也盖不过，必须由页面 `getTabBar().setData({hidden:true})` 隐藏、关闭恢复，并在 `onShow` 里 `hidden:false` 兜底（首页/我的选学校弹层、消息页通知抽屉已补）
+- 页面的 `getTabBar()` 只有 tab 页（index/zone/messages/user）才有；非 tab 页调它拿到 undefined，所以旧代码里 `setData({selected:N})` 要随 tab 归属一起清理
 
-## 首页 = 功能区布局（**没有频道 tab**）
-- 结构：顶栏 → 金刚区 → 运营公告位 → 内容功能区（今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活）
-- **唯一配置源 = `miniprogram/utils/zones.js`**（buildEntries / buildZones / postItem / wallItem / goodsItem）；加功能＝加一条 zone 配置 + 选模板，不动 tabBar（名额是微信硬上限 5）
-- 金刚区 = 3 个固定入口 + 后端 `t_channel` 动态生成
+## 首页 = 功能区布局（**没有频道 tab，也不再有金刚区**）
+- 结构：顶栏（范围胶囊/搜索/铃铛）→ 运营公告位 → 内容功能区（今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活）
+- **内容区一律「单列全宽」卡片**：`.zone-list` 纵向 flex，`.zcard` 为 `display:block; width:100%`；
+  **不要再写成横向 `scroll-view` + 固定宽度卡片**（以前 400/340/240rpx 看着像分了两栏，2026-10-25 改掉）
+- 单列后每区最多 3 张卡，由 `utils/zones.js` 的 **`ZONE_LIMIT`/`take()`** 收敛，其余走右上角「更多 ›」；
+  改卡片布局时记得同步 `zones.js` 的 limit 与两套自测断言（`==6` 已改 `<=3`）
+- 校园闲置卡是「左图右文」整行：图 200rpx 固定、右侧 `flex:1`，价格 `margin-top:auto` 贴底
+- **唯一配置源 = `miniprogram/utils/zones.js`**（buildEntries / buildZones / postItem / wallItem / goodsItem）；
+  `buildEntries` 现在只给 `pages/zone/index` 用，加功能＝加一条 zone 配置 + 选模板，不动 tabBar（名额是微信硬上限 5）
 - 公告区(channel 2001) 与生活区在前端按 channelId 拆同一次 `/posts` 响应；**空区不渲染**
 - 点赞按 kind 分流：post `/posts/{id}/like`、wall `/wall/posts/{id}/like`、goods `/goods/{id}/like`
 - 表白墙派生字段抽到 `utils/wall.js`（decorateWall / CAT_TAG），首页与表白墙页共用
@@ -123,4 +131,9 @@
 
 ## 演示数据 / 校验脚本
 - `config.js` 的 `DEV_OPENID` 对应 t_user 9001（林小满），改种子数据别破坏这个对应
-- 脚本：`check-miniprogram.js`（结构，21 页）、`mock-selftest.js`（模拟层 154 断言）、`home-zones-selftest.js`（首页功能区回归 29 断言）、`api-smoke-test.js`（后端 45 项，需 Nacos + 服务已启动，**跑完清演示数据**）
+- 三套前端自测跑法一致：`node scripts/xxx.js`（node 用 `C:/Users/25916/.workbuddy/binaries/node/versions/22.22.2-6/node.exe`）
+  - `check-miniprogram.js`：结构完整性，**22 页**
+  - `mock-selftest.js`：模拟层，**154 断言**（含 zones 单列全宽「每区 ≤3 条」）
+  - `home-zones-selftest.js`：首页功能区回归，**35 断言**（含 zone 页 onShow 与跳转落点）
+  - `api-smoke-test.js`：后端 **45 项**，需 Nacos + 服务已启动，**跑完清演示数据**（删 `content='冒烟测试消息'` 并重置会话 last_*/unread_a）
+- 改首页卡片布局/条数时，三套里凡断言 `items.length === 6` 的地方必须同步改，否则必红

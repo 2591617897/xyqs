@@ -3,7 +3,7 @@
     "scope-sheet": "/components/scope-sheet/index",
     "school-onboard": "/components/school-onboard/index"
   },
-  "navigationBarTitleText": "校园趣事",
+  "navigationBarTitleText": "校园聚",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"
 }

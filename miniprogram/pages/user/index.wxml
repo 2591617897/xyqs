@@ -195,7 +195,7 @@
       </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="about">
         <text class="mi-icon">ℹ️</text>
-        <text class="mi-text">关于校园趣事</text>
+        <text class="mi-text">关于校园聚</text>
         <text class="mi-tip">v2.4.1</text>
         <text class="mi-arrow">›</text>
       </view>
@@ -204,7 +204,7 @@
 
   <view class="logout fade-bounce-in {{pageReady ? 'animate-in' : ''}}" hover-class="tap-scale" wx:if="{{logged}}" bindtap="logout">⇄ 切换账号 / 退出登录</view>
   <view class="footer-tip" bindlongpress="resetMock">
-    校园趣事 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
+    校园聚 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
   </view>
 
   <!-- 意向单弹层 -->

@@ -41,6 +41,7 @@ global.getApp = () => ({ globalData: {} })
 
 /* ---------- 假 request：转发到 mock 数据层 ---------- */
 const mock = require(path.join(__dirname, '../miniprogram/utils/mock.js'))
+const zoneMod = require(path.join(__dirname, '../miniprogram/utils/zones.js'))
 
 function unwrap(r) {
   if (!r || r.code !== 0) {
@@ -129,9 +130,12 @@ async function main() {
   const d = page.data
   check('加载完成（loading=false）', d.loading === false, d.loading)
   check('没有加载错误', d.loadError === false, d.errorMsg)
-  check('生成金刚区入口', d.entries.length === 8, d.entries.length)
-  check('金刚区首项是「我想说」', d.entries[0] && d.entries[0].title === '我想说')
-  check('金刚区没有「学习交流」', !d.entries.some((e) => e.title === '学习交流'))
+  // 金刚区已独立成「功能区」页，首页不再持有 entries：入口生成改由 zones.js 直接断言
+  const entryList = zoneMod.buildEntries(mock.handle('GET', '/channels', {}).data)
+  check('功能入口 8 个（3 固定 + 5 频道）', entryList.length === 8, entryList.length)
+  check('功能入口首项是「我想说」', entryList[0] && entryList[0].title === '我想说')
+  check('功能入口没有「学习交流」', !entryList.some((e) => e.title === '学习交流'))
+  check('首页不再渲染金刚区', d.entries === undefined)
   check('生成内容功能区', d.zones.length === 5, d.zones.map((z) => z.key))
   check('区顺序正确', d.zones.map((z) => z.key).join(',') === 'hot,wall,goods,notice,campus')
 
@@ -140,9 +144,10 @@ async function main() {
   d.zones.forEach((z) => { byKey[z.key] = z })
   check('热区 1 条帖子', byKey.hot.items.length === 1 && byKey.hot.items[0].kind === 'post')
   check('热区有作者与频道名', !!byKey.hot.items[0].authorName && !!byKey.hot.items[0].badge)
-  check('我想说区是表白墙数据', byKey.wall.items.length === 6 && byKey.wall.items[0].kind === 'wall')
+  // 单列全宽卡片，每区最多 3 条（ZONE_LIMIT）
+  check('我想说区是表白墙数据（≤3 条）', byKey.wall.items.length <= 3 && byKey.wall.items.length > 0 && byKey.wall.items[0].kind === 'wall', byKey.wall.items.length)
   check('我想说区带匿名昵称', !!byKey.wall.items[0].anonName && !!byKey.wall.items[0].avatarClass)
-  check('闲置区是商品数据', byKey.goods.items.length === 6 && byKey.goods.items[0].kind === 'goods')
+  check('闲置区是商品数据（≤3 条）', byKey.goods.items.length <= 3 && byKey.goods.items.length > 0 && byKey.goods.items[0].kind === 'goods', byKey.goods.items.length)
   check('闲置区带价格', byKey.goods.items[0].priceText !== undefined && byKey.goods.items[0].priceText !== '')
   check('公告区只含 2001 频道', byKey.notice.items.every((it) => it.badge === '校园公告'))
   check('生活区不含公告频道', byKey.campus.items.every((it) => it.badge !== '校园公告'))
@@ -169,12 +174,13 @@ async function main() {
   const jumps = []
   mp.switchTab = (o) => jumps.push(['switchTab', o.url])
   mp.navigateTo = (o) => jumps.push(['navigateTo', o.url])
-  page.goEntry({ currentTarget: { dataset: { url: '/pages/wall/index' } } })
-  page.goEntry({ currentTarget: { dataset: { url: '/pages/post/list?channelId=2001' } } })
+  // 金刚区的 goEntry 已随页面搬走，这里改测功能区右上角「更多」
+  page.goZoneMore({ currentTarget: { dataset: { url: '/pages/wall/index' } } })
+  page.goZoneMore({ currentTarget: { dataset: { url: '/pages/post/list?channelId=2001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'wall', id: '7001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'goods', id: '8001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'post', id: '6001' } } })
-  // 表白墙已让位给底部「私信」tab，不再是 tab 页 → 走 navigateTo
+  // 表白墙不再是 tab 页（底栏已换成 功能区/私信）→ navigateTo
   check('非 tab 页用 navigateTo', jumps[0] && jumps[0][0] === 'navigateTo' && jumps[0][1] === '/pages/wall/index', jumps[0])
   check('非 tab 页用 navigateTo 且带参', jumps[1] && jumps[1][0] === 'navigateTo' && jumps[1][1] === '/pages/post/list?channelId=2001', jumps[1])
   check('表白墙跳详情', jumps[2] && jumps[2][1] === '/pages/wall/detail?id=7001', jumps[2])
@@ -195,6 +201,28 @@ async function main() {
   check('有可读的错误提示', !!page.data.errorMsg, page.data.errorMsg)
   check('功能区为空（不渲染空模块）', page.data.zones.length === 0)
   fakeHttp.get = origGet
+
+  console.log('\n[6] 功能区页（底栏第 2 项，新增页）')
+  let zoneCfg = null
+  global.Page = (cfg) => { zoneCfg = cfg }
+  const zonePath = require.resolve(path.join(__dirname, '../miniprogram/pages/zone/index.js'))
+  delete require.cache[zonePath]
+  require(zonePath)
+  const zpage = Object.assign({}, zoneCfg)
+  zpage.data = JSON.parse(JSON.stringify(zoneCfg.data))
+  zpage.setData = function (patch) { Object.assign(zpage.data, patch) }
+  zpage.getTabBar = () => null
+  zpage.onShow()
+  await new Promise((r) => setTimeout(r, 200))
+  check('功能区页构建 8 个入口', zpage.data.entries.length === 8, zpage.data.entries.length)
+  check('功能区页 loading 归零', zpage.data.loading === false)
+  check('功能区页没有 partial 警告', zpage.data.partial === false)
+  const zj = []
+  mp.navigateTo = (o) => zj.push(o.url)
+  zpage.goEntry({ currentTarget: { dataset: { url: '/pages/goods/list' } } })
+  zpage.goEntry({ currentTarget: { dataset: { url: '/pages/wall/index' } } })
+  check('功能区入口用 navigateTo（非 tab 页）', zj[0] === '/pages/goods/list', zj[0])
+  check('功能区入口带正确落点', zj[1] === '/pages/wall/index', zj[1])
 
   console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
   process.exit(fail ? 1 : 0)

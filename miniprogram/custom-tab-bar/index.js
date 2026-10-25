@@ -14,10 +14,10 @@ Component({
     /** 私信未读总数：显示在「私信」tab 右上角 */
     unread: 0,
     list: [
-      { key: 'home', pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
-      { key: 'goods', pagePath: '/pages/goods/list', text: '闲置', icon: '🏷️' },
+      { key: 'home', pagePath: '/pages/index/index', text: '发现', icon: '🏠' },
+      { key: 'zone', pagePath: '/pages/zone/index', text: '功能', icon: '🧩' },
       { key: 'plus', pagePath: '', text: '', icon: '', plus: true },
-      { key: 'message', pagePath: '/pages/messages/index', text: '私信', icon: '💬' },
+      { key: 'message', pagePath: '/pages/messages/index', text: '消息', icon: '💬' },
       { key: 'mine', pagePath: '/pages/user/index', text: '我的', icon: '👤' }
     ]
   },
@@ -43,12 +43,7 @@ Component({
       if (!item || item.plus) return
       if (index === this.data.selected) return
 
-      // 点底栏「二手」视为回到全部闲置，清掉"我的闲置/收藏"模式
-      if (item.pagePath === '/pages/goods/list') {
-        const app = getApp()
-        if (app && app.globalData) app.globalData.goodsMode = ''
-      }
-
+      // 说明：「闲置」已从底栏移到「功能区」页里，本组件不再需要清 goodsMode
       mp.switchTab({
         url: item.pagePath,
         success: function () {

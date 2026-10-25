@@ -953,7 +953,7 @@ function seed() {
       {
         id: 3005,
         peerId: 0,
-        peerName: '校园趣事小助手',
+        peerName: '校园聚小助手',
         peerAvatar: '',
         official: true,
         peerTags: [{ text: '官方认证', cls: 'green' }],
@@ -1314,7 +1314,7 @@ function submitVerify(q) {
   p.verifyStatus = 2
   p.verifyRemark = ''
   save()
-  return ok({ verifyStatus: 2, token: 'mock-token-' + p.id, message: '认证成功，欢迎来到校园趣事' })
+  return ok({ verifyStatus: 2, token: 'mock-token-' + p.id, message: '认证成功，欢迎来到校园聚' })
 }
 
 function queryGoods(q) {

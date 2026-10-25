@@ -150,7 +150,15 @@
   transform: scale(0.94);
 }
 
-/* ===== 发布弹层 ===== */
+/* ===== 发布弹层 =====
+ * 视觉结构（2026-10-25 重做）：
+ *   1) .pub-mask  —— 深色玻璃遮罩 + backdrop-filter 虚化，让底下的功能区页面「化开」不抢焦点；
+ *   2) .pub-sheet —— 一块顶部 44rpx 大圆角的磨砂玻璃面板，把彩色卡片整体托住（之前卡片是直接浮在遮罩上的）；
+ *   3) .pub-grab  —— 顶部拖拽提示条，暗示「从底部升起、可关闭」；
+ *   4) .pub-close —— 从遮罩上挪进面板内，改成浅色幽灵按钮（原来的纯黑圆块压在磨砂板上很突兀）。
+ * ⚠️ backdrop-filter 在 iOS 与新版安卓 XWeb 上生效；不支持时自动退化成纯半透明遮罩/面板，
+ *    对比度仍然够（遮罩 0.34→0.58 的径向渐变，面板 0.86 白），不会出现内容看不清。
+ */
 .pub-mask {
   position: fixed;
   left: 0;
@@ -158,25 +166,54 @@
   top: 0;
   bottom: 0;
   z-index: 1100;
-  background: rgba(17, 20, 26, 0.45);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
+  /* 径向渐变：越靠近底部（面板所在处）越深，把面板「压」出来 */
+  background: radial-gradient(130% 90% at 50% 100%, rgba(6, 14, 11, 0.34) 0%, rgba(6, 14, 11, 0.58) 100%);
+  -webkit-backdrop-filter: blur(24rpx) saturate(130%);
+  backdrop-filter: blur(24rpx) saturate(130%);
+  animation: pub-mask-in 0.2s ease-out both;
 }
 .pub-sheet {
   width: 100%;
-  padding: 24rpx 24rpx 8rpx;
+  padding: 16rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  border-radius: 44rpx 44rpx 0 0;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(40rpx) saturate(160%);
+  backdrop-filter: blur(40rpx) saturate(160%);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 -16rpx 64rpx rgba(4, 12, 9, 0.26);
+  animation: pub-sheet-up 0.3s cubic-bezier(0.22, 0.9, 0.24, 1) both;
 }
+.pub-grab {
+  width: 76rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  margin: 0 auto 18rpx;
+  background: rgba(15, 26, 22, 0.16);
+}
+
+@keyframes pub-mask-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pub-sheet-up {
+  from { transform: translateY(64rpx); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .pub-big {
   position: relative;
-  border-radius: 24rpx;
-  padding: 32rpx 34rpx;
-  background: var(--brand-500, #006C49);
+  border-radius: 28rpx;
+  padding: 34rpx 34rpx 32rpx;
+  background: linear-gradient(135deg, #007A50 0%, #005B3E 100%);
   color: #ffffff;
   overflow: hidden;
   margin-bottom: 20rpx;
+  box-shadow: 0 14rpx 34rpx -12rpx rgba(0, 108, 73, 0.6);
 }
 .pub-big-head {
   display: flex;
@@ -201,7 +238,7 @@
   right: 0;
   top: 0;
   padding: 8rpx 22rpx;
-  border-radius: 0 24rpx 0 24rpx;
+  border-radius: 0 28rpx 0 28rpx;
   background: #ffd54a;
   color: #7a4d00;
   font-size: 22rpx;
@@ -210,7 +247,7 @@
 .pub-deco {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.14);
 }
 .pub-deco.d1 { width: 150rpx; height: 150rpx; right: 30rpx; bottom: -50rpx; }
 .pub-deco.d2 { width: 70rpx; height: 70rpx; right: 170rpx; top: -20rpx; }
@@ -224,9 +261,10 @@
 .pub-half {
   position: relative;
   flex: 1;
-  border-radius: 20rpx;
-  padding: 28rpx 28rpx;
+  border-radius: 24rpx;
+  padding: 28rpx;
   overflow: hidden;
+  box-shadow: 0 6rpx 20rpx -10rpx rgba(15, 26, 22, 0.35);
 }
 .pub-half-head {
   display: flex;
@@ -246,16 +284,23 @@
   opacity: 0.9;
   margin-top: 10rpx;
 }
-.pub-amber { background: #ffd54a; color: #6b4a00; }
-.pub-gray { background: #f2f3f5; color: #1a1a1a; }
+.pub-amber {
+  background: linear-gradient(135deg, #FFDB63 0%, #FFC93C 100%);
+  color: #6b4a00;
+}
+.pub-gray {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a1a1a;
+  border: 1rpx solid rgba(15, 26, 22, 0.06);
+}
 .pub-gray .pub-half-sub { color: #6b6b73; opacity: 1; }
 
 .pub-line {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-radius: 20rpx;
-  padding: 30rpx 34rpx;
+  border-radius: 24rpx;
+  padding: 30rpx 32rpx;
   margin-bottom: 20rpx;
 }
 .pub-line-title {
@@ -266,20 +311,35 @@
   font-size: 32rpx;
   opacity: 0.7;
 }
-.pub-red { background: #ef7d68; color: #ffffff; }
-.pub-plain { background: #f7f8fa; color: #1a1a1a; }
-
-.pub-close {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  background: #2D2D2D;
+.pub-red {
+  background: linear-gradient(135deg, #FF8C77 0%, #F2604B 100%);
   color: #ffffff;
-  font-size: 40rpx;
+  box-shadow: 0 10rpx 26rpx -12rpx rgba(242, 96, 75, 0.7);
+}
+.pub-plain {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a1a1a;
+  border: 1rpx solid rgba(15, 26, 22, 0.06);
+}
+
+/* 关闭键：面板内的浅色幽灵圆钮（替代原先压在遮罩上的纯黑圆块） */
+.pub-close {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  margin: 2rpx auto 4rpx;
+  background: rgba(15, 26, 22, 0.06);
+  border: 1rpx solid rgba(15, 26, 22, 0.08);
+  color: var(--text-2, #4B5A54);
+  font-size: 32rpx;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 8rpx 0 calc(28rpx + env(safe-area-inset-bottom));
+  transition: background 0.15s ease;
+}
+.close-hover {
+  background: rgba(15, 26, 22, 0.12);
 }
 .card-press {
   opacity: 0.85;

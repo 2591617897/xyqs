@@ -314,12 +314,13 @@ const zAll = zones.buildZones({ posts: zPosts, hot: zHot, wall: zWall, goods: zG
 const zKeys = zAll.map((z) => z.key)
 check('生成 5 个功能区', zAll.length === 5, zKeys)
 check('区顺序：热/墙/闲置/公告/生活', zKeys.join(',') === 'hot,wall,goods,notice,campus', zKeys.join(','))
-check('「我想说」区内嵌表白墙数据', zAll[1].items.length === 6 && zAll[1].items[0].kind === 'wall')
+check('「我想说」区内嵌表白墙数据', zAll[1].items.length <= 3 && zAll[1].items.length > 0 && zAll[1].items[0].kind === 'wall', zAll[1].items.length)
 check('表白墙卡片带匿名头像与标签', !!zAll[1].items[0].avatarClass && zAll[1].items[0].tags.length === 1)
 check('闲置区卡片带价格', zAll[2].items[0].priceText !== undefined && zAll[2].items[0].kind === 'goods')
 check('公告区只含 2001 频道', zAll[3].items.every((it) => it.badge === '校园公告'))
 check('生活区不含公告频道', zAll[4].items.every((it) => it.badge !== '校园公告'))
-check('生活区条目数 = 总数 - 公告数', zAll[4].items.length === zPosts.total - zAll[3].items.length)
+// 首页卡片已改单列全宽，每区都收敛到 ZONE_LIMIT（3）条，其余走「更多」
+check('单列全宽：每区最多 3 条', zAll.every((z) => z.items.length <= 3), zAll.map((z) => z.items.length))
 check('每个区都有标题与图标', zAll.every((z) => !!z.title && !!z.icon))
 check('无数据的区不渲染', zones.buildZones({ posts: { records: [] }, hot: { records: [] }, wall: { records: [] }, goods: { records: [] } }, chList).length === 0)
 

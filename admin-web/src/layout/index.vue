@@ -3,7 +3,7 @@
     <el-aside :width="collapsed ? '64px' : '210px'" class="app-aside">
       <div class="app-logo">
         <el-icon :size="20"><Grid /></el-icon>
-        <span v-show="!collapsed" class="app-logo-text">校园趣事</span>
+        <span v-show="!collapsed" class="app-logo-text">校园聚</span>
       </div>
       <SidebarMenu :menus="menus" :collapsed="collapsed" />
     </el-aside>

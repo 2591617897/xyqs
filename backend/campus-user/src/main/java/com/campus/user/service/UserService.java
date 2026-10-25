@@ -231,7 +231,7 @@ public class UserService {
         userMapper.updateById(user);
 
         String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
-        String msg = autoApprove ? "认证成功，欢迎来到校园趣事" : "已提交认证，预计 1 个工作日内完成审核";
+        String msg = autoApprove ? "认证成功，欢迎来到校园聚" : "已提交认证，预计 1 个工作日内完成审核";
         return new VerifyResp(user.getVerifyStatus(), token, msg);
     }
 

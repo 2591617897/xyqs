@@ -1,0 +1,39 @@
+<view class="page">
+  <!-- 顶部说明 -->
+  <view class="head">
+    <view class="head-title">全部功能</view>
+    <view class="head-sub">校园里的好玩好用，一屏直达</view>
+  </view>
+
+  <!-- 功能入口网格：4 列，固定入口在前，频道入口由后端 t_channel 生成 -->
+  <view class="card" wx:if="{{entries.length}}">
+    <view
+      class="entry"
+      wx:for="{{entries}}"
+      wx:key="key"
+      bindtap="goEntry"
+      data-url="{{item.url}}"
+      hover-class="entry-hover"
+      hover-stay-time="60"
+    >
+      <view class="entry-icon tone-{{item.tone}}">{{item.icon}}</view>
+      <text class="entry-text">{{item.title}}</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="state" wx:elif="{{loading}}">
+    <text class="state-emoji">⏳</text>
+    <text class="state-text">正在加载功能入口…</text>
+  </view>
+
+  <!-- 兜底：理论上不会出现（固定入口是前端常量），留个出口防死路 -->
+  <view class="state" wx:else>
+    <text class="state-emoji">🧩</text>
+    <text class="state-text">功能入口没加载出来</text>
+    <view class="state-btn" bindtap="retry">重新加载</view>
+  </view>
+
+  <view class="foot" wx:if="{{entries.length}}">更多功能陆续上线，会在这里直接出现</view>
+  <view class="foot warn" wx:if="{{partial}}">校园频道暂时不可用，稍后下拉重试即可</view>
+</view>
