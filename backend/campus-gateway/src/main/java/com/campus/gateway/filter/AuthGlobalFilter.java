@@ -41,6 +41,14 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     /** 完全放行的前缀：登录、学校字典、静态图片、健康检查 */
     private static final List<String> WHITE_PREFIX =
             List.of("/api/auth/", "/api/schools", "/uploads", "/actuator");
+    /**
+     * 微信消息推送回调（图片内容审核结果）。
+     *
+     * <p>微信服务器从公网直连，不可能带用户令牌，只能放行；安全性由接口自身保证——
+     * /wx/callback 会校验 sha1(token, timestamp, nonce)，Token 不对外泄露。
+     * 这条前缀下只有回调一个接口，不放任何业务能力。
+     */
+    private static final String WX_CALLBACK_PREFIX = "/api/wx/";
     private static final List<String> PUBLIC_READ_PREFIX =
             List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels");
     /** 这些前缀虽然是 GET，但属于「我的」私域数据，必须登录 */
@@ -88,7 +96,10 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith);
+        boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith)
+                // 微信消息推送回调：只放行 GET/POST /api/wx/callback 这一条精确路径，
+                // 用前缀 + 精确路径双条件，避免以后 /api/wx 下新增接口被顺带放开
+                || (path.startsWith(WX_CALLBACK_PREFIX) && path.endsWith("/callback"));
         // 公开读：GET /api/user/{数字}/profile 与 GET /api/user/follow/status（精确匹配，全等）
         boolean publicProfile = "GET".equals(method) && PUBLIC_PROFILE.matcher(path).matches();
         boolean publicFollowStatus = "GET".equals(method) && "/api/user/follow/status".equals(path);

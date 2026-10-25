@@ -63,8 +63,15 @@ campus:
       # 内容安全审核（msg_sec_check v2）总开关。
       # 默认 false：未配 appsecret 时不影响发帖；本地与 CI 不被外部依赖卡住。
       # 生产启用条件：① WX_APPSECRET 已注入 ② 本开关置 true。
-      # 生效后发帖/评论/改昵称会先过微信内容安全，命中违规返回「内容涉嫌违规」。
+      # 生效后发帖/评论/改昵称/私信会先过微信内容安全，命中违规返回「内容涉嫌违规」。
       enabled: ${WX_SEC_CHECK:false}
+      # 图片异步审核（media_check_async）单独开关，默认跟随总开关。
+      # 本地联调可置 false：微信要求 media_url 公网可达，localhost/局域网 IP 必然送审失败。
+      media-enabled: ${WX_MEDIA_CHECK:true}
+    # 微信「消息推送」的 Token，图片审核结果回调（/api/wx/callback）用它验签。
+    # 未配置时回调一律拒绝——宁可丢审核结果，也不能让任意人往台账写数据。
+    # 配置位置：公众平台 → 开发管理 → 开发设置 → 消息推送 → Token
+    callback-token: ${WX_CALLBACK_TOKEN:}
   qq:
     # QQ 小程序（保留兼容，需要时填上即可）
     appid: ${QQ_APPID:}

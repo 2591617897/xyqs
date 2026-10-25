@@ -1,6 +1,7 @@
 package com.campus.message.service;
 
 import com.campus.common.api.R;
+import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.UserClient;
 import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
@@ -54,6 +55,8 @@ public class MessageService {
     private final ConversationHideMapper conversationHideMapper;
     private final MessageMapper messageMapper;
     private final UserClient userClient;
+    /** 内容安全：私信与其他 UGC 同一套标准，不能因为是「私聊」就免审 */
+    private final SecurityGuard securityGuard;
 
     // ---------------- 会话列表 ----------------
 
@@ -171,6 +174,17 @@ public class MessageService {
         }
         if (content.length() > 2000) {
             content = content.substring(0, 2000);
+        }
+
+        // 内容安全：私信是最容易被用来引流、诈骗、骚扰的通道，与公开内容同标准。
+        // 文本同步拦（命中抛 400，消息不落库）；图片只提交异步送审（微信无同步媒体接口）；
+        // 视频微信 media_check_async 不支持（只接受图片/音频），这里不送审，靠举报与人工处置。
+        if ("text".equals(type)) {
+            securityGuard.checkText(userId, content, SecurityGuard.SCENE_FORUM,
+                    SecurityGuard.BIZ_MESSAGE);
+        } else if ("image".equals(type)) {
+            securityGuard.checkImages(userId, SecurityGuard.BIZ_MESSAGE, c.getId(),
+                    List.of(content));
         }
 
         Message msg = new Message();

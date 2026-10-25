@@ -174,11 +174,13 @@ public class GoodsService {
         fillSeller(goods, userId);
         securityGuard.checkText(userId,
                 (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
-                SecurityGuard.SCENE_FORUM);
+                SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_GOODS);
         goods.setStatus(1);
         goods.setViewCount(0);
         goods.setLikeCount(0);
         goodsMapper.insert(goods);
+        // 闲置图最多 9 张，一次性提交异步送审（先发后审，结论走回调）
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_GOODS, goods.getId(), req.getImages());
         return goods.getId();
     }
 
@@ -190,7 +192,9 @@ public class GoodsService {
         apply(goods, req);
         securityGuard.checkText(UserContext.requireUserId(),
                 (req.getTitle() == null ? "" : req.getTitle()) + "\n" + (req.getDescription() == null ? "" : req.getDescription()),
-                SecurityGuard.SCENE_FORUM);
+                SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_GOODS);
+        securityGuard.checkImages(UserContext.requireUserId(), SecurityGuard.BIZ_GOODS, id,
+                req.getImages());
         goodsMapper.updateById(goods);
     }
 
@@ -304,7 +308,8 @@ public class GoodsService {
         if (!StringUtils.hasText(text) && !StringUtils.hasText(imgs)) {
             throw new BizException("说点什么，或者配张图吧");
         }
-        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT);
+        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT,
+                SecurityGuard.BIZ_GOODS_COMMENT);
         GoodsComment comment = new GoodsComment();
         comment.setGoodsId(goodsId);
         comment.setUserId(userId);
@@ -335,6 +340,7 @@ public class GoodsService {
         }
         comment.setUserName(comment.getUserName() == null ? "校园用户" : comment.getUserName());
         commentMapper.insert(comment);
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_GOODS_COMMENT, comment.getId(), images);
         goodsMapper.incrComment(goodsId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(imgs));

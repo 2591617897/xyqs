@@ -153,8 +153,10 @@ public class WallService {
         post.setAnonName(anonName(userId, 0L));
         post.setAnonAvatar(anonAvatar(userId, 0L));
         // 内容安全：匿名内容同样要拦，且这是最高风险的 UGC 场景
-        securityGuard.checkText(userId, post.getContent(), SecurityGuard.SCENE_FORUM);
+        securityGuard.checkText(userId, post.getContent(), SecurityGuard.SCENE_FORUM,
+                SecurityGuard.BIZ_WALL);
         postMapper.insert(post);
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_WALL, post.getId(), req.getImages());
 
         // 用帖子 id 再派生一次，保证同一个人在不同帖子下昵称不同，避免被串联
         post.setAnonName(anonName(userId, post.getId()));
@@ -265,8 +267,11 @@ public class WallService {
             comment.setReplyToName(null);
         }
         comment.setAnonName(anonName(userId, postId));
-        securityGuard.checkText(userId, content, SecurityGuard.SCENE_COMMENT);
+        securityGuard.checkText(userId, content, SecurityGuard.SCENE_COMMENT,
+                SecurityGuard.BIZ_WALL_COMMENT);
         commentMapper.insert(comment);
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_WALL_COMMENT, comment.getId(),
+                req.getImages());
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(images));
@@ -390,7 +395,9 @@ public class WallService {
             throw BizException.forbidden("只能编辑自己发布的内容");
         }
         // 用 UpdateWrapper 显式 set，保证「清空图片」也能写回 null
-        securityGuard.checkText(userId, req.getContent().trim(), SecurityGuard.SCENE_FORUM);
+        securityGuard.checkText(userId, req.getContent().trim(), SecurityGuard.SCENE_FORUM,
+                SecurityGuard.BIZ_WALL);
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_WALL, id, req.getImages());
         postMapper.update(null, Wrappers.<WallPost>lambdaUpdate()
                 .eq(WallPost::getId, id)
                 .set(WallPost::getContent, req.getContent().trim())

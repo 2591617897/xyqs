@@ -197,7 +197,8 @@ public class UserService {
             user.setSchoolId(req.getSchoolId());
         }
         if (StringUtils.hasText(req.getNickname())) {
-            securityGuard.checkText(userId, req.getNickname().trim(), SecurityGuard.SCENE_PROFILE);
+            securityGuard.checkText(userId, req.getNickname().trim(), SecurityGuard.SCENE_PROFILE,
+                    SecurityGuard.BIZ_NICKNAME);
         }
         userMapper.updateById(user);
         return me(userId);

@@ -170,8 +170,11 @@ public class PostService {
         post.setStatus(1);
         // 内容安全：标题与正文一起送审，命中违规直接 400，不落库
         securityGuard.checkText(userId, post.getTitle() + "\n" + post.getContent(),
-                SecurityGuard.SCENE_FORUM);
+                SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_POST);
         postMapper.insert(post);
+        // 图片异步送审：微信没有同步媒体审核接口，这里是「只提交、不等结论」，
+        // 落库后再提交是为了让回调能按 bizId 定位到具体帖子
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_POST, post.getId(), req.getImages());
         return post.getId();
     }
 
@@ -194,7 +197,8 @@ public class PostService {
         // 用 UpdateWrapper 显式 set，保证清空图片能写回 null
         // 内容安全：编辑同样要审，否则可以先发正常内容再改成违规内容绕过
         securityGuard.checkText(userId, req.getTitle().trim() + "\n" + req.getContent().trim(),
-                SecurityGuard.SCENE_FORUM);
+                SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_POST);
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_POST, id, req.getImages());
         postMapper.update(null, Wrappers.<Post>lambdaUpdate()
                 .eq(Post::getId, id)
                 .set(Post::getChannelId, req.getChannelId())
@@ -329,8 +333,11 @@ public class PostService {
             log.warn("获取用户信息失败 userId={}", userId);
         }
         comment.setUserName(comment.getUserName() == null ? "校园用户" : comment.getUserName());
-        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT);
+        securityGuard.checkText(userId, text, SecurityGuard.SCENE_COMMENT,
+                SecurityGuard.BIZ_POST_COMMENT);
         commentMapper.insert(comment);
+        // 评论配图同样送审（只发图不写字的评论是最容易夹带违规图的路径）
+        securityGuard.checkImages(userId, SecurityGuard.BIZ_POST_COMMENT, comment.getId(), images);
         postMapper.incrComment(postId, 1);
         comment.setMine(true);
         comment.setImageList(splitImages(imgs));

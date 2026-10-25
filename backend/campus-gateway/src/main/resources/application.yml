@@ -46,6 +46,15 @@ spring:
             - Path=/api/messages/**
           filters:
             - StripPrefix=1
+        # 微信「消息推送」回调：接收图片内容审核结果（media_check_async）。
+        # 微信服务器从公网访问，必须走网关；落到 campus-auth 的 /wx/callback，
+        # 由该接口自己做 sha1 签名校验，所以 AuthGlobalFilter 里同步放行 /api/wx/ 前缀。
+        - id: campus-wx
+          uri: lb://campus-auth
+          predicates:
+            - Path=/api/wx/**
+          filters:
+            - StripPrefix=1
         # 小程序后台管理：独立令牌体系（campus.admin.jwt.secret），
         # AuthGlobalFilter 里只对 POST /api/admin/auth/login 精确放行，其余必须带管理员令牌。
         # 注意这里剥两层：/api 是网关统一前缀，/admin 是后台服务前缀，

@@ -6,6 +6,12 @@ package com.campus.auth.dto;
  * @param userId  提交者 id，用于反查 openid
  * @param content 待校验文本
  * @param scene   微信场景值：1 资料 / 2 评论 / 3 论坛 / 4 社交日志
+ * @param bizType 业务类型（POST/WALL/GOODS/.../MESSAGE/NICKNAME），仅用于违规事件落库
  */
-public record MsgCheckReq(Long userId, String content, Integer scene) {
+public record MsgCheckReq(Long userId, String content, Integer scene, String bizType) {
+
+    /** 兼容只传三项的调用 */
+    public MsgCheckReq(Long userId, String content, Integer scene) {
+        this(userId, content, scene, null);
+    }
 }

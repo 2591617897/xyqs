@@ -137,3 +137,15 @@
   - `home-zones-selftest.js`：首页功能区回归，**35 断言**（含 zone 页 onShow 与跳转落点）
   - `api-smoke-test.js`：后端 **45 项**，需 Nacos + 服务已启动，**跑完清演示数据**（删 `content='冒烟测试消息'` 并重置会话 last_*/unread_a）
 - 改首页卡片布局/条数时，三套里凡断言 `items.length === 6` 的地方必须同步改，否则必红
+
+## 内容安全（2026-10-25 补全，长期有效）
+- **任何 UGC 写入口落库前必须过 `SecurityGuard`**：文本 `checkText(userId, text, SCENE_*, BIZ_*)`；
+  带图再 `checkImages(userId, BIZ_*, bizId, urls)`。新增发布入口后必须把它加进
+  `scripts/content-security-check.js` 的 `ENTRIES`，否则「少一处就白做」（审核要求任意发布场景都生效）
+- 微信调用只允许在 `campus-auth`（持 appsecret + access_token 缓存）；业务侧一律走 Feign `SecurityClient`
+- 文本**同步拦**（risky → 400 不落库）；图片 `media_check_async` 是**先发后审**，只返回 trace_id，
+  结论靠 `/api/wx/callback` 回调落 `t_media_check`，下架由后台人工做
+- 违规事件统一写 `t_content_audit`：`source=2`（系统自动）、`action=REJECT/WARN`、`target_id=0` 表示未落库
+- **fail-open**：微信侧异常一律放行 + warn 日志。所以「审核没生效」往往表现为「一切正常」→
+  先查 IP 白名单（40164）与 `WX_SEC_CHECK`/`WX_APPSECRET`
+- 回调必须：消息推送 **JSON + 明文模式**，Token 同 `WX_CALLBACK_TOKEN`；XML/安全模式解析不了
