@@ -48,6 +48,10 @@ export const dashboardApi = {
 /** 组织与负责人 */
 export const regionApi = {
   tree: () => request.get('/admin/regions/tree'),
+  /** 省 / 市下拉（取自 t_school，保证与学校字典逐字一致） */
+  areas: () => request.get('/admin/regions/areas'),
+  /** 校区下拉（可搜索），替代手填 t_school.id */
+  schools: (params) => request.get('/admin/regions/schools', { params }),
   create: (data) => request.post('/admin/regions', data),
   update: (id, data) => request.put('/admin/regions/' + id, data),
   remove: (id) => request.delete('/admin/regions/' + id),

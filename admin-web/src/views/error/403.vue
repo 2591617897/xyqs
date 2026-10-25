@@ -44,7 +44,7 @@
   border: 1px solid var(--line-soft);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-3);
-  animation: cardIn .5s var(--ease) both;
+  animation: cardIn .5s var(--ease) backwards;
 }
 
 .err-code {

@@ -45,7 +45,7 @@ defineProps({
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-1);
   cursor: default;
-  animation: statIn .5s var(--ease) both;
+  animation: statIn .5s var(--ease) backwards;
   transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
 }

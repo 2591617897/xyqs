@@ -2,7 +2,9 @@ package com.campus.admin.controller;
 
 import com.campus.admin.config.annotation.AuditLog;
 import com.campus.admin.config.annotation.RequirePermission;
+import com.campus.admin.dto.AreaOption;
 import com.campus.admin.dto.RegionNode;
+import com.campus.admin.dto.SchoolOption;
 import com.campus.admin.entity.AdminRegion;
 import com.campus.admin.entity.AdminRegionLeader;
 import com.campus.admin.service.RegionService;
@@ -34,6 +36,27 @@ public class RegionController {
     @GetMapping("/tree")
     public R<List<RegionNode>> tree() {
         return R.ok(regionService.tree());
+    }
+
+    /**
+     * 省 / 市下拉数据（取自 t_school，保证与学校表的 province/city 逐字一致）。
+     *
+     * <p>前端不用再手输省市：手输「贵州省」而学校表存的是「贵州」时，
+     * 这个节点会匹配不到任何学校，数据权限静默为空。
+     */
+    @RequirePermission({"admin:region:list"})
+    @GetMapping("/areas")
+    public R<List<AreaOption>> areas() {
+        return R.ok(regionService.areas());
+    }
+
+    /** 校区下拉（可搜索），替代原先手填 19 位雪花 id */
+    @RequirePermission({"admin:region:list"})
+    @GetMapping("/schools")
+    public R<List<SchoolOption>> schools(@RequestParam(value = "province", required = false) String province,
+                                         @RequestParam(value = "city", required = false) String city,
+                                         @RequestParam(value = "keyword", required = false) String keyword) {
+        return R.ok(regionService.schoolOptions(province, city, keyword));
     }
 
     @AuditLog(value = "新建组织节点", module = "SYSTEM")

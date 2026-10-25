@@ -327,7 +327,7 @@ onMounted(() => {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-1);
   padding: 16px 18px;
-  animation: cardIn var(--dur-slow) var(--ease) both;
+  animation: cardIn var(--dur-slow) var(--ease) backwards;
   transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 

@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { addDynamicRoutes } from './dynamic'
 
 /**
  * 只放静态路由：登录、根布局、错误页。
@@ -22,6 +24,28 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+/**
+ * 刷新/直接打开动态页时，首帧会命中顶层 404（此时 Layout 未挂载、动态路由没注册，
+ * 布局里的 ensureMenus 根本没机会跑）。这里在全局守卫里补注册一次再重定向重解析。
+ * 每个路径只补一次，避免「组件路径配错 → 404 → 再注册」死循环。
+ */
+const retriedPaths = new Set()
+
+router.beforeEach(async (to) => {
+  if (to.name !== 'NotFound' || retriedPaths.has(to.fullPath)) return true
+  const userStore = useUserStore()
+  if (!userStore.token) return true
+  retriedPaths.add(to.fullPath)
+  try {
+    await userStore.loadMenus()
+    addDynamicRoutes(router, userStore.menus)
+    return { path: to.path, query: to.query, hash: to.hash, replace: true }
+  } catch (e) {
+    // 拉菜单失败（token 过期等）按原样落到 404；request 拦截器会另行引导重新登录
+    return true
+  }
 })
 
 export default router

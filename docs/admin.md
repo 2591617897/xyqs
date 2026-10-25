@@ -114,7 +114,15 @@ P1 业务（`migration-20261025-admin-business.sql`）：
 | GET/POST/PUT/DELETE | `/roles` `/roles/{id}` `/roles/{id}/grant` | `admin:role:*` |
 | GET/POST/PUT/DELETE | `/menus` `/menus/{id}` | `admin:menu:*` |
 | GET | `/regions/tree` `/regions/leaders` | `admin:region:list` / `admin:leader:list` |
+| GET | `/regions/areas` `/regions/schools` | `admin:region:list` |
 | POST | `/regions/leaders/assign` `/regions/leaders/{id}/revoke` | `admin:leader:*` |
+
+> **组织节点的省市必须来自下拉，不要手输**：`/regions/areas` 返回的省/市直接由
+> `t_school` 去重得到，`/regions/schools` 返回可搜索的校区列表。手输「贵州省」而学校表
+> 存的是「贵州」时，该节点按省市反查学校的结果为 0——节点能建、树能看，负责人的数据权限却是空的。
+>
+> 辖区匹配语义（`AdminRegionMapper#selectSchoolIdsByRegions`）：省市**填了才参与匹配**。
+> `type=1` 且 `city` 为空 = 整省辖区；省 + 市 = 该市辖区；`type=2` = 单校区（按 `ref_school_id`）。
 
 ### 内容管理
 

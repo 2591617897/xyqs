@@ -25,11 +25,25 @@
 - 表格行动画只用 `opacity`：**别给 `tr` 加 transform**（破坏 fixed 列 sticky）
 - 深色登录页：双圆环 + 光斑 + 网格遮罩；卡片入场 `loginIn`，校验失败 `shake`；「记住账号」只存账号不存密码
 
-## 运营位实现要点
-- 广告/公告 campus-post 侧用 `AdMaterialVO`/`NoticeVO` 直接接收（map-underscore-to-camel-case，**不建实体副本**）
+## 运营位实现要点- 广告/公告 campus-post 侧用 `AdMaterialVO`/`NoticeVO` 直接接收（map-underscore-to-camel-case，**不建实体副本**）
 - 四道过滤缺一不可：上架 + 过审 + 投放时间窗 + 地域定向
 - ⚠️ `PUBLIC_READ_PREFIX` **只放行 GET** —— 任何 POST（如 `/api/ads/materials/{id}/click`）必须另加正则精确放行
 - ⚠️ `t_admin_notice.target_type` 是**安全边界**：1=后台管理员内部通知，绝不能推给小程序，只放行 2/3
 - `t_admin_notice` 字段只有 type/target_type/level（**没有** cover/link_type/is_top/scope_type）
 - 敏感词三级：1 WARN 不改 / 2 按 `replace_to` 替换（空则 `***`）/ 3 抛 400 不落库；`selectEnabled()` 必须 `ORDER BY CHAR_LENGTH(word) DESC`
 - 演示数据 `backend/sql/data-operate-demo.sql`
+
+## 组织架构表单（/system/regions，2026-10-26 改）
+- **省市必须下拉，不许手输**：`GET /admin/regions/areas` 返回 `[{province, cities[]}]`，
+  数据由 `t_school` 的 province/city **去重**得到（`RegionDictMapper#selectProvinceCity`）
+- 为什么不能用行政区域表/手输：`t_school` 存的是 **「贵州 / 贵阳」不带「省 / 市」后缀**，
+  手输「贵州省」→ 辖区反查 0 所学校 → 节点能建、树能看，负责人数据权限却是空的
+- 校区也改下拉：`GET /admin/regions/schools?province=&city=&keyword=`（`SchoolOption`），
+  替代手填 19 位雪花 `t_school.id`
+- 层级不再手选，由选择自动推导：`type=2 → 3`；`type=1 && city → 2`；`type=1 && !city → 1`
+- ⚠️ **辖区展开必须「填了才参与匹配」**（已修正）：旧 SQL 是
+  `t_school.city = g2.city AND t_school.province = g2.province` 硬等值，省节点 city 为空 →
+  永远匹配 0 所。现为 `(g2.province IS NULL OR g2.province='' OR t_school.province=g2.province) AND (...)`
+  - 实测：贵州（city 空）→ 46 所；旧版 → 0；贵州+贵阳 → 24 所
+- 前端 `admin-web/src/views/system/RegionTree.vue`：省 / 市 / 校区三个 el-select（filterable），
+  换省清空非法城市、选校区自动回填省市并向空名称填学校名、`buildPayload()` 提交前归一 level

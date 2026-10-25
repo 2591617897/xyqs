@@ -1,13 +1,16 @@
 package com.campus.admin.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.campus.admin.dto.AreaOption;
 import com.campus.admin.dto.RegionNode;
+import com.campus.admin.dto.SchoolOption;
 import com.campus.admin.entity.AdminRegion;
 import com.campus.admin.entity.AdminRegionLeader;
 import com.campus.admin.entity.AdminUser;
 import com.campus.admin.mapper.AdminRegionLeaderMapper;
 import com.campus.admin.mapper.AdminRegionMapper;
 import com.campus.admin.mapper.AdminUserMapper;
+import com.campus.admin.mapper.RegionDictMapper;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +39,7 @@ public class RegionService {
     private final AdminRegionMapper regionMapper;
     private final AdminRegionLeaderMapper leaderMapper;
     private final AdminUserMapper adminUserMapper;
+    private final RegionDictMapper dictMapper;
 
     /** 全量树。组织规模是百级，一次查完内存组装，不做递归查库 */
     public List<RegionNode> tree() {
@@ -204,5 +209,39 @@ public class RegionService {
             throw BizException.notFound("节点不存在");
         }
         return region;
+    }
+
+    // ---------------- 表单选项字典 ----------------
+
+    /**
+     * 省 / 市下拉数据。
+     *
+     * <p>为什么不给前端写死一份行政区划：节点的 province/city 要拿去和 t_school 做
+     * <b>等值匹配</b>才算辖区，而学校表里存的是「贵州 / 贵阳」这种不带「省 / 市」后缀的写法，
+     * 手输「贵州省」就永远匹配不到任何学校，节点看着正常、数据权限却是空的。
+     * 这里直接返回 t_school 现有组合，"能选的就是能匹配的"。
+     */
+    public List<AreaOption> areas() {
+        Map<String, List<String>> grouped = new LinkedHashMap<>();
+        for (Map<String, Object> row : dictMapper.selectProvinceCity()) {
+            Object p = row.get("province");
+            if (p == null || p.toString().isBlank()) {
+                continue;
+            }
+            Object c = row.get("city");
+            String province = p.toString().trim();
+            List<String> cities = grouped.computeIfAbsent(province, k -> new ArrayList<>());
+            if (c != null && !c.toString().isBlank()) {
+                cities.add(c.toString().trim());
+            }
+        }
+        List<AreaOption> out = new ArrayList<>(grouped.size());
+        grouped.forEach((province, cities) -> out.add(new AreaOption(province, cities)));
+        return out;
+    }
+
+    /** 校区下拉（可按省 / 市过滤，按名称搜索），供「关联校区」选择器使用 */
+    public List<SchoolOption> schoolOptions(String province, String city, String keyword) {
+        return dictMapper.selectSchools(province, city, keyword);
     }
 }

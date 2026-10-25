@@ -94,7 +94,7 @@ function onChange () {
   color: var(--brand-500);
   background: var(--brand-50);
   box-shadow: inset 0 0 0 1px var(--brand-100);
-  animation: popIn .45s var(--ease) both;
+  animation: popIn .45s var(--ease) backwards;
 }
 
 .empty-title {

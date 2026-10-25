@@ -70,7 +70,10 @@ a {
   padding: 18px 20px;
   box-shadow: var(--shadow-1);
   transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
-  animation: cardIn var(--dur-slow) var(--ease) both;
+  /* ⚠️ 必须用 backwards 而不是 both：
+     both 会在动画结束后残留恒等 transform，使 .page-card 成为 position:fixed
+     的包含块，把内部按默认 in-place 渲染的 el-dialog 遮罩裁成卡片大小。 */
+  animation: cardIn var(--dur-slow) var(--ease) backwards;
 }
 
 .page-card:hover {
@@ -120,7 +123,7 @@ a {
 
 /* 骨架/内容淡入：给异步渲染的区块用 */
 .fade-in {
-  animation: cardIn var(--dur-slow) var(--ease) both;
+  animation: cardIn var(--dur-slow) var(--ease) backwards;
 }
 
 /* ==========================================================================
@@ -306,7 +309,7 @@ a {
 
 .el-table .el-table__row {
   transition: background-color var(--dur) var(--ease);
-  animation: rowIn .38s var(--ease) both;
+  animation: rowIn .38s var(--ease) backwards;
 }
 
 .el-table .el-table__row:nth-child(1) { animation-delay: .01s; }
@@ -439,11 +442,17 @@ a {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-3);
   overflow: hidden;
+  /* 限高 + flex 列布局：窗口再矮也是头部/底部固定，只有内容区滚动，
+     保证「保存/取消」按钮永远可见（EP 默认 margin-top 15vh、margin-bottom 50px） */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(85vh - 50px);
 }
 
 .el-dialog__header {
   padding: 18px 22px 10px;
   margin-right: 0;
+  flex: none;
 }
 
 .el-dialog__title {
@@ -453,10 +462,14 @@ a {
 
 .el-dialog__body {
   padding: 10px 22px 20px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .el-dialog__footer {
   padding: 0 22px 20px;
+  flex: none;
 }
 
 .el-overlay {
