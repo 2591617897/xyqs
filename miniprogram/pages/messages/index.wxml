@@ -1,6 +1,6 @@
 <view class="page">
-  <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏） -->
-  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
+  <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏；右侧预留胶囊宽度） -->
+  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px; padding-right: {{capsuleGap}}px">
     <view class="tb-left">
       <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
       <text class="tb-title">私信与消息中心</text>
@@ -16,7 +16,6 @@
     <view class="search-box">
       <view class="ico ico-search"></view>
       <input class="search-input" placeholder="搜索校友昵称、聊天记录或宝贝..." placeholder-class="ph" value="{{keyword}}" bindinput="onSearch" confirm-type="search" />
-      <view class="ico ico-mic"></view>
     </view>
   </view>
 
@@ -91,7 +90,7 @@
     >
       <view slot="action">
         <view class="op-btn op-btn-danger" catchtap="onSwipeAction" data-id="{{item.id}}">
-          <view class="ico ico-trash"></view>
+          <view class="ico ico-delete"></view>
           <text class="op-btn-text">删除</text>
         </view>
       </view>

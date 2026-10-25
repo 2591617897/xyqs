@@ -5,6 +5,8 @@ Page({
   data: {
     loading: true,
     statusBarHeight: 20,
+    /** 顶栏右侧预留的胶囊宽度（px），onLoad 实测 */
+    capsuleGap: 104,
     summary: { likes: 0, followers: 0, mentions: 0, notice: '' },
     convos: [],
     /** 全量会话（本地筛选，避免每次筛选都打接口） */
@@ -31,7 +33,18 @@ Page({
   onLoad: function () {
     // 自绘顶栏需要自己避开状态栏（navigationStyle:custom）
     const info = typeof mp.getWindowInfo === 'function' ? mp.getWindowInfo() : mp.getSystemInfoSync()
-    this.setData({ statusBarHeight: info.statusBarHeight || 20 })
+    // 顶栏右侧要给微信胶囊让位：预留「屏幕右缘 → 胶囊左缘」的距离
+    let capsuleGap = 96
+    try {
+      const rect = mp.getMenuButtonBoundingClientRect()
+      if (rect && rect.left > 0) {
+        capsuleGap = info.windowWidth - rect.left
+      }
+    } catch (e) { /* 低版本兜底 96px */ }
+    this.setData({
+      statusBarHeight: info.statusBarHeight || 20,
+      capsuleGap: capsuleGap + 8
+    })
     this.load()
   },
 
