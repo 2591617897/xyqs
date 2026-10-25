@@ -34,15 +34,17 @@ page {
   background: var(--bg-page);
   min-height: 100vh;
   box-sizing: border-box;
+  /* 装饰元素（::before 圆点、⭐）意外越界时不出现横向滚动 */
+  overflow-x: hidden;
 }
 
 /* ---------- 渐变头部区 ---------- */
 .hero {
-  padding: 16rpx 24rpx 0;
   position: relative;
   /* 品牌清新渐变背景（森林绿系） */
   background: linear-gradient(160deg, var(--brand-50) 0%, var(--brand-100) 55%, var(--info-50) 100%);
-  margin: 0 -24rpx 16rpx;
+  /* .page 无左右内边距，头部天然满宽；负边距会撑出屏幕导致横滑，勿恢复 */
+  margin: 0 0 16rpx;
   padding: 32rpx 24rpx 40rpx;
   border-radius: 0 0 48rpx 48rpx;
   transition: transform 100ms linear;
