@@ -6,6 +6,7 @@ import com.campus.common.security.UserContext;
 import com.campus.user.dto.ReportReq;
 import com.campus.user.entity.ReportTicket;
 import com.campus.user.entity.User;
+import com.campus.user.mapper.ReportBriefMapper;
 import com.campus.user.mapper.ReportTicketMapper;
 import com.campus.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Random;
 public class ReportService {
 
     private final ReportTicketMapper reportMapper;
+    private final ReportBriefMapper briefMapper;
     private final UserMapper userMapper;
 
     /**
@@ -38,6 +40,7 @@ public class ReportService {
         ticket.setTicketNo(genTicketNo());
         ticket.setTargetType(req.getTargetType());
         ticket.setTargetId(req.getTargetId());
+        ticket.setTargetBrief(buildBrief(req.getTargetType(), req.getTargetId()));
         ticket.setReporterId(userId);
         ticket.setReporterName(nickname);
         ticket.setReasonType(req.getReasonType());
@@ -62,6 +65,45 @@ public class ReportService {
             return exist == null ? null : exist.getId();
         }
         return ticket.getId();
+    }
+
+    /**
+     * 反查被举报对象的纯文本摘要，写进 target_brief 供后台列表直接查看。
+     *
+     * <p>t_report_ticket.target_brief 只有 varchar(500)，而帖子正文可能上千字，
+     * 所以必须截断，否则 MySQL 报 Data too long 会让「提交举报」直接失败——
+     * 宁可摘要被切短，也不能让举报发不出去。
+     *
+     * @return 摘要；取不到（内容已删 / FEEDBACK 无 targetId）时为 null
+     */
+    private String buildBrief(String targetType, Long targetId) {
+        if (targetId == null) {
+            return null;
+        }
+        String raw;
+        switch (targetType) {
+            case "POST" -> raw = briefMapper.post(targetId);
+            case "WALL" -> raw = briefMapper.wall(targetId);
+            case "GOODS" -> raw = briefMapper.goods(targetId);
+            case "USER" -> raw = briefMapper.user(targetId);
+            case "MESSAGE" -> raw = briefMapper.message(targetId);
+            case "COMMENT" -> {
+                // 工单只记了 targetId，不知归属哪张评论表，依次试探
+                raw = briefMapper.postComment(targetId);
+                if (raw == null) {
+                    raw = briefMapper.wallComment(targetId);
+                }
+                if (raw == null) {
+                    raw = briefMapper.goodsComment(targetId);
+                }
+            }
+            default -> raw = null; // FEEDBACK 等无实体对象
+        }
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        raw = raw.replaceAll("\\s+", " ").trim();
+        return raw.length() > 480 ? raw.substring(0, 480) + "…" : raw;
     }
 
     public List<ReportTicket> listMine() {

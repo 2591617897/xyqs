@@ -10,6 +10,8 @@ import com.campus.admin.dto.ReportHandleReq;
 import com.campus.admin.entity.ReportTicket;
 import com.campus.admin.mapper.ReportTicketMapper;
 import com.campus.common.api.R;
+import com.campus.common.client.NotificationClient;
+import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ public class ReportService {
     public static final String RESULT_OTHER = "其他";
 
     private final ReportTicketMapper reportTicketMapper;
+    private final NotificationClient notificationClient;
     private final ContentService contentService;
     private final UserManageService userManageService;
     private final DataScopeResolver dataScopeResolver;
@@ -117,6 +120,38 @@ public class ReportService {
                 .set(ReportTicket::getHandlerId, AdminContext.adminId())
                 .set(ReportTicket::getHandlerName, AdminContext.username())
                 .set(ReportTicket::getHandledAt, LocalDateTime.now()));
+
+        notifyReporter(ticket, result, remark);
+    }
+
+    /**
+     * 把受理结论回执给举报人。
+     *
+     * <p>举报是 UGC 平台唯一的「用户替平台发现问题」的通道：
+     * 用户举报后如果永远收不到回音，二次举报率会掉到接近 0，
+     * 而且「处置申诉闭环」本身也是内容安全审核要看的能力项。
+     *
+     * <p>刻意放在事务方法的最末尾且完全 try/catch：
+     * 通知是锦上添花，campus-message 抖动绝不能让已生效的处理回滚，
+     * 也不能把 Feign 的耗时算进本事务。
+     */
+    private void notifyReporter(ReportTicket ticket, String result, String remark) {
+        Long reporter = ticket.getReporterId();
+        if (reporter == null) {
+            return;
+        }
+        try {
+            NotifyReq req = new NotifyReq();
+            req.setType("SYSTEM");
+            req.setReceiverId(reporter);
+            req.setTargetType(ticket.getTargetType());
+            req.setTargetId(ticket.getTargetId());
+            req.setContentSnapshot("你提交的举报（工单 " + ticket.getTicketNo() + "）已处理：" + result
+                    + (remark == null || remark.isBlank() ? "" : "；" + remark));
+            notificationClient.send(req);
+        } catch (Exception e) {
+            log.warn("[admin] 举报回执通知发送失败，已忽略：ticket={}, {}", ticket.getTicketNo(), e.getMessage());
+        }
     }
 
     /** 按被举报对象类型执行隐藏，评论走删除 */

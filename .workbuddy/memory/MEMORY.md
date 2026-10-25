@@ -149,3 +149,17 @@
 - **fail-open**：微信侧异常一律放行 + warn 日志。所以「审核没生效」往往表现为「一切正常」→
   先查 IP 白名单（40164）与 `WX_SEC_CHECK`/`WX_APPSECRET`
 - 回调必须：消息推送 **JSON + 明文模式**，Token 同 `WX_CALLBACK_TOKEN`；XML/安全模式解析不了
+
+## 后台管理 campus-admin（2026-10-25 巡检后补充，长期有效）
+- 端口 **8107**；网关路由 `/api/admin/**`（剥 /api + /admin 两层）；不用有线某个 8107 curl 绕过了网关就不带 X-Admin-* 头
+- 独立令牌体系：`campus.admin.jwt.secret`（必须与网关一致，且 HS256 密钥 ≥32 字节否则启动 WeakKeyException），有效期 8h
+- 跨服务写统一走 `AdminWriteGateway`：优先 Feign 调各服务 `/internal/admin/**`，
+  失败才降级 `FallbackWriteMapper` 直写。**降级会打 WARN**，看到大量降级 = 服务发现有问题
+- 举报工单表 `t_report_ticket` 由 campus-user 与 campus-admin **共享**（各自持有一份实体，避免跨模块依赖）；
+  存在共享 t_content_audit(source=1 人工 / 2 系统自动)
+- 举报 `target_brief` 由 campus-user `ReportService#buildBrief()` 在**创建时**写入快照，字段 varchar(500) 必须截断
+- 受理/驳回的最终 status 由 `handleResult` 推导（「无违规」→2 驳回，其余→1 已处理），**req.status 只是兼容保留**
+- t_notification 正文列名是 **`content_snapshot`**（不是 content）
+- MySQL 查询结果在 Git Bash 里带 `\r`，做文件名/路径比对前务必 `tr -d '\r'`，否则全误判
+- bash 里 `UID` 是**只读变量**，不能用它存 user id（会静默赋值失败导致 404）
+- 还没做（半成品，别以为有了）：敏感词库未接 UGC 拦截；广告位/素材、后台公告均无对外接口（小程序拿不到）
