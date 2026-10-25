@@ -1,5 +1,6 @@
 const { mp } = require('../utils/util')
 const auth = require('../utils/auth')
+const http = require('../utils/request')
 
 Component({
   options: {
@@ -10,13 +11,28 @@ Component({
     selected: 0,
     showSheet: false,
     hidden: false,
+    /** 私信未读总数：显示在「私信」tab 右上角 */
+    unread: 0,
     list: [
       { key: 'home', pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
       { key: 'goods', pagePath: '/pages/goods/list', text: '闲置', icon: '🏷️' },
       { key: 'plus', pagePath: '', text: '', icon: '', plus: true },
-      { key: 'wall', pagePath: '/pages/wall/index', text: '我想说', icon: '💌' },
+      { key: 'message', pagePath: '/pages/messages/index', text: '私信', icon: '💬' },
       { key: 'mine', pagePath: '/pages/user/index', text: '我的', icon: '👤' }
     ]
+  },
+
+  lifetimes: {
+    attached: function () {
+      this.refreshUnread()
+    }
+  },
+
+  // 自定义 tabBar 由框架挂在每个 tab 页下，切 tab 时靠这个回调刷新角标
+  pageLifetimes: {
+    show: function () {
+      this.refreshUnread()
+    }
   },
 
   methods: {
@@ -69,6 +85,32 @@ Component({
       if (!url) return
       this.setData({ showSheet: false })
       mp.switchTab({ url: url })
+    },
+
+    /**
+     * 发布面板：普通页面入口，无需认证。
+     * 与 goPage 的区别：不强制学籍认证（表白墙是匿名的，游客也要能进）。
+     */
+    goNav: function (e) {
+      const url = e.currentTarget.dataset.url
+      if (!url) return
+      this.setData({ showSheet: false })
+      mp.navigateTo({ url: url })
+    },
+
+    /**
+     * 私信 tab 的未读角标。
+     * 未登录时直接置 0 —— 游客浏览是设计，不能因为一个角标去触发登录。
+     */
+    refreshUnread: function () {
+      const self = this
+      if (!http.getToken()) {
+        if (this.data.unread) this.setData({ unread: 0 })
+        return
+      }
+      http.get('/messages/unread', null, { silent: true }).then(function (res) {
+        self.setData({ unread: (res && res.unread) || 0 })
+      }).catch(function () {})
     }
   }
 })

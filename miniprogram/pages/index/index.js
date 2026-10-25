@@ -427,8 +427,9 @@ Page({
     this.openGoodsTab('')
   },
 
+  /** 铃铛 → 私信（已是 tab 页，必须 switchTab，navigateTo 会被框架拒绝） */
   goMessages: function () {
-    mp.navigateTo({ url: '/pages/messages/index' })
+    mp.switchTab({ url: '/pages/messages/index' })
   },
 
   goStatus: function () {
@@ -479,7 +480,7 @@ function fmtCount(n) {
 const TAB_PAGES = [
   '/pages/index/index',
   '/pages/goods/list',
-  '/pages/wall/index',
+  '/pages/messages/index',
   '/pages/user/index'
 ]
 

@@ -2,7 +2,8 @@
 .page {
   min-height: 100vh;
   background: #f7f9fb;
-  padding-bottom: calc(170rpx + env(safe-area-inset-bottom));
+  /* 本页已不是 tab 页（底部「我想说」让位给「私信」），不再需要给底栏留整块高度 */
+  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
 }
 
 /* ---------- 顶部栏 ---------- */

@@ -2,7 +2,7 @@
   <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏；右侧预留胶囊宽度） -->
   <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px; padding-right: {{capsuleGap}}px">
     <view class="tb-left">
-      <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
+      <!-- 本页已是底部「私信」tab 页：没有上一级可返回，不显示返回箭头 -->
       <text class="tb-title">私信与消息中心</text>
     </view>
     <view class="tb-right">
@@ -146,9 +146,17 @@
     </swipe-cell>
   </view>
 
-  <view class="empty" wx:if="{{!loading && !convos.length}}">
+  <view class="empty" wx:if="{{!loading && !needLogin && !convos.length}}">
     <text class="empty-icon">📭</text>
     <text>没有符合条件的会话</text>
+  </view>
+
+  <!-- 未登录引导：私信必须有身份，游客点进来给一个明确入口，不打 401 -->
+  <view class="login-box" wx:if="{{needLogin}}">
+    <view class="lb-icon">💬</view>
+    <view class="lb-title">登录后查看私信</view>
+    <view class="lb-sub">和校友聊闲置、约面交时间，消息只在你们两人之间可见。</view>
+    <view class="lb-btn" bindtap="goLogin">微信一键登录</view>
   </view>
 
   <!-- 底部状态 -->

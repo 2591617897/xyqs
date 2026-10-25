@@ -13,7 +13,11 @@
       hover-class="tab-hover"
       hover-stay-time="80"
     >
-      <text class="tab-icon">{{item.icon}}</text>
+      <view class="tab-icon-wrap">
+        <text class="tab-icon">{{item.icon}}</text>
+        <!-- 私信未读角标（游客未登录时为 0，不展示） -->
+        <view class="tab-badge" wx:if="{{item.key === 'message' && unread > 0}}">{{unread > 99 ? '99+' : unread}}</view>
+      </view>
       <text class="tab-label">{{item.text}}</text>
     </view>
   </block>
@@ -51,7 +55,8 @@
       </view>
     </view>
 
-    <view class="pub-line pub-red" bindtap="goTab" data-url="/pages/wall/index" hover-class="card-press">
+    <!-- 表白墙已不是 tab 页，这里改走 navigateTo（入口仍需匿名可达，不做认证拦截） -->
+    <view class="pub-line pub-red" bindtap="goNav" data-url="/pages/wall/index" hover-class="card-press">
       <text class="pub-line-title">写匿名心事</text>
       <text class="pub-line-arrow">›</text>
     </view>

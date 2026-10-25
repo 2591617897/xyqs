@@ -1,5 +1,6 @@
 const http = require('../../utils/request')
 const { mp, timeAgo } = require('../../utils/util')
+const auth = require('../../utils/auth')
 
 Page({
   data: {
@@ -13,6 +14,8 @@ Page({
     allConvos: [],
     keyword: '',
     showTip: true,
+    /** 未登录时为 true：tab 页游客也能点进来，这里给登录引导而不是打一堆 401 */
+    needLogin: false,
     filters: [
       { key: 'all', name: '全部消息' },
       { key: 'trade', name: '二手交易' },
@@ -45,12 +48,42 @@ Page({
       statusBarHeight: info.statusBarHeight || 20,
       capsuleGap: capsuleGap + 8
     })
+  },
+
+  /**
+   * 本页是 tab 页（底部「私信」），onLoad 只会执行一次，
+   * 所以数据刷新统一放在 onShow —— 从聊天页返回、切 tab 回来都要看到最新未读。
+   */
+  onShow: function () {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      // hidden:false 兜底：弹层若没走正常关闭路径，别让底栏一直不显示
+      this.getTabBar().setData({ selected: 3, hidden: false })
+    }
     this.load()
+  },
+
+  onHide: function () {
+    // 带着通知抽屉切走时兜底收起，否则底栏会停在隐藏态
+    if (this.data.notifyDrawerOpen) {
+      this.setData({ notifyDrawerOpen: false })
+    }
   },
 
   load: function () {
     const self = this
-    this.setData({ loading: true })
+    // 游客进来不打接口：/messages 需要登录，静默 401 只会把登录态清掉
+    if (!http.getToken()) {
+      this.setData({
+        loading: false,
+        needLogin: true,
+        allConvos: [],
+        convos: [],
+        summary: { likes: 0, followers: 0, mentions: 0, notice: '' },
+        unread: 0
+      })
+      return
+    }
+    this.setData({ loading: true, needLogin: false })
     // 并行拉会话列表 + 通知未读统计
     const convosPromise = http.get('/messages', null, { silent: true }).catch(function () { return {} })
     const notifyPromise = http.get('/messages/notifications/unread', null, { silent: true }).catch(function () { return null })
@@ -76,6 +109,7 @@ Page({
         loading: false
       })
       self.applyFilter()
+      self.syncTabUnread(summary.unreadTotal || 0)
     })
   },
 
@@ -127,6 +161,7 @@ Page({
     }
     const types = typeMap[name] || []
     this.setData({ notifyDrawerTitle: name, notifyDrawerTypes: types, notifyDrawerItems: [], notifyDrawerOpen: true, notifyDrawerLoading: true })
+    this.toggleTabBar(true)
     // 拉全部类型，前端过滤（后端无多 type OR 查询，先拉全量）
     http.get('/messages/notifications?size=30', null, { silent: true }).then(function (res) {
       const items = (res.records || [])
@@ -145,6 +180,7 @@ Page({
 
   closeNotifyDrawer: function () {
     this.setData({ notifyDrawerOpen: false })
+    this.toggleTabBar(false)
   },
 
   /** 抽屉内「全部标为已读」 */
@@ -253,8 +289,38 @@ Page({
     mp.navigateTo({ url: '/pages/chat/index?id=' + id + '&name=' + encodeURIComponent(name || '') })
   },
 
-  goBack: function () {
-    mp.navigateBack()
+  /**
+   * 把未读总数同步到底栏「私信」角标。
+   *
+   * 为什么要手动同步：custom-tab-bar 的 pageLifetimes.show 回调与页面的 onShow
+   * 先后不保证，靠底栏自己拉接口可能慢半拍（刚读完消息角标还在）。
+   * 这里页面已经拿到 summary.unreadTotal，顺手回写最准。
+   */
+  syncTabUnread: function (n) {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ unread: Number(n) || 0 })
+    }
+  },
+
+  /**
+   * 弹层需要盖住自定义 tabBar。
+   *
+   * 自定义 tabBar 由框架层渲染（`custom-tab-bar/`），页面里的 z-index 再高也压不住它，
+   * 官方给定的做法是由页面把它隐藏掉（`.tabbar-hidden`），否则抽屉底部会被底栏切掉。
+   */
+  toggleTabBar: function (hide) {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ hidden: !!hide })
+    }
+  },
+
+  /** 游客态：点「去登录」才真正建号（拒绝则继续浏览） */
+  goLogin: function () {
+    const self = this
+    auth.ensureLogin(true).then(function (user) {
+      self.setData({ needLogin: false })
+      self.load()
+    }).catch(function () {})
   }
 })
 

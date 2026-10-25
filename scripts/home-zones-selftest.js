@@ -174,7 +174,8 @@ async function main() {
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'wall', id: '7001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'goods', id: '8001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'post', id: '6001' } } })
-  check('tab 页用 switchTab', jumps[0] && jumps[0][0] === 'switchTab' && jumps[0][1] === '/pages/wall/index', jumps[0])
+  // 表白墙已让位给底部「私信」tab，不再是 tab 页 → 走 navigateTo
+  check('非 tab 页用 navigateTo', jumps[0] && jumps[0][0] === 'navigateTo' && jumps[0][1] === '/pages/wall/index', jumps[0])
   check('非 tab 页用 navigateTo 且带参', jumps[1] && jumps[1][0] === 'navigateTo' && jumps[1][1] === '/pages/post/list?channelId=2001', jumps[1])
   check('表白墙跳详情', jumps[2] && jumps[2][1] === '/pages/wall/detail?id=7001', jumps[2])
   check('闲置跳详情', jumps[3] && jumps[3][1] === '/pages/goods/detail?id=8001', jumps[3])

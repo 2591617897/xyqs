@@ -2,7 +2,43 @@
 .page {
   min-height: 100vh;
   background: #f7f9fb;
-  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  /* 底部留出自定义 tabBar 的高度（约 110rpx）+ 安全区，否则最后一条会话被底栏压住 */
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+}
+
+/* ===== 未登录引导 ===== */
+.login-box {
+  margin: 40rpx 24rpx 0;
+  padding: 56rpx 32rpx 48rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(15, 26, 22, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.lb-icon { font-size: 76rpx; line-height: 1; }
+.lb-title {
+  margin-top: 20rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #0f1a16;
+}
+.lb-sub {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #6b7a74;
+}
+.lb-btn {
+  margin-top: 32rpx;
+  padding: 20rpx 64rpx;
+  border-radius: 999rpx;
+  background: #006C49;
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 700;
 }
 
 /* ---------- 顶栏 ---------- */

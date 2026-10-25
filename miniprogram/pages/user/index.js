@@ -366,9 +366,9 @@ Page({
     }).catch(function () {})
   },
 
-  /** 消息中心（私信 / 赞与收藏 / 评论） */
+  /** 私信（已是 tab 页，走 switchTab） */
   goMessages: function () {
-    mp.navigateTo({ url: '/pages/messages/index' })
+    mp.switchTab({ url: '/pages/messages/index' })
   },
 
   /** 未实现的演示入口统一占位 */

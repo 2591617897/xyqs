@@ -48,9 +48,8 @@ Page({
   },
 
   onShow: function () {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 3 })
-    }
+    // 表白墙已让位给「私信」tab，本页不再是 tab 页（无底栏），
+    // 也就不需要设置 getTabBar().selected
     // 从详情页返回时同步点赞数 / 评论数 / 编辑结果
     if (mp.getStorageSync('needRefreshWall')) {
       mp.removeStorageSync('needRefreshWall')
@@ -171,9 +170,9 @@ Page({
     this.openCompose()
   },
 
-  /** 顶部铃铛 → 消息中心 */
+  /** 顶部铃铛 → 私信（tab 页，走 switchTab） */
   goMessages: function () {
-    mp.navigateTo({ url: '/pages/messages/index' })
+    mp.switchTab({ url: '/pages/messages/index' })
   },
 
   /** 阻止分享按钮冒泡 */

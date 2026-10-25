@@ -77,6 +77,34 @@
   transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
 }
 
+/* 图标容器：给未读角标提供定位基准 */
+.tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44rpx;
+  height: 44rpx;
+}
+
+/* 私信未读角标 */
+.tab-badge {
+  position: absolute;
+  top: -8rpx;
+  left: 28rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+  border-radius: 15rpx;
+  background: var(--danger-500, #DC2626);
+  border: 2rpx solid #ffffff;
+  color: #ffffff;
+  font-size: 18rpx;
+  line-height: 26rpx;
+  text-align: center;
+}
+
 .tab-label {
   font-size: 20rpx;
   color: var(--text-3, #6B7A74);

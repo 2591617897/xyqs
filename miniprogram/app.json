@@ -45,8 +45,8 @@
         "text": "二手"
       },
       {
-        "pagePath": "pages/wall/index",
-        "text": "表白墙"
+        "pagePath": "pages/messages/index",
+        "text": "私信"
       },
       {
         "pagePath": "pages/user/index",
