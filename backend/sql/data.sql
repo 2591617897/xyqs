@@ -24,9 +24,10 @@ INSERT INTO t_school (id, name, province, city, district, sort) VALUES
 (1020, '兰州大学', '甘肃', '兰州', '城关区', 81)
 ON DUPLICATE KEY UPDATE name = VALUES(name), province = VALUES(province), city = VALUES(city), district = VALUES(district);
 
+-- 频道：首页已改为「功能区」布局，频道只在「校园频道」页做二级分类
+-- 「学习交流」(2002) 已下线：首页不再用频道 tab，该频道由「我想说」功能区替代
 INSERT INTO t_channel (id, name, icon, description, school_id, sort) VALUES
 (2001, '校园公告', '📢', '失物招领、校园通知、社团招新', NULL, 100),
-(2002, '学习交流', '📚', '选课攻略、考研保研、资料互换', NULL, 90),
 (2003, '吃喝玩乐', '🍜', '食堂测评、周边探店、周末去哪儿', NULL, 80),
 (2004, '树洞吐槽', '🕳️', '今天也想碎碎念一下', NULL, 70),
 (2005, '二手交易', '♻️', '闲置好物流转，低碳又省钱', NULL, 60),

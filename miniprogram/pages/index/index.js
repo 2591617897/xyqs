@@ -1,10 +1,20 @@
 const http = require('../../utils/request')
-const { timeAgo, priceText, mp, toast } = require('../../utils/util')
+const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
-const swipe = require('../../utils/swipe')
-const { resolveList } = require('../../utils/img')
+const zoneMod = require('../../utils/zones')
 
+/**
+ * 首页 = 功能区首页（不再用「频道 tab」）。
+ *
+ * 结构自上而下：
+ *   1. 顶部栏：学校范围胶囊 / 搜索 / 通知
+ *   2. 功能入口区（金刚区）：一排图标直达各功能
+ *   3. 运营公告位
+ *   4. 内容功能区：今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活
+ *
+ * 各区配置集中在 utils/zones.js，加新功能不用动这里的导航逻辑。
+ */
 Page({
   data: {
     user: null,
@@ -18,28 +28,21 @@ Page({
     /** 新用户选学校引导 */
     onboardShow: false,
     onboardSaving: false,
-    channels: [],
-    channelId: '',
-    // 频道导航的 scroll-into-view 目标：滑动切换后把选中频道滚进可视区
-    navInto: '',
+    /** 功能入口区（金刚区） */
+    entries: [],
+    /** 内容功能区 */
+    zones: [],
+    /** 闲置分类（校园闲置区的子筛选） */
     categories: [],
-    feed: [],
     loading: true,
     loadError: false,
     errorMsg: '',
-    unread: 0,
-    hotPost: null,
-    hotComment: null
+    unread: 0
   },
 
   onLoad: function () {
-    // 快速滑动会连发多次加载，只认最后一次的结果（见 loadData 里的 seq 校验）
+    // 序号：快速滑动会连发多次加载，只认最后一次的结果（见 loadData 里的 seq 校验）
     this._loadSeq = 0
-    const self = this
-    this._swipe = swipe.create({
-      next: function () { self.switchChannelOffset(1) },
-      prev: function () { self.switchChannelOffset(-1) }
-    })
   },
 
   onShow: function () {
@@ -212,6 +215,12 @@ Page({
     this.loadData(true)
   },
 
+  /**
+   * 一次性拉齐首页所有功能区的数据。
+   *
+   * 各接口互不依赖，用 Promise.all 并行；每个请求各自 catch，
+   * 否则一个失败会把整页吞掉（Promise.all 的失败会短路其它分支）。
+   */
   loadData: function (refresh) {
     const self = this
     if (refresh) this.setData({ loading: true })
@@ -228,154 +237,64 @@ Page({
     }
 
     // 浏览范围：本校（默认）/ 本市（scope=city&city=xxx）
-    const postParams = Object.assign({ page: 1, size: 10 }, scopeMod.postParams())
-    if (this.data.channelId) postParams.channelId = this.data.channelId
-
-    // 频道是内容分区，商品（闲置）不属于任何频道。
-    // 只有在「全部」这种聚合入口才把闲置混排进来；
-    // 否则切了频道看到的还是同一批闲置，会让人以为筛选没生效。
-    const goodsTask = this.data.channelId
-      ? Promise.resolve(null)
-      : http.get('/goods', Object.assign({ page: 1, size: 4, sort: 'latest' }, scopeMod.goodsParams()), { silent: true }).catch(fail('goods'))
+    const scopeParams = scopeMod.postParams()
+    // 帖子一次拉够首页各区所需：公告区与生活区在前端按 channelId 拆分
+    const postParams = Object.assign({ page: 1, size: 16 }, scopeParams)
+    const hotParams = Object.assign({ page: 1, size: 1, sort: 'hot' }, scopeParams)
+    const wallParams = Object.assign({ page: 1, size: 6 }, scopeParams)
+    const goodsParams = Object.assign({ page: 1, size: 6, sort: 'latest' }, scopeMod.goodsParams())
 
     Promise.all([
       http.get('/channels', null, { silent: true }).catch(fail('channels')),
       http.get('/posts', postParams, { silent: true }).catch(fail('posts')),
-      goodsTask,
-      http.get('/goods/categories', null, { silent: true }).catch(fail('categories')),
-      // 全站点赞最高的帖子：点赞不超过 10 不值当展示，接口失败静默跳过
-      http.get('/posts', { page: 1, size: 1, sort: 'hot' }, { silent: true }).catch(fail('hot'))
+      http.get('/posts', hotParams, { silent: true }).catch(fail('hot')),
+      http.get('/wall/posts', wallParams, { silent: true }).catch(fail('wall')),
+      http.get('/goods', goodsParams, { silent: true }).catch(fail('goods')),
+      http.get('/goods/categories', null, { silent: true }).catch(fail('categories'))
     ]).then(function (res) {
       if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
       const channels = res[0] || []
-      const postsRes = res[1] || { records: [] }
-      const goodsRes = res[2] || { records: [] }
-      const categories = res[3] || []
-      const okCount = res.filter(function (x) {
+      // 判定依据只看「内容源」：帖子 / 最热 / 表白墙 / 闲置
+      // 任一成功就能渲染出部分功能区（优雅降级）；
+      // 全挂了才算整页失败，否则用户只会看到一句「暂时还没有内容」而不知道是服务挂了
+      const contentOk = [res[1], res[2], res[3], res[4]].filter(function (x) {
         return !!x
       }).length
 
-      const posts = (postsRes.records || []).map(function (p) {
-        return {
-          type: 'post',
-          key: 'post-' + p.id,
-          id: p.id,
-          authorId: p.userId,
-          authorName: p.authorName || '校园用户',
-          avatar: p.authorAvatar || '',
-          schoolId: p.schoolId || '',
-          avatarText: (p.authorName || '校').substring(0, 1),
-          timeText: timeAgo(p.createdAt),
-          createdAt: p.createdAt || '',
-          badge: p.channelName || '校园频道',
-          topic: p.channelName || '校园',
-          title: p.title || '',
-          excerpt: (p.content || '').replace(/\s+/g, ' '),
-          imageList: resolveList(p.imageList),
-          attachment: p.attachment || null,
-          viewCount: p.viewCount || 0,
-          viewText: fmtCount(p.viewCount),
-          liked: !!p.liked,
-          likeCount: p.likeCount || 0,
-          likeText: fmtCount(p.likeCount),
-          commentCount: p.commentCount || 0,
-          commentText: fmtCount(p.commentCount)
-        }
-      })
-
-      const goods = (goodsRes.records || []).map(function (g) {
-        return {
-          type: 'goods',
-          key: 'goods-' + g.id,
-          id: g.id,
-          authorId: g.userId,
-          authorName: g.sellerName || '校园用户',
-          avatar: g.sellerAvatar || '',
-          schoolId: g.schoolId || '',
-          avatarText: (g.sellerName || '校').substring(0, 1),
-          timeText: timeAgo(g.createdAt),
-          createdAt: g.createdAt || '',
-          badge: g.tradeType === 1 ? '校内自提' : '支持邮寄',
-          topic: g.categoryName || '闲置',
-          title: g.title || '',
-          excerpt: (g.description || '').replace(/\s+/g, ' '),
-          priceText: priceText(g.price),
-          originalPriceText: g.originalPrice ? priceText(g.originalPrice) : '',
-          location: g.location || '',
-          viewCount: g.viewCount || 0,
-          viewText: fmtCount(g.viewCount),
-          imageList: resolveList(g.imageList),
-          categoryName: g.categoryName || '',
-          liked: !!g.liked,
-          likeCount: g.likeCount || 0,
-          likeText: fmtCount(g.likeCount),
-          commentCount: 0,
-          commentText: fmtCount(0)
-        }
-      })
-
-      // 帖子与闲置按发布时间混排，形成信息流
-      const feed = posts.concat(goods).sort(function (a, b) {
-        return (b.createdAt || '').localeCompare(a.createdAt || '')
-      })
-
-      // 同市浏览范围下，标记同校 / 同市（异校）：同校帖子打绿标「同校」，其余同城异校打蓝标「同市」
-      const me = self.data.user || (getApp().globalData && getApp().globalData.user) || mp.getStorageSync('user') || {}
-      const mySchoolId = me.schoolId
-      const isCity = self.data.scopeMode === 'city'
-      feed.forEach(function (item) {
-        item.scopeBadge = ''
-        if (!isCity || !mySchoolId || !item.schoolId) return
-        item.scopeBadge = String(mySchoolId) === String(item.schoolId) ? '同校' : '同市'
-      })
+      const built = zoneMod.buildZones({
+        posts: res[1] || {},
+        hot: res[2] || {},
+        wall: res[3] || {},
+        goods: res[4] || {}
+      }, channels)
 
       self.setData({
-        channels: channels,
-        categories: categories,
-        feed: feed,
+        entries: zoneMod.buildEntries(channels),
+        categories: res[5] || [],
+        zones: built,
         loading: false,
-        loadError: okCount === 0,
-        errorMsg: okCount === 0 ? (firstError || '加载失败，请检查后端服务') : ''
+        loadError: contentOk === 0,
+        errorMsg: contentOk === 0 ? (firstError || '加载失败，请检查后端服务') : ''
       })
 
-      // 最热帖子：点赞 > 10 才值得占首页位
-      const hotRes = res[4] || {}
-      const hot = (hotRes.records || [])[0]
-      if (!hot || (hot.likeCount || 0) <= 10) {
-        self.setData({ hotPost: null, hotComment: null })
-        return
-      }
-      const hotPost = {
-        id: hot.id,
-        authorId: hot.userId,
-        authorName: hot.authorName || '校园用户',
-        avatar: hot.authorAvatar || '',
-        timeText: timeAgo(hot.createdAt),
-        badge: hot.channelName || '校园频道',
-        title: hot.title || '',
-        excerpt: (hot.content || '').replace(/\s+/g, ' '),
-        imageList: resolveList(hot.imageList),
-        liked: !!hot.liked,
-        likeCount: hot.likeCount || 0,
-        likeText: fmtCount(hot.likeCount),
-        commentCount: hot.commentCount || 0,
-        commentText: fmtCount(hot.commentCount),
-        viewCount: hot.viewCount || 0,
-        viewText: fmtCount(hot.viewCount)
-      }
-      self.setData({ hotPost: hotPost })
-      // 热评预览：取该帖第一条评论
-      http.get('/posts/' + hot.id + '/comments', null, { silent: true }).then(function (list) {
+      // 热评预览：今日最热区的第一条评论
+      const hotIdx = built.findIndex(function (z) {
+        return z.key === 'hot'
+      })
+      if (hotIdx < 0 || !built[hotIdx].items.length) return
+      const hotId = built[hotIdx].items[0].id
+      http.get('/posts/' + hotId + '/comments', null, { silent: true }).then(function (list) {
         const c = (list || []).filter(function (x) {
           return !x.parentId
         })[0]
         if (!c) return
-        self.setData({
-          hotComment: {
-            userName: c.userName || '校园用户',
-            content: (c.content || '').replace(/\s+/g, ' ')
-          }
-        })
+        // setData 的路径键必须是变量，不能写成对象字面量的计算属性名
+        const patch = {}
+        patch['zones[' + hotIdx + '].items[0].hotComment'] = {
+          userName: c.userName || '校园用户',
+          content: (c.content || '').replace(/\s+/g, ' ')
+        }
+        self.setData(patch)
       }).catch(function () {})
     }).then(function () {
       mp.stopPullDownRefresh()
@@ -417,7 +336,7 @@ Page({
     this.toggleTabBar(false)
     this.applyUser(getApp().globalData.user)
     // 范围变了重新拉信息流
-    this.setData({ feed: [], loading: true })
+    this.setData({ zones: [], loading: true })
     this.loadData()
     if (next.scope === 'city') {
       toast('已切换到' + (next.city || '本市') + ' · 全市')
@@ -431,46 +350,60 @@ Page({
     this.goStatus()
   },
 
-  switchChannel: function (e) {
-    const id = e.currentTarget.dataset.id || ''
-    if (String(id) === String(this.data.channelId)) return
-    this.setData({ channelId: id, navInto: id ? 'nav-' + id : 'nav-all', feed: [], loading: true })
-    this.loadData()
+  /* ---------- 功能区交互 ---------- */
+
+  /** 金刚区入口 */
+  goEntry: function (e) {
+    navigate(e.currentTarget.dataset.url)
+  },
+
+  /** 功能区右上角「更多」 */
+  goZoneMore: function (e) {
+    navigate(e.currentTarget.dataset.url)
+  },
+
+  /** 功能区卡片 → 详情页（帖子 / 表白墙 / 闲置三种落点） */
+  goZoneDetail: function (e) {
+    const ds = e.currentTarget.dataset
+    if (!ds.id) return
+    if (ds.kind === 'wall') {
+      mp.navigateTo({ url: '/pages/wall/detail?id=' + ds.id })
+      return
+    }
+    if (ds.kind === 'goods') {
+      mp.navigateTo({ url: '/pages/goods/detail?id=' + ds.id })
+      return
+    }
+    mp.navigateTo({ url: '/pages/post/detail?id=' + ds.id })
   },
 
   /**
-   * 按偏移量切换频道（左右滑动用）。
-   * 频道序列 = 「全部」+ 后端返回的频道；到两端给一句轻提示，
-   * 否则用户会以为滑动没生效。
+   * 功能区卡片点赞：不跳转，直接改状态。
+   * 三个区的点赞接口不同（帖子 / 表白墙 / 闲置），按 kind 分流。
    */
-  switchChannelOffset: function (offset) {
-    const channels = this.data.channels || []
-    if (!channels.length) return
-    const keys = [''].concat(channels.map(function (c) { return String(c.id) }))
-    const cur = keys.indexOf(String(this.data.channelId || ''))
-    if (cur < 0) return
-    const next = cur + offset
-    if (next < 0 || next >= keys.length) {
-      if (keys.length > 1) toast(offset > 0 ? '已经是最后一个频道了' : '已经是第一个频道了')
-      return
-    }
-    const id = keys[next]
-    if (id === String(this.data.channelId || '')) return
-    this.setData({ channelId: id, navInto: id ? 'nav-' + id : 'nav-all', feed: [], loading: true })
-    this.loadData()
-  },
-
-  /* ---------- 左右滑动切频道（手势判定在 utils/swipe.js） ---------- */
-  onSwipeStart: function (e) {
-    if (this._swipe) this._swipe.start(e)
-  },
-
-  onSwipeMove: function (e) {
-    if (this._swipe) this._swipe.move(e)
-  },
-
-  onSwipeEnd: function (e) {
-    if (this._swipe) this._swipe.end(e)
+  toggleZoneLike: function (e) {
+    const self = this
+    const ds = e.currentTarget.dataset
+    const zi = ds.zi
+    const ii = ds.ii
+    const zone = (this.data.zones || [])[zi]
+    if (!zone) return
+    const item = (zone.items || [])[ii]
+    if (!item) return
+    auth.ensureLogin().then(function () {
+      let url = '/posts/' + item.id + '/like'
+      if (item.kind === 'wall') url = '/wall/posts/' + item.id + '/like'
+      else if (item.kind === 'goods') url = '/goods/' + item.id + '/like'
+      return http.post(url)
+    }).then(function (liked) {
+      const cnt = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
+      const base = 'zones[' + zi + '].items[' + ii + ']'
+      const patch = {}
+      patch[base + '.liked'] = liked
+      patch[base + '.likeCount'] = cnt
+      patch[base + '.likeText'] = fmtCount(cnt)
+      self.setData(patch)
+    }).catch(function () {})
   },
 
   openGoodsTab: function (mode, categoryId) {
@@ -484,6 +417,7 @@ Page({
     this.openGoodsTab('')
   },
 
+  /** 校园闲置区里的分类筛选 → 跳二手广场并带上分类 */
   goCategory: function (e) {
     this.openGoodsTab('', e.currentTarget.dataset.id)
   },
@@ -515,82 +449,11 @@ Page({
     mp.navigateTo({ url: '/pages/user/verify' })
   },
 
-  /* ---------- 信息流交互 ---------- */
-  goDetail: function (e) {
-    const type = e.currentTarget.dataset.type
-    const id = e.currentTarget.dataset.id
-    const url = type === 'goods'
-      ? '/pages/goods/detail?id=' + id
-      : '/pages/post/detail?id=' + id
-    mp.navigateTo({ url: url })
-  },
-
-  previewFeed: function (e) {
-    const fi = e.currentTarget.dataset.fi
-    const item = this.data.feed[fi]
-    if (!item || !item.imageList.length) return
-    mp.previewImage({
-      current: e.currentTarget.dataset.url,
-      urls: item.imageList
-    })
-  },
-
-  toggleLike: function (e) {
-    const self = this
-    const index = e.currentTarget.dataset.index
-    const item = this.data.feed[index]
-    if (!item) return
-    auth.ensureLogin().then(function () {
-      const url = item.type === 'goods'
-        ? '/goods/' + item.id + '/like'
-        : '/posts/' + item.id + '/like'
-      return http.post(url)
-    }).then(function (liked) {
-      const patch = {}
-      patch['feed[' + index + '].liked'] = liked
-      patch['feed[' + index + '].likeCount'] = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
-      patch['feed[' + index + '].likeText'] = fmtCount(Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1)))
-      self.setData(patch)
-    }).catch(function () {})
-  },
-
-  /** 最热帖子卡片的点赞 */
-  likeHot: function () {
-    const self = this
-    const hot = this.data.hotPost
-    if (!hot) return
-    auth.ensureLogin().then(function () {
-      return http.post('/posts/' + hot.id + '/like')
-    }).then(function (liked) {
-      const count = Math.max(0, (hot.likeCount || 0) + (liked ? 1 : -1))
-      self.setData({
-        'hotPost.liked': liked,
-        'hotPost.likeCount': count,
-        'hotPost.likeText': fmtCount(count)
-      })
-    }).catch(function () {})
-  },
-
-  goComments: function (e) {
-    const type = e.currentTarget.dataset.type
-    const id = e.currentTarget.dataset.id
-    if (type === 'goods') {
-      mp.navigateTo({ url: '/pages/goods/detail?id=' + id })
-      return
-    }
-    mp.navigateTo({ url: '/pages/post/detail?id=' + id })
-  },
-
   /** 作者行跳转：进对方个人主页（catchtap 已阻止冒泡到卡片详情跳转） */
   goUserSpace: function (e) {
     const id = e.currentTarget.dataset.id
     if (!id) return
     mp.navigateTo({ url: '/pages/user/space/space?id=' + id })
-  },
-
-  /** 附件卡片：占位交互 */
-  onAttachment: function () {
-    toast('附件下载即将开放')
   },
 
   /** 阻止分享按钮的 tap 冒泡到卡片详情跳转 */
@@ -610,4 +473,25 @@ function fmtCount(n) {
   if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '万'
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
   return String(n)
+}
+
+/** 底部 tabBar 的页面路径：这些页必须 switchTab，不能 navigateTo */
+const TAB_PAGES = [
+  '/pages/index/index',
+  '/pages/goods/list',
+  '/pages/wall/index',
+  '/pages/user/index'
+]
+
+/**
+ * 统一跳转：tabBar 页面用 switchTab（带参数会被丢弃），其余用 navigateTo。
+ */
+function navigate(url) {
+  if (!url) return
+  const path = url.split('?')[0]
+  if (TAB_PAGES.indexOf(path) >= 0) {
+    mp.switchTab({ url: path })
+    return
+  }
+  mp.navigateTo({ url: url })
 }

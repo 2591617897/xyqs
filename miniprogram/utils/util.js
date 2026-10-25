@@ -38,6 +38,14 @@ function priceText(v) {
   return n % 1 === 0 ? String(n) : n.toFixed(2)
 }
 
+/** 计数美化：1200 → 1.2k，12345 → 1.2万（首页/列表页共用，避免各写一份） */
+function fmtCount(n) {
+  n = Number(n) || 0
+  if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '万'
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  return String(n)
+}
+
 function toast(title, icon) {
   mp.showToast({ title: title, icon: icon || 'none' })
 }
@@ -61,6 +69,7 @@ module.exports = {
   PLATFORM_NAME,
   timeAgo,
   priceText,
+  fmtCount,
   toast,
   parseDate,
   categoryEmoji,

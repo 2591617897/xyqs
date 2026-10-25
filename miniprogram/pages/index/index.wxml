@@ -15,40 +15,22 @@
     </view>
   </view>
 
-  <!-- 频道导航：左右滑动内容区会切换频道，选中项自动滚进可视区 -->
-  <scroll-view class="nav-scroll" scroll-x="true" show-scrollbar="false" scroll-into-view="{{navInto}}" scroll-with-animation="true">
-    <view class="nav-row">
-      <view id="nav-all" class="nav-item {{!channelId ? 'active' : ''}}" bindtap="switchChannel" data-id="">全部</view>
-      <view
-        id="nav-{{item.id}}"
-        class="nav-item {{channelId === item.id ? 'active' : ''}}"
-        wx:for="{{channels}}"
-        wx:key="id"
-        bindtap="switchChannel"
-        data-id="{{item.id}}"
-      >{{item.name}}</view>
+  <!-- 功能入口区（金刚区）：一屏看清所有功能。后台给频道加一行，这里自动多一个图标 -->
+  <view class="entries">
+    <view
+      class="entry"
+      wx:for="{{entries}}"
+      wx:key="key"
+      bindtap="goEntry"
+      data-url="{{item.url}}"
+      hover-class="entry-hover"
+      hover-stay-time="60"
+    >
+      <view class="entry-icon tone-{{item.tone}}">{{item.icon}}</view>
+      <text class="entry-text">{{item.title}}</text>
     </view>
-  </scroll-view>
+  </view>
 
-  <!-- 分类横滑 -->
-  <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">
-    <view class="cat-row">
-      <view class="cat-pill active" bindtap="goCategory" data-id="">🔥 今日热门</view>
-      <view class="cat-pill" wx:for="{{categories}}" wx:key="id" bindtap="goCategory" data-id="{{item.id}}">
-        <text class="cat-icon">{{item.icon}}</text>
-        <text>{{item.name}}</text>
-      </view>
-    </view>
-  </scroll-view>
-
-  <!-- 内容区：左右滑动切换频道（手势判定见 utils/swipe.js；命中后走与点 tab 相同的逻辑） -->
-  <view
-    class="swipe-area"
-    bindtouchstart="onSwipeStart"
-    bindtouchmove="onSwipeMove"
-    bindtouchend="onSwipeEnd"
-    bindtouchcancel="onSwipeEnd"
-  >
   <!-- 运营公告位：跳蚤集市 -->
   <view class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
     <view class="announce-icon">🛍️</view>
@@ -62,184 +44,222 @@
     <view class="announce-btn">去逛逛 ›</view>
   </view>
 
-  <!-- 最热帖子：全站点赞第一（点赞 > 10 才展示） -->
-  <view class="hot-card" wx:if="{{hotPost}}" bindtap="goDetail" data-type="post" data-id="{{hotPost.id}}" hover-class="feed-hover" hover-stay-time="60">
-    <view class="hot-head">
-      <text class="hot-flame">🔥</text>
-      <text class="hot-title">今日最热帖子</text>
-      <view class="flex1"></view>
-      <text class="hot-hint">点赞榜第一</text>
-    </view>
+  <!-- 内容功能区：每个模块一个横向卡片行，配置见 utils/zones.js -->
+  <view class="zones">
+    <view class="zone" wx:for="{{zones}}" wx:for-item="zone" wx:for-index="zi" wx:key="key">
 
-    <view class="hot-user">
-      <view class="hot-avatar" catchtap="goUserSpace" data-id="{{hotPost.authorId}}">
-        <image wx:if="{{hotPost.avatar}}" class="hot-avatar-img" src="{{hotPost.avatar}}" mode="aspectFill" />
-        <view wx:else class="avatar-default">
-          <view class="ad-head"></view>
-          <view class="ad-body"></view>
+      <!-- 模块标题 -->
+      <view class="zone-head">
+        <text class="zone-icon">{{zone.icon}}</text>
+        <view class="zone-head-main">
+          <text class="zone-title">{{zone.title}}</text>
+          <text class="zone-desc">{{zone.desc}}</text>
         </view>
-      </view>
-      <view class="flex1" catchtap="goUserSpace" data-id="{{hotPost.authorId}}">
-        <text class="hot-name">{{hotPost.authorName}}</text>
-        <text class="hot-meta">{{hotPost.badge}} · {{hotPost.timeText}}</text>
-      </view>
-    </view>
-
-    <view class="hot-text clamp3">
-      <text class="feed-topic">#{{hotPost.badge}}</text>
-      <text wx:if="{{hotPost.title}}"> {{hotPost.title}} </text>
-      <text>{{hotPost.excerpt}}</text>
-    </view>
-
-    <!-- 热评预览 -->
-    <view class="hot-comment" wx:if="{{hotComment}}">
-      <view class="hot-like-badge">{{hotPost.likeCount}}赞</view>
-      <view class="hot-comment-body">
-        <text class="hot-comment-name">{{hotComment.userName}}：</text>
-        <text class="hot-comment-text">{{hotComment.content}}</text>
-      </view>
-    </view>
-
-    <view class="feed-actions">
-      <view class="feed-view">
-        <text class="fa-icon">👁</text>
-        <text>{{hotPost.viewText}}</text>
-      </view>
-      <view class="flex1"></view>
-      <view class="feed-act {{hotPost.liked ? 'liked' : ''}}" catchtap="likeHot">
-        <text class="fa-icon">{{hotPost.liked ? '💚' : '👍'}}</text>
-        <text>{{hotPost.likeText}}</text>
-      </view>
-      <view class="feed-act" catchtap="goDetail" data-type="post" data-id="{{hotPost.id}}">
-        <text class="fa-icon">💬</text>
-        <text>{{hotPost.commentText}}</text>
-      </view>
-      <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover" style="width: 77rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
-        <text class="fa-icon">↗</text>
-      </button>
-    </view>
-  </view>
-
-  <!-- 信息流 -->
-  <view class="feed">
-    <view
-      class="feed-item"
-      wx:for="{{feed}}"
-      wx:key="key"
-      bindtap="goDetail"
-      data-type="{{item.type}}"
-      data-id="{{item.id}}"
-      hover-class="feed-hover"
-      hover-stay-time="60"
-    >
-      <!-- 作者行：头像 + 昵称 + 标签（头像与昵称区 catchtap 阻止冒泡到卡片详情跳转） -->
-      <view class="feed-user">
-        <view class="feed-avatar" catchtap="goUserSpace" data-id="{{item.authorId}}">
-          <image wx:if="{{item.avatar}}" class="feed-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
-          <view wx:else class="avatar-default">
-            <view class="ad-head"></view>
-            <view class="ad-body"></view>
-          </view>
-        </view>
-        <view class="feed-user-info" catchtap="goUserSpace" data-id="{{item.authorId}}">
-          <view class="feed-name-row">
-            <text class="feed-name">{{item.authorName}}</text>
-            <text wx:if="{{item.scopeBadge}}" class="scope-badge {{item.scopeBadge === '同校' ? 'scope-school' : 'scope-city'}}">{{item.scopeBadge}}</text>
-          </view>
-          <view class="feed-meta">
-            <text class="feed-chip {{item.type === 'post' ? 'chip-amber' : 'chip-green'}}">{{item.badge}}</text>
-            <text class="feed-time">{{item.timeText}}</text>
-          </view>
-        </view>
-        <text class="feed-status" wx:if="{{item.type === 'goods'}}">闲置中</text>
+        <view class="zone-more" wx:if="{{zone.more}}" bindtap="goZoneMore" data-url="{{zone.more}}">更多 ›</view>
       </view>
 
-      <!-- 正文主体：单图时右侧缩略图 -->
-      <view class="feed-body {{item.imageList.length === 1 ? 'with-thumb' : ''}}">
-        <view class="feed-body-main">
-          <view class="feed-text clamp3">
-            <text class="feed-topic">#{{item.topic}}</text>
-            <text wx:if="{{item.title}}"> {{item.title}} </text>
-            <text>{{item.excerpt}}</text>
-          </view>
-          <view class="feed-price" wx:if="{{item.type === 'goods'}}">
-            <text class="price-symbol">¥</text>
-            <text class="price-num">{{item.priceText}}</text>
-            <text class="price-origin" wx:if="{{item.originalPriceText}}">¥{{item.originalPriceText}}</text>
-            <text class="feed-loc" wx:if="{{item.location}}">📍 {{item.location}}</text>
-          </view>
-        </view>
-        <image
-          wx:if="{{item.imageList.length === 1}}"
-          class="feed-thumb"
-          src="{{item.imageList[0]}}"
-          mode="aspectFill"
-          catchtap="previewFeed"
-          data-fi="{{index}}"
-          data-url="{{item.imageList[0]}}"
-        />
-      </view>
-
-      <!-- 多图：三列横排，超出显示 +N -->
-      <view class="feed-imgs" wx:if="{{item.imageList.length > 1}}">
+      <!-- 今日最热：大卡（置顶视觉锚点） -->
+      <block wx:if="{{zone.type === 'hot'}}">
         <view
-          class="feed-img-wrap"
-          wx:for="{{item.imageList}}"
-          wx:for-item="img"
+          class="hot-card"
+          wx:for="{{zone.items}}"
+          wx:for-item="it"
           wx:for-index="ii"
-          wx:key="*this"
+          wx:key="key"
+          bindtap="goZoneDetail"
+          data-kind="{{it.kind}}"
+          data-id="{{it.id}}"
+          hover-class="feed-hover"
+          hover-stay-time="60"
         >
-          <image
-            class="feed-img"
-            src="{{img}}"
-            mode="aspectFill"
-            catchtap="previewFeed"
-            data-fi="{{index}}"
-            data-url="{{img}}"
-          />
-          <view class="img-more" wx:if="{{ii === 2 && item.imageList.length > 3}}">+{{item.imageList.length - 3}}</view>
-        </view>
-      </view>
+          <view class="hot-head">
+            <text class="hot-flame">🔥</text>
+            <text class="hot-title">今日最热帖子</text>
+            <view class="flex1"></view>
+            <text class="hot-hint">点赞榜第一</text>
+          </view>
 
-      <!-- 附件卡片（如学习资料） -->
-      <view class="attach-card" wx:if="{{item.attachment}}" catchtap="onAttachment">
-        <view class="attach-icon">📄</view>
-        <view class="attach-info">
-          <text class="attach-name ellipsis">{{item.attachment.name}}</text>
-          <text class="attach-meta">{{item.attachment.size}} · 已下载 {{item.attachment.downloads}} 次</text>
-        </view>
-        <text class="attach-down">⬇</text>
-      </view>
+          <view class="hot-user">
+            <view class="hot-avatar" catchtap="goUserSpace" data-id="{{it.authorId}}">
+              <image wx:if="{{it.avatar}}" class="hot-avatar-img" src="{{it.avatar}}" mode="aspectFill" />
+              <view wx:else class="avatar-default">
+                <view class="ad-head"></view>
+                <view class="ad-body"></view>
+              </view>
+            </view>
+            <view class="flex1" catchtap="goUserSpace" data-id="{{it.authorId}}">
+              <text class="hot-name">{{it.authorName}}</text>
+              <text class="hot-meta">{{it.badge}} · {{it.timeText}}</text>
+            </view>
+          </view>
 
-      <!-- 底部：浏览 / 赞 / 评 / 分享 -->
-      <view class="feed-actions">
-        <view class="feed-view" wx:if="{{item.viewCount}}">
-          <text class="fa-icon">👁</text>
-          <text>{{item.viewText}}</text>
+          <view class="hot-text clamp3">
+            <text class="feed-topic">#{{it.badge}}</text>
+            <text wx:if="{{it.title}}"> {{it.title}} </text>
+            <text>{{it.excerpt}}</text>
+          </view>
+
+          <!-- 热评预览 -->
+          <view class="hot-comment" wx:if="{{it.hotComment}}">
+            <view class="hot-like-badge">{{it.likeCount}}赞</view>
+            <view class="hot-comment-body">
+              <text class="hot-comment-name">{{it.hotComment.userName}}：</text>
+              <text class="hot-comment-text">{{it.hotComment.content}}</text>
+            </view>
+          </view>
+
+          <view class="feed-actions">
+            <!-- 后端 Post 没有 view_count 字段，没有浏览数时整块不显示（避免出现「👁 0」） -->
+            <view class="feed-view" wx:if="{{it.viewCount}}">
+              <text class="fa-icon">👁</text>
+              <text>{{it.viewText}}</text>
+            </view>
+            <view class="flex1"></view>
+            <view class="feed-act {{it.liked ? 'liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+              <text class="fa-icon">{{it.liked ? '💚' : '👍'}}</text>
+              <text>{{it.likeText}}</text>
+            </view>
+            <view class="feed-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+              <text class="fa-icon">💬</text>
+              <text>{{it.commentText}}</text>
+            </view>
+            <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover" style="width: 58rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
+              <text class="fa-icon">↗</text>
+            </button>
+          </view>
         </view>
-        <view class="flex1"></view>
-        <view class="feed-act {{item.liked ? 'liked' : ''}}" catchtap="toggleLike" data-index="{{index}}">
-          <text class="fa-icon">{{item.liked ? '💚' : '👍'}}</text>
-          <text>{{item.likeText}}</text>
-        </view>
-        <view class="feed-act" catchtap="goComments" data-type="{{item.type}}" data-id="{{item.id}}">
-          <text class="fa-icon">💬</text>
-          <text>{{item.commentText}}</text>
-        </view>
-        <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover" style="width: 58rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
-          <text class="fa-icon">↗</text>
-        </button>
-      </view>
+      </block>
+
+      <!-- 帖子型（校园公告 / 校园生活） -->
+      <block wx:if="{{zone.type === 'post'}}">
+        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
+          <view class="zone-row">
+            <view
+              class="zcard zcard-post"
+              wx:for="{{zone.items}}"
+              wx:for-item="it"
+              wx:for-index="ii"
+              wx:key="key"
+              bindtap="goZoneDetail"
+              data-kind="{{it.kind}}"
+              data-id="{{it.id}}"
+              hover-class="zcard-hover"
+              hover-stay-time="60"
+            >
+              <view class="zcard-top">
+                <text class="zcard-badge">{{it.badge}}</text>
+                <text class="zcard-time">{{it.timeText}}</text>
+              </view>
+              <view class="zcard-title clamp2">{{it.title}}</view>
+              <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
+              <view class="zcard-foot">
+                <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                  <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
+                  <text>{{it.likeText}}</text>
+                </view>
+                <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                  <text class="zcard-act-icon">💬</text>
+                  <text>{{it.commentText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </block>
+
+      <!-- 我想说（表白墙）：匿名心事卡片 -->
+      <block wx:if="{{zone.type === 'wall'}}">
+        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
+          <view class="zone-row">
+            <view
+              class="zcard zcard-wall"
+              wx:for="{{zone.items}}"
+              wx:for-item="it"
+              wx:for-index="ii"
+              wx:key="key"
+              bindtap="goZoneDetail"
+              data-kind="{{it.kind}}"
+              data-id="{{it.id}}"
+              hover-class="zcard-hover"
+              hover-stay-time="60"
+            >
+              <view class="zcard-user">
+                <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
+                <view class="zcard-user-info">
+                  <text class="zcard-name">{{it.anonName}}</text>
+                  <text class="zcard-meta">{{it.timeText}} · {{it.flair}}</text>
+                </view>
+              </view>
+              <text class="zcard-tag">{{it.tags[0]}}</text>
+              <view class="zcard-excerpt clamp3">{{it.content}}</view>
+              <view class="zcard-foot">
+                <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                  <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💗' : '🤍'}}</text>
+                  <text>{{it.likeText}}</text>
+                </view>
+                <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                  <text class="zcard-act-icon">💬</text>
+                  <text>{{it.commentText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </block>
+
+      <!-- 校园闲置：带分类子筛选 -->
+      <block wx:if="{{zone.type === 'goods'}}">
+        <scroll-view class="zone-sub" scroll-x="true" show-scrollbar="false">
+          <view class="zone-sub-row">
+            <view class="zone-sub-pill" bindtap="goCategory" data-id="">🔥 全部</view>
+            <view
+              class="zone-sub-pill"
+              wx:for="{{categories}}"
+              wx:key="id"
+              bindtap="goCategory"
+              data-id="{{item.id}}"
+            >
+              <text class="zone-sub-icon">{{item.icon}}</text>
+              <text>{{item.name}}</text>
+            </view>
+          </view>
+        </scroll-view>
+        <scroll-view class="zone-scroll" scroll-x="true" show-scrollbar="false">
+          <view class="zone-row">
+            <view
+              class="zcard zcard-goods"
+              wx:for="{{zone.items}}"
+              wx:for-item="it"
+              wx:for-index="ii"
+              wx:key="key"
+              bindtap="goZoneDetail"
+              data-kind="{{it.kind}}"
+              data-id="{{it.id}}"
+              hover-class="zcard-hover"
+              hover-stay-time="60"
+            >
+              <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
+              <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+              <view class="zcard-goods-body">
+                <view class="zcard-goods-title clamp2">{{it.title}}</view>
+                <view class="zcard-goods-price">
+                  <text class="zcard-price-symbol">¥</text>
+                  <text class="zcard-price-num">{{it.priceText}}</text>
+                </view>
+                <text class="zcard-goods-loc ellipsis">{{it.location}}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </block>
+
     </view>
   </view>
 
-  <view class="empty" wx:if="{{!loading && !feed.length}}">
+  <view class="empty" wx:if="{{!loading && !zones.length}}">
     <text class="empty-icon">{{loadError ? '📡' : '📭'}}</text>
-    <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '这个频道还没有内容，去发第一条吧'}}</text>
+    <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '暂时还没有内容'}}</text>
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
-  </view>
-
-  <view class="list-end" wx:if="{{feed.length && !loading}}">已经到底啦，点击右下方「＋」发布你的新动态吧</view>
   </view>
 
   <!-- 浏览范围切换：本校 / 本市（+ 定位城市） -->

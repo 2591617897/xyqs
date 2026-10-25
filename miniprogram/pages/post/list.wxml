@@ -13,7 +13,7 @@
         <text>全部</text>
       </view>
       <view
-        class="nav-item {{channelId === item.id ? 'active' : ''}}"
+        class="nav-item {{channelId == item.id ? 'active' : ''}}"
         wx:for="{{channels}}"
         wx:key="id"
         bindtap="switchChannel"

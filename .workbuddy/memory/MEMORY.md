@@ -119,8 +119,10 @@
 - 自绘顶栏必须 `navigationStyle: custom`；图标用 SVG data-URI，别用 ←/✓/☰ 文本字符
 
 ## 校验脚本
-- `node scripts/check-miniprogram.js`（结构完整性）
-- `node scripts/mock-selftest.js`（模拟层 **139** 断言）
+- `node scripts/check-miniprogram.js`（结构完整性，21 页）
+- `node scripts/mock-selftest.js`（模拟层 **154** 断言）
+- `node scripts/home-zones-selftest.js`（**首页功能区回归 29 断言**：require.cache 注入假 request
+  转发到 mock 层 → 捕获 Page() 跑**真实 loadData** → 断言 res 下标没串位/点赞取反/跳转路由/全挂进错误态）
 - `node scripts/api-smoke-test.js`（后端 **45** 项，需 Nacos + 服务已启动；**跑完清演示数据**：删 `content='冒烟测试消息'` 并重置 4 个会话 last_*/unread_a）
 
 ## 演示数据
@@ -128,9 +130,29 @@
 - 显式 id 全字符串透传，`_key = String(id)` 再做选中态比较
 
 ## 其他
-- 首页频道是**帖子分区**，商品不属于任何频道；选具体频道时不能混排闲置
 - 浏览范围：storage `feedScope`（`utils/scope.js`），`GET /posts|/wall/posts` 支持 `scope=school|city` + `city`；无 schoolId 时不要用残留 scope，胶囊按「选择学校」渲染
 - `campus-common` 与 `campus-user` 各有一个 `LoginOrCreateReq`，改字段两个都要改
+
+## 首页 = 功能区布局（2026-10-25 改版，**没有频道 tab**）
+- 首页结构：顶栏 → **功能入口区（金刚区）** → 运营公告位 → **内容功能区**（今日最热 / 我想说 /
+  校园闲置 / 校园公告 / 校园生活，每区一行横向卡片）。**没有**频道 tab，**没有**左右滑动切频道
+- **功能区的唯一配置源 = `miniprogram/utils/zones.js`**（`buildEntries` / `buildZones` /
+  postItem / wallItem / goodsItem）。**加新功能 = 加一条 zone 配置 + 选个卡片模板**，
+  不动导航、不动 tabBar（tabBar 名额是微信硬上限 5，这是改版的根本动机）
+- 金刚区入口 = 3 个固定入口 + **后端 t_channel 动态生成** → 后台加一行频道，首页自动多一个图标
+- 公告区(channel 2001) 与 生活区 在**前端按 channelId 拆分**同一次 `/posts` 响应；
+  **没数据的区直接不渲染**（首页不留空模块）
+- 点赞按 kind 分流：post `/posts/{id}/like`、wall `/wall/posts/{id}/like`、goods `/goods/{id}/like`
+- 跳转统一 `navigate()`：**tabBar 页用 switchTab**（会丢 query，url 要先 split('?')[0]），
+  其余 navigateTo
+- 表白墙派生字段算法已抽到 **`miniprogram/utils/wall.js`**（decorateWall / CAT_TAG），
+  首页「我想说」区与表白墙页共用一份
+- ⚠️ `setData({ 'zones[0].items[0].x': v })` 是**非法语法**（对象字面量不能有计算属性名），
+  必须 `patch['zones[0].items[0].x'] = v; setData(patch)`
+- ⚠️ 多请求并行时 `loadError` 别用 `okCount === 0`（几乎永不成立）→ 只看**内容源**是否全挂
+- 后端 `Post` 实体**没有 viewCount 字段**，显示浏览数要 `wx:if` 兜住
+- 频道 **2002「学习交流」已下线**（迁移 `backend/sql/migration-20261025-home-zones.sql`），
+  首页的「我想说」功能区（内嵌表白墙）替代了它
 
 ## 接口路径 / 返回结构（踩过坑，别再犯）
 - **学校字典是 `/schools`，不是 `/auth/schools`**：`AuthController` **无类级 `@RequestMapping`**，

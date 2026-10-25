@@ -1,10 +1,10 @@
 const http = require('../../utils/request')
-const { timeAgo, mp, toast } = require('../../utils/util')
+const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
 const upload = require('../../utils/upload')
 const swipe = require('../../utils/swipe')
-const { resolveList } = require('../../utils/img')
+const { CAT_TAG, decorateWall } = require('../../utils/wall')
 
 Page({
   data: {
@@ -25,10 +25,10 @@ Page({
     showCatPicker: false,
     // 顶部分类 chips（对齐设计稿）
     cats: [
-      { key: 'love', name: '💗 精选表白', tag: '#精选表白' },
-      { key: 'tree', name: '🌳 树洞吐槽', tag: '#树洞吐槽' },
-      { key: 'find', name: '🔎 寻物启事', tag: '#寻物启事' },
-      { key: 'findp', name: '🙋 捞人', tag: '#捞人' }
+      { key: 'love', name: '💗 精选表白', tag: CAT_TAG.love },
+      { key: 'tree', name: '🌳 树洞吐槽', tag: CAT_TAG.tree },
+      { key: 'find', name: '🔎 寻物启事', tag: CAT_TAG.find },
+      { key: 'findp', name: '🙋 捞人', tag: CAT_TAG.findp }
     ],
     cat: 'love',
     // 分类 chips 的 scroll-into-view 目标：滑动切换后把选中分类滚进可视区
@@ -100,7 +100,7 @@ Page({
     http.get('/wall/posts', query, { silent: true })
       .then(function (res) {
         if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
-        const records = (res.records || []).map(decorate)
+        const records = (res.records || []).map(decorateWall)
         self.setData({
           posts: reset ? records : self.data.posts.concat(records),
           page: self.data.page + 1,
@@ -351,17 +351,3 @@ Page({
 
   stop: function () {}
 })
-
-function decorate(item) {
-  item.timeText = timeAgo(item.createdAt)
-  item.avatarClass = 'anon-' + (item.anonAvatar || 1)
-  item.avatarEmoji = ['🌸', '🌙', '🍀', '⭐', '🐳', '🍑', '🌿', '☁️'][(item.anonAvatar || 1) - 1]
-  item.imageList = resolveList(item.imageList)
-  // 分类标签：来自发布时选择的分类字段
-  const catTag = { love: '#精选表白', tree: '#树洞吐槽', find: '#寻物启事', findp: '#捞人' }
-  item.tags = [catTag[item.category] || '#校园日常']
-  // 匿名昵称旁的彩色小徽标
-  const seed = Number(item.id) || 0
-  item.flair = ['接投稿送花', '真心话大冒险', '今日树洞', '沉船打捞'][seed % 4]
-  return item
-}

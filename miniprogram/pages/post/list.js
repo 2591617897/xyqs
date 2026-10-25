@@ -15,8 +15,12 @@ Page({
     loadError: false
   },
 
-  onLoad: function () {
+  onLoad: function (options) {
     mp.setNavigationBarTitle({ title: '校园频道' })
+    // 支持从首页功能区带 channelId 进来（如「校园公告」入口）
+    // 雪花 ID 以字符串透传，不做 Number 转换（会丢精度）
+    const preset = (options && options.channelId) || ''
+    if (preset) this.setData({ channelId: preset })
     this.loadChannels()
     this.load(true)
   },

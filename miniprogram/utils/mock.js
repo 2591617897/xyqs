@@ -147,7 +147,6 @@ function seed() {
 
     channels: [
       { id: 2001, name: '校园公告', icon: '📢', description: '失物招领、校园通知、社团招新', sort: 100 },
-      { id: 2002, name: '学习交流', icon: '📚', description: '选课攻略、考研保研、资料互换', sort: 90 },
       { id: 2003, name: '吃喝玩乐', icon: '🍜', description: '食堂测评、周边探店、周末去哪儿', sort: 80 },
       { id: 2004, name: '树洞吐槽', icon: '🕳️', description: '今天也想碎碎念一下', sort: 70 },
       { id: 2005, name: '二手交易', icon: '♻️', description: '闲置好物流转，低碳又省钱', sort: 60 },
@@ -669,7 +668,7 @@ function seed() {
       },
       {
         id: 6002,
-        channelId: 2002,
+        channelId: 2004,
         userId: 9002,
         schoolId: SCHOOL_ID,
         authorName: '陈屿',
@@ -766,7 +765,7 @@ function seed() {
       },
       {
         id: 6008,
-        channelId: 2002,
+        channelId: 2004,
         userId: 9002,
         schoolId: SCHOOL_ID,
         authorName: '陈屿',

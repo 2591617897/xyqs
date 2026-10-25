@@ -133,7 +133,7 @@ check('删除他人表白被拒', call('DELETE', '/wall/posts/7001').code === 40
 
 console.log('\n[8] 频道 / 帖子')
 const chs = call('GET', '/channels')
-check('6 个频道', chs.data.length === 6)
+check('5 个频道', chs.data.length === 5)
 check('频道带 postCount', typeof chs.data[0].postCount === 'number')
 const posts = call('GET', '/posts', { page: 1, size: 3 })
 check('帖子 3 条', posts.data.records.length === 3)
@@ -162,7 +162,7 @@ check('删评论后计数 -1', call('GET', '/posts/' + newPost.data).data.commen
 check('删他人帖子评论被拒', call('DELETE', '/posts/' + newPost.data + '/comments/9001').code === 404)
 check('发帖缺标题被拦', call('POST', '/posts', { channelId: 2004, title: '', content: 'x' }).code === 400)
 const editPost = call('PUT', '/posts/' + newPost.data, {
-  channelId: 2002,
+  channelId: 2003,
   title: '改过的标题',
   content: '改过的正文',
   images: []
@@ -171,9 +171,9 @@ check('编辑自己的帖子', editPost.code === 0, editPost)
 const pd2 = call('GET', '/posts/' + newPost.data).data
 check('帖子标题已更新', pd2.title === '改过的标题')
 check('帖子正文已更新', pd2.content === '改过的正文')
-check('帖子频道已更新', pd2.channelId === 2002)
-check('编辑他人帖子被拒', call('PUT', '/posts/6002', { channelId: 2002, title: 'x', content: 'y' }).code === 403)
-check('编辑缺标题被拒', call('PUT', '/posts/' + newPost.data, { channelId: 2002, title: '  ', content: 'y' }).code === 400)
+check('帖子频道已更新', pd2.channelId === 2003)
+check('编辑他人帖子被拒', call('PUT', '/posts/6002', { channelId: 2003, title: 'x', content: 'y' }).code === 403)
+check('编辑缺标题被拒', call('PUT', '/posts/' + newPost.data, { channelId: 2003, title: '  ', content: 'y' }).code === 400)
 check('删除自己的帖子', call('DELETE', '/posts/' + newPost.data).code === 0)
 
 console.log('\n[9] 用户 / 认证')
@@ -295,6 +295,33 @@ check('撤回不存在的消息 404', call('DELETE', '/messages/' + targetConvo.
 mock.logout()
 check('未登录删除会话被拦（401）', call('DELETE', '/messages/' + targetConvo.id).code === 401)
 call('POST', '/auth/login', {})
+
+console.log('\n[14] 首页功能区（utils/zones.js）')
+const zones = require(require('path').join(__dirname, '../miniprogram/utils/zones.js'))
+const chList = call('GET', '/channels').data
+const entries = zones.buildEntries(chList)
+check('金刚区 = 3 固定入口 + 5 频道', entries.length === 8, entries.length)
+check('金刚区首项是「我想说」', entries[0].title === '我想说' && entries[0].url === '/pages/wall/index')
+check('金刚区含校园闲置', entries.some((e) => e.title === '校园闲置' && e.url === '/pages/goods/list'))
+check('频道入口带 channelId 参数', entries.some((e) => e.url === '/pages/post/list?channelId=2001'))
+check('入口都有图标与底色', entries.every((e) => !!e.icon && !!e.tone))
+
+const zPosts = call('GET', '/posts', { page: 1, size: 16 }).data
+const zWall = call('GET', '/wall/posts', { page: 1, size: 6 }).data
+const zGoods = call('GET', '/goods', { page: 1, size: 6 }).data
+const zHot = call('GET', '/posts', { page: 1, size: 1, sort: 'hot' }).data
+const zAll = zones.buildZones({ posts: zPosts, hot: zHot, wall: zWall, goods: zGoods }, chList)
+const zKeys = zAll.map((z) => z.key)
+check('生成 5 个功能区', zAll.length === 5, zKeys)
+check('区顺序：热/墙/闲置/公告/生活', zKeys.join(',') === 'hot,wall,goods,notice,campus', zKeys.join(','))
+check('「我想说」区内嵌表白墙数据', zAll[1].items.length === 6 && zAll[1].items[0].kind === 'wall')
+check('表白墙卡片带匿名头像与标签', !!zAll[1].items[0].avatarClass && zAll[1].items[0].tags.length === 1)
+check('闲置区卡片带价格', zAll[2].items[0].priceText !== undefined && zAll[2].items[0].kind === 'goods')
+check('公告区只含 2001 频道', zAll[3].items.every((it) => it.badge === '校园公告'))
+check('生活区不含公告频道', zAll[4].items.every((it) => it.badge !== '校园公告'))
+check('生活区条目数 = 总数 - 公告数', zAll[4].items.length === zPosts.total - zAll[3].items.length)
+check('每个区都有标题与图标', zAll.every((z) => !!z.title && !!z.icon))
+check('无数据的区不渲染', zones.buildZones({ posts: { records: [] }, hot: { records: [] }, wall: { records: [] }, goods: { records: [] } }, chList).length === 0)
 
 console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
 process.exit(fail ? 1 : 0)
