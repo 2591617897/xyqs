@@ -37,8 +37,12 @@
         <!-- 我发的：长按可撤回 -->
         <view wx:if="{{item.from === 'me'}}" class="msg mine" bindlongpress="onLongPress" data-id="{{item.id}}">
           <view class="msg-body">
+            <!-- 图片消息 -->
+            <image wx:if="{{item.type === 'image'}}" class="msg-image" src="{{item.content}}" mode="aspectFill" bindtap="previewMedia" data-url="{{item.content}}" />
+            <!-- 视频消息 -->
+            <video wx:elif="{{item.type === 'video'}}" class="msg-video" src="{{item.content}}" object-fit="contain" controls />
             <!-- 地址卡片消息 -->
-            <view class="loc-card" wx:if="{{item.type === 'location'}}">
+            <view class="loc-card" wx:elif="{{item.type === 'location'}}">
               <view class="loc-pin">📍 {{item.content}}</view>
             </view>
             <!-- 普通文本 -->
@@ -64,7 +68,11 @@
             </view>
           </view>
           <view class="msg-body">
-            <view class="loc-card" wx:if="{{item.type === 'location'}}">
+            <!-- 图片消息 -->
+            <image wx:if="{{item.type === 'image'}}" class="msg-image" src="{{item.content}}" mode="aspectFill" bindtap="previewMedia" data-url="{{item.content}}" />
+            <!-- 视频消息 -->
+            <video wx:elif="{{item.type === 'video'}}" class="msg-video" src="{{item.content}}" object-fit="contain" controls />
+            <view class="loc-card" wx:elif="{{item.type === 'location'}}">
               <view class="loc-pin">📍 {{item.content}}</view>
             </view>
             <view class="bubble" wx:else>{{item.content}}</view>
@@ -78,10 +86,8 @@
 
   <!-- 输入栏 -->
   <view class="input-bar">
-    <view class="ib-icon">🎙</view>
     <input class="ib-input" placeholder="发消息给{{peerName}}..." placeholder-class="ph" value="{{draft}}" bindinput="onDraft" bindconfirm="onSend" confirm-type="send" />
-    <view class="ib-icon">😊</view>
-    <view class="ib-icon">⊕</view>
+    <view class="ib-icon" bindtap="onPlus">⊕</view>
     <view class="ib-send" bindtap="onSend">发送</view>
   </view>
 </view>

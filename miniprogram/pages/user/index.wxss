@@ -2,34 +2,30 @@
 /* 适配基础库: 2.11.0+ (CSS 变量支持) */
 
 page {
-  /* ========== 马卡龙色系变量 —— 可自定义调整 ========== */
-  --mac-pink: #FFB5C5;        /* 樱花粉 —— 主强调色 */
-  --mac-pink-deep: #FF8FA8;   /* 深粉 —— 按压态 */
-  --mac-pink-soft: #FFE4EC;   /* 浅粉 —— 背景装饰 */
-  --mac-blue: #B5D8FF;        /* 天空蓝 */
-  --mac-blue-soft: #E4F0FF;   /* 浅蓝 */
-  --mac-mint: #B5E5C8;        /* 薄荷绿 */
-  --mac-mint-soft: #E4F7EA;   /* 浅绿 */
-  --mac-purple: #D4B5FF;      /* 薰衣草紫 */
-  --mac-purple-soft: #EFE4FF; /* 浅紫 */
-  --mac-yellow: #FFE5B5;      /* 奶油黄 */
-  --mac-yellow-soft: #FFF5E4; /* 浅黄 */
-  --mac-coral: #FFC4B5;       /* 珊瑚橙 */
-  --mac-coral-soft: #FFE8E4;  /* 浅橙 */
+  /* 马卡龙变量 → design tokens（批次 1：保留旧名、换值，逐页迁移用）
+     中性变量（--bg-page / --text-* / --divider / --shadow-*）交给 tokens.wxss 兼容层，此处不再重定义 */
+  --mac-pink: var(--like-500);            /* 情感子色：点赞/收藏/表白场景 */
+  --mac-pink-deep: var(--like-600);
+  --mac-pink-soft: var(--like-50);
+  --mac-blue: var(--info-500);
+  --mac-blue-soft: var(--info-50);
+  --mac-mint: var(--success-500);
+  --mac-mint-soft: var(--success-50);
+  --mac-purple: var(--brand-200);
+  --mac-purple-soft: var(--brand-50);
+  --mac-yellow: #FFE5B5;                 /* 暖黄无对应 token，保留原值（低风险） */
+  --mac-yellow-soft: #FFF5E4;
+  --mac-coral: var(--warning-500);
+  --mac-coral-soft: var(--warning-50);
+  --mac-cream: var(--surface-2);         /* 原 --mac-cream 未定义，此处补上（历史灰块 bug） */
+  --shadow-card-hover: var(--shadow-2);
 
-  /* 背景与功能色 */
-  --bg-page: #FFF8F5;         /* 奶油粉背景 */
-  --bg-card: #FFFFFF;
-  --text-primary: #3D3D3D;
-  --text-secondary: #8C8C8C;
-  --text-hint: #BFBFBF;
-  --text-inverse: #FFFFFF;
-  --divider: #F5EFEB;
-
-  /* 阴影系统 —— 柔和粉色投影 */
-  --shadow-card: 0 4rpx 20rpx rgba(255, 181, 197, 0.12);
-  --shadow-card-hover: 0 8rpx 32rpx rgba(255, 181, 197, 0.22);
-  --shadow-float: 0 12rpx 40rpx rgba(212, 181, 255, 0.18);
+  /* ========== 全局基础样式（变量由 styles/tokens.wxss 提供） ========== */
+  background: var(--bg-page, #F5F7F6);
+  color: var(--text-1, #0F1A16);
+  font-size: 28rpx;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ---------- 页面容器 ---------- */
@@ -44,8 +40,8 @@ page {
 .hero {
   padding: 16rpx 24rpx 0;
   position: relative;
-  /* 马卡龙粉紫渐变背景 */
-  background: linear-gradient(160deg, #FFE4EC 0%, #EFE4FF 50%, #E4F0FF 100%);
+  /* 品牌清新渐变背景（森林绿系） */
+  background: linear-gradient(160deg, var(--brand-50) 0%, var(--brand-100) 55%, var(--info-50) 100%);
   margin: 0 -24rpx 16rpx;
   padding: 32rpx 24rpx 40rpx;
   border-radius: 0 0 48rpx 48rpx;
@@ -139,7 +135,7 @@ page {
   background: var(--mac-pink-soft);
   overflow: hidden;
   border: 6rpx solid var(--bg-card);
-  box-shadow: 0 4rpx 16rpx rgba(255, 181, 197, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(0, 108, 73, 0.16);
   box-sizing: border-box;
 }
 .avatar-img {
@@ -199,13 +195,13 @@ page {
   padding: 0 16rpx;
   border-radius: 999rpx;
   background: var(--mac-purple-soft);
-  color: #7B61A8;
+  color: var(--brand-700, #00452F);
   font-size: 20rpx;
   font-weight: 600;
 }
 .verify-pill.ok {
   background: var(--mac-mint-soft);
-  color: #2D7A4E;
+  color: var(--success-500, #059669);
 }
 .verify-pill .vp-check {
   font-size: 18rpx;
@@ -227,13 +223,13 @@ page {
 .user-verified-line {
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #2D7A4E;
+  color: var(--success-500, #059669);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .user-verified-line.warn {
-  color: #E8925E;
+  color: var(--warning-500, #D97706);
 }
 .user-chev {
   flex-shrink: 0;
@@ -245,20 +241,20 @@ page {
 /* 登录按钮 */
 .login-btn {
   margin-top: 28rpx;
-  background: linear-gradient(135deg, var(--mac-pink) 0%, var(--mac-pink-deep) 100%);
-  color: var(--text-inverse);
+  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  color: var(--text-inverse, #ffffff);
   border-radius: 999rpx;
   font-size: 28rpx;
   font-weight: 600;
   height: 80rpx;
   line-height: 80rpx;
   border: none;
-  box-shadow: 0 4rpx 16rpx rgba(255, 143, 168, 0.3);
+  box-shadow: var(--shadow-2);
   transition: transform 200ms, box-shadow 200ms;
 }
 .login-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 2rpx 8rpx rgba(255, 143, 168, 0.2);
+  box-shadow: var(--shadow-1);
 }
 
 /* ---------- 统计条 ---------- */
@@ -299,8 +295,8 @@ page {
   margin: 24rpx 24rpx 0;
   padding: 32rpx;
   border-radius: 36rpx;
-  /* 粉紫渐变，柔和梦幻 */
-  background: linear-gradient(135deg, #D4B5FF 0%, #FFB5C5 50%, #FFC4B5 100%);
+  /* 品牌绿渐变（信用分卡） */
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-300) 100%);
   overflow: hidden;
   box-shadow: var(--shadow-float);
   color: var(--text-inverse);
@@ -308,7 +304,7 @@ page {
 }
 .credit-card:active {
   transform: scale(0.98);
-  box-shadow: 0 8rpx 28rpx rgba(212, 181, 255, 0.3);
+  box-shadow: var(--shadow-2);
 }
 .credit-card::before {
   /* 光晕装饰 */
@@ -588,7 +584,7 @@ page {
   color: var(--text-secondary);
 }
 .mi-tip.warn {
-  color: #E8925E;
+  color: var(--warning-500, #D97706);
 }
 .mi-tip.orange {
   color: var(--mac-pink-deep);
@@ -673,10 +669,10 @@ page {
   transition: all 200ms;
 }
 .seg-item.active {
-  background: linear-gradient(135deg, var(--mac-pink) 0%, var(--mac-pink-deep) 100%);
+  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
   color: var(--text-inverse);
   font-weight: 600;
-  box-shadow: 0 4rpx 12rpx rgba(255, 143, 168, 0.3);
+  box-shadow: var(--shadow-2);
 }
 .order-scroll {
   max-height: 56vh;
@@ -741,7 +737,7 @@ page {
 }
 .tag-mint {
   background: var(--mac-mint-soft);
-  color: #2D7A4E;
+  color: var(--success-500, #059669);
 }
 .empty {
   text-align: center;

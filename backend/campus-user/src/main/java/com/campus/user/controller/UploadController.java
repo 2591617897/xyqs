@@ -29,6 +29,8 @@ import java.util.UUID;
 public class UploadController {
 
     private static final Set<String> ALLOWED = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    /** 聊天视频消息支持的视频格式 */
+    private static final Set<String> ALLOWED_VIDEO = Set.of("mp4", "mov", "m4v");
 
     @Value("${campus.upload.dir:./uploads}")
     private String uploadDir;
@@ -39,20 +41,29 @@ public class UploadController {
     @Value("${campus.upload.max-size:5242880}")
     private long maxSize;
 
+    /** 视频上限（聊天视频消息），默认 50MB；需小于 multipart 上限 */
+    @Value("${campus.upload.video-max-size:52428800}")
+    private long videoMaxSize;
+
     @PostMapping("/upload")
     public R<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BizException("请选择要上传的图片");
-        }
-        if (file.getSize() > maxSize) {
-            throw new BizException("图片不能超过 " + (maxSize / 1024 / 1024) + "MB");
+            throw new BizException("请选择要上传的文件");
         }
 
         String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
         int dot = original.lastIndexOf('.');
         String ext = dot >= 0 ? original.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        if (!ALLOWED.contains(ext)) {
-            throw new BizException("只支持 jpg / png / gif / webp 格式");
+        boolean isVideo = ALLOWED_VIDEO.contains(ext);
+
+        long limit = isVideo ? videoMaxSize : maxSize;
+        if (file.getSize() > limit) {
+            throw new BizException(isVideo
+                    ? "视频不能超过 " + (limit / 1024 / 1024) + "MB"
+                    : "图片不能超过 " + (limit / 1024 / 1024) + "MB");
+        }
+        if (!isVideo && !ALLOWED.contains(ext)) {
+            throw new BizException("只支持 jpg / png / gif / webp 图片或 mp4 / mov 视频");
         }
 
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
@@ -80,7 +91,7 @@ public class UploadController {
         String base = baseUrl != null && baseUrl.endsWith("/")
                 ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         String url = base + "/uploads/" + datePath + "/" + fileName;
-        log.info("图片上传成功 size={} url={}", file.getSize(), url);
+        log.info("文件上传成功 type={} size={} url={}", isVideo ? "video" : "image", file.getSize(), url);
         return R.ok(Map.of("url", url));
     }
 }

@@ -280,7 +280,7 @@
 .mention-item {
   display: flex; align-items: center; gap: 20rpx;
   padding: 20rpx 8rpx;
-  border-bottom: 1rpx solid #FFE4EC;
+  border-bottom: 1rpx solid var(--surface-2, #F0F3F2);
 }
 .mi-avatar {
   width: 72rpx; height: 72rpx; border-radius: 50%;
@@ -416,13 +416,13 @@
   font-size: 20rpx;
 }
 .reply-to {
-  color: #FF8FA8;
+  color: var(--like-500, #FF4D7D);
   font-weight: 600;
 }
 .reply-more {
   padding: 14rpx 0 8rpx;
   font-size: 24rpx;
-  color: #FF8FA8;
+  color: var(--like-500, #FF4D7D);
 }
 
 /* ---------- 评论抽屉 ---------- */
@@ -476,7 +476,7 @@
   font-size: 30rpx;
   color: #94a3b8;
   border-radius: 50%;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
 }
 .sheet-input-area {
   position: relative;
@@ -520,13 +520,13 @@
   text-align: center;
   font-size: 30rpx;
   border-radius: 50%;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
   color: #64748b;
   transition: background 0.15s, color 0.15s;
 }
 .sheet-tool.on {
   background: #edf9f3;
-  color: #E8625A;
+  color: var(--brand-500, #006C49);
 }
 .sheet-send {
   padding: 0 40rpx;
@@ -540,7 +540,7 @@
   transition: background 0.15s, color 0.15s;
 }
 .sheet-send.on {
-  background: linear-gradient(135deg, #FFB5C5, #E8625A);
+  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
   color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(255, 181, 197, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(0, 108, 73, 0.18);
 }

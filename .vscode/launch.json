@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "AdminApplication",
+            "request": "launch",
+            "mainClass": "com.campus.admin.AdminApplication",
+            "projectName": "campus-admin"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-AuthApplication<campus-auth>",
             "request": "launch",
             "cwd": "${workspaceFolder}",

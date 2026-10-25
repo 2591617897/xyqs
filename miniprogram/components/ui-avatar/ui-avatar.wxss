@@ -2,7 +2,7 @@
   position: relative;
   border-radius: 50%;
   overflow: hidden;
-  background: #E6F2EC;
+  background: var(--brand-50, #E8F5EF);
 }
 .ui-avatar-img { width: 100%; height: 100%; display: block; }
 .ui-avatar-def {
@@ -17,12 +17,12 @@
   width: 42%;
   height: 42%;
   border-radius: 50%;
-  background: #9DC3B0;
+  background: var(--brand-200, #93D3B9);
   margin-bottom: 6%;
 }
 .ui-avatar-def .ad-body {
   width: 84%;
   height: 52%;
   border-radius: 50% 50% 0 0;
-  background: #9DC3B0;
+  background: var(--brand-200, #93D3B9);
 }

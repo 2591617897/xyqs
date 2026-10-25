@@ -65,7 +65,7 @@ function confirmLogin() {
         + '不会读取手机号或通讯录。登录即表示同意《用户协议》和《隐私政策》。',
       confirmText: '微信登录',
       cancelText: '先逛逛',
-      confirmColor: '#FF8FA8',
+      confirmColor: '#006C49',
       success: function (res) {
         resolve(!!res.confirm)
       },

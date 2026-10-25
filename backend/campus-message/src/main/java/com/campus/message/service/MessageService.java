@@ -184,7 +184,7 @@ public class MessageService {
 
         // 更新会话摘要，并给「对端」累加未读
         boolean meIsA = userId.equals(c.getUserA());
-        conversationMapper.refreshAndIncrUnread(c.getId(), msg.getId(), summarize(content),
+        conversationMapper.refreshAndIncrUnread(c.getId(), msg.getId(), summaryFor(type, content),
                 msg.getCreatedAt() == null ? LocalDateTime.now() : msg.getCreatedAt(),
                 meIsA ? 0 : 1, meIsA ? 1 : 0);
 
@@ -192,7 +192,7 @@ public class MessageService {
         conversationHideMapper.deleteHide(peerId, c.getId());
 
         c.setLastMsgId(msg.getId());
-        c.setLastContent(summarize(content));
+        c.setLastContent(summaryFor(type, content));
         c.setLastTime(msg.getCreatedAt());
         ConversationVO vo = toVO(c, userId, loadBriefs(List.of(peerId)), true);
         vo.setMessages(messages(conversationId, userId));
@@ -278,7 +278,7 @@ public class MessageService {
             conversationMapper.refreshSummary(conversationId, null, null, null);
         } else {
             conversationMapper.refreshSummary(conversationId, last.getId(),
-                    summarize(last.getContent()), last.getCreatedAt());
+                    summaryFor(last.getType(), last.getContent()), last.getCreatedAt());
         }
     }
 
@@ -484,8 +484,23 @@ public class MessageService {
         }
         String t = type.trim().toLowerCase();
         return switch (t) {
-            case "location", "image", "system" -> t;
+            case "location", "image", "video", "system" -> t;
             default -> "text";
+        };
+    }
+
+    /**
+     * 会话摘要：媒体消息不直接展示 URL，用类型占位符。
+     */
+    private String summaryFor(String type, String content) {
+        if (!StringUtils.hasText(type) || "text".equals(type) || "location".equals(type)) {
+            return summarize(content);
+        }
+        return switch (type) {
+            case "image" -> "[图片]";
+            case "video" -> "[视频]";
+            case "system" -> "[系统消息]";
+            default -> summarize(content);
         };
     }
 

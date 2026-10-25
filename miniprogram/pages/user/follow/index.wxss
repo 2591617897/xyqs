@@ -26,7 +26,7 @@
   position: relative;
 }
 .tab.active {
-  color: #E8625A;
+  color: var(--like-600, #E11D48);
   font-weight: 600;
   font-size: 30rpx;
 }
@@ -39,7 +39,7 @@
   width: 56rpx;
   height: 6rpx;
   border-radius: 3rpx;
-  background: linear-gradient(135deg, #FFB5C5, #E8625A);
+  background: linear-gradient(135deg, var(--brand-500, #006C49), var(--like-600, #E11D48));
 }
 .tab-count {
   margin-left: 6rpx;
@@ -47,7 +47,7 @@
   color: #cbd5e1;
 }
 .tab.active .tab-count {
-  color: #FFB5C5;
+  color: var(--brand-500, #006C49);
 }
 
 /* ---------- 列表 ---------- */
@@ -77,7 +77,7 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
 }
 .avatar.default {
   background: linear-gradient(135deg, #d1fae5, #a7f3d0);
@@ -88,7 +88,7 @@
   bottom: -4rpx;
   width: 32rpx;
   height: 32rpx;
-  background: #FFB5C5;
+  background: var(--brand-500, #006C49);
   border-radius: 50%;
   border: 3rpx solid #ffffff;
   display: flex;
@@ -140,21 +140,21 @@
   transition: all 0.2s;
 }
 .follow-btn.active {
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
   color: #64748b;
   border: 1rpx solid #e2e8f0;
 }
 /* 相互关注：浅绿底 + 绿字，与「已关注」的灰底区分开（四字文案略收窄内边距） */
 .follow-btn.mutual {
   background: #ecfdf5;
-  color: #E8625A;
+  color: var(--like-600, #E11D48);
   border: 1rpx solid #a7f3d0;
   padding: 0 22rpx;
 }
 .follow-btn.inactive {
-  background: linear-gradient(135deg, #FFB5C5, #E8625A);
+  background: linear-gradient(135deg, var(--brand-500, #006C49), var(--like-600, #E11D48));
   color: #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(255, 181, 197, 0.25);
+  box-shadow: 0 4rpx 12rpx rgba(0, 108, 73, 0.25);
 }
 
 /* ---------- 空状态 ---------- */

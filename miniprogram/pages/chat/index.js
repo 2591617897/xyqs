@@ -1,4 +1,5 @@
 const http = require('../../utils/request')
+const upload = require('../../utils/upload')
 const { mp, timeAgo } = require('../../utils/util')
 const { resolve } = require('../../utils/img')
 
@@ -48,6 +49,30 @@ Page({
     this.load()
   },
 
+  /** 页面可见期间每 4s 轮询一次会话，让对方的新消息自动到达 */
+  onShow: function () {
+    const self = this
+    if (this._pollTimer) return
+    this._pollTimer = setInterval(function () {
+      self.fetchConvoSilently()
+    }, 4000)
+  },
+
+  onHide: function () {
+    this.stopPoll()
+  },
+
+  onUnload: function () {
+    this.stopPoll()
+  },
+
+  stopPoll: function () {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer)
+      this._pollTimer = null
+    }
+  },
+
   load: function () {
     const self = this
     if (this.data.convoId) {
@@ -82,6 +107,19 @@ Page({
       self.applyConvo(res)
     }).catch(function () {
       mp.showToast({ title: '会话加载失败', icon: 'none' })
+    })
+  },
+
+  /** 轮询专用：静默拉取，失败不打扰；发送中 / 上一次未返回时跳过 */
+  fetchConvoSilently: function () {
+    const self = this
+    if (this._fetching || this.data.sending || !this.data.convoId) return
+    this._fetching = true
+    http.get('/messages/' + this.data.convoId, null, { silent: true }).then(function (res) {
+      self._fetching = false
+      self.applyConvo(res)
+    }).catch(function () {
+      self._fetching = false
     })
   },
 
@@ -120,14 +158,23 @@ Page({
       m.id = String(m.id)
       return m
     })
-    this.setData({
+    // 只在最后一条消息变化（对方新消息 / 首次加载）时更新列表并滚动，
+    // 轮询无新消息时不动 messages，避免把正在翻历史的用户拽回底部
+    const lastId = msgs.length ? msgs[msgs.length - 1].id : ''
+    const changed = lastId !== this._lastMsgId
+    this._lastMsgId = lastId
+    const patch = {
       peerName: res.peerName || this.data.peerName,
-      goodsCard: res.goodsCard || this.data.goodsCard,
-      messages: msgs,
-      dayText: dayDivider(msgs)
-    })
+      goodsCard: res.goodsCard || this.data.goodsCard
+    }
+    if (changed) {
+      patch.messages = msgs
+      patch.dayText = dayDivider(msgs)
+      patch.scrollInto = ''
+    }
+    this.setData(patch)
     this.applyPeer(res)
-    this.scrollToEnd()
+    if (changed) this.scrollToEnd()
   },
 
   /** 用后端返回的对端信息刷新头部（头像 / 标签 / 认证 / 匿名） */
@@ -163,11 +210,11 @@ Page({
     this.scrollToEnd()
 
     if (this.data.convoId) {
-      this.postMessage(text)
+      this.postMessage('text', text)
     } else if (this.data.peerId) {
       // 会话还没建好：先建会话再发
       this.startConvo(function () {
-        self.postMessage(text)
+        self.postMessage('text', text)
       })
     } else {
       // 纯前端演示会话：1 秒后自动回复
@@ -186,14 +233,16 @@ Page({
   },
 
   /** 把消息提交到后端，并用返回的完整记录覆盖本地气泡 */
-  postMessage: function (text) {
+  postMessage: function (type, content) {
     const self = this
-    http.post('/messages/' + this.data.convoId, { content: text }, { silent: true }).then(function (res) {
+    return http.post('/messages/' + this.data.convoId, { type: type, content: content }, { silent: true }).then(function (res) {
       const msgs = (res.messages || []).map(function (m) {
         m.timeText = shortTime(m.createdAt)
         m.id = String(m.id)
         return m
       })
+      // 同步轮询基线：自己刚发的消息不再被轮询当成「新消息」重复滚动
+      self._lastMsgId = msgs.length ? msgs[msgs.length - 1].id : ''
       self.setData({ messages: msgs, sending: false })
       self.scrollToEnd()
     }).catch(function () {
@@ -204,6 +253,94 @@ Page({
 
   onSend: function () {
     this.send(this.data.draft)
+  },
+
+  /** ⊕ 附件面板：发送图片 / 发送视频 */
+  onPlus: function () {
+    const self = this
+    mp.showActionSheet({
+      itemList: ['发送图片', '发送视频'],
+      success: function (res) {
+        self.chooseMedia(res.tapIndex === 0 ? 'image' : 'video')
+      }
+    })
+  },
+
+  /** 选一张图片或一段视频 */
+  chooseMedia: function (type) {
+    const self = this
+    mp.chooseMedia({
+      count: 1,
+      mediaType: [type],
+      sizeType: ['compressed'],
+      maxDuration: 60,
+      success: function (res) {
+        const f = res.tempFiles && res.tempFiles[0]
+        if (!f || !f.tempFilePath) return
+        self.sendMedia(type, f.tempFilePath, f.size)
+      }
+    })
+  },
+
+  /** 上传媒体文件并发送；先展示本地占位气泡，成功后由响应覆盖 */
+  sendMedia: function (type, path, size) {
+    const self = this
+    if (this.data.sending) return
+    if (type === 'video' && size && size > 50 * 1024 * 1024) {
+      mp.showToast({ title: '视频不能超过 50MB，请截短后再发', icon: 'none' })
+      return
+    }
+    const localId = 'local-' + Date.now()
+    this.setData({
+      messages: this.data.messages.concat([{
+        id: localId, from: 'me', type: type, content: path, timeText: nowTime()
+      }]),
+      sending: true
+    })
+    this.scrollToEnd()
+
+    // 纯前端演示会话（无会话 id、无对端）：本地展示 + 自动回复
+    if (!this.data.convoId && !this.data.peerId) {
+      setTimeout(function () {
+        self.setData({
+          sending: false,
+          messages: self.data.messages.concat([{
+            id: 'local-' + Date.now(), from: 'peer', type: 'text',
+            content: '收到！图片/视频我看到了～', timeText: nowTime()
+          }])
+        })
+        self.scrollToEnd()
+      }, 1200)
+      return
+    }
+
+    mp.showLoading({ title: type === 'video' ? '发送视频中' : '发送图片中', mask: true })
+    const uploader = type === 'video' ? upload.uploadVideo : upload.uploadImage
+    uploader(path).then(function (url) {
+      mp.hideLoading()
+      if (self.data.convoId) {
+        return self.postMessage(type, url)
+      }
+      // 会话还没建好：先建会话再发
+      return new Promise(function (resolve) {
+        self.startConvo(function () {
+          self.postMessage(type, url).then(resolve)
+        })
+      })
+    }).catch(function () {
+      mp.hideLoading()
+      self.setData({ sending: false })
+      // 上传失败：撤掉本地占位气泡
+      self.setData({
+        messages: self.data.messages.filter(function (m) { return m.id !== localId })
+      })
+    })
+  },
+
+  /** 点开图片消息大图预览 */
+  previewMedia: function (e) {
+    const url = e.currentTarget.dataset.url
+    if (url) mp.previewImage({ current: url, urls: [url] })
   },
 
   /** 发起预订 / 小刀还价：按闲鱼「小刀还价」的心智，直接发一条询价消息 */

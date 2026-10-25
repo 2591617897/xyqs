@@ -1,7 +1,7 @@
 /* ===== 统一文档页样式 ===== */
 .page {
   min-height: 100vh;
-  background: #FFF8F5;
+  background: var(--bg-page, #F5F7F6);
   padding: 28rpx 28rpx calc(48rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
@@ -32,7 +32,7 @@
   border-radius: 20rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 24rpx;
-  border-left: 6rpx solid #FFB5C5;
+  border-left: 6rpx solid var(--brand-500, #006C49);
   box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
@@ -103,7 +103,7 @@
 }
 .doc-tr {
   display: flex;
-  border-bottom: 1rpx solid #FFE4EC;
+  border-bottom: 1rpx solid var(--surface-2, #F0F3F2);
 }
 .doc-tr:last-child {
   border-bottom: none;

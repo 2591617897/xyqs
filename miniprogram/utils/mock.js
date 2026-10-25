@@ -2271,7 +2271,7 @@ function messageList() {
       peerTags: c.peerTags || [],
       unread: c.unread || 0,
       goodsCard: c.goodsCard || null,
-      lastText: last ? last.content : '',
+      lastText: last ? summarizeMsg(last) : '',
       lastFrom: last ? last.from : '',
       lastTime: last ? last.createdAt : ''
     }
@@ -2279,6 +2279,16 @@ function messageList() {
     return a.lastTime < b.lastTime ? 1 : -1
   })
   return { summary: d.msgSummary || { likes: 0, followers: 0, mentions: 0, notice: '' }, convos: list }
+}
+
+/**
+ * 会话摘要占位：媒体消息不直接展示 URL（与后端 summaryFor 行为一致）
+ */
+function summarizeMsg(m) {
+  if (m.type === 'image') return '[图片]'
+  if (m.type === 'video') return '[视频]'
+  if (m.type === 'location') return '[位置] ' + (m.content || '')
+  return String(m.content || '')
 }
 
 /**
@@ -2429,10 +2439,16 @@ function sendMessage(id, q) {
   if (!c) throw { code: 404, msg: '会话不存在或已删除' }
   const content = String(q.content || '').trim()
   if (!content) throw { code: 400, msg: '消息内容不能为空' }
+  // 与后端 normalizeType 行为一致：只放行白名单类型
+  const type = ['image', 'video', 'location'].indexOf(q.type) >= 0 ? q.type : 'text'
 
-  c.messages.push({ id: nextId(), from: 'me', type: 'text', content: content, createdAt: fmt(new Date()) })
+  c.messages.push({ id: nextId(), from: 'me', type: type, content: content, createdAt: fmt(new Date()) })
 
-  // 简单的自动回复，营造真实聊天感
+  // 简单的自动回复，营造真实聊天感（媒体消息不自动回，等下一次文本再触发）
+  if (type !== 'text') {
+    save()
+    return { messages: c.messages }
+  }
   const replies = [
     '收到收到，稍等我下课回你详细说～',
     '好的呀，那就这么说定啦！',

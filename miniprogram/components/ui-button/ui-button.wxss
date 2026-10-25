@@ -15,13 +15,13 @@
 .ui-btn--block { display: flex; width: 100%; }
 
 /* 主按钮 */
-.ui-btn--primary { background: #006C49; color: #fff; }
+.ui-btn--primary { background: var(--brand-500, #006C49); color: var(--text-inverse, #fff); }
 /* 次按钮 */
-.ui-btn--secondary { background: #E6F2EC; color: #006C49; }
+.ui-btn--secondary { background: var(--brand-50, #E8F5EF); color: var(--brand-500, #006C49); }
 /* 文字按钮 */
-.ui-btn--text { background: transparent; color: #006C49; padding: 0 16rpx; }
+.ui-btn--text { background: transparent; color: var(--brand-500, #006C49); padding: 0 16rpx; }
 /* 危险 */
-.ui-btn--danger { background: #EF4444; color: #fff; }
+.ui-btn--danger { background: var(--danger-500, #DC2626); color: var(--text-inverse, #fff); }
 
 /* 尺寸 */
 .ui-btn--default { height: 80rpx; font-size: 30rpx; }
@@ -34,7 +34,7 @@
   height: 30rpx;
   margin-right: 12rpx;
   border: 3rpx solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border-top-color: var(--text-inverse, #fff);
   border-radius: 50%;
   animation: ui-btn-rotate 0.7s linear infinite;
 }

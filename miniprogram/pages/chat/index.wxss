@@ -46,7 +46,7 @@
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
-  background: #FFB5C5;
+  background: var(--brand-500, #006C49);
   color: #ffffff;
   font-size: 18rpx;
   display: flex;
@@ -71,20 +71,20 @@
 .peer-tag {
   padding: 2rpx 14rpx;
   border-radius: 999rpx;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
   color: #64748b;
   font-size: 20rpx;
   font-weight: 600;
   flex-shrink: 0;
 }
-.peer-tag.mint { background: rgba(255, 181, 197, 0.14); color: #005236; }
+.peer-tag.mint { background: rgba(0, 108, 73, 0.14); color: #005236; }
 .peer-tag.orange { background: #ffdbca; color: #783200; }
 .peer-tag.pink { background: rgba(236, 72, 153, 0.12); color: #8c0053; }
-.peer-tag.plain { background: #FFE4EC; color: #64748b; }
+.peer-tag.plain { background: var(--surface-2, #F0F3F2); color: #64748b; }
 .peer-school {
   margin-top: 6rpx;
   font-size: 22rpx;
-  color: #FFB5C5;
+  color: var(--brand-500, #006C49);
 }
 .peer-acts {
   display: flex;
@@ -94,7 +94,7 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +107,7 @@
   padding: 24rpx;
   border-radius: 28rpx;
   background: #ffffff;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(255, 181, 197, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .gc-cover {
   width: 100rpx;
@@ -144,7 +144,7 @@
   flex-shrink: 0;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(255, 181, 197, 0.12);
+  background: rgba(0, 108, 73, 0.12);
   color: #006c49;
   font-size: 20rpx;
   font-weight: 600;
@@ -268,9 +268,24 @@
   box-shadow: 0 4rpx 16rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .msg.mine .bubble {
-  background: #FFB5C5;
+  background: var(--brand-500, #006C49);
   color: #ffffff;
   border-radius: 32rpx 8rpx 32rpx 32rpx;
+}
+/* 图片消息：无气泡包裹，圆角矩形 */
+.msg-image {
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 24rpx;
+  display: block;
+  background: #f2f4f6;
+}
+/* 视频消息：16:9 附近，防止高度塌陷 */
+.msg-video {
+  width: 440rpx;
+  height: 330rpx;
+  border-radius: 24rpx;
+  background: #0b0f0d;
 }
 .loc-card {
   padding: 20rpx 24rpx;
@@ -299,7 +314,7 @@
   gap: 16rpx;
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   background: #ffffff;
-  border-top: 1rpx solid #FFE4EC;
+  border-top: 1rpx solid var(--surface-2, #F0F3F2);
 }
 .ib-icon {
   font-size: 36rpx;
@@ -311,7 +326,7 @@
   height: 80rpx;
   padding: 0 28rpx;
   border-radius: 999rpx;
-  background: #FFE4EC;
+  background: var(--surface-2, #F0F3F2);
   font-size: 28rpx;
   color: #191c1e;
 }
@@ -324,7 +339,7 @@
   line-height: 80rpx;
   padding: 0 34rpx;
   border-radius: 999rpx;
-  background: #FFB5C5;
+  background: var(--brand-500, #006C49);
   color: #ffffff;
   font-size: 28rpx;
   font-weight: 700;

@@ -1,5 +1,5 @@
 .ui-card {
-  background: #fff;
+  background: var(--surface, #FFFFFF);
   border-radius: 24rpx;
   padding: 28rpx;
 }

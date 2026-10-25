@@ -53,7 +53,7 @@
   height: 6rpx;
   margin-left: -20rpx;
   border-radius: 3rpx;
-  background: #FF8FA8;
+  background: var(--brand-500, #006C49);
 }
 
 /* 信息流 */
@@ -93,7 +93,7 @@
   font-size: 23rpx;
   color: #b6bbc6;
   padding: 32rpx 0;
-  background: #FFF8F5;
+  background: var(--bg-page, #F5F7F6);
 }
 .retry-btn {
   margin-top: 28rpx;

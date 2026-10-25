@@ -126,6 +126,73 @@ function compressChain(filePath, qualities) {
 }
 
 /**
+ * 上传视频（聊天视频消息）。不做压缩，服务端上限 50MB，
+ * 超限直接本地拒绝，避免白传一大半才报错。
+ */
+function uploadVideo(filePath) {
+  if (!filePath) {
+    return Promise.reject({ code: 400, msg: '视频路径为空' })
+  }
+  // 模拟数据模式：本地路径直接可用
+  if (USE_MOCK) return Promise.resolve(filePath)
+  if (isServerUrl(filePath)) return Promise.resolve(filePath)
+
+  return fileSize(filePath).then(function (size) {
+    if (size && size > 50 * 1024 * 1024) {
+      toast('视频不能超过 50MB，请截短后再发')
+      return Promise.reject({ code: 400, msg: '视频超过 50MB' })
+    }
+    return uploadRaw(filePath, '视频')
+  })
+}
+
+/** 通用 multipart 上传（不压缩），kind 仅用于错误文案 */
+function uploadRaw(filePath, kind) {
+  return new Promise(function (resolve, reject) {
+    mp.uploadFile({
+      url: UPLOAD_URL,
+      filePath: filePath,
+      name: 'file',
+      timeout: 120000,
+      header: {
+        Authorization: 'Bearer ' + (http.getToken() || '')
+      },
+      success: function (res) {
+        let body = res.data
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body)
+          } catch (e) {
+            body = {}
+          }
+        }
+        if (res.statusCode === 401 || (body && body.code === 401)) {
+          http.cleanLogin()
+          toast('登录已失效，请重新登录')
+          reject({ code: 401, msg: '未登录' })
+          return
+        }
+        if (body && body.code === 0 && body.data && body.data.url) {
+          resolve(body.data.url)
+          return
+        }
+        if (res.statusCode >= 500) {
+          toast(kind + '上传失败，请重试')
+          reject({ code: 500, msg: '上传失败' })
+          return
+        }
+        toast((body && body.msg) || kind + '上传失败')
+        reject({ code: (body && body.code) || 500, msg: (body && body.msg) || '上传失败' })
+      },
+      fail: function () {
+        toast(kind + '上传失败，请检查网络')
+        reject({ code: -1, msg: 'upload fail' })
+      }
+    })
+  })
+}
+
+/**
  * 批量上传（保持顺序），已上传过的地址会跳过
  */
 function uploadImages(paths) {
@@ -141,5 +208,6 @@ function uploadImages(paths) {
 module.exports = {
   uploadImage: uploadImage,
   uploadImages: uploadImages,
+  uploadVideo: uploadVideo,
   isServerUrl: isServerUrl
 }
