@@ -7,6 +7,7 @@ import com.campus.admin.config.AdminContext;
 import com.campus.admin.config.AdminPasswordUtil;
 import com.campus.admin.dto.AdminUserDTO;
 import com.campus.admin.dto.AdminUserReq;
+import com.campus.admin.dto.AdminAuthState;
 import com.campus.admin.entity.AdminUser;
 import com.campus.admin.entity.AdminUserRole;
 import com.campus.admin.mapper.AdminMenuMapper;
@@ -79,8 +80,10 @@ public class AdminUserService {
         assertUsernameFree(req.getUsername(), null);
         AdminUser u = new AdminUser();
         u.setUsername(req.getUsername().trim());
-        u.setSalt(newSalt());
-        u.setPassword(AdminPasswordUtil.md5Hex(requirePassword(req), u.getSalt()));
+        // BCrypt 自带盐，salt 列留空（列非空，给空串）。初始密码仍然要求首次登录后修改。
+        u.setSalt("");
+        String pwd = requirePassword(req);
+        u.setPassword(AdminPasswordUtil.hash(pwd));
         fillBasic(u, req);
         u.setSuperFlag(0);
         u.setMustChangePwd(1);
@@ -104,16 +107,27 @@ public class AdminUserService {
         // 以下几个字段不允许通过编辑改：超级管理员标记 / superFlag / dataScope 由超级管理员在专属接口维护
         u.setSuperFlag(old.getSuperFlag());
         if (StringUtils.hasText(req.getPassword())) {
-            u.setPassword(AdminPasswordUtil.md5Hex(req.getPassword(), old.getSalt()));
+            String weak = AdminPasswordUtil.checkStrength(req.getPassword(), req.getUsername());
+            if (weak != null) {
+                throw BizException.of(weak);
+            }
+            u.setPassword(AdminPasswordUtil.hash(req.getPassword()));
+            u.setSalt("");
+            u.setMustChangePwd(1);
         }
         // 编辑自己时不允许把自己禁用
         Long self = AdminContext.adminId();
         if (self != null && self.equals(id) && req.getStatus() != null && req.getStatus() != 1) {
             throw BizException.of("不能禁用自己的账号");
         }
+        boolean pwdChanged = StringUtils.hasText(req.getPassword());
         adminUserMapper.updateById(u);
         replaceRoles(id, req.getRoleIds());
         AdminAuthInterceptor.evictPermissionCache(id);
+        // 管理员被改了口令 / 被禁用，都必须让旧令牌立刻失效
+        if (pwdChanged || (req.getStatus() != null && req.getStatus() != 1)) {
+            revokeTokens(id);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -131,6 +145,7 @@ public class AdminUserService {
         }
         adminUserRoleMapper.delete(Wrappers.<AdminUserRole>lambdaQuery().eq(AdminUserRole::getAdminUserId, id));
         adminUserMapper.deleteById(id);
+        AdminAuthInterceptor.evictPermissionCache(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -148,6 +163,9 @@ public class AdminUserService {
         u.setStatus(status);
         adminUserMapper.updateById(u);
         AdminAuthInterceptor.evictPermissionCache(id);
+        if (status != null && status != 1) {
+            revokeTokens(id);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -159,13 +177,20 @@ public class AdminUserService {
         if (!StringUtils.hasText(newPassword) || newPassword.length() < 8) {
             throw BizException.of("新密码长度不能少于 8 位");
         }
+        String weak = AdminPasswordUtil.checkStrength(newPassword, old.getUsername());
+        if (weak != null) {
+            throw BizException.of(weak);
+        }
         AdminUser u = new AdminUser();
         u.setId(id);
-        u.setPassword(AdminPasswordUtil.md5Hex(newPassword, old.getSalt()));
+        u.setPassword(AdminPasswordUtil.hash(newPassword));
+        u.setSalt("");
         u.setMustChangePwd(1);
         u.setFailCount(0);
         u.setLockedUntil(null);
         adminUserMapper.updateById(u);
+        // 管理员重置别人的密码后，对方手上的旧令牌必须立刻作废
+        revokeTokens(id);
     }
 
     /**
@@ -173,6 +198,25 @@ public class AdminUserService {
      */
     public Set<String> permissionsOf(Long adminId) {
         return new HashSet<>(adminMenuMapper.selectPermissionsByAdminId(adminId));
+    }
+
+    /**
+     * 鉴权状态快照（状态 / 令牌版本 / 是否待改密）。被拦截器调用，10 秒本地缓存。
+     */
+    public AdminAuthState authStateOf(Long adminId) {
+        return adminUserMapper.selectAuthState(adminId);
+    }
+
+    /**
+     * 让某管理员的全部已发出令牌失效。
+     *
+     * <p>改密、重置密码、禁用、删除账号时必须调用 —— 否则旧令牌在有效期内（8 小时）
+     * 仍然能继续操作，这正是「改完密码别人还能进」的根因。
+     */
+    public void revokeTokens(Long adminId) {
+        adminUserMapper.bumpTokenVersion(adminId);
+        AdminAuthInterceptor.evictPermissionCache(adminId);
+        log.info("[security] 管理员 {} 的令牌已全部失效（token_version +1）", adminId);
     }
 
     /**
@@ -213,9 +257,15 @@ public class AdminUserService {
         if (!StringUtils.hasText(req.getPassword())) {
             throw BizException.of("请设置初始密码");
         }
+        String weak = AdminPasswordUtil.checkStrength(req.getPassword(), req.getUsername());
+        if (weak != null) {
+            throw BizException.of(weak);
+        }
         return req.getPassword();
     }
 
+    /** 保留给历史 MD5 记录使用；新密码一律 BCrypt（自带盐），不再需要单独生成 */
+    @Deprecated
     private String newSalt() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }

@@ -17,6 +17,7 @@ import com.campus.admin.mapper.UserMuteMapper;
 import com.campus.admin.mapper.UserQueryMapper;
 import com.campus.admin.mapper.UserVerifyLogMapper;
 import com.campus.common.api.R;
+import com.campus.common.crypto.SearchHash;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,9 +63,25 @@ public class UserManageService {
         if (schoolIds != null && schoolIds.isEmpty()) {
             return R.Page.of(List.of(), 0, page, size);
         }
-        IPage<UserRow> p = userQueryMapper.selectUsers(new Page<>(page, size), keyword, schoolId,
+        // 手机号列是密文，LIKE 搜不到；用盲索引做精确匹配（走 phone_hash 索引）
+        String phoneHash = looksLikePhone(keyword) ? SearchHash.of("phone", keyword) : null;
+        IPage<UserRow> p = userQueryMapper.selectUsers(new Page<>(page, size), keyword, phoneHash, schoolId,
                 verifyStatus, status, muted, blacklisted, schoolIds);
+        // 列表页只给脱敏手机号：能定位到人即可，完整号码留给详情（详情有操作日志留痕）
+        p.getRecords().forEach(row -> row.setPhone(maskPhone(row.getPhone())));
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
+    }
+
+    /** 纯数字且长度 7~15，按手机号处理 */
+    private boolean looksLikePhone(String keyword) {
+        return keyword != null && keyword.trim().matches("\\d{7,15}");
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 7) {
+            return phone;
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 
     public UserRow userDetail(Long id) {

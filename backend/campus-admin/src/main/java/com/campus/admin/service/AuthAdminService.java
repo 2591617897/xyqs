@@ -1,6 +1,7 @@
 package com.campus.admin.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.campus.admin.config.AdminAuthInterceptor;
 import com.campus.admin.config.AdminContext;
 import com.campus.admin.config.AdminJwtService;
 import com.campus.admin.config.AdminPasswordUtil;
@@ -47,6 +48,12 @@ public class AuthAdminService {
     private final AdminLoginLogMapper adminLoginLogMapper;
     private final AdminJwtService jwtService;
 
+    /**
+     * 账号不存在时用来消耗等量 CPU 的假哈希，避免通过响应时间枚举账号。
+     * 启动时算一次（约 200~400ms），不放在请求路径上。
+     */
+    private static final String DUMMY_HASH = AdminPasswordUtil.hash("campus-timing-equalizer");
+
     @Value("${campus.admin.login.max-fail:5}")
     private int maxFail;
 
@@ -58,6 +65,8 @@ public class AuthAdminService {
         AdminUser user = adminUserMapper.selectOne(Wrappers.<AdminUser>lambdaQuery()
                 .eq(AdminUser::getUsername, username));
         if (user == null) {
+            // 账号不存在时也跑一次 BCrypt，避免「秒回 vs 慢回」被用来枚举账号
+            AdminPasswordUtil.matches(req.getPassword(), DUMMY_HASH, null);
             recordLog(username, null, false, "账号不存在");
             throw BizException.of("账号或密码错误");
         }
@@ -69,7 +78,7 @@ public class AuthAdminService {
             recordLog(username, user.getId(), false, "账号禁用");
             throw BizException.forbidden("账号已禁用，请联系管理员");
         }
-        if (!AdminPasswordUtil.md5Hex(req.getPassword(), user.getSalt()).equals(user.getPassword())) {
+        if (!AdminPasswordUtil.matches(req.getPassword(), user.getPassword(), user.getSalt())) {
             int fails = (user.getFailCount() == null ? 0 : user.getFailCount()) + 1;
             AdminUser patch = new AdminUser();
             patch.setId(user.getId());
@@ -91,37 +100,66 @@ public class AuthAdminService {
         patch.setLockedUntil(null);
         patch.setLastLoginAt(LocalDateTime.now());
         patch.setLastLoginIp(clientIp());
+        // 历史 MD5 密码：本次校验通过后顺手升级成 BCrypt，用户无感。
+        // 这是「不停机迁移口令哈希」的标准做法，比强制全员改密温和得多。
+        if (AdminPasswordUtil.needsUpgrade(user.getPassword())) {
+            patch.setPassword(AdminPasswordUtil.hash(req.getPassword()));
+            patch.setSalt("");
+            log.info("[security] 管理员 {} 的密码哈希已从 MD5 升级为 BCrypt", username);
+        }
         adminUserMapper.updateById(patch);
         recordLog(username, user.getId(), true, null);
 
         boolean superAdmin = Integer.valueOf(1).equals(user.getSuperFlag());
         String scope = Integer.valueOf(1).equals(user.getDataScope()) ? "ALL" : "REGION";
-        String token = jwtService.create(user.getId(), user.getUsername(), superAdmin, scope, List.of());
+        int tokenVersion = user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+        String token = jwtService.create(user.getId(), user.getUsername(), superAdmin, scope,
+                List.of(), tokenVersion);
         return new LoginResp(token, jwtService.expireHours(),
                 Integer.valueOf(1).equals(user.getMustChangePwd()));
     }
 
     /**
-     * 修改自己的密码。成功后清掉「必须改初始密码」标记。
+     * 修改自己的密码。成功后清掉「必须改初始密码」标记，并让所有旧令牌失效。
+     *
+     * <p>因为旧令牌当场作废，这里必须返回一张新令牌，否则用户改完密码自己就被踢出去了。
+     *
+     * @return 新的管理员令牌
      */
     @Transactional(rollbackFor = Exception.class)
-    public void changePassword(ChangePasswordReq req) {
+    public String changePassword(ChangePasswordReq req) {
         Long adminId = AdminContext.requireAdminId();
         AdminUser user = adminUserMapper.selectById(adminId);
         if (user == null) {
             throw BizException.notFound("账号不存在");
         }
-        if (!AdminPasswordUtil.md5Hex(req.getOldPassword(), user.getSalt()).equals(user.getPassword())) {
+        if (!AdminPasswordUtil.matches(req.getOldPassword(), user.getPassword(), user.getSalt())) {
             throw BizException.of("原密码不正确");
         }
         if (req.getOldPassword().equals(req.getNewPassword())) {
             throw BizException.of("新密码不能与原密码相同");
         }
+        String weak = AdminPasswordUtil.checkStrength(req.getNewPassword(), user.getUsername());
+        if (weak != null) {
+            throw BizException.of(weak);
+        }
         AdminUser patch = new AdminUser();
         patch.setId(adminId);
-        patch.setPassword(AdminPasswordUtil.md5Hex(req.getNewPassword(), user.getSalt()));
+        // BCrypt 自带随机盐，salt 列清空；保留该列只是为了兼容历史记录
+        patch.setPassword(AdminPasswordUtil.hash(req.getNewPassword()));
+        patch.setSalt("");
         patch.setMustChangePwd(0);
         adminUserMapper.updateById(patch);
+
+        // 改密 = 强制所有旧令牌失效（含可能在别处登录的会话）
+        adminUserMapper.bumpTokenVersion(adminId);
+        AdminAuthInterceptor.evictPermissionCache(adminId);
+        log.info("[security] 管理员 {} 修改密码，旧令牌已全部失效", adminId);
+
+        int newVersion = (user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1;
+        boolean superAdmin = Integer.valueOf(1).equals(user.getSuperFlag());
+        String scope = Integer.valueOf(1).equals(user.getDataScope()) ? "ALL" : "REGION";
+        return jwtService.create(user.getId(), user.getUsername(), superAdmin, scope, List.of(), newVersion);
     }
 
     /**

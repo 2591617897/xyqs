@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "ad-banner": "/components/ad-banner/ad-banner"
+  },
   "navigationBarTitleText": "二手市场",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"

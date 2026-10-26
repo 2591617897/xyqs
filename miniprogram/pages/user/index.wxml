@@ -55,6 +55,10 @@
     </view>
   </view>
 
+  <!-- 运营投放位（后台广告位 code=mine_banner）：放在用户卡与信用分之间，
+       未配置时不渲染，页面高度自然回收 -->
+  <ad-banner code="mine_banner" height="{{200}}" />
+
   <!-- ===== 校园信用分（粉紫渐变卡） ===== -->
   <view class="credit-card fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-3" hover-class="tap-scale" bindtap="demoEntry" data-name="信用特权">
     <view class="credit-top">

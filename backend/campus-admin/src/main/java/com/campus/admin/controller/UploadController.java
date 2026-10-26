@@ -3,6 +3,7 @@ package com.campus.admin.controller;
 import com.campus.admin.config.annotation.RequirePermission;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.common.upload.FileMagic;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -61,6 +63,15 @@ public class UploadController {
         String ext = dot >= 0 ? original.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
         if (!ALLOWED.contains(ext)) {
             throw BizException.of("只支持 jpg / png / gif / webp 格式");
+        }
+        // 后台账号权限更高，被拿来传 webshell / 钓鱼页的危害更大，同样校验真实文件头
+        try (InputStream in = file.getInputStream()) {
+            if (!FileMagic.matches(in.readNBytes(16), ext)) {
+                log.warn("[security] 后台素材上传：文件头与扩展名不符 name={} ext={}", original, ext);
+                throw BizException.of("文件内容与格式不符，请上传真实的图片");
+            }
+        } catch (IOException e) {
+            throw BizException.of("文件读取失败，请重试");
         }
 
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));

@@ -36,9 +36,16 @@ public interface UserMapper extends BaseMapper<User> {
     @Select("select count(1) from t_school where id = #{schoolId}")
     int countSchool(@Param("schoolId") Long schoolId);
 
-    @Select("select count(1) from t_user where school_id = #{schoolId} and student_no = #{studentNo} "
+    /**
+     * 同校同学号是否已被占用。
+     *
+     * <p>student_no 现在是 AES-GCM 密文（随机 IV，同明文两次加密结果不同），
+     * 不能再用等值条件匹配；改查盲索引 student_no_hash（HMAC，稳定且不可反推）。
+     * 调用方必须同时传 hash，别再传明文。
+     */
+    @Select("select count(1) from t_user where school_id = #{schoolId} and student_no_hash = #{studentNoHash} "
             + "and verify_status = 2 and id <> #{excludeId}")
     int countStudentNoUsed(@Param("schoolId") Long schoolId,
-                           @Param("studentNo") String studentNo,
+                           @Param("studentNoHash") String studentNoHash,
                            @Param("excludeId") Long excludeId);
 }

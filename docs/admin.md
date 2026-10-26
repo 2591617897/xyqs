@@ -160,6 +160,7 @@ P1 业务（`migration-20261025-admin-business.sql`）：
 | 方法 | 路径 | 权限点 |
 | --- | --- | --- |
 | GET | `/ads/slots` `/ads/materials` | `admin:ad:*:list` |
+| GET | `/ads/slots/codes` | `admin:ad:slot:list` |
 | POST/PUT/DELETE | `/ads/slots[/{id}]` `/ads/materials[/{id}]` | `admin:ad:slot:*` / `admin:ad:material:*` |
 | POST | `/ads/slots/{id}/audit` `/ads/slots/{id}/status` | `admin:ad:slot:update` / `:status` |
 | POST | `/ads/materials/{id}/audit` `/ads/materials/{id}/status` | `admin:ad:material:audit` / `:online` |
@@ -173,6 +174,26 @@ P1 业务（`migration-20261025-admin-business.sql`）：
 
 > 广告是**两道独立闸**：审核闸（`audit_status`）和上下架闸（`status`），未过审不许上架；
 > 素材还额外要求所属广告位已上架。冒烟脚本对这四个组合各有一条断言。
+
+### 广告位编码（后台 ↔ 小程序的唯一契约）
+
+投放链路是「后台建广告位（`code`）→ 小程序按 `code` 拉素材」，**编码拼错一个字符就一条都拉不到，
+而两边都不报错**。所以编码已改为受控枚举（`campus-admin/config/AdSlotCatalog`），
+后台表单只能从下拉里选，`position` 由编码推导、不再手填（避免出现「位置=表白墙、code=home_banner」的矛盾数据）。
+
+| code | 位置 | 小程序落点 | 已接入 |
+| --- | --- | --- | --- |
+| `home_banner` | 1 首页Banner | `pages/index` 顶部轮播（多条自动播） | ✅ |
+| `zone_top` | 2 频道页 | `pages/zone` 顶部（`<ad-banner>`） | ✅ |
+| `wall_top` | 3 表白墙 | `pages/wall` 分类栏上方 | ✅ |
+| `goods_top` | 4 商品列表 | `pages/goods/list` 搜索栏下方（「我的/收藏」不投） | ✅ |
+| `splash` | 5 开屏 | —— 未接入，**禁止上架** | ❌ |
+| `mine_banner` | 6 个人中心 | `pages/user` 用户卡下方 | ✅ |
+
+- 每个 code 只能建 **一个** 广告位，多条素材建在它下面（轮播/替换）
+- 编码不在表里 = 小程序永不读取：列表会打「未对应」标 + 页面顶部汇总提示
+- `connected=false` 的位可以建、可以审，但**上架会被 400 拒绝**，杜绝「上架成功但没人看到」
+- 新增投放位＝在 `AdSlotCatalog` 加一行 + 小程序页面加 `<ad-banner code="..." />`，顺序不要动（position 会进历史数据）
 
 ## 七、前端页面
 
@@ -190,9 +211,19 @@ P1 业务（`migration-20261025-admin-business.sql`）：
 ## 八、自检
 
 ```bash
-node scripts/admin-smoke-test.js [http://127.0.0.1:8888] [admin] [admin123]
+node scripts/admin-smoke-test.js [http://127.0.0.1:8888] [admin] [口令]
 # ========== 通过 56 / 失败 0 ==========
 ```
+
+> **口令不再是 `admin123`。** 2026-10-26 的第二轮加固里：
+> 1. 初始口令已在库里换成强口令（本轮验证时设为 `Campus@2026#Temp`），并且 `must_change_pwd=1`；
+> 2. 服务端会拦「未改初始密码」的账号 —— 除了 `/auth/info`、`/auth/password`、`/auth/logout`、
+>    `/auth/menus`，其余接口一律 `403 请先修改初始密码后再使用后台`；
+> 3. 首次登录后必须在弹窗里改密，改完前端会自动换用新令牌（旧令牌当场失效）。
+>
+> 所以跑自检前先用浏览器登录改一次密码，然后
+> `node scripts/admin-smoke-test.js http://127.0.0.1:8888 admin 你的新口令`。
+> 本地纯演示想跳过强制改密，可以 `CAMPUS_ADMIN_FORCE_PWD_CHANGE=false`（生产别关）。
 
 七段：网关鉴权边界 → 登录（含错误密码/锁定）→ 登录后基础接口 → 接口级权限校验
 → P1 只读接口 → **处置联动端到端** → 操作日志落库。
@@ -207,3 +238,5 @@ node scripts/admin-smoke-test.js [http://127.0.0.1:8888] [admin] [admin123]
 | 解除禁言后 `mute_until` 清不掉 | `updateById` 的 NOT_NULL 策略跳过 null 字段 | 改 `lambdaUpdate().set(User::getMuteUntil, null)`；`verify` 通过时清 remark 同理 |
 | `Ambiguous mapping. Cannot map ... GET [/reports]` | P0 遗留的 `ReportAdminController` 与 P1 的 `ReportController` 撞路由 | 删掉旧的，保留带联动处置与防重复受理的新版本 |
 | 登录报「账号或密码错误」 | 库里密码与种子 `MD5(CONCAT('admin123','c4m2p9s1'))` 不一致 | 重跑种子里的 UPDATE 语句 |
+| 登录成功但所有接口都 `403 请先修改初始密码后再使用后台` | 服务端强制改密（`must_change_pwd=1`） | 在后台弹窗里改密码；或本地演示设 `CAMPUS_ADMIN_FORCE_PWD_CHANGE=false` |
+| 改完密码后原来的页面全部 `401 登录状态已失效` | 改密会 `token_version+1`，让所有旧令牌失效 | 正常行为；`/auth/password` 已返回新令牌，前端会自动替换，重新登录也可 |

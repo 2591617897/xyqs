@@ -1,0 +1,28 @@
+<!-- 素材为空时整块不渲染（不是隐藏，是不进布局），避免后台没配广告时留白条 -->
+<view wx:if="{{list.length}}" class="ad-wrap {{inset ? '' : 'ad-wrap-flush'}}">
+  <swiper
+    class="ad-banner"
+    style="height: {{height}}rpx;"
+    indicator-dots="{{list.length > 1}}"
+    indicator-color="rgba(255,255,255,0.5)"
+    indicator-active-color="#ffffff"
+    autoplay="{{list.length > 1}}"
+    circular
+    interval="5000"
+    duration="400"
+  >
+    <swiper-item wx:for="{{list}}" wx:key="id">
+      <image
+        class="ad-img"
+        style="height: {{height}}rpx;"
+        src="{{item.image}}"
+        mode="aspectFill"
+        lazy-load
+        data-ad="{{item}}"
+        data-index="{{index}}"
+        bindtap="onTap"
+        binderror="onImgError"
+      />
+    </swiper-item>
+  </swiper>
+</view>

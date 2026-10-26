@@ -1,7 +1,8 @@
 {
   "usingComponents": {
     "scope-sheet": "/components/scope-sheet/index",
-    "school-onboard": "/components/school-onboard/index"
+    "school-onboard": "/components/school-onboard/index",
+    "ad-banner": "/components/ad-banner/ad-banner"
   },
   "navigationBarTitleText": "我的"
 }

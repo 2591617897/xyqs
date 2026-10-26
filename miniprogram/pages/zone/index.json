@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "ad-banner": "/components/ad-banner/ad-banner"
+  },
   "navigationBarTitleText": "功能区",
   "navigationBarTextStyle": "black",
   "navigationBarBackgroundColor": "#FFFFFF",

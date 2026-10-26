@@ -59,10 +59,15 @@ public class AdminAuthController {
         return R.ok(menuService.treeOfCurrentAdmin());
     }
 
+    /**
+     * 修改自己的登录密码。
+     *
+     * <p>改密会让所有旧令牌失效（token_version +1），所以这里返回一张新令牌，
+     * 前端拿到后直接替换本地存储，用户不会被自己的改密操作踢出去。
+     */
     @AuditLog(value = "修改登录密码", module = "AUTH", saveParams = false)
     @PostMapping("/password")
-    public R<Void> password(@RequestBody @Valid ChangePasswordReq req) {
-        authAdminService.changePassword(req);
-        return R.ok();
+    public R<String> password(@RequestBody @Valid ChangePasswordReq req) {
+        return R.ok(authAdminService.changePassword(req));
     }
 }

@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "ad-banner": "/components/ad-banner/ad-banner"
+  },
   "navigationBarTitleText": "匿名表白墙",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"

@@ -16,14 +16,23 @@ const service = axios.create({
 })
 
 const TOKEN_KEY = 'admin_token'
+/**
+ * 令牌存在 sessionStorage 而不是 localStorage。
+ *
+ * 两者都挡不住 XSS（脚本能读到），差别在于「暴露时长」：
+ * localStorage 是永久存储，页面关了还留着，一个 XSS 就能把令牌带走长期复用；
+ * sessionStorage 随标签页关闭即失效，配合后台 8 小时令牌有效期，窗口小得多。
+ * 更彻底的做法是 httpOnly Cookie + CSRF Token，但那需要网关与后台改造，
+ * 本项目当前阶段先做这个低成本的收敛。
+ */
 export function getToken () {
-  return localStorage.getItem(TOKEN_KEY) || ''
+  return sessionStorage.getItem(TOKEN_KEY) || ''
 }
 export function setToken (token) {
-  localStorage.setItem(TOKEN_KEY, token)
+  sessionStorage.setItem(TOKEN_KEY, token)
 }
 export function clearToken () {
-  localStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
 }
 
 service.interceptors.request.use((config) => {

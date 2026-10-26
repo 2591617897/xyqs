@@ -2,6 +2,7 @@ package com.campus.user.controller;
 
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.common.upload.FileMagic;
 import com.campus.user.config.UploadPaths;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -64,6 +66,18 @@ public class UploadController {
         }
         if (!isVideo && !ALLOWED.contains(ext)) {
             throw new BizException("只支持 jpg / png / gif / webp 图片或 mp4 / mov 视频");
+        }
+        // 扩展名可以随便改，文件头骗不了人：真实类型不符一律拒绝，
+        // 避免把 .html/.svg 改名成 .png 塞进 Nginx 直出的静态目录（存储型 XSS 的经典路径）
+        try (InputStream in = file.getInputStream()) {
+            byte[] head = in.readNBytes(16);
+            if (!FileMagic.matches(head, ext)) {
+                log.warn("[security] 上传文件头与扩展名不符 name={} ext={} size={}",
+                        original, ext, file.getSize());
+                throw new BizException("文件内容与格式不符，请上传真实的图片或视频");
+            }
+        } catch (IOException e) {
+            throw new BizException("文件读取失败，请重试");
         }
 
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));

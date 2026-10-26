@@ -45,6 +45,15 @@ public class AdminUser {
     /** 1强制修改初始密码 0已修改 */
     private Integer mustChangePwd;
 
+    /**
+     * 令牌版本号：改密、重置、禁用、删除时 +1。
+     *
+     * <p>JWT 是无状态的，服务端没法「收回」一张已发出的令牌；把版本号写进令牌 claim，
+     * 每次请求与库里的值比对，一旦库里的值被 +1，所有旧令牌当场失效。
+     * 这是无状态令牌实现「立即踢下线」的标准做法，代价是每个请求多一次主键查询（本地缓存 10 秒）。
+     */
+    private Integer tokenVersion;
+
     private Integer failCount;
 
     private LocalDateTime lockedUntil;

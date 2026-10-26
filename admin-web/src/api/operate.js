@@ -2,6 +2,7 @@ import request from '@/utils/request'
 
 /** 广告位与素材 */
 export const adApi = {
+  slotCodes: () => request.get('/admin/ads/slots/codes'),
   slots: (params) => request.get('/admin/ads/slots', { params }),
   createSlot: (data) => request.post('/admin/ads/slots', data),
   updateSlot: (id, data) => request.put('/admin/ads/slots/' + id, data),

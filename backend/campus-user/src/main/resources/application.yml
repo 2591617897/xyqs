@@ -14,7 +14,7 @@ spring:
       max-request-size: 50MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PWD:123456}
     hikari:
@@ -37,8 +37,10 @@ mybatis-plus:
 
 campus:
   jwt:
-    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
-    expire-hours: 168
+    # 【安全】此处的密钥不能再写字面量：留空时由 JwtService 从 JWT_SECRET 环境变量
+    # 或 ~/.campus-secrets/jwt.key 读取（所有服务与网关必须是同一份）。
+    secret: ${JWT_SECRET:}
+    expire-hours: ${JWT_EXPIRE_HOURS:72}
   verify:
     # true：提交即视为认证通过（本地联调）；false：进入人工/接口审核
     auto-approve: ${VERIFY_AUTO_APPROVE:true}

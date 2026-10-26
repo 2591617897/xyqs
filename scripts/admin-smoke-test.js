@@ -24,8 +24,10 @@ const { URL } = require('url')
 const SERVER = (process.argv[2] || 'http://127.0.0.1:8888').replace(/\/$/, '')
 const BASE = SERVER + '/api'
 const ADMIN = BASE + '/admin'
-const USERNAME = process.argv[3] || 'admin'
-const PASSWORD = process.argv[4] || 'admin123'
+const USERNAME = process.argv[3] || process.env.ADMIN_USERNAME || 'admin'
+// 口令不再有默认值：后台初始口令已改成强口令，且服务端会强制「登录后必须改密」。
+// 跑之前先登录改一次密码，再 ADMIN_PASSWORD=新口令 node scripts/admin-smoke-test.js
+const PASSWORD = process.argv[4] || process.env.ADMIN_PASSWORD || 'admin123'
 
 function request (method, path, body, token) {
   return new Promise(function (resolve) {
@@ -185,6 +187,16 @@ async function main () {
 
   console.log('\n[3] 登录后接口')
   await call('GET /auth/info', 'GET', '/auth/info', null, token)
+  // 服务端强制「初始密码必须改掉」：没过这一关，后面所有接口都会 403，
+  // 直接给一句话说明，省得对着一串 403 猜原因。
+  const pwdGate = await request('GET', '/users?page=1&size=1', null, token)
+  if (pwdGate.body && pwdGate.body.code === 403 && /初始密码/.test(pwdGate.body.msg || '')) {
+    console.log('\n该账号还没改初始密码，服务端已拦截除改密外的所有接口。')
+    console.log('请先用浏览器登录改一次密码，然后 ADMIN_PASSWORD=新口令 重跑本脚本。')
+    console.log('（本地纯演示可设 CAMPUS_ADMIN_FORCE_PWD_CHANGE=false 跳过强制改密）')
+    console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + '（因未改初始密码提前结束）==========')
+    process.exit(2)
+  }
   const menus = await call('GET /auth/menus', 'GET', '/auth/menus', null, token)
   if (menus.body && menus.body.code === 0 && Array.isArray(menus.body.data)) {
     console.log('       菜单顶层节点 ' + menus.body.data.length + ' 个')

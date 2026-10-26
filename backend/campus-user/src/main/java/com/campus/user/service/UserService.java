@@ -3,6 +3,7 @@ package com.campus.user.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.api.R;
 import com.campus.common.client.SecurityGuard;
+import com.campus.common.crypto.SearchHash;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.client.GoodsCountClient;
@@ -21,6 +22,7 @@ import com.campus.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -69,7 +71,20 @@ public class UserService {
             user.setGender(0);
             user.setVerifyStatus(0);
             user.setStatus(1);
-            userMapper.insert(user);
+            try {
+                userMapper.insert(user);
+            } catch (DuplicateKeyException e) {
+                // uk_platform_openid 并发兜底：小程序冷启动时首页与「我的」页可能同时
+                // ensureLogin，两个请求都读到 user==null 各插一条，后到者撞唯一键。
+                // 关系行已由并发事务建立，重新读回即可，不能让用户看到 500。
+                User exist = userMapper.selectOne(Wrappers.<User>lambdaQuery()
+                        .eq(User::getPlatform, platform)
+                        .eq(User::getOpenid, req.getOpenid()));
+                if (exist == null) {
+                    throw e;
+                }
+                return toBrief(exist);
+            }
         } else {
             // 昵称/头像以小程序授权为准（仅补齐空值，避免覆盖用户自定义资料）
             boolean needUpdate = false;
@@ -185,7 +200,10 @@ public class UserService {
             user.setGender(req.getGender());
         }
         if (req.getPhone() != null) {
-            user.setPhone(req.getPhone());
+            String phone = req.getPhone().trim();
+            user.setPhone(phone);
+            // 手机号列已加密，等值搜索只能靠盲索引；这里同步维护，避免后台搜不到人
+            user.setPhoneHash(phone.isEmpty() ? null : SearchHash.of("phone", phone));
         }
         if (req.getBio() != null) {
             user.setBio(req.getBio());
@@ -220,12 +238,16 @@ public class UserService {
         if (userMapper.countSchool(req.getSchoolId()) == 0) {
             throw new BizException("所选学校不存在，请重新选择");
         }
-        if (userMapper.countStudentNoUsed(req.getSchoolId(), req.getStudentNo(), userId) > 0) {
+        if (userMapper.countStudentNoUsed(req.getSchoolId(),
+                SearchHash.of(req.getSchoolId() == null ? null : String.valueOf(req.getSchoolId()), req.getStudentNo()),
+                userId) > 0) {
             throw new BizException("该学号已被其他账号认证，请联系管理员");
         }
 
         user.setSchoolId(req.getSchoolId());
         user.setStudentNo(req.getStudentNo().trim());
+        // 盲索引与密文同事务落库：查重、后续换校复核都靠它
+        user.setStudentNoHash(SearchHash.of(String.valueOf(req.getSchoolId()), req.getStudentNo()));
         user.setRealName(req.getRealName().trim());
         user.setVerifyImg(req.getVerifyImg());
         user.setVerifyStatus(autoApprove ? 2 : 1);

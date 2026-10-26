@@ -5,6 +5,10 @@
     <view class="head-sub">校园里的好玩好用，一屏直达</view>
   </view>
 
+  <!-- 运营投放位（后台广告位 code=zone_top）：未配置时不渲染。
+       .page 自带 24rpx 内边距，所以 inset=false 让广告与下方卡片左右对齐 -->
+  <ad-banner code="zone_top" height="{{240}}" inset="{{false}}" />
+
   <!-- 功能入口网格：4 列，固定入口在前，频道入口由后端 t_channel 生成 -->
   <view class="card" wx:if="{{entries.length}}">
     <view

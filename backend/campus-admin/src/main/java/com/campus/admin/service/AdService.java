@@ -3,8 +3,10 @@ package com.campus.admin.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.admin.config.AdSlotCatalog;
 import com.campus.admin.config.DataScope;
 import com.campus.admin.config.DataScopeResolver;
+import com.campus.admin.dto.AdSlotOption;
 import com.campus.admin.entity.AdMaterial;
 import com.campus.admin.entity.AdSlot;
 import com.campus.admin.mapper.AdMaterialMapper;
@@ -58,13 +60,31 @@ public class AdService {
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 
+    /** 后台下拉用的可选编码；前端拿它渲染「广告位」选择器，不再手填编码 */
+    public List<AdSlotOption> slotOptions() {
+        return AdSlotCatalog.all();
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Long createSlot(AdSlot slot) {
         if (slot.getCode() == null || slot.getCode().isBlank()) {
             throw BizException.of("广告位编码不能为空");
         }
+        slot.setCode(slot.getCode().trim());
+        // 编码必须来自注册表：手填的编码小程序不会去拉，建了等于白建
+        AdSlotOption option = AdSlotCatalog.find(slot.getCode())
+                .orElseThrow(() -> BizException.of(
+                        "广告位编码「" + slot.getCode() + "」小程序不会读取，请从下拉中选择"));
         if (slotMapper.selectCount(Wrappers.<AdSlot>lambdaQuery().eq(AdSlot::getCode, slot.getCode())) > 0) {
-            throw BizException.of("广告位编码已存在");
+            throw BizException.of("该广告位已存在（编码 " + slot.getCode() + " 只能建一个，多条素材建在它下面）");
+        }
+        // position 由编码唯一决定，不接受前端传值——否则能造出「位置=表白墙、code=home_banner」的矛盾数据
+        slot.setPosition(option.getPosition());
+        if (slot.getName() == null || slot.getName().isBlank()) {
+            slot.setName(option.getName());
+        }
+        if (slot.getSizeDesc() == null || slot.getSizeDesc().isBlank()) {
+            slot.setSizeDesc(option.getSizeHint());
         }
         assertSlotInScope(slot.getSchoolId());
         slot.setStatus(slot.getStatus() == null ? 0 : slot.getStatus());
@@ -83,7 +103,9 @@ public class AdService {
         AdSlot patch = new AdSlot();
         patch.setId(id);
         patch.setName(req.getName());
-        patch.setPosition(req.getPosition());
+        // 编码不可改，位置跟着编码走（前端即使传了也忽略）
+        AdSlotCatalog.find(exist.getCode())
+                .ifPresent(o -> patch.setPosition(o.getPosition()));
         patch.setScopeType(req.getScopeType());
         patch.setCity(req.getCity());
         patch.setSchoolId(req.getSchoolId());
@@ -129,6 +151,10 @@ public class AdService {
         }
         if (status == 1 && !Integer.valueOf(1).equals(exist.getAuditStatus())) {
             throw BizException.of("广告位未通过审核，不能上架");
+        }
+        // 未接入小程序的位一律禁止上架：让「上架成功但一个人都看不到」这种状态根本不存在
+        if (status == 1 && !AdSlotCatalog.connected(exist.getCode())) {
+            throw BizException.of("该广告位小程序暂未接入，上架后也不会展示");
         }
         slotMapper.update(null, Wrappers.<AdSlot>lambdaUpdate()
                 .eq(AdSlot::getId, id)

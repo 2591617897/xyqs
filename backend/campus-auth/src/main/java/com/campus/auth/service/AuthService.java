@@ -12,13 +12,17 @@ import com.campus.auth.mapper.SchoolMapper;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
+import com.campus.auth.security.LoginRateLimiter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -49,6 +53,7 @@ public class AuthService {
     private final UserClient userClient;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final LoginRateLimiter loginRateLimiter;
 
     @Value("${campus.qq.appid:}")
     private String qqAppid;
@@ -82,8 +87,15 @@ public class AuthService {
         if (!StringUtils.hasText(req.getCode()) && !StringUtils.hasText(req.getDevOpenid())) {
             throw new BizException("缺少登录凭证 code");
         }
+        // 先只按 IP 挡一层：此时还没拿到 openid，但已经能挡住刷接口的脚本，
+        // 顺便保护 code2Session 的日调用配额（被刷等于小程序登录整体不可用）。
+        String ip = clientIp();
+        loginRateLimiter.check(ip, null);
+
         String platform = normalizePlatform(req.getPlatform());
         Session session = code2Session(platform, req.getCode(), req.getDevOpenid());
+        // 拿到 openid 后再按账号维度挡一层，防止「同一账号换 IP 高频换令牌」
+        loginRateLimiter.check(ip, session.openid());
         // 便于核对：两个微信号登录应当打印出两个不同的 openid
         log.info("登录 platform={} openid={}", platform, maskOpenid(session.openid()));
 
@@ -419,6 +431,31 @@ public class AuthService {
             return openid;
         }
         return openid.substring(0, 6) + "****" + openid.substring(openid.length() - 4);
+    }
+
+    /**
+     * 客户端真实 IP。生产在 Nginx 后面，{@code remoteAddr} 永远是 127.0.0.1，
+     * 必须优先取 {@code X-Forwarded-For} 的第一段（Nginx 用 {@code $proxy_add_x_forwarded_for} 追加）。
+     */
+    private String clientIp() {
+        try {
+            if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
+                HttpServletRequest request = attrs.getRequest();
+                String xff = request.getHeader("X-Forwarded-For");
+                if (StringUtils.hasText(xff)) {
+                    return xff.split(",")[0].trim();
+                }
+                String real = request.getHeader("X-Real-IP");
+                if (StringUtils.hasText(real)) {
+                    return real.trim();
+                }
+                return request.getRemoteAddr();
+            }
+        } catch (Exception e) {
+            // 拿不到 IP 不影响登录，只是少一层限流维度
+            log.debug("获取客户端 IP 失败：{}", e.getMessage());
+        }
+        return null;
     }
 
     private record Session(String openid, String unionid) {

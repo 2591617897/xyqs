@@ -194,6 +194,21 @@ mvn -pl campus-admin   spring-boot:run     # 8107 ← 后台管理（也要先�
 mvn -pl campus-gateway spring-boot:run     # 8888 ← 小程序与后台都只访问这个
 ```
 
+Windows 下也可用脚本一键起停（**串行**启动，每个服务独占一个窗口，避免并发编译互踩 target）：
+
+```bat
+backend\start-all.bat    :: 先重建 campus-common，再逐个拉起 8 个服务并等端口就绪
+backend\stop-all.bat     :: 只按 8 个业务端口找 PID 关闭，不动 Nacos/MySQL/Redis
+```
+
+> 顺序不能乱：**campus-common 必须先 install**。公共模块装到本地仓库的 jar 过期时，
+> 子模块会报 `NoClassDefFoundError: LikeMapper`、`找不到符号 DuplicateKeyException` 这类
+> "源码明明没问题"的假错误。
+>
+> 另外 **别同时起两个 mvn**（尤其是 `install` 和 `spring-boot:run` 混着跑），
+> 并发写 `target/` 会产出不完整的编译产物，症状仍是上面那类假错误，
+> 此时 `mvn -pl campus-xxx clean install` 即可恢复。
+
 验证：`curl http://127.0.0.1:8888/api/schools` 应返回学校列表。
 
 更完整的自检（逐条打印 23 个核心接口的状态与错误原因，含私信）：
@@ -218,17 +233,22 @@ node scripts/api-smoke-test.js
 mysql -uroot -p123456 guizhou_campus_fun < backend/sql/migration-20261025-campus-admin.sql
 mysql -uroot -p123456 guizhou_campus_fun < backend/sql/migration-20261025-admin-business.sql
 
-# 2) 起服务（默认账号 admin / admin123）
+# 2) 起服务（初始账号 admin；口令见下方说明，首次登录会被强制修改）
 mvn -pl campus-admin spring-boot:run       # 8107
 
 # 3) 起后台前端
 cd admin-web && npm install && npm run dev  # 默认 http://localhost:5173
 ```
 
+> **后台口令**：仓库里的种子脚本只建账号，不再写死 `admin123`。
+> 本轮安全加固后初始口令为强口令（本地验证时设为 `Campus@2026#Temp`），且 `must_change_pwd=1`——
+> 登录后会被强制改密，改之前除「查自身信息 / 改密 / 登出 / 菜单」外所有接口返回
+> `403 请先修改初始密码后再使用后台`。纯演示想跳过：`CAMPUS_ADMIN_FORCE_PWD_CHANGE=false`。
+
 自检（56 项，含「隐藏帖子→查流水→恢复」「禁言→投影→解除」这类端到端联动）：
 
 ```bash
-node scripts/admin-smoke-test.js
+node scripts/admin-smoke-test.js http://127.0.0.1:8888 admin 你的新口令
 # ========== 通过 56 / 失败 0 ==========
 ```
 

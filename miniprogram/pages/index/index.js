@@ -3,6 +3,7 @@ const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
 const zoneMod = require('../../utils/zones')
+const adMod = require('../../utils/ad')
 
 /**
  * 首页 = 功能区首页（不再用「频道 tab」）。
@@ -419,27 +420,14 @@ Page({
   },
 
   /**
-   * 点击 Banner：先上报点击数（失败静默，不影响跳转），再按 linkType 跳目标。
-   *
-   * linkType：0无跳转 1帖子 2商品 3外链 4小程序页面。
-   * 外链不能直接 navigateTo——小程序只能打开自身页面，外链复制链接让用户自行粘贴。
+   * 点击 Banner：上报点击数后按 linkType 跳目标。
+   * 跳转分支统一在 utils/ad.js（与其它投放位共用一份，避免各页面行为不一致）。
    */
   onAdTap: function (e) {
     const ad = e.currentTarget.dataset.ad
     if (!ad) return
-    if (ad.id) {
-      http.post('/ads/materials/' + ad.id + '/click').catch(function () {})
-    }
-    const lt = ad.linkType || 0
-    if (lt === 1 && ad.linkValue) {
-      mp.navigateTo({ url: '/pages/post/detail?id=' + ad.linkValue })
-    } else if (lt === 2 && ad.linkValue) {
-      mp.navigateTo({ url: '/pages/goods/detail?id=' + ad.linkValue })
-    } else if (lt === 4 && ad.linkValue) {
-      mp.navigateTo({ url: ad.linkValue })
-    } else if (lt === 3 && ad.linkValue) {
-      mp.setClipboardData({ data: ad.linkValue })
-    }
+    adMod.reportClick(ad.id)
+    adMod.open(ad)
   },
 
   /** 公告：跳详情（目前公告详情页复用 legal 风格的通用页，先用 toast 兜住正文摘要） */

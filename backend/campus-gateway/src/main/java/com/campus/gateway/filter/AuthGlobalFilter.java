@@ -3,6 +3,7 @@ package com.campus.gateway.filter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import com.campus.gateway.security.SecretResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -38,9 +39,16 @@ import java.util.regex.Pattern;
 @Component
 public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
-    /** 完全放行的前缀：登录、学校字典、静态图片、健康检查 */
+    /** 完全放行的前缀：登录、学校字典、静态图片 */
     private static final List<String> WHITE_PREFIX =
-            List.of("/api/auth/", "/api/schools", "/uploads", "/actuator");
+            List.of("/api/auth/", "/api/schools", "/uploads");
+    /**
+     * 健康检查只放行精确路径。
+     *
+     * <p>以前是 {@code /actuator} 前缀全放行：一旦网关引入了 actuator 依赖，
+     * {@code /actuator/env}、{@code /actuator/heapdump} 这类端点会把配置与内存直接吐给公网。
+     */
+    private static final String ACTUATOR_HEALTH_EXACT = "/actuator/health";
     /**
      * 微信消息推送回调（图片内容审核结果）。
      *
@@ -80,16 +88,29 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     /** 后台令牌里的身份类型标记，用于防止小程序用户令牌串用进后台。 */
     private static final String ADMIN_TOKEN_TYPE = "admin";
 
+    /** 令牌签发方 / 受众，与 campus-common 的 JwtService、campus-admin 的 AdminJwtService 保持一字不差 */
+    private static final String ISSUER = "campus-api";
+    private static final String AUDIENCE_MINIAPP = "campus-miniapp";
+    private static final String AUDIENCE_ADMIN = "campus-admin";
+
     private final SecretKey key;
     /** 后台管理员令牌专用密钥，与 C 端 campus.jwt.secret 完全隔离。 */
     private final SecretKey adminKey;
 
-    public AuthGlobalFilter(@Value("${campus.jwt.secret:campus-fun-jwt-secret-key-please-change-in-prod-2026}")
-                            String secret,
-                            @Value("${campus.admin.jwt.secret:campus-admin-jwt-secret-key-change-me-please-32+}")
-                            String adminSecret) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.adminKey = Keys.hmacShaKeyFor(adminSecret.getBytes(StandardCharsets.UTF_8));
+    public AuthGlobalFilter(@Value("${campus.jwt.secret:}") String secret,
+                            @Value("${campus.admin.jwt.secret:}") String adminSecret) {
+        // 密钥不再允许「配置里没写就用一个写死的字符串」：
+        // 空值时统一到 SecretResolver（环境变量 → ~/.campus-secrets/ → 随机生成落盘），
+        // 与各业务服务、campus-admin 读的是同一份，才能互验签名。
+        String userKey = StringUtils.hasText(secret) && secret.getBytes(StandardCharsets.UTF_8).length >= 32
+                ? secret.trim()
+                : SecretResolver.resolve("JWT_SECRET", "jwt.key", 32, "C 端登录令牌");
+        String adminKeyValue = StringUtils.hasText(adminSecret)
+                && adminSecret.getBytes(StandardCharsets.UTF_8).length >= 32
+                ? adminSecret.trim()
+                : SecretResolver.resolve("ADMIN_JWT_SECRET", "admin-jwt.key", 32, "后台管理令牌");
+        this.key = Keys.hmacShaKeyFor(userKey.getBytes(StandardCharsets.UTF_8));
+        this.adminKey = Keys.hmacShaKeyFor(adminKeyValue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -107,6 +128,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         }
 
         boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith)
+                // 健康检查只认精确路径，其余 /actuator/** 一律要求令牌
+                || ACTUATOR_HEALTH_EXACT.equals(path)
                 // 微信消息推送回调：只放行 GET/POST /api/wx/callback 这一条精确路径，
                 // 用前缀 + 精确路径双条件，避免以后 /api/wx 下新增接口被顺带放开
                 || (path.startsWith(WX_CALLBACK_PREFIX) && path.endsWith("/callback"));
@@ -146,7 +169,12 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         String token = resolveToken(request);
         if (StringUtils.hasText(token)) {
             try {
-                claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+                claims = Jwts.parser()
+                        .verifyWith(key)
+                        .requireIssuer(ISSUER)
+                        .requireAudience(AUDIENCE_MINIAPP)
+                        .build()
+                        .parseSignedClaims(token).getPayload();
             } catch (Exception e) {
                 log.debug("token 解析失败: {}", e.getMessage());
                 if (!whitelisted && !publicRead) {
@@ -187,7 +215,12 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             return null;
         }
         try {
-            return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .requireIssuer(ISSUER)
+                    .requireAudience(AUDIENCE_ADMIN)
+                    .build()
+                    .parseSignedClaims(token).getPayload();
         } catch (Exception e) {
             log.debug("token 解析失败: {}", e.getMessage());
             return null;

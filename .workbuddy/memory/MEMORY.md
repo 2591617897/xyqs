@@ -37,6 +37,24 @@
 - `jscode2session` 响应 `text/plain` → `getForObject(String.class)` 再 ObjectMapper
 - 位置服务 `sig=MD5(path?params+SK)`；`GET /api/auth/geo/ip-city`；key 日配额小，上线要申请
 
+## 安全基线（2026-10-26 全量加固后，改代码前先读）
+- **身份只认 JWT**：`SecurityAutoConfig` 不再信任 `X-User-Id`（带了但无有效 token 直接 401）；
+  后台 `AdminAuthInterceptor` 要求 token 与 `X-Admin-Id` 一致、权限读 claim。别再把「网关注入头」当可信来源
+- **密钥零硬编码**：`SecretStore`（common）/`SecretResolver`（gateway，不能依赖 common 否则 WebFlux 冲突）：
+  env → `~/.campus-secrets/<jwt.key|admin-jwt.key|data-key.key>` → 随机生成。yml 里只写 `${XXX:}`
+- **令牌**：`iss=campus-api` + `aud=campus-miniapp|campus-admin` + `typ=user|admin`；改密钥后存量 token 全失效
+- **后台口令 BCrypt(cost12)**：`AdminPasswordUtil.hash/matches/checkStrength`；旧 MD5 登录成功即自动升级，
+  别再写 `md5Hex(plain, salt)`；新增/改密必须过 `checkStrength`
+- **敏感字段加密**：`@TableField(typeHandler = EncryptedStringTypeHandler.class)` +
+  **`@TableName(autoResultMap = true)`（漏了就会写入加密、读出密文）**
+  加密列不能等值/LIKE → 用 `SearchHash.of(scope, value)` 盲索引（学号 `student_no_hash`、手机号 `phone_hash`）
+  历史数据迁移：`CAMPUS_SECURITY_MIGRATE_PLAINTEXT=true` 启动一次后必须关掉
+- **上传**：扩展名 + `FileMagic` 文件头双校验，新入口照办
+- **网关**：CORS 是白名单（`CORS_ALLOWED_ORIGINS`）且 `allowCredentials=false`；`/actuator` 只放行 health
+- **新增 UGC/个人信息落库前**：先判断是否该加密（手机号/学号/姓名/联系方式/证件），再判断是否需要盲索引
+- 数据库：生产必须 `campus_app`（仅 DML）+ `MYSQL_SSL=true`；脚本在 `sql/migration-20261026-security-hardening.sql`
+- ⚠️ IDE（redhat.java）会污染 `target/classes` 导致 `NoClassDefFoundError: LikeMapper` → 先 `rm -rf target` 再 mvn
+
 ## 小程序结构
 - tabBar 4 真实页 + 中间发布钮：`index/zone/messages/user`；**`wall/index`、`goods/list` 已移出 → 只能 navigateTo**
 - 功能区 = `pages/zone/index`，入口只来自 `utils/zones.js#buildEntries`（3 固定 + t_channel 动态）
@@ -95,6 +113,15 @@
 
 ## 后台（campus-admin 8107 + admin-web）
 > 细节见同目录 **`NOTES-admin.md`**（网关分层、独立 JWT、AdminWriteGateway 降级、el-container 竖排、el-pagination total 必须 Number、动态路由幂等、t_notification.content_snapshot 等），做后台任务先读它。
+
+## 安全基线（长期，改动前先跑 `scripts/security-baseline-check.js`，要求「失败 0 项」）
+- **后台口令不是 admin123**：admin=`Campus@2026#Temp`、auditor=`Campus@2026#Audit`（`$2a$12$`、`must_change_pwd=1`）
+- **令牌吊销**：`t_admin_user.token_version` ↔ claim `tv`，拦截器不缓存地比对；改密/重置/禁用/删除 → `revokeTokens`
+  → **`/auth/password` 返回新令牌**，前端必须 `setToken()` 替换；`CAMPUS_ADMIN_FORCE_PWD_CHANGE=false` 才能跳过强制改密
+- **C 端频控** `LoginRateLimiter`：IP 30/min（在 code2Session 之前）+ openid 10/min；超限 429
+- **备份**：`scripts/backup-db.sh` 必须设 `CAMPUS_BACKUP_PASSPHRASE`，否则拒绝执行（不允许明文备份）
+- 学生证照片仍走公网静态目录（`verify_img`），未私有化；UGC/私信正文明文是有意保留
+- 完整结论与上线顺序：`docs/安全审计报告.md`（第八节是第二轮）
 
 ## 演示数据 / 自测
 - `config.js` 的 `DEV_OPENID` 对应 t_user 9001（林小满），别破坏

@@ -16,7 +16,7 @@ spring:
             read-timeout: 5000
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PWD:123456}
     hikari:
@@ -39,4 +39,5 @@ mybatis-plus:
 
 campus:
   jwt:
-    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
+    # 【安全】密钥来自环境变量 JWT_SECRET 或 ~/.campus-secrets/jwt.key
+    secret: ${JWT_SECRET:}

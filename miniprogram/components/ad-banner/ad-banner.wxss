@@ -1,0 +1,25 @@
+/* 通用广告位：圆角卡片 + 单层冷中性阴影（与首页 Banner 视觉一致） */
+.ad-wrap {
+  margin: 20rpx 24rpx 4rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  /* 所有 var() 都带 fallback：token 没注入时也不会变成无阴影/黑块 */
+  box-shadow: var(--shadow-2, 0 4rpx 16rpx rgba(15, 23, 42, 0.08));
+  background-color: var(--fill-2, #eef2f0);
+}
+
+/* 页面自己已有横向 padding 时用这个（如「功能区」），让广告与下方卡片左右对齐 */
+.ad-wrap-flush {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.ad-banner {
+  width: 100%;
+  display: block;
+}
+
+.ad-img {
+  width: 100%;
+  display: block;
+}

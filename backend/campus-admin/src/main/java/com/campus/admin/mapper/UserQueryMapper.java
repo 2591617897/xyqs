@@ -2,8 +2,11 @@ package com.campus.admin.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.campus.admin.dto.UserRow;
+import com.campus.common.crypto.EncryptedStringTypeHandler;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -13,10 +16,21 @@ import java.util.List;
  *
  * <p>blacklisted / muted 用 EXISTS 子查询投影出来，列表页才能直接筛选和打标，
  * 否则「筛出所有被禁言的人」要先查一张处置表再回表，分页就废了。
+ *
+ * <p><b>加密列的处理</b>：t_user.phone / student_no / real_name 在库里是 AES-GCM 密文，
+ * 这里必须显式声明 {@link EncryptedStringTypeHandler}，否则后台列表会直接展示
+ * {@code enc:v1:...} 这种乱码。注意注解 SQL 里用了别名的列（realName / studentNo），
+ * Result 的 column 要写别名而不是下划线列名，否则匹配不上。
+ *
+ * <p>相应的，手机号也不能再 {@code LIKE} 了 —— 密文里没有可读数字。
+ * 搜索改成「昵称模糊 OR 手机号盲索引精确匹配」，见 {@code UserManageService#list}。
  */
 @Mapper
 public interface UserQueryMapper {
 
+    @Results(id = "userRowBase", value = {
+            @Result(column = "phone", property = "phone", typeHandler = EncryptedStringTypeHandler.class)
+    })
     @Select("<script>"
             + "SELECT u.id, u.nickname, u.avatar, u.phone, u.gender, u.school_id schoolId, s.name schoolName, "
             + "       u.verify_status verifyStatus, u.status, u.mute_until muteUntil, "
@@ -28,7 +42,8 @@ public interface UserQueryMapper {
             + "LEFT JOIN t_school s ON s.id = u.school_id "
             + "WHERE 1 = 1 "
             + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (u.nickname LIKE CONCAT('%', #{keyword}, '%') OR u.phone LIKE CONCAT('%', #{keyword}, '%')) "
+            + "  AND (u.nickname LIKE CONCAT('%', #{keyword}, '%') "
+            + "       <if test='phoneHash != null'>OR u.phone_hash = #{phoneHash}</if>) "
             + "</if>"
             + "<if test='schoolId != null'>AND u.school_id = #{schoolId} </if>"
             + "<if test='verifyStatus != null'>AND u.verify_status = #{verifyStatus} </if>"
@@ -42,6 +57,7 @@ public interface UserQueryMapper {
             + "</script>")
     IPage<UserRow> selectUsers(IPage<UserRow> page,
                                @Param("keyword") String keyword,
+                               @Param("phoneHash") String phoneHash,
                                @Param("schoolId") Long schoolId,
                                @Param("verifyStatus") Integer verifyStatus,
                                @Param("status") Integer status,
@@ -54,7 +70,15 @@ public interface UserQueryMapper {
      *
      * <p>即使没有任何动态标签，也必须套 {@code <script>}：MyBatis 只对带 script 的注解做 XML 实体解析，
      * 否则 {@code &gt;} 会原样拼进 SQL，MySQL 直接报语法错。列表那条同理，两条要保持一致的写法。
+     *
+     * <p>详情里的实名/学号给的是解密后的明文（后台审核需要核对），列表页只给手机号且已脱敏，
+     * 遵循「最小必要」原则。
      */
+    @Results(id = "userRowDetail", value = {
+            @Result(column = "phone", property = "phone", typeHandler = EncryptedStringTypeHandler.class),
+            @Result(column = "realName", property = "realName", typeHandler = EncryptedStringTypeHandler.class),
+            @Result(column = "studentNo", property = "studentNo", typeHandler = EncryptedStringTypeHandler.class)
+    })
     @Select("<script>"
             + "SELECT u.id, u.nickname, u.avatar, u.phone, u.gender, u.school_id schoolId, s.name schoolName, "
             + "       u.verify_status verifyStatus, u.status, u.mute_until muteUntil, u.bio, "

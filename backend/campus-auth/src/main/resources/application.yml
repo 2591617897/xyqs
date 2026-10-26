@@ -15,7 +15,7 @@ spring:
         server-addr: ${NACOS_ADDR:localhost:8848}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PWD:123456}
     hikari:
@@ -38,8 +38,10 @@ mybatis-plus:
 
 campus:
   jwt:
-    secret: campus-fun-jwt-secret-key-please-change-in-prod-2026
-    expire-hours: 168
+    # 【安全】此处的密钥不能再写字面量：留空时由 JwtService 从 JWT_SECRET 环境变量
+    # 或 ~/.campus-secrets/jwt.key 读取（所有服务与网关必须是同一份）。
+    secret: ${JWT_SECRET:}
+    expire-hours: ${JWT_EXPIRE_HOURS:72}
   auth:
     # mock=true 时不会调用微信 code2Session，而是直接用请求里的 devOpenid（或按 code 哈希）
     # 当 openid —— 所有宿主账号会落到同一个用户，**只能本地单人演示**。
@@ -50,10 +52,11 @@ campus:
     # 注意：key 需在腾讯位置服务控制台「key 设置」中勾选开通 WebServiceAPI，
     # 后端逆地理才能解析成功；未开通/未配置时 /auth/geo/city 返回 available=false，
     # 前端自动回退到「学校所在市」。申请/管理：https://lbs.qq.com/
-    qqmap-key: ${QQMAP_KEY:R3GBZ-74NLJ-FULFO-DWKJE-QVEY5-SPBJ2}
+    # 【安全】key / SK 属于凭据，绝不写进仓库。申请/管理：https://lbs.qq.com/
+    # 通过环境变量 QQMAP_KEY / QQMAP_SK 注入；未配置时位置能力自动降级为不可用。
+    qqmap-key: ${QQMAP_KEY:}
     # key 若在控制台开启了「签名校验」，必须填 SK，否则 WebService 返回 status=111
-    # （控制台 → 该 key → 签名校验；关掉的话这里留空即可）
-    qqmap-sk: ${QQMAP_SK:SJhhXXNWWMTNIV59Ss4xrk79LDe5QKUj}
+    qqmap-sk: ${QQMAP_SK:}
   wx:
     # 微信小程序（当前主端）。appid 与 project.config.json 保持一致；
     # appsecret 必须由环境变量 WX_APPSECRET 提供（不要写进仓库）。

@@ -80,6 +80,7 @@ import { ArrowRight, CaretBottom, Key, SwitchButton } from '@element-plus/icons-
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { authApi } from '@/api/system'
+import { setToken } from '@/utils/request'
 import { resetDynamic } from '@/router/dynamic'
 
 defineEmits(['toggle'])
@@ -135,12 +136,19 @@ async function submitPwd () {
   if (!valid) return
   pwdLoading.value = true
   try {
-    await authApi.changePassword({ ...pwdForm })
-    ElMessage.success('密码修改成功，请重新登录')
-    authApi.logout().catch(() => {})
-    userStore.reset()
-    resetDynamic()
-    router.replace('/login')
+    // 后端改密后会让所有旧令牌失效（token_version +1），同时回一张新令牌，
+    // 这里必须替换本地存储，否则用户会立刻被自己的改密操作踢下线。
+    const newToken = await authApi.changePassword({ ...pwdForm })
+    if (newToken) {
+      setToken(newToken)
+      userStore.token = newToken
+    }
+    ElMessage.success('密码修改成功')
+    pwdVisible.value = false
+    pwdForm.oldPassword = ''
+    pwdForm.newPassword = ''
+    // 重新拉一次自身信息，把 mustChangePwd 置回 false，解除页面的强制改密状态
+    await userStore.loadInfo(true).catch(() => {})
   } catch (e) {
     // 提示已在拦截器统一处理
   } finally {

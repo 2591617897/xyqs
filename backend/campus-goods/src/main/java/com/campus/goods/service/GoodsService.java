@@ -26,6 +26,7 @@ import com.campus.goods.mapper.SchoolRegionMapper;
 import com.campus.goods.mapper.UserSnapshotMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -249,15 +250,25 @@ public class GoodsService {
                 .eq(Like::getTargetId, goodsId)
                 .eq(Like::getUserId, userId));
         if (exist != null) {
-            likeMapper.deleteById(exist.getId());
-            goodsMapper.incrLike(goodsId, -1);
+            // 并发双取消：只有真正删掉关系行的那次才回退计数。
+            // 否则两个请求都读到 exist，第二个 delete 影响 0 行却照样 -1，
+            // like_count 会永久少 1（greatest 只防负数，防不了漂移）。
+            if (likeMapper.deleteById(exist.getId()) > 0) {
+                goodsMapper.incrLike(goodsId, -1);
+            }
             return false;
         }
         Like like = new Like();
         like.setTargetType(TARGET);
         like.setTargetId(goodsId);
         like.setUserId(userId);
-        likeMapper.insert(like);
+        try {
+            likeMapper.insert(like);
+        } catch (DuplicateKeyException e) {
+            // uk_target_user 并发兜底：并发双点赞时后到者插入失败，
+            // 说明关系行已由并发事务建立，按「已收藏」返回且不重复 +1。
+            return true;
+        }
         goodsMapper.incrLike(goodsId, 1);
         tryNotifyLikeGoods(goods, userId);
         return true;

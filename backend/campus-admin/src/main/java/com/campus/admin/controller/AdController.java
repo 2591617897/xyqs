@@ -2,6 +2,7 @@ package com.campus.admin.controller;
 
 import com.campus.admin.config.annotation.AuditLog;
 import com.campus.admin.config.annotation.RequirePermission;
+import com.campus.admin.dto.AdSlotOption;
 import com.campus.admin.dto.AuditReq;
 import com.campus.admin.entity.AdMaterial;
 import com.campus.admin.entity.AdSlot;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 广告位与素材。审核与上下架是两道独立的闸，未过审不允许上架。
  */
@@ -29,6 +32,16 @@ public class AdController {
     private final AdService adService;
 
     // ---------------- 广告位 ----------------
+
+    /**
+     * 可选编码列表。前端「广告位」下拉用它，避免运营手填编码导致
+     * 「后台显示上架、小程序一条都拿不到」。{@code connected=false} 的位禁止上架。
+     */
+    @RequirePermission({"admin:ad:slot:list"})
+    @GetMapping("/slots/codes")
+    public R<List<AdSlotOption>> slotCodes() {
+        return R.ok(adService.slotOptions());
+    }
 
     @RequirePermission({"admin:ad:slot:list"})
     @GetMapping("/slots")

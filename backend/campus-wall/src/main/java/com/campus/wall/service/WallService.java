@@ -21,6 +21,7 @@ import com.campus.wall.mapper.WallPostMapper;
 import com.campus.wall.mapper.SchoolRegionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -176,15 +177,22 @@ public class WallService {
                 .eq(Like::getTargetId, postId)
                 .eq(Like::getUserId, userId));
         if (exist != null) {
-            likeMapper.deleteById(exist.getId());
-            postMapper.incrLike(postId, -1);
+            // 并发双取消：只有真正删掉关系行的那次才回退计数，否则 like_count 漂移
+            if (likeMapper.deleteById(exist.getId()) > 0) {
+                postMapper.incrLike(postId, -1);
+            }
             return false;
         }
         Like like = new Like();
         like.setTargetType(TARGET);
         like.setTargetId(postId);
         like.setUserId(userId);
-        likeMapper.insert(like);
+        try {
+            likeMapper.insert(like);
+        } catch (DuplicateKeyException e) {
+            // uk_target_user 并发兜底：并发双点赞时后到者插入失败，不重复 +1
+            return true;
+        }
         postMapper.incrLike(postId, 1);
         tryNotifyLikeWall(post, userId);
         return true;
