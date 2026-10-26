@@ -62,8 +62,16 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
                     // 首页运营位：广告素材与后台公告要在游客首屏就可见，
                     // 否则图片和公告永远只在后台存在、C 端看不到。两者都是只读。
                     "/api/ads", "/api/notices");
-    /** 这些前缀虽然是 GET，但属于「我的」私域数据，必须登录 */
-    private static final List<String> PRIVATE_HINTS = List.of("/mine", "/orders", "/favorite");
+    /**
+     * 这些**路径段**虽然是 GET，但属于「我的」私域数据，必须登录。
+     *
+     * <p><b>必须按路径段比较，不能用 {@code path.contains("/mine")}</b>：
+     * 广告位编码 {@code mine_banner} 拼出来的路径是 {@code /api/ads/mine_banner}，
+     * 里面含有子串 {@code /mine}，用 contains 判定会把「个人中心广告位」误判成私域接口，
+     * 游客请求直接 401 —— 表现为「后台配了广告，个人中心永远不显示」，
+     * 而且两边都不报错，极难定位。
+     */
+    private static final List<String> PRIVATE_SEGMENTS = List.of("mine", "orders", "favorite", "favorites");
     /**
      * 公开个人主页：GET /api/user/{userId}/profile（userId 为纯数字）。
      * 只放行精确匹配，不放宽 /api/user 前缀——否则 /user/me 等私域接口会被误开。
@@ -151,7 +159,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         boolean publicRead = publicProfile || publicFollowStatus || publicAdClick || publicNoticeConfirm
                 || ("GET".equals(method)
                 && PUBLIC_READ_PREFIX.stream().anyMatch(path::startsWith)
-                && PRIVATE_HINTS.stream().noneMatch(path::contains));
+                && !hasPrivateSegment(path));
 
         // 后台管理：独立令牌体系（campus.admin.jwt.secret），除登录外全部要求管理员令牌
         if (path.startsWith(ADMIN_PREFIX)) {
@@ -236,6 +244,21 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             log.debug("token 解析失败: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 路径里是否含有「我的」私域段。
+     *
+     * <p>按 {@code /} 切开后**整段全等**比较，不做子串匹配：{@code mine_banner}
+     * 是合法广告位编码，不能被当成 {@code mine} 段。
+     */
+    private boolean hasPrivateSegment(String path) {
+        for (String seg : path.split("/")) {
+            if (PRIVATE_SEGMENTS.contains(seg)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
