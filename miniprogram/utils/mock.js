@@ -2187,6 +2187,49 @@ function route(method, url, data) {
     return ok(list)
   }
 
+  // 推广（看广告换排序）
+  // mock 模式下不拉真实广告：issue 直接发凭证、complete 直接加分，
+  // 用来验证弹层与列表展示，不代表真实防刷链路（真实链路必须过服务端 15 秒校验）
+  if (s[0] === 'promote') {
+    if (s[1] === 'quota' && M === 'GET') {
+      requireLogin()
+      return ok({
+        score: 0,
+        expireAt: null,
+        remainTarget: 5,
+        remainUser: 20,
+        dailyPerTarget: 5,
+        dailyPerUser: 20,
+        baseScore: 100,
+        decayDays: 7,
+        minWatchSeconds: 15,
+        mockAd: true,
+        hasAdUnit: false
+      })
+    }
+    if (s[1] === 'issue' && M === 'POST') {
+      requireLogin()
+      return ok({
+        token: 'mock_promote_token',
+        adUnitId: '',
+        minWatchSeconds: 15,
+        mockAd: true,
+        ttlMinutes: 10,
+        baseScore: 100,
+        decayDays: 7
+      })
+    }
+    if (s[1] === 'complete' && M === 'POST') {
+      requireLogin()
+      return ok({
+        score: 100,
+        delta: 100,
+        expireAt: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 19)
+      })
+    }
+    if (s[1] === 'cancel' && M === 'POST') return ok(null)
+  }
+
   // 用户
   if (s[0] === 'user') {
     if (s[1] === 'me' && M === 'GET') {

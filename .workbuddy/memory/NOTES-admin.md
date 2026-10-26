@@ -70,3 +70,16 @@
   - 实测：贵州（city 空）→ 46 所；旧版 → 0；贵州+贵阳 → 24 所
 - 前端 `admin-web/src/views/system/RegionTree.vue`：省 / 市 / 校区三个 el-select（filterable），
   换省清空非法城市、选校区自动回填省市并向空名称填学校名、`buildPayload()` 提交前归一 level
+
+## el-dialog 放进顶栏 = 点了没反应（2026-10-27 修）
+- ⚠️ `.app-navbar`（`layout/Navbar.vue`）有 `backdrop-filter: saturate(180%) blur(12px)`，
+  **会成为 position:fixed 的包含块**。EP 的 `el-dialog` 默认**原地渲染**（`appendToBody=false`），
+  于是遮罩 `inset:0` 被压成顶栏那条 60px 高的框，对话框本体靠 `margin-top:15vh` 落到框外
+  （框还是 `overflow:auto`）→ 完全看不见，症状就是「点修改密码没反应」
+- 修法：`append-to-body`（传送到 body，按视口定位）。同类坑见 `styles/index.scss` 里
+  `.page-card` 的注释（animation 残留恒等 transform 也会造成同样的包含块问题）
+- 另一个坑：子组件 `onMounted` 早于父组件执行，而 `info` 是 Layout 挂载时才异步拉的 →
+  在 Navbar 的 `onMounted` 里判 `mustChangePwd` 恒为 false。用 `watch(..., {immediate:true})` 等它变 true
+- 强制改密态（后端 `must_change_pwd=1`）下，除 `/auth/info|password|logout|menus` 外所有接口 403
+  「请先修改初始密码后再使用后台」→ 看板全 0 + 满屏红条；已在 `utils/request.js` 加 3 秒同文案去重
+- 改密成功后 `window.location.reload()`（令牌在 sessionStorage，刷新不掉登录态）让被拦的数据重拉

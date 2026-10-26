@@ -59,8 +59,9 @@
          对话框本体又因为 margin-top:15vh 落到框外（框还是 overflow:auto）——
          表现就是「点了修改密码没反应」。传送到 body 才按视口定位。 -->
     <el-dialog v-model="pwdVisible" title="修改登录密码" width="420px" append-to-body
-               :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
-      <p class="dialog-hint">为了账号安全，使用初始密码登录后需要先修改密码。</p>
+               :close-on-click-modal="!forcedPwd" :close-on-press-escape="!forcedPwd"
+               :show-close="!forcedPwd">
+      <p v-if="forcedPwd" class="dialog-hint">为了账号安全，使用初始密码登录后需要先修改密码。</p>
       <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="90px">
         <el-form-item label="原密码" prop="oldPassword">
           <el-input v-model="pwdForm.oldPassword" type="password" show-password />
@@ -70,6 +71,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
+        <!-- 非强制态（用户自己点的）必须给退路，否则点开就出不来了 -->
+        <el-button v-if="!forcedPwd" @click="closePwd">取 消</el-button>
         <el-button type="primary" :loading="pwdLoading" @click="submitPwd">确 定</el-button>
       </template>
     </el-dialog>
@@ -116,6 +119,8 @@ function onFsChange () {
 
 const pwdVisible = ref(false)
 const pwdLoading = ref(false)
+/** 是否「强制改密」态：是就不给关闭/取消，改完才放人 */
+const forcedPwd = computed(() => userStore.mustChangePwd)
 const pwdFormRef = ref()
 const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const pwdRules = {
@@ -142,6 +147,13 @@ watch(
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', onFsChange)
 })
+
+function closePwd () {
+  pwdVisible.value = false
+  pwdFormRef.value?.clearValidate?.()
+  pwdForm.oldPassword = ''
+  pwdForm.newPassword = ''
+}
 
 async function submitPwd () {
   const valid = await pwdFormRef.value.validate().catch(() => false)

@@ -2,12 +2,26 @@
 
 ## 环境
 - 库 guizhou_campus_fun/root/123456；MySQL3306 Redis6379 Nacos8848 网关8888（唯一入口，前缀 `/api`）
-- 端口 auth8101 user8102 goods8103 wall8104 post8105 message8106 admin8107
+- 端口 auth8101 user8102 goods8103 wall8104 post8105 message8106 admin8107 **promote8108**
 - 线上 `https://campus-api.trkcwl.com`（服务器多项目→子域名带项目名）；`ACTIVE_ENV='prod'`；Nginx 模板 `deploy/nginx-campus-api.trkcwl.com.conf`
 - 上域名必须 `UPLOAD_BASE_URL=<域名>`；上传目录必须**绝对路径**（`UploadPaths` 统一写读）；生产 Nginx alias 直出 `/uploads/`（`/mnt/ssd/web/campus-api.trkcwl.com/uploads/`）
 - 图片地址只在 `utils/request.js` 归一（递归替换含 `/uploads/` 的串）
 - 上传 404：`curl -D -` 见 `200 + code:404` = 写 A 读 B（相对路径 / Nacos 多实例）
 - 微信后台分别配 request/uploadFile/downloadFile 三域名（无端口路径 IP，需备案）
+
+## 推广（看激励视频换排序，2026-10-27 落地，细节见同日 daily log）
+- 新服务 `campus-promote` 8108，网关 `/api/promote/**` **全部要登录**（不在 PUBLIC_READ_PREFIX）
+- 链路：`quota` 看配额 → `issue` 签一次性凭证（**不加分**）→ 播广告 → `complete` 结算 → 失败/放弃走 `cancel` 释放配额
+- 计分：单次 100 分，`有效分 = 100 × 剩余时间/7天`**线性衰减**；定时任务每 30 分钟回写 `promote_score`
+- 防刷四件套：nonce 唯一键 + 带 `status=0` 的条件更新 / 最短观看 15s / 凭证 10 分钟 / 归属+每日上限(单条5·账号20)
+  ⚠️ 同步内容服务失败要**抛异常回滚**（nonce 还能重试），绝不 fail-open
+- 三张内容表加 `promote_score`+`promote_expire_at`（**必须落库**，读时聚合没法走索引排序）
+- 排序：只有默认 latest 用 `promote_score DESC, created_at DESC`；**价格/热度排序不插推广**
+- promote 服务不直接写别人的表 → 各内容服务提供 `/internal/{goods|posts|wall/posts}/owner` 与 `/promote/apply`
+- 前端：`utils/rewarded-ad.js`（单例+重绑回调+show前load+超时兜底）、`utils/promote.js`、`components/promote-sheet`
+- `PROMOTE_AD_UNIT_ID` 正式必填；**`PROMOTE_MOCK_AD` 生产必须 false**（start-all.bat 本地默认 true）
+- 开发者工具拉不起激励视频 → 真机 + 流量主才能验完整链路；自测 `scripts/promote-selftest.js`
+- ⚠️ 页面/组件 json 引用根目录组件一律写 `/components/xxx/xxx`（漏 `/` 会被当成相对路径）
 
 ## 构建
 - JDK17 `JAVA_HOME='C:\Program Files\Java\jdk-17'`，仓库 `D:\apache-maven-3.6.3\MavenData`
