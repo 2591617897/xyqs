@@ -53,6 +53,11 @@
   color: #9b9ba3;
   font-weight: 400;
 }
+/* 推广入口：实心填充，和普通「管理」按钮区分开 */
+.ab-btn.solid {
+  background: var(--brand-500, #006C49);
+  color: #fff;
+}
 
 /* ===== 正文 ===== */
 .article {

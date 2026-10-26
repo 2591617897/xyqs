@@ -74,6 +74,8 @@
         </view>
         <view class="cover-status" wx:if="{{item.status !== 1}}">{{item.status === 2 ? '已售出' : '已下架'}}</view>
         <view class="cover-tag" wx:elif="{{item.tradeType === 1}}">自提</view>
+        <!-- 推广中：作者看过广告，这条在同校列表里靠前展示 -->
+        <view class="cover-promote" wx:if="{{item.promoteScore > 0}}">🚀 推广</view>
       </view>
       <view class="goods-body">
         <view class="goods-title clamp2">{{item.title}}</view>

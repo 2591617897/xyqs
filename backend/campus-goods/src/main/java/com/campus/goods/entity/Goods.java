@@ -73,6 +73,15 @@ public class Goods {
 
     private Integer commentCount;
 
+    /**
+     * 当前有效推广分。由 campus-promote 看广告后回写，并按 7 天线性衰减重算。
+     * 列表第一排序键，所以必须落库（读时聚合没法走索引排序）。
+     */
+    private Integer promoteScore;
+
+    /** 最晚一条推广的到期时间；0 分为 null */
+    private LocalDateTime promoteExpireAt;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

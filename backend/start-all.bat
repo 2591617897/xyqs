@@ -38,9 +38,19 @@ if errorlevel 1 (
 )
 echo     common OK
 
+REM ------------------------------------------------------------
+REM  推广功能（campus-promote）本地联调开关。
+REM  未开通微信流量主时，真实激励视频广告拉不起来，推广流程走不通。
+REM  PROMOTE_MOCK_AD=true 让服务端返回 mockAd，前端用「模拟观看倒计时」
+REM  走完整的签发 → 结算链路（最短观看时长校验照旧生效）。
+REM  正式投放必须置为 false —— 否则用户不看广告就能刷排序。
+REM ------------------------------------------------------------
+if not defined PROMOTE_MOCK_AD set "PROMOTE_MOCK_AD=true"
+if not defined PROMOTE_AD_UNIT_ID set "PROMOTE_AD_UNIT_ID="
+
 echo.
 echo === 2. start services one by one ===
-set "MODULES=auth user goods wall post message admin gateway"
+set "MODULES=auth user goods wall post message admin gateway promote"
 set /a N=0
 for %%m in (%MODULES%) do (
   set /a N+=1
@@ -52,7 +62,7 @@ for %%m in (%MODULES%) do (
 
 echo.
 echo === 3. waiting for ports ===
-set "PORTS=8101 8102 8103 8104 8105 8106 8107 8888"
+set "PORTS=8101 8102 8103 8104 8105 8106 8107 8108 8888"
 set /a WAIT=0
 set /a UP=0
 :wait
@@ -61,18 +71,18 @@ set /a UP=0
 for %%p in (%PORTS%) do (
   netstat -ano | findstr /r /c:":%%p .*LISTENING" >nul && set /a UP+=1
 )
-echo     round !WAIT! : !UP!/8 up
-if !UP! geq 8 goto ready
+echo     round !WAIT! : !UP!/9 up
+if !UP! geq 9 goto ready
 if !WAIT! geq 30 goto ready
 timeout /t 10 /nobreak >nul
 goto wait
 :ready
 
 echo.
-if !UP! geq 8 (
-  echo [OK] all 8 services are listening.
+if !UP! geq 9 (
+  echo [OK] all 9 services are listening.
 ) else (
-  echo [WARN] only !UP!/8 up - check the individual windows for stack traces.
+  echo [WARN] only !UP!/9 up - check the individual windows for stack traces.
 )
 echo.
 echo   gateway  http://127.0.0.1:8888/api

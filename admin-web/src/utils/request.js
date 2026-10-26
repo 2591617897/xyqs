@@ -55,6 +55,20 @@ function handle401 (msg) {
   }, 300)
 }
 
+/**
+ * 错误提示去重：同一句文案 3 秒内只弹一次。
+ *
+ * 强制改密期间后台对每个业务接口都回 403「请先修改初始密码后再使用后台」，
+ * 看板一进页面就并发发好几个请求 —— 不去重就是一屏红条，把真正要看的信息盖住。
+ */
+const tipSeenAt = new Map()
+function errorTip (msg) {
+  const now = Date.now()
+  if (now - (tipSeenAt.get(msg) || 0) < 3000) return
+  tipSeenAt.set(msg, now)
+  ElMessage.error(msg)
+}
+
 function normalizeImages (v, depth = 0) {
   if (depth > 6 || v === null || v === undefined) return v
   if (typeof v === 'string') return v.indexOf('/uploads/') >= 0 ? resolve(v) : v
@@ -81,11 +95,11 @@ service.interceptors.response.use(
       return Promise.reject(new Error(body.msg || '未登录'))
     }
     if (body.code === 403) {
-      ElMessage.error(body.msg || '没有权限执行该操作')
+      errorTip(body.msg || '没有权限执行该操作')
       return Promise.reject(new Error(body.msg || '无权限'))
     }
     if (body.code !== 0) {
-      ElMessage.error(body.msg || '请求失败')
+      errorTip(body.msg || '请求失败')
       return Promise.reject(new Error(body.msg || '请求失败'))
     }
     return normalizeImages(body.data, 0)

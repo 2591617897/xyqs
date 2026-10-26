@@ -12,6 +12,7 @@
       <view class="ab-name">{{post.authorName}}</view>
       <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
     </view>
+    <view class="ab-btn solid" wx:if="{{post.mine}}" catchtap="openPromote">🚀 推广</view>
     <view class="ab-btn" wx:if="{{post.mine}}" catchtap="openMore">管理</view>
     <!-- 同校 / 同市 由 schoolId 对比得出（全市范围下作者可能是外校同学） -->
     <view class="ab-btn ghost" wx:elif="{{post.schoolBadge}}">{{post.schoolBadge}}</view>
@@ -249,3 +250,13 @@
   <text>{{loadError ? '加载失败，请检查网络或后端服务' : '帖子不存在或已删除'}}</text>
   <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
 </view>
+
+<promote-sheet
+  visible="{{showPromote}}"
+  target-type="POST"
+  target-id="{{post.id}}"
+  target-name="帖子"
+  title="推广这条帖子"
+  bind:close="closePromote"
+  bind:done="onPromoteDone"
+/>

@@ -1,0 +1,58 @@
+server:
+  port: 8108
+
+spring:
+  application:
+    name: campus-promote
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123456}
+    hikari:
+      pool-name: ${spring.application.name}HikariPool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 300000
+      connection-test-query: SELECT 1
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+campus:
+  jwt:
+    # 【安全】密钥来自环境变量 JWT_SECRET 或 ~/.campus-secrets/jwt.key
+    secret: ${JWT_SECRET:}
+  promote:
+    # 微信激励视频广告位 ID（adunit-xxxxxxxx）。留空时小程序拿不到广告位，
+    # 只能靠 mock-ad 联调；正式投放前必须在微信公众平台「流量主」里创建并填这里。
+    ad-unit-id: ${PROMOTE_AD_UNIT_ID:}
+    # 看完整段视频一次给的基础分（7 天内线性衰减到 0）
+    base-score: ${PROMOTE_BASE_SCORE:100}
+    # 权重有效期（天）
+    decay-days: ${PROMOTE_DECAY_DAYS:7}
+    # 最短观看时长（秒）：服务端按「签发时间 → 结算时间」校验，
+    # 防止客户端跳过广告直接打结算接口。激励视频一般 15~30 秒。
+    min-watch-seconds: ${PROMOTE_MIN_WATCH_SECONDS:15}
+    # 单个内容每天最多推广次数
+    daily-per-target: ${PROMOTE_DAILY_PER_TARGET:5}
+    # 单个用户每天最多推广次数（所有内容合计）
+    daily-per-user: ${PROMOTE_DAILY_PER_USER:20}
+    # 凭证有效期（分钟）：超时未结算自动作废
+    token-ttl-minutes: ${PROMOTE_TOKEN_TTL_MINUTES:10}
+    # 联调模式：跳过真实广告，前端用「模拟观看」走完整流程。
+    # 【安全】只能用于未开通流量主时的本地联调，生产必须 false，
+    # 否则用户不看广告就能刷排序权重。
+    mock-ad: ${PROMOTE_MOCK_AD:false}

@@ -20,6 +20,9 @@
 - `{code,msg,data}`，0 成功；401 未登录 / 403 未认证 / 404 不存在
 - **ID 一律字符串**（雪花19位，`JacksonConfig` 全局 Long→String），前端别 `Number(id)`
 - 前端请求不写 `/api` 前缀（`BASE_URL` 已含，例外 `config.js` 的 `UPLOAD_URL`）；`Promise.all` 每项各自 `.catch`
+- ⚠️ `utils/request.js` 导出的是**对象** → 只能 `http.get/post/put/del(...)`，**不能** `http({...})`
+  （举报页踩过：同步抛 `http is not a function`，请求根本没发，看起来像「没权限」）。`check-miniprogram.js` 已加断言
+- 雪花 id 19 位 > `Number.MAX_SAFE_INTEGER`，前端**禁止** `Number(id)`（…9601 → …9600），一律字符串传
 - 作者名/头像不能只靠快照：`PostService#refreshAuthors`、`GoodsService#refreshSellers` 用 `UserSnapshotMapper` 覆盖，新内容表照办
 - 静态资源映射必须 `Path#toUri()`
 
@@ -75,6 +78,9 @@
 - `<image>` 与 `previewImage` 两条通道：真机 `http://192.168.x.x` 的 `<image>` 静默失败（灰块、binderror 不触发）→ 先用「预览」；真机看图要 HTTPS
 - 查图 `curl -D -`：`Content-Type: image/*` 才对，`application/json` = 后端没返图
 - `.json` 必须显式 `"usingComponents": {}`（缺了整页白屏）；`require` 相对路径按深度数层级；自绘顶栏 `navigationStyle:custom`，图标用 SVG data-URI
+- **引用根目录组件一律写 `/components/xxx/xxx`（带前导 `/`）**：不带 `/` 是按 json 所在目录解析的，
+  写成 `components/...` 会去找 `pages/xxx/components/...` → 开发者工具直接「模拟器启动失败」。
+  `scripts/check-miniprogram.js#checkComponentPaths` 会静态查这个
 
 ## 接口坑
 - 学校字典是 **`/schools`**（`AuthController` 无类级 `@RequestMapping`）
@@ -116,6 +122,8 @@
 
 ## 安全基线（长期，改动前先跑 `scripts/security-baseline-check.js`，要求「失败 0 项」）
 - **后台口令不是 admin123**：admin=`Campus@2026#Temp`、auditor=`Campus@2026#Audit`（`$2a$12$`、`must_change_pwd=1`）
+- 口令忘了/被清空 → 跑 `backend/sql/reset-admin-password.sql`（幂等，含 BCrypt 生成说明与删行后补回的 INSERT）；
+  验证登录**只走网关** `POST :8888/api/admin/auth/login`（直连 8107 是 404），重置后无需重启 8107
 - **令牌吊销**：`t_admin_user.token_version` ↔ claim `tv`，拦截器不缓存地比对；改密/重置/禁用/删除 → `revokeTokens`
   → **`/auth/password` 返回新令牌**，前端必须 `setToken()` 替换；`CAMPUS_ADMIN_FORCE_PWD_CHANGE=false` 才能跳过强制改密
 - **C 端频控** `LoginRateLimiter`：IP 30/min（在 code2Session 之前）+ openid 10/min；超限 429

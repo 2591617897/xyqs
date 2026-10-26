@@ -54,7 +54,11 @@
     </div>
 
     <!-- 强制改密：初始密码登录后必须改 -->
-    <el-dialog v-model="pwdVisible" title="修改登录密码" width="420px"
+    <!-- ⚠️ 必须 append-to-body：.app-navbar 上有 backdrop-filter，它会成为 position:fixed
+         的包含块；el-dialog 默认原地渲染，遮罩就被压成顶栏那条 60px 高的框，
+         对话框本体又因为 margin-top:15vh 落到框外（框还是 overflow:auto）——
+         表现就是「点了修改密码没反应」。传送到 body 才按视口定位。 -->
+    <el-dialog v-model="pwdVisible" title="修改登录密码" width="420px" append-to-body
                :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
       <p class="dialog-hint">为了账号安全，使用初始密码登录后需要先修改密码。</p>
       <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="90px">
@@ -73,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, CaretBottom, Key, SwitchButton } from '@element-plus/icons-vue'
@@ -124,8 +128,16 @@ const pwdRules = {
 
 onMounted(() => {
   document.addEventListener('fullscreenchange', onFsChange)
-  if (userStore.mustChangePwd) pwdVisible.value = true
 })
+
+// 不能只在 onMounted 里判断一次：info 是异步拉的（Layout 挂载时才 loadInfo），
+// 而子组件的 onMounted 先于父组件执行，那一刻 mustChangePwd 还是 false，
+// 弹窗永远不自动出现 —— 只能靠用户手动点「修改密码」。用 watch 等它变成 true。
+watch(
+  () => userStore.mustChangePwd,
+  (v) => { if (v) pwdVisible.value = true },
+  { immediate: true }
+)
 
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', onFsChange)
@@ -149,6 +161,9 @@ async function submitPwd () {
     pwdForm.newPassword = ''
     // 重新拉一次自身信息，把 mustChangePwd 置回 false，解除页面的强制改密状态
     await userStore.loadInfo(true).catch(() => {})
+    // 强制改密期间业务接口全被 403 拦掉（看板数据都是空的），改完刷新一次让各页重拉。
+    // 令牌在 sessionStorage，刷新不掉登录态。
+    setTimeout(() => window.location.reload(), 600)
   } catch (e) {
     // 提示已在拦截器统一处理
   } finally {

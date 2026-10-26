@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,10 @@ public class GoodsService {
             case "price_asc" -> w.orderByAsc(Goods::getPrice);
             case "price_desc" -> w.orderByDesc(Goods::getPrice);
             case "hot" -> w.orderByDesc(Goods::getViewCount);
-            default -> w.orderByDesc(Goods::getCreatedAt);
+            // 默认（最新）排序里推广优先：推广分是连续衰减值，同分时再按发布时间倒序。
+            // 价格 / 热度排序是用户显式选择的维度，不再插入推广权重，
+            // 否则「按价格从低到高」里会混进高价推广位，排序就不可信了。
+            default -> w.orderByDesc(Goods::getPromoteScore).orderByDesc(Goods::getCreatedAt);
         }
         Page<Goods> p = goodsMapper.selectPage(new Page<>(page, size), w);
         p.getRecords().forEach(this::fillExtra);
@@ -133,6 +137,26 @@ public class GoodsService {
                 .eq(Like::getTargetType, TARGET)
                 .eq(Like::getUserId, userId));
         return cnt == null ? 0 : cnt;
+    }
+
+    /**
+     * 内容作者（内部接口，供 campus-promote 做归属校验）。
+     * 商品不存在返回 null，让调用方自己决定是 404 还是拒绝。
+     */
+    public Long ownerOf(Long id) {
+        Goods goods = goodsMapper.selectById(id);
+        return goods == null ? null : goods.getUserId();
+    }
+
+    /**
+     * 回写推广分（内部接口，供 campus-promote 结算/衰减时调用）。
+     * 幂等：同样的数据写多少次结果都一样。
+     */
+    public void applyPromote(Long id, Integer score, LocalDateTime expireAt) {
+        goodsMapper.update(null, Wrappers.<Goods>lambdaUpdate()
+                .set(Goods::getPromoteScore, score == null ? 0 : Math.max(0, score))
+                .set(Goods::getPromoteExpireAt, expireAt)
+                .eq(Goods::getId, id));
     }
 
     /** 该作者订单数：role=buyer/seller，status 可选（不传 = 全部） */

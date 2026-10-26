@@ -9,6 +9,10 @@
  *   4. 页面 js 是否会调用 Page()、wxml 是否为空
  *   5. 按需注入（lazyCodeLoading）是否开启；开启后 wxml 用到的自定义标签是否都在
  *      对应 json 的 usingComponents 里声明（漏声明会「静默不渲染」，比白屏更难查）
+ *   6. usingComponents 里的路径是否真的能解析到文件（绝对路径 / 开头按小程序根目录，
+ *      否则按当前 json 所在目录）。历史 bug：pages/goods/detail.json 写了
+ *      "components/promote-sheet/promote-sheet"，被解析成
+ *      pages/goods/components/...，开发者工具直接「模拟器启动失败」
  */
 const fs = require('fs')
 const path = require('path')
@@ -107,6 +111,57 @@ function checkRequiredComponents(app, pages) {
   }
 }
 
+/**
+ * 校验 usingComponents 的路径能否落到真实文件。
+ * 小程序规则：以 / 开头 = 相对小程序根目录；否则 = 相对该 json 所在目录。
+ * 末尾可以不带后缀，也可以指向目录里的 index。
+ */
+function checkComponentPaths(app, pages) {
+  const resolveTarget = function (dir, p) {
+    const norm = p.replace(/\\/g, '/')
+    const base = norm.startsWith('/') ? path.join(ROOT, norm) : path.join(dir, norm)
+    return [
+      base + '.js',
+      path.join(base, 'index.js')
+    ].some(exists)
+  }
+
+  const checkUnit = function (jsonFile, label) {
+    if (!exists(jsonFile)) return
+    let cfg
+    try {
+      cfg = readJson(jsonFile)
+    } catch (e) {
+      return // 解析失败已在上文报错
+    }
+    const uc = cfg.usingComponents || {}
+    const dir = path.dirname(jsonFile)
+    Object.keys(uc).forEach(function (tag) {
+      const p = uc[tag]
+      if (typeof p !== 'string' || !p) return
+      // 插件 / npm 走 node_modules，跳过
+      if (p.startsWith('plugin://') || p.includes('miniprogram_npm')) return
+      if (!resolveTarget(dir, p)) {
+        errors.push('usingComponents 路径解析不到组件：' + label + ' → ' + tag + ': "' + p
+          + '"（建议写成 "/components/' + tag + '/' + tag + '"）')
+      }
+    })
+  }
+
+  checkUnit(path.join(ROOT, 'app.json'), 'app.json')
+  pages.forEach(function (p) { checkUnit(path.join(ROOT, p + '.json'), p + '.json') })
+
+  const compDir = path.join(ROOT, 'components')
+  if (exists(compDir)) {
+    fs.readdirSync(compDir).forEach(function (d) {
+      checkUnit(path.join(compDir, d, d + '.json'), 'components/' + d)
+    })
+  }
+  if (app.tabBar && app.tabBar.custom) {
+    checkUnit(path.join(ROOT, 'custom-tab-bar', 'index.json'), 'custom-tab-bar/index.json')
+  }
+}
+
 function main() {
   const appJsonPath = path.join(ROOT, 'app.json')
   if (!exists(appJsonPath)) {
@@ -155,6 +210,9 @@ function main() {
       if (!code) warnings.push('页面 wxml 为空：' + p + '.wxml')
     }
   })
+
+  checkRequestUsage()
+  checkComponentPaths(app, pages)
 
   // tabBar 校验
   const tabBar = app.tabBar
@@ -215,6 +273,53 @@ function main() {
   }
 
   report(pages.length)
+}
+
+/**
+ * utils/request.js 导出的是对象 { request, get, post, put, del }，不是函数。
+ * 历史 bug：举报页写成 `http({ url, method, data })`，运行期抛
+ * `TypeError: http is not a function`，请求根本发不出去（页面看起来像「没权限」）。
+ * 这里把所有 .js 扫一遍，禁止把 request 模块本身当函数调用。
+ *
+ * ⚠️ 必须先剔注释再匹配：注释和说明文档里会引用 `http({...})` 这个错误写法，
+ *    不剔掉就会变成假阳性——和 scripts/security-baseline-check.js 是同一个坑。
+ */
+function checkRequestUsage() {
+  const files = []
+  ;['pages', 'components', 'utils'].forEach(function (dir) {
+    walk(path.join(ROOT, dir), files)
+  })
+
+  files.forEach(function (file) {
+    if (path.basename(file) === 'request.js') return // 模块自身不参与
+    let code = fs.readFileSync(file, 'utf8')
+    code = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    const rq = /require\(\s*['"][^'"]*utils\/request['"]\s*\)/
+    if (!rq.test(code)) return
+
+    // const http = require('.../utils/request')
+    const m = code.match(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(\s*['"][^'"]*utils\/request['"]\s*\)/)
+    if (!m) return
+    const alias = m[1]
+    // alias 后面紧跟 ( 就是「把模块当函数调用」；alias.get( 有小数点，不会误伤
+    const bad = new RegExp('(?<![.\\w$])' + alias.replace(/\$/g, '\\$') + '\\s*\\(')
+    if (bad.test(code)) {
+      errors.push('utils/request 导出的是对象，不能用 ' + alias + '({...}) 调用 → '
+        + rel(file) + '（应改为 ' + alias + '.get/post/put/del(...)）')
+    }
+  })
+}
+
+function walk(dir, out) {
+  if (!fs.existsSync(dir)) return
+  fs.readdirSync(dir, { withFileTypes: true }).forEach(function (d) {
+    const full = path.join(dir, d.name)
+    if (d.isDirectory()) {
+      walk(full, out)
+    } else if (d.name.endsWith('.js')) {
+      out.push(full)
+    }
+  })
 }
 
 function report(pageCount) {

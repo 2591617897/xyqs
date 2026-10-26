@@ -1,9 +1,12 @@
 package com.campus.goods.controller;
 
 import com.campus.common.api.R;
+import com.campus.goods.dto.PromoteApplyReq;
 import com.campus.goods.service.GoodsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +33,25 @@ public class InternalGoodsController {
     @GetMapping("/favorites/count")
     public R<Long> favoritesCount(@RequestParam("userId") Long userId) {
         return R.ok(goodsService.countFavorites(userId));
+    }
+
+    /**
+     * 商品作者（campus-promote 归属校验用）。
+     * 不存在返回 null data，由调用方决定是 404 还是拒绝。
+     */
+    @GetMapping("/owner")
+    public R<Long> owner(@RequestParam("id") Long id) {
+        return R.ok(goodsService.ownerOf(id));
+    }
+
+    /**
+     * 回写推广分（campus-promote 结算 / 衰减重算用）。
+     * 幂等：同一份数据重复写结果一致。
+     */
+    @PostMapping("/promote/apply")
+    public R<Void> applyPromote(@RequestBody PromoteApplyReq req) {
+        goodsService.applyPromote(req.getTargetId(), req.getScore(), req.getExpireAt());
+        return R.ok();
     }
 
     /** 该作者订单数：role=buyer/seller，status 可选（不传 = 全部） */

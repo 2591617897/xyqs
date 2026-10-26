@@ -322,11 +322,17 @@
         <view class="status-dot"></view>
         <text>{{goods.status === 1 ? '在售中' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
       </view>
-      <view class="owner-acts">
-        <button class="act-btn act-edit" hover-class="act-btn-hover" bindtap="goEdit" style="width: 171rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">编辑</button>
-    
-        <button class="act-btn act-danger" hover-class="act-btn-hover" bindtap="removeGoods" style="width: 150rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">删除</button>
-        <button class="act-btn" hover-class="act-btn-hover" bindtap="toggleStatus" style="width: 171rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">{{goods.status === 1 ? '下架' : '上架'}}</button>
+      <!-- 四个按钮平分：加了「推广」之后固定宽度会挤出屏幕，统一改自适应 -->
+      <view class="owner-acts is-4">
+        <button
+          wx:if="{{goods.status === 1}}"
+          class="act-btn act-promote"
+          hover-class="act-btn-hover"
+          bindtap="openPromote"
+        >推广</button>
+        <button class="act-btn act-edit" hover-class="act-btn-hover" bindtap="goEdit">编辑</button>
+        <button class="act-btn act-danger" hover-class="act-btn-hover" bindtap="removeGoods">删除</button>
+        <button class="act-btn" hover-class="act-btn-hover" bindtap="toggleStatus">{{goods.status === 1 ? '下架' : '上架'}}</button>
       </view>
     </block>
     <block wx:else>
@@ -388,3 +394,13 @@
   <text>{{loadError ? '加载失败，请检查网络' : '商品不存在或已下架'}}</text>
   <view class="btn btn-ghost btn-sm retry-btn" bindtap="retry" wx:if="{{loadError}}">重新加载</view>
 </view>
+
+<promote-sheet
+  visible="{{showPromote}}"
+  target-type="GOODS"
+  target-id="{{goods.id}}"
+  target-name="闲置"
+  title="推广这条闲置"
+  bind:close="closePromote"
+  bind:done="onPromoteDone"
+/>

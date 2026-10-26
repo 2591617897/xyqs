@@ -46,16 +46,22 @@
    样式随页面一起搬走，首页不再有 .entries / .entry / .tone-* 定义。 */
 
 /* ===== 运营 Banner（后台广告位 code=home_banner） ===== */
+/* 与首页其他区块对齐：左右各 24rpx（= .announce / .zone-head / .hot-card 的外边距），
+   圆角 24rpx 与 .announce、.hot-card 保持一致。
+   ⚠️ width 必须是 auto 而不是 100%：swiper 默认宽度就是满屏，
+   再叠上左右 24rpx margin 会撑出 48rpx，整页可横向滚动。 */
 .banner {
-  width: 100%;
+  width: auto;
   height: 300rpx;
-  margin-top: 16rpx;
+  margin: 16rpx 24rpx 0;
+  border-radius: 24rpx;
+  overflow: hidden;
 }
 .banner-img {
   width: 100%;
   height: 300rpx;
   display: block;
-  border-radius: 0;
+  border-radius: 24rpx;
 }
 
 /* ===== 运营公告位：绿色横幅 ===== */

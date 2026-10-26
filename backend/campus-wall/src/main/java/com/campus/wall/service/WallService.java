@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,20 @@ public class WallService {
     /** 学校所在市（未配置/未知时为 null） */
     public String cityOfSchool(Long schoolId) {
         return schoolId == null ? null : schoolRegionMapper.selectCityBySchoolId(schoolId);
+    }
+
+    /** 内容作者（内部接口，供 campus-promote 做归属校验），不存在返回 null */
+    public Long ownerOf(Long id) {
+        WallPost post = postMapper.selectById(id);
+        return post == null ? null : post.getUserId();
+    }
+
+    /** 回写推广分（内部接口，幂等） */
+    public void applyPromote(Long id, Integer score, LocalDateTime expireAt) {
+        postMapper.update(null, Wrappers.<WallPost>lambdaUpdate()
+                .set(WallPost::getPromoteScore, score == null ? 0 : Math.max(0, score))
+                .set(WallPost::getPromoteExpireAt, expireAt)
+                .eq(WallPost::getId, id));
     }
 
     /** 该作者表白墙帖子数（category 可空 = 全部；仅计 status=1 已发布） */
@@ -115,7 +130,8 @@ public class WallService {
         if ("hot".equalsIgnoreCase(sort)) {
             q.orderByDesc(WallPost::getLikeCount).orderByDesc(WallPost::getCreatedAt);
         } else {
-            q.orderByDesc(WallPost::getCreatedAt);
+            // 默认（最新）排序里推广优先；sort=hot 是显式热度维度，不插推广
+            q.orderByDesc(WallPost::getPromoteScore).orderByDesc(WallPost::getCreatedAt);
         }
         Page<WallPost> p = postMapper.selectPage(new Page<>(page, size), q);
         Set<Long> liked = likedIds(p.getRecords().stream().map(WallPost::getId).toList(), userId);

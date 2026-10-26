@@ -41,7 +41,9 @@ Page({
     /** @ 选择器 */
     mentionUserIds: [],
     mentionPickerList: [],
-    showMentionPicker: false
+    showMentionPicker: false,
+    /** 推广弹层 */
+    showPromote: false
   },
 
   onLoad: function (options) {
@@ -137,6 +139,22 @@ Page({
   /* ---------- 自己发布的管理操作 ---------- */
   goEdit: function () {
     mp.navigateTo({ url: '/pages/goods/publish?id=' + this.goodsId })
+  },
+
+  /* ---------- 推广：看一段激励视频换排序 ---------- */
+  openPromote: function () {
+    this.setData({ showPromote: true })
+  },
+
+  closePromote: function () {
+    this.setData({ showPromote: false })
+  },
+
+  /** 结算完成：把新分数写回本地卡片，并标记列表需要刷新 */
+  onPromoteDone: function (e) {
+    const score = e && e.detail ? e.detail.score : 0
+    this.setData({ 'goods.promoteScore': score, showPromote: false })
+    mp.setStorageSync('needRefreshGoods', 1)
   },
 
   toggleStatus: function () {

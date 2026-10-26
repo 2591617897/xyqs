@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,20 @@ public class PostService {
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
+    /** 内容作者（内部接口，供 campus-promote 做归属校验），不存在返回 null */
+    public Long ownerOf(Long id) {
+        Post post = postMapper.selectById(id);
+        return post == null ? null : post.getUserId();
+    }
+
+    /** 回写推广分（内部接口，幂等） */
+    public void applyPromote(Long id, Integer score, LocalDateTime expireAt) {
+        postMapper.update(null, Wrappers.<Post>lambdaUpdate()
+                .set(Post::getPromoteScore, score == null ? 0 : Math.max(0, score))
+                .set(Post::getPromoteExpireAt, expireAt)
+                .eq(Post::getId, id));
+    }
+
     /** 内部计数：该作者 status=1 帖子数（供个人主页聚合，campus-user Feign 调用） */
     public long countByUser(Long userId) {
         Long cnt = postMapper.selectCount(Wrappers.<Post>lambdaQuery()
@@ -127,6 +142,8 @@ public class PostService {
                 .eq(schoolId != null, Post::getSchoolId, schoolId)
                 .in(citySchoolIds != null, Post::getSchoolId, citySchoolIds)
                 .orderByDesc("hot".equalsIgnoreCase(sort), Post::getLikeCount)
+                // 默认（最新）排序里推广优先；sort=hot 是用户显式选的热度维度，不再插入推广
+                .orderByDesc(sort == null || !"hot".equalsIgnoreCase(sort), Post::getPromoteScore)
                 .orderByDesc(Post::getCreatedAt));
 
         Map<Long, Channel> channelMap = channelMap(p.getRecords());

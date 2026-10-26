@@ -21,6 +21,7 @@
         <module>campus-post</module>
         <module>campus-message</module>
         <module>campus-admin</module>
+        <module>campus-promote</module>
     </modules>
 
     <properties>

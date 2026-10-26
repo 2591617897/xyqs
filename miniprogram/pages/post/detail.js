@@ -33,7 +33,9 @@ Page({
     /** @ 选择器 */
     mentionUserIds: [],
     mentionPickerList: [],
-    showMentionPicker: false
+    showMentionPicker: false,
+    /** 推广弹层 */
+    showPromote: false
   },
 
   onLoad: function (options) {
@@ -381,6 +383,21 @@ Page({
       return
     }
     mp.previewImage({ current: ds.url, urls: urls })
+  },
+
+  /* ---------- 推广：看一段激励视频换排序 ---------- */
+  openPromote: function () {
+    this.setData({ showPromote: true })
+  },
+
+  closePromote: function () {
+    this.setData({ showPromote: false })
+  },
+
+  onPromoteDone: function (e) {
+    const score = e && e.detail ? e.detail.score : 0
+    this.setData({ 'post.promoteScore': score, showPromote: false })
+    mp.setStorageSync('needRefreshPosts', 1)
   },
 
   /* ---------- 自己的帖子：编辑 / 删除 ---------- */

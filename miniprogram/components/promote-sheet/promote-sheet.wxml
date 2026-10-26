@@ -1,0 +1,63 @@
+<view wx:if="{{visible}}" class="pm-mask" bindtap="close"></view>
+<view class="pm-sheet {{visible ? 'on' : ''}}" style="padding-bottom:{{safeArea}}px">
+  <view class="pm-head">
+    <text class="pm-title">{{title}}</text>
+    <text class="pm-close" catchtap="close">✕</text>
+  </view>
+
+  <view class="pm-body" catchtap="noop">
+    <view wx:if="{{loading}}" class="pm-tip">加载中…</view>
+
+    <block wx:elif="{{error}}">
+      <view class="pm-tip pm-tip-err">{{error}}</view>
+    </block>
+
+    <block wx:elif="{{quota}}">
+      <view class="pm-score-card">
+        <view class="pm-score-row">
+          <text class="pm-score-num">{{quota.score}}</text>
+          <text class="pm-score-unit">推广分</text>
+          <text wx:if="{{remainText}}" class="pm-score-expire">{{remainText}}</text>
+        </view>
+        <view class="pm-bar">
+          <view class="pm-bar-fill" style="width:{{percent}}%"></view>
+        </view>
+        <view class="pm-score-sub">
+          越高越靠前 · 每次 +{{quota.baseScore}} 分 · {{quota.decayDays}} 天内逐日回落
+        </view>
+      </view>
+
+      <view class="pm-quota">
+        <text class="pm-quota-main">今日还可推广 {{quota.remainTarget}} 次</text>
+        <text class="pm-quota-sub">
+          单条每天 {{quota.dailyPerTarget}} 次 · 账号每天 {{quota.dailyPerUser}} 次
+          <block wx:if="{{quota.remainUser < quota.remainTarget}}">
+            （账号今日只剩 {{quota.remainUser}} 次）
+          </block>
+        </text>
+      </view>
+
+      <view class="pm-note">
+        <text class="pm-note-line">看完一整段视频，这条{{targetName}}在同校列表里就会往前排。</text>
+        <text class="pm-note-line">推广分每天按比例衰减，看完不算永久置顶。</text>
+      </view>
+
+      <button
+        class="pm-cta {{quota.remainTarget <= 0 || quota.remainUser <= 0 ? 'is-off' : ''}}"
+        hover-class="pm-cta-hover"
+        bindtap="start"
+      >
+        <block wx:if="{{busy}}">
+          <text wx:if="{{countdown > 0}}">模拟观看中 {{countdown}}s…</text>
+          <text wx:else>观看中…</text>
+        </block>
+        <block wx:else>
+          <text wx:if="{{quota.remainTarget <= 0 || quota.remainUser <= 0}}">今日次数已用完</text>
+          <text wx:else>🎬 看视频，+{{quota.baseScore}} 推广分</text>
+        </block>
+      </button>
+
+      <view wx:if="{{quota.mockAd}}" class="pm-warn">当前为联调模式：不消耗真实广告</view>
+    </block>
+  </view>
+</view>

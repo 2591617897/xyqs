@@ -1,0 +1,107 @@
+/* 推广弹层。样式变量全部来自 styles/tokens.wxss，必须带 fallback */
+.pm-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 900;
+}
+.pm-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface, #FFFFFF);
+  border-radius: 28rpx 28rpx 0 0;
+  z-index: 901;
+  transform: translateY(100%);
+  transition: transform 0.28s ease;
+  box-sizing: border-box;
+}
+.pm-sheet.on { transform: translateY(0); }
+
+.pm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 12rpx;
+}
+.pm-title { font-size: 30rpx; font-weight: 600; color: var(--text-1, #0F1A16); }
+.pm-close { font-size: 36rpx; color: var(--text-4, #9AA8A3); padding: 0 8rpx; }
+
+.pm-body { padding: 8rpx 32rpx 32rpx; }
+
+.pm-tip { padding: 40rpx 0; text-align: center; font-size: 26rpx; color: var(--text-3, #6B7A74); }
+.pm-tip-err { color: var(--danger-500, #DC2626); }
+
+.pm-score-card {
+  background: var(--brand-50, #E8F5EF);
+  border-radius: 20rpx;
+  padding: 24rpx;
+}
+.pm-score-row { display: flex; align-items: baseline; }
+.pm-score-num {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--brand-700, #00452F);
+  line-height: 1;
+}
+.pm-score-unit { font-size: 24rpx; color: var(--text-2, #4B5A54); margin-left: 8rpx; }
+.pm-score-expire { margin-left: auto; font-size: 24rpx; color: var(--text-3, #6B7A74); }
+
+.pm-bar {
+  margin-top: 18rpx;
+  height: 10rpx;
+  border-radius: 10rpx;
+  background: var(--brand-100, #C6E8D8);
+  overflow: hidden;
+}
+.pm-bar-fill {
+  height: 100%;
+  border-radius: 10rpx;
+  background: var(--brand-500, #006C49);
+  transition: width 0.3s ease;
+}
+.pm-score-sub {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: var(--text-3, #6B7A74);
+}
+
+.pm-quota { margin-top: 28rpx; }
+.pm-quota-main { font-size: 28rpx; font-weight: 600; color: var(--text-1, #0F1A16); }
+.pm-quota-sub { display: block; margin-top: 8rpx; font-size: 22rpx; color: var(--text-3, #6B7A74); }
+
+.pm-note {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  background: var(--surface-2, #F0F3F2);
+  border-radius: 16rpx;
+}
+.pm-note-line {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--text-2, #4B5A54);
+}
+
+.pm-cta {
+  margin-top: 28rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: 46rpx;
+  background: var(--brand-500, #006C49);
+  color: var(--text-inverse, #FFFFFF);
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+}
+.pm-cta::after { border: none; }
+.pm-cta-hover { background: var(--brand-600, #005A3D); }
+.pm-cta.is-off { background: var(--surface-3, #E8ECEA); color: var(--text-4, #9AA8A3); }
+
+.pm-warn {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--warning-500, #D97706);
+}

@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "promote-sheet": "/components/promote-sheet/promote-sheet"
+  },
   "navigationBarTitleText": "匿名心事"
 }

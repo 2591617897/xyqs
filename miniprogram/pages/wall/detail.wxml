@@ -9,7 +9,10 @@
           <view class="muted">{{post.timeText}}</view>
         </view>
       </view>
-      <view class="more-btn" wx:if="{{post.mine}}" catchtap="openMore">···</view>
+      <view class="row gap12">
+        <view class="wall-promote" wx:if="{{post.mine}}" catchtap="openPromote">🚀 推广</view>
+        <view class="more-btn" wx:if="{{post.mine}}" catchtap="openMore">···</view>
+      </view>
     </view>
 
     <view class="content">{{post.content}}</view>
@@ -268,3 +271,13 @@
   <view class="btn btn-ghost btn-sm back-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   <view class="btn btn-plain btn-sm back-btn" wx:else bindtap="goBack">回到表白墙</view>
 </view>
+
+<promote-sheet
+  visible="{{showPromote}}"
+  target-type="WALL"
+  target-id="{{post.id}}"
+  target-name="心事"
+  title="推广这条心事"
+  bind:close="closePromote"
+  bind:done="onPromoteDone"
+/>

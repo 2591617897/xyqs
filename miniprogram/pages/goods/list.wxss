@@ -127,6 +127,17 @@
   color: #ffffff;
   font-size: 20rpx;
 }
+/* 推广标签放右上角，避开左下角的「自提 / 已售出」 */
+.cover-promote {
+  position: absolute;
+  right: 12rpx;
+  top: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(0, 108, 73, 0.85);
+  color: #ffffff;
+  font-size: 20rpx;
+}
 .cover-status {
   position: absolute;
   left: 0;

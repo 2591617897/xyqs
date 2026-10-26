@@ -1,5 +1,6 @@
 const { mp, toast } = require('../../utils/util')
 const http = require('../../utils/request')
+const auth = require('../../utils/auth')
 
 const TARGET_LABELS = {
   POST: '帖子',
@@ -58,17 +59,27 @@ Page({
     }
     const data = {
       targetType: d.targetType || 'FEEDBACK',
-      targetId: d.targetId ? Number(d.targetId) : null,
+      // ⚠️ 雪花 id 是 19 位，超过 Number.MAX_SAFE_INTEGER，
+      // 一旦 Number() 转换就会丢精度（2114021598989209601 → 2114021598989209600），
+      // 工单会挂到错误的内容上。全站 id 一律以字符串传递，后端 Jackson/Long 会自动承接。
+      targetId: d.targetId ? String(d.targetId) : null,
       reasonType: d.reasons[d.reasonIndex],
       reasonDesc: d.reasonDesc
     }
     this.setData({ submitting: true })
-    http({ url: '/user/report', method: 'POST', data: data, loading: '提交中' })
+    // 举报是写操作，后端要求登录；游客直接提交只会拿到 401，
+    // 所以先走统一的登录守卫（用户点「提交」＝明确意图，弹窗确认后登录再发请求）。
+    // ⚠️ utils/request 导出的是 { request, get, post, put, del }，
+    // 不是函数本身 —— 这里必须用 http.post(...)，写成 http({...}) 会抛 http is not a function。
+    auth.ensureLogin()
+      .then(function () {
+        return http.post('/user/report', data, { loading: '提交中' })
+      })
       .then(function () {
         toast('提交成功，我们会尽快核实处理')
         setTimeout(function () { mp.navigateBack() }, 800)
       })
       .catch(function () {})
-      .finally(() => this.setData({ submitting: false }))
+      .then(() => this.setData({ submitting: false }))
   }
 })

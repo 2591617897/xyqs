@@ -699,6 +699,18 @@
   background: rgba(255, 77, 79, 0.08);
   color: #e23a3c;
 }
+/* 加了「推广」之后是四个按钮，固定宽度会挤出屏幕，改成等分自适应。
+   width: auto !important 是为了盖掉历史遗留的 inline style width。 */
+.owner-acts.is-4 .act-btn {
+  flex: 1 1 0;
+  width: auto !important;
+  min-width: 0;
+  padding: 0 10rpx;
+}
+.act-btn.act-promote {
+  background: rgba(0, 108, 73, 0.92);
+  color: #fff;
+}
 
 /* ---------- 弹层 ---------- */
 .mask {
