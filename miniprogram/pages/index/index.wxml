@@ -1,13 +1,29 @@
 <view class="page">
-  <!-- 顶部：只留「学校范围胶囊（本校/本市）」
-       已按需求去掉右侧的搜索框与通知铃铛：
-       - 搜索框原本只是跳转二手广场（goSearch → openGoods('')），入口在闲置页里还有；
-       - 铃铛只是私信入口 + 未读角标，私信本身就是底栏第 3 个 tab，且 custom-tab-bar 自带 unread 角标。
-       需要恢复时，把 .search-box / .bell-btn 结构和 wxss 一并加回，并在 js 里补回 goSearch / goMessages 与 loadUnread。 -->
-  <view class="topbar">
-    <view class="school-pill" bindtap="openScope">
-      <text class="school-name">{{scopeLabel}}</text>
-      <text class="school-arrow">▾</text>
+  <!-- 顶部「浏览范围」行（默认整块不渲染）
+       旧版是一整条 sticky 白栏 + 一枚胶囊：96rpx 独占一行、右侧全空、滚动时一直悬在顶上，
+       但它对大多数用户没有决策价值（已绑学校 + 本校模式时就是个装饰）。
+       现在只在这两种情况出现，跟随页面滚走：
+         - onboard：还没绑学校 → 引导去选学校（本校筛选此时是退化的，必须提示）
+         - city：已切到「本市」→ 显示城市，右侧给一键切回本校
+       视觉沿用首页卡片语言：白底 + 24rpx 圆角 + shadow-1 + 品牌浅底图标块 + 品牌绿 CTA，
+       不要做成裸文字行（没有承载块会显得像漏样式）。
+       常驻入口搬到「我的 → 账户与服务 → 浏览范围」，功能不会丢。
+       搜索框 / 铃铛同理：入口在闲置页与底栏 tab，需要恢复时把结构与 wxss 一并加回。 -->
+  <view
+    wx:if="{{scopeKind}}"
+    class="scope-bar"
+    bindtap="openScope"
+    hover-class="scope-hover"
+    hover-stay-time="60"
+  >
+    <view class="scope-ico">{{scopeKind === 'city' ? '🏙' : '🎓'}}</view>
+    <text class="scope-main">{{scopeKind === 'onboard' ? '选择学校' : scopeLabel}}</text>
+    <text class="scope-sub" wx:if="{{scopeKind === 'onboard'}}">只看本校内容</text>
+    <view class="flex1"></view>
+    <view class="scope-cta" wx:if="{{scopeKind === 'city'}}" catchtap="switchToSchool">切回本校</view>
+    <view class="scope-cta" wx:else>
+      <text>去选择</text>
+      <text class="scope-arrow">›</text>
     </view>
   </view>
 

@@ -72,18 +72,19 @@
 
       <template v-if="handling">
         <el-form label-width="90px">
-          <el-form-item label="处理状态">
-            <el-select v-model="handleForm.status" style="width: 100%">
-              <el-option v-for="s in STATUS" :key="s.value" :label="s.label" :value="s.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="处理结果">
-            <el-select v-model="handleForm.handleResult" placeholder="请选择" clearable style="width: 100%">
+          <!-- 没有「处理状态」下拉：最终状态由处理结果推导（后端 ReportService#handle），
+               放一个可选状态下拉只会让人误以为能自己决定驳回，实际会被覆盖。 -->
+          <el-form-item label="处理结果" required>
+            <el-select v-model="handleForm.handleResult" placeholder="请选择" style="width: 100%">
               <el-option v-for="r in HANDLE_RESULTS" :key="r" :label="r" :value="r" />
             </el-select>
           </el-form-item>
           <el-form-item label="处理说明">
             <el-input v-model="handleForm.handleRemark" type="textarea" :rows="3" placeholder="可选，记录处置依据" />
+          </el-form-item>
+          <el-form-item label="工单状态">
+            <el-tag :type="derivedStatus.type" size="small">{{ derivedStatus.label }}</el-tag>
+            <span class="handle-hint">{{ derivedStatus.hint }}</span>
           </el-form-item>
         </el-form>
         <div style="text-align: right">
@@ -96,7 +97,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchForm from '@/components/SearchForm.vue'
 import PageTable from '@/components/PageTable.vue'
@@ -124,7 +125,28 @@ const detailVisible = ref(false)
 const detail = ref({})
 const handling = ref(false)
 const submitting = ref(false)
-const handleForm = reactive({ status: 1, handleResult: '', handleRemark: '' })
+const handleForm = reactive({ handleResult: '', handleRemark: '' })
+
+/** 处理结果 → 副作用提示，和后端 ReportService#handle 的 switch 一一对应 */
+const EFFECT_HINT = {
+  下架内容: '将把被举报内容下架（状态置为隐藏）',
+  禁言作者: '将禁言作者 24 小时',
+  封禁作者: '将封禁作者账号',
+  无违规: '仅记录结论，不动内容，工单标记为已驳回',
+  其他: '仅记录结论，不动内容'
+}
+
+/**
+ * 工单最终状态由「处理结果」推导，不接受人工指定：
+ * 「无违规」= 已驳回(2)，其余 = 已处理(1)。
+ * 口径必须与后端一致，否则抽屉里显示的和列表里落库的会对不上。
+ */
+const derivedStatus = computed(() => {
+  const r = handleForm.handleResult
+  if (!r) return { label: '待处理', type: 'warning', hint: '选择处理结果后自动确定最终状态' }
+  const s = r === '无违规' ? STATUS[2] : STATUS[1]
+  return { label: s.label, type: s.type, hint: EFFECT_HINT[r] || '' }
+})
 
 watch(range, (v) => {
   query.startTime = v && v[0] ? v[0] : null
@@ -165,16 +187,25 @@ async function showDetail (row) {
 function openHandle (row) {
   showDetail(row).then(() => {
     handling.value = true
-    handleForm.status = 1
     handleForm.handleResult = ''
     handleForm.handleRemark = ''
   })
 }
 
 async function submitHandle () {
+  // 处理结果必填：后端会直接 400，前端先拦一道，别让人白发一次请求
+  if (!handleForm.handleResult) {
+    ElMessage.warning('请先选择处理结果')
+    return
+  }
   submitting.value = true
   try {
-    await reportApi.handle(detail.value.id, { ...handleForm })
+    // 只传处理结果和说明。status 由后端按 handleResult 推导，前端传了也会被忽略，
+    // DTO 里那个字段纯粹为兼容旧调用方保留。
+    await reportApi.handle(detail.value.id, {
+      handleResult: handleForm.handleResult,
+      handleRemark: handleForm.handleRemark
+    })
     ElMessage.success('已提交处理')
     handling.value = false
     detailVisible.value = false
@@ -196,5 +227,12 @@ onMounted(load)
   object-fit: cover;
   border-radius: 6px;
   margin: 0 8px 8px 0;
+}
+
+.handle-hint {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.4;
 }
 </style>

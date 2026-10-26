@@ -64,7 +64,8 @@
         </el-descriptions-item>
         <el-descriptions-item label="图片" :span="2">
           <div v-if="imgList.length" class="img-list">
-            <el-image v-for="u in imgList" :key="u" :src="u" :preview-src-list="imgList" fit="cover" class="thumb" />
+            <el-image v-for="u in imgList" :key="u" :src="u" :preview-src-list="imgList"
+                      preview-teleported :z-index="3000" fit="cover" class="thumb" />
           </div>
           <span v-else>-</span>
         </el-descriptions-item>

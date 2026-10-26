@@ -49,7 +49,8 @@ public class ReportService {
     private final UserManageService userManageService;
     private final DataScopeResolver dataScopeResolver;
 
-    public R.Page<ReportTicket> pageTickets(Integer status, String targetType, String keyword, long page, long size) {
+    public R.Page<ReportTicket> pageTickets(Integer status, String targetType, String keyword,
+                                           LocalDateTime start, LocalDateTime end, long page, long size) {
         DataScope ds = dataScopeResolver.resolve();
         List<Long> schoolIds = ds.isAll() ? null : ds.getSchoolIds();
         IPage<ReportTicket> p = reportTicketMapper.selectPage(new Page<>(page, size),
@@ -57,6 +58,8 @@ public class ReportService {
                         .eq(status != null, ReportTicket::getStatus, status)
                         .eq(targetType != null && !targetType.isBlank(), ReportTicket::getTargetType, targetType)
                         .like(keyword != null && !keyword.isBlank(), ReportTicket::getTicketNo, keyword)
+                        .ge(start != null, ReportTicket::getCreatedAt, start)
+                        .le(end != null, ReportTicket::getCreatedAt, end)
                         .in(schoolIds != null && !schoolIds.isEmpty(), ReportTicket::getSchoolId, schoolIds)
                         .apply(schoolIds != null && schoolIds.isEmpty(), "1 = 2")
                         .orderByAsc(ReportTicket::getStatus)

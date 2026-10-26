@@ -46,6 +46,8 @@ public class AuthService {
 
     /** IP 定位缓存：TTL 6 小时、最多 512 个 IP —— 腾讯 key 每日配额有限，能复用就复用 */
     private static final long IP_GEO_TTL_MS = 6 * 60 * 60 * 1000L;
+    /** 失败结果（未配置 key / 配额耗尽 status=121 / 网络异常）只缓存 1 分钟，避免把额度烧在重试上 */
+    private static final long IP_GEO_FAIL_TTL_MS = 60 * 1000L;
     private static final int IP_GEO_CACHE_MAX = 512;
     private final Map<String, CachedGeo> ipGeoCache = new ConcurrentHashMap<>();
 
@@ -116,10 +118,13 @@ public class AuthService {
     }
 
     public List<School> schools(String keyword) {
+        // limit 200：小程序端是**本地**做关键词过滤 + 城市分组（见 utils/school.js），
+        // 只返回 50 条会让第 51 所以后的学校既选不到、也搜不到（库里已有 81 所）。
+        // 全量 200 条的 JSON 也就几十 KB，不值得为它牺牲可选择性。
         return schoolMapper.selectList(Wrappers.<School>lambdaQuery()
                 .like(StringUtils.hasText(keyword), School::getName, keyword)
                 .orderByDesc(School::getSort)
-                .last("limit 50"));
+                .last("limit 200"));
     }
 
     /**
@@ -164,7 +169,7 @@ public class AuthService {
         resp.setAvailable(false);
         String cacheKey = StringUtils.hasText(ip) ? ip.trim() : "local";
         CachedGeo hit = ipGeoCache.get(cacheKey);
-        if (hit != null && System.currentTimeMillis() - hit.at() < IP_GEO_TTL_MS) {
+        if (hit != null && System.currentTimeMillis() - hit.at() < ipGeoCacheTtl(hit.geo())) {
             return hit.geo();
         }
         Map<String, String> params = new TreeMap<>();
@@ -175,7 +180,11 @@ public class AuthService {
         Object result = body == null ? null : body.get("result");
         Object ad = result instanceof Map ? ((Map<?, ?>) result).get("ad_info") : null;
         if (!(ad instanceof Map)) {
-            // 失败不缓存：下次打开还能重试（腾讯 key 有每日配额，配额耗尽时别反复打）
+            // 失败也缓存一小会儿（见 ipGeoCacheTtl）：腾讯 key 配额耗尽（status=121）时，
+            // 前端每次打开选校弹层都会打一发，不挡就是纯无效调用。
+            if (ipGeoCache.size() < IP_GEO_CACHE_MAX) {
+                ipGeoCache.put(cacheKey, new CachedGeo(resp, System.currentTimeMillis()));
+            }
             return resp;
         }
         Map<?, ?> info = (Map<?, ?>) ad;
@@ -183,10 +192,17 @@ public class AuthService {
         resp.setCity(asText(info.get("city")));
         resp.setDistrict(asText(info.get("district")));
         resp.setAvailable(StringUtils.hasText(resp.getCity()));
-        if (resp.isAvailable() && ipGeoCache.size() < IP_GEO_CACHE_MAX) {
+        if (ipGeoCache.size() < IP_GEO_CACHE_MAX) {
+            // 失败也缓存（短 TTL）：key 配额耗尽（status=121）时前端每次打开选校弹层都会来一发，
+            // 不挡一下就是纯粹的无效调用。用短 TTL 而不是不缓存，配额恢复后 1 分钟内自动转好。
             ipGeoCache.put(cacheKey, new CachedGeo(resp, System.currentTimeMillis()));
         }
         return resp;
+    }
+
+    /** 成功结果缓存 6 小时（校园网共用出口 IP）；失败结果只缓存 1 分钟，让配额恢复/网络抖动后能快速自愈 */
+    private long ipGeoCacheTtl(GeoCity geo) {
+        return geo != null && geo.isAvailable() ? IP_GEO_TTL_MS : IP_GEO_FAIL_TTL_MS;
     }
 
     /** IP 定位结果缓存：一整个校园网通常共用一个出口 IP，没必要每个用户都查一次（省腾讯配额） */

@@ -105,7 +105,7 @@
         </el-descriptions-item>
         <el-descriptions-item label="认证材料" :span="2">
           <el-image v-if="detail.verifyImg" :src="detail.verifyImg" :preview-src-list="[detail.verifyImg]"
-                    fit="cover" class="verify-img" />
+                    preview-teleported :z-index="3000" fit="cover" class="verify-img" />
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="个性签名" :span="2">{{ detail.bio || '-' }}</el-descriptions-item>

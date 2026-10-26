@@ -65,9 +65,14 @@ function toggle () {
 
 async function ensureMenus () {
   try {
+    // info 和 menus 是两个接口，谁先返回不确定：只要 info 缺了就补拉。
+    // 少了这一步，刷新页面时（守卫里只拉过菜单）store.info 永远是 null，
+    // 顶栏显示「未登录」，isSuper 判不出来，v-permission 的按钮会成片消失。
+    if (!userStore.info) {
+      await userStore.loadInfo(true).catch(() => {})
+    }
     let list = menus.value
     if (!list || !list.length) {
-      await userStore.loadInfo(true)
       list = await userStore.loadMenus(true)
     }
     addDynamicRoutes(router, list)

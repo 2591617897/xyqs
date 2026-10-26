@@ -90,20 +90,32 @@ function sleep(ms) {
 async function main() {
   console.log('\n=== 推广功能自检 ===\n  server: ' + SERVER + '\n')
 
-  // ---- 登录 ----
-  const login = await request('POST', '/auth/login', {
-    code: 'test',
-    platform: 'wx',
-    devOpenid: DEV_OPENID
-  })
-  const token =
-    login.body && login.body.code === 0 && login.body.data ? login.body.data.token : null
-  if (!token) {
-    console.log('  ✗ 登录失败，后续用例无法执行：' + (login.raw || '').slice(0, 200))
-    fail++
-    return
+  // ---- 拿令牌 ----
+  // 优先用外部传入的令牌：后端没开 AUTH_MOCK 时 code=test 登录会被拒，
+  // 用 `node scripts/make-dev-token.js <userId> [schoolId]` 自签一个即可，
+  // 不必为了跑脚本去改 auth 服务的启动参数。
+  let token = process.env.PROMOTE_TOKEN || null
+  if (token) {
+    assert('使用外部令牌（PROMOTE_TOKEN）', true)
+  } else {
+    const login = await request('POST', '/auth/login', {
+      code: 'test',
+      platform: 'wx',
+      devOpenid: DEV_OPENID
+    })
+    token = login.body && login.body.code === 0 && login.body.data ? login.body.data.token : null
+    if (!token) {
+      console.log(
+        '  ✗ 登录失败：' +
+          (login.raw || '').slice(0, 200) +
+          '\n     提示：auth 未开 AUTH_MOCK 时用 make-dev-token.js 生成令牌，' +
+          '再用 PROMOTE_TOKEN=<token> 跑本脚本'
+      )
+      fail++
+      return
+    }
+    assert('登录成功', true)
   }
-  assert('登录成功', true)
 
   // ---- 未登录不能访问 ----
   const anon = await request('GET', '/promote/quota?targetType=GOODS&targetId=1')

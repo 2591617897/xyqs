@@ -43,6 +43,15 @@ Component({
     }
   },
 
+  attached: function () {
+    // 提前把定位城市准备好：ipCity() 命中本地缓存时是同步 Promise，
+    // 这样首次 render 就能直接出「同城置顶」，避免列表先分组再跳一下。
+    const self = this
+    schoolMod.ipCity().then(function (city) {
+      if (city) self.setData({ geoCity: city })
+    })
+  },
+
   methods: {
     loadSchools: function () {
       const self = this
@@ -67,7 +76,8 @@ Component({
       const all = this.data.schools
       const kw = this.data.keyword
       if (kw) {
-        this.setData({ list: schoolMod.buildList(schoolMod.search(all, kw), '') })
+        // 搜索不分组：用户已经在缩小范围，再插标题反而碍事
+        this.setData({ list: schoolMod.flatList(schoolMod.search(all, kw)) })
         return
       }
       this.setData({ list: schoolMod.buildList(all, this.data.geoCity) })

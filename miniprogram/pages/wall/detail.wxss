@@ -12,23 +12,38 @@
   font-weight: 600;
   color: #3f4653;
 }
+/* ---------- 头部操作：推广 / 更多（统一图标 + 胶囊） ---------- */
 .more-btn {
-  font-size: 34rpx;
-  color: #9ca3af;
-  letter-spacing: 2rpx;
-  padding: 0 12rpx;
-  line-height: 1;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: var(--text-3, #6B7A74);
+  background: var(--surface-2, #F0F3F2);
+  border-radius: var(--radius-pill, 999rpx);
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
 }
-/* 推广入口：和「···」并列，实心填充突出 */
+.more-btn-hover {
+  background: var(--surface-3, #E8ECEA);
+}
+/* 推广入口：品牌实心胶囊，与普通「更多」区分视觉权重 */
 .wall-promote {
-  height: 52rpx;
-  line-height: 52rpx;
-  padding: 0 22rpx;
-  border-radius: 999rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 26rpx;
+  border-radius: var(--radius-pill, 999rpx);
   background: var(--brand-500, #006C49);
-  color: #fff;
-  font-size: 24rpx;
-  font-weight: 600;
+  color: var(--text-inverse, #FFFFFF);
+  font-size: var(--fs-3, 24rpx);
+  font-weight: var(--fw-bold, 600);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
+}
+.wall-promote-hover {
+  background: var(--brand-600, #005A3D);
 }
 .content {
   font-size: 33rpx;
@@ -134,11 +149,10 @@
   background: #f4f5f9;
 }
 
+/* ---------- 底部悬停操作栏 ---------- */
 .bottom-space {
   height: 200rpx;
 }
-
-/* ---------- 底部悬停操作栏 ---------- */
 .bottom-bar {
   position: fixed;
   left: 0;
@@ -147,69 +161,99 @@
   display: flex;
   align-items: center;
   gap: 20rpx;
-  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: #ffffff;
-  box-shadow: 0 -6rpx 24rpx rgba(31, 35, 41, 0.06);
+  padding: 14rpx 24rpx calc(14rpx + env(safe-area-inset-bottom));
+  background: var(--surface, #FFFFFF);
+  border-top: 1rpx solid var(--border, #E3E8E6);
+  box-shadow: 0 -8rpx 32rpx rgba(15, 26, 22, 0.06);
   z-index: 30;
 }
+
+/* 写评论：胶囊输入框 */
 .bar-input {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 12rpx;
-  height: 84rpx;
-  padding: 0 28rpx;
-  background: #f4f5f9;
-  border-radius: 999rpx;
+  height: 80rpx;
+  padding: 0 26rpx;
+  background: var(--surface-2, #F0F3F2);
+  border-radius: var(--radius-pill, 999rpx);
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
+}
+.bar-input-hover {
+  background: var(--surface-3, #E8ECEA);
 }
 .bar-input-icon {
   font-size: 30rpx;
-  line-height: 1;
+  color: var(--text-3, #6B7A74);
+  flex-shrink: 0;
 }
 .bar-input-hint {
-  font-size: 27rpx;
-  color: #9ca3af;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-4, 26rpx);
+  color: var(--text-3, #6B7A74);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
+
+/* 操作组：图标 + 计数，单行胶囊 */
 .bar-acts {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 4rpx;
   flex-shrink: 0;
 }
 .bar-act {
-  width: 92rpx;
-  height: 92rpx;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rpx;
-  background: #ffffff;
-  border: 1rpx solid #eef0f4;
-  border-radius: 50%;
+  gap: 6rpx;
+  height: 76rpx;
+  min-width: 64rpx;
+  padding: 0 16rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  background: transparent;
+  color: var(--text-2, #4B5A54);
   box-sizing: border-box;
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease),
+              transform var(--dur-fast, 120ms) var(--ease-out, ease);
 }
-.bar-act.on {
-  border-color: #ffd7da;
-  background: #fff5f6;
+.bar-act-hover {
+  background: var(--surface-2, #F0F3F2);
+  transform: scale(0.94);
 }
-.bar-icon {
-  font-size: 32rpx;
-  line-height: 1;
+.bar-ico {
+  font-size: 36rpx;
+  flex-shrink: 0;
 }
 .bar-num {
-  font-size: 20rpx;
-  color: #8b8f99;
-  line-height: 1.2;
+  font-size: var(--fs-2, 22rpx);
+  font-weight: var(--fw-medium, 500);
+  color: var(--text-3, #6B7A74);
+  line-height: 1;
+}
+/* 点赞激活：马卡龙浅粉底 + 樱花粉 */
+.bar-act.on {
+  background: var(--like-50, #FFF0F4);
+  color: var(--like-500, #FF4D7D);
 }
 .bar-act.on .bar-num {
-  color: #ff4d4f;
+  color: var(--like-500, #FF4D7D);
 }
+.bar-act.on.bar-act-hover {
+  background: var(--like-100, #FFD9E3);
+}
+/* 分享（button 组件）样式复位 */
 .bar-share {
   margin: 0;
-  padding: 0;
-  line-height: inherit;
+  padding: 0 16rpx;
+  line-height: 1;
+  font-size: inherit;
+  background: transparent;
+  border-radius: var(--radius-pill, 999rpx);
 }
 .bar-share::after {
   border: none;
@@ -527,16 +571,20 @@
 .sheet-tool {
   width: 64rpx;
   height: 64rpx;
-  line-height: 64rpx;
-  text-align: center;
-  font-size: 30rpx;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  border-radius: var(--radius-pill, 999rpx);
   background: var(--surface-2, #F0F3F2);
-  color: #64748b;
+  color: var(--text-3, #6B7A74);
   transition: background 0.15s, color 0.15s;
 }
+.sheet-tool-hover {
+  background: var(--surface-3, #E8ECEA);
+}
 .sheet-tool.on {
-  background: #edf9f3;
+  background: var(--brand-50, #E8F5EF);
   color: var(--brand-500, #006C49);
 }
 .sheet-send {

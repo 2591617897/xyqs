@@ -27,7 +27,7 @@
       <el-table-column label="证明材料" width="120" align="center">
         <template #default="{ row }">
           <el-image v-if="row.verifyImg" :src="row.verifyImg" :preview-src-list="[row.verifyImg]"
-                    fit="cover" class="thumb" />
+                    preview-teleported :z-index="3000" fit="cover" class="thumb" />
           <span v-else>-</span>
         </template>
       </el-table-column>

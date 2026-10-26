@@ -29,7 +29,13 @@
                :loading="loading" @load="load">
       <el-table-column label="素材图" width="110" align="center">
         <template #default="{ row }">
-          <el-image :src="row.image" :preview-src-list="[row.image]" fit="cover" class="thumb" />
+          <!-- ⚠️ preview-teleported 不能省：el-image 的预览层默认渲染在原地（表格单元格里），
+               它的 position:fixed 会被 el-table 那几层 overflow:hidden 的祖先形成自己的层叠上下文，
+               表现就是「点开图片后遮罩不铺满、表格浮在图片上面、整个界面糊在一起」。
+               挂到 body 才是干净的「暗底 + 居中大图 + 右上角关闭」。
+               z-index 抬高是因为本项目的 el-dialog 也在 2000+，别让弹窗压住预览。 -->
+          <el-image :src="row.image" :preview-src-list="[row.image]"
+                    preview-teleported :z-index="3000" fit="cover" class="thumb" />
         </template>
       </el-table-column>
       <el-table-column prop="title" label="标题" min-width="160" show-overflow-tooltip />

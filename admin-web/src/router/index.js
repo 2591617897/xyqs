@@ -39,6 +39,11 @@ router.beforeEach(async (to) => {
   if (!userStore.token) return true
   retriedPaths.add(to.fullPath)
   try {
+    // ⚠️ 必须连 info 一起拉：只拉菜单会让 store.info 保持 null，
+    // 于是顶栏显示「未登录」、isSuper=false、permissions=[]，
+    // 页面上所有 v-permission 按钮（比如举报工单的操作列）全部被隐藏。
+    // 而 Layout 的 ensureMenus 看到 menus 已有数据就跳过 loadInfo，把这个问题固化下来。
+    await userStore.loadInfo().catch(() => {})
     await userStore.loadMenus()
     addDynamicRoutes(router, userStore.menus)
     return { path: to.path, query: to.query, hash: to.hash, replace: true }

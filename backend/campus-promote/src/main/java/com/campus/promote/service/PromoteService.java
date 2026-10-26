@@ -116,8 +116,10 @@ public class PromoteService {
             voidRecord(rec.getId());
             throw BizException.of("推广凭证已超时，请重新发起");
         }
-        long watched = Duration.between(rec.getIssuedAt(), now).getSeconds();
-        if (watched < props.getMinWatchSeconds()) {
+        // 用毫秒比较而不是 getSeconds()：后者会截断小数，
+        // 看满 14.98 秒会被算成 14 秒而误判成「没看完」。
+        long watchedMs = Duration.between(rec.getIssuedAt(), now).toMillis();
+        if (watchedMs < props.getMinWatchSeconds() * 1000L) {
             throw BizException.of("视频还没看完，完整观看后才能获得推广");
         }
 

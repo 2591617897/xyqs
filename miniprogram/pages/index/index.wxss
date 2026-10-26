@@ -3,43 +3,69 @@
   padding-bottom: calc(170rpx + env(safe-area-inset-bottom));
 }
 
-/* ===== 顶部：只剩学校范围胶囊 =====
-   搜索框 .search-box / 铃铛 .bell-btn 及其子块样式已随结构一起删除，
-   需要恢复时连同 index.wxml 的 topbar 结构一起加回。 */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+/* ===== 顶部「浏览范围」行（默认不渲染，见 index.wxml 注释） =====
+   必须落在首页既有的卡片语言里：白底 + 24rpx 圆角 + shadow-1 + 品牌浅底图标块 + 品牌绿 CTA。
+   ⚠️ 不要退化成裸文字行（无承载块 + 裸 emoji）—— 那样看着像漏写样式，也会和下面的绿 banner 打架。
+   高度约 72rpx（旧版 sticky 白栏是 96rpx），且不再 sticky，滚一下就没了。
+   旧版 .topbar / .school-pill / .school-name / .school-arrow 已随之移除。 */
+.scope-bar {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 24rpx;
-  background: #ffffff;
+  gap: 12rpx;
+  margin: 16rpx 24rpx 0;
+  padding: 14rpx 20rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
 }
-.school-pill {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  height: 64rpx;
-  padding: 0 20rpx;
-  background: #ffffff;
-  border: 1rpx solid #F5E8EC;
-  border-radius: 999rpx;
-  box-shadow: 0 2rpx 8rpx rgba(17, 20, 26, 0.04);
+.scope-hover {
+  background: var(--surface-2, #F0F3F2);
+}
+/* 图标块：与 .announce-icon 同思路（有底才不像裸 emoji），尺寸按行高收到 44rpx */
+.scope-ico {
   flex-shrink: 0;
-  max-width: 260rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: var(--radius-sm, 8rpx);
+  background: var(--brand-50, #E8F5EF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  line-height: 1;
 }
-.school-name {
+.scope-main {
+  flex-shrink: 0;
   font-size: 26rpx;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: 500;
+  color: var(--text-1, #0F1A16);
+  max-width: 300rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.school-arrow {
-  font-size: 20rpx;
-  color: #9b9ba3;
+.scope-sub {
+  flex-shrink: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  color: var(--text-3, #6B7A74);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 右侧 CTA：品牌绿文字 + 箭头，不做填充按钮（下方绿 banner 已有一个白色填充按钮，会抢焦点） */
+.scope-cta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--brand-500, #006C49);
+}
+.scope-arrow {
+  font-size: 24rpx;
+  line-height: 1;
 }
 
 /* ===== 功能入口区（金刚区）已移到 pages/zone/index =====

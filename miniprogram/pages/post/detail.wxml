@@ -12,8 +12,8 @@
       <view class="ab-name">{{post.authorName}}</view>
       <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
     </view>
-    <view class="ab-btn solid" wx:if="{{post.mine}}" catchtap="openPromote">🚀 推广</view>
-    <view class="ab-btn" wx:if="{{post.mine}}" catchtap="openMore">管理</view>
+    <view class="ab-btn solid" wx:if="{{post.mine}}" hover-class="ab-btn-solid-hover" hover-stay-time="80" catchtap="openPromote">推广</view>
+    <view class="ab-btn" wx:if="{{post.mine}}" hover-class="ab-btn-hover" hover-stay-time="80" catchtap="openMore">管理</view>
     <!-- 同校 / 同市 由 schoolId 对比得出（全市范围下作者可能是外校同学） -->
     <view class="ab-btn ghost" wx:elif="{{post.schoolBadge}}">{{post.schoolBadge}}</view>
   </view>
@@ -172,9 +172,15 @@
     <!-- 工具行 + 发送 -->
     <view class="sheet-toolbar">
       <view class="sheet-tools">
-        <view class="sheet-tool {{showEmoji ? 'on' : ''}}" catchtap="toggleEmoji">😊</view>
-        <view class="sheet-tool" catchtap="chooseCommentImage">🖼</view>
-        <view class="sheet-tool" catchtap="openMentionPicker">@</view>
+        <view class="sheet-tool {{showEmoji ? 'on' : ''}}" hover-class="sheet-tool-hover" hover-stay-time="80" catchtap="toggleEmoji" aria-role="button" aria-label="表情">
+          <view class="ico ico-emoji"></view>
+        </view>
+        <view class="sheet-tool" hover-class="sheet-tool-hover" hover-stay-time="80" catchtap="chooseCommentImage" aria-role="button" aria-label="图片">
+          <view class="ico ico-image"></view>
+        </view>
+        <view class="sheet-tool" hover-class="sheet-tool-hover" hover-stay-time="80" catchtap="openMentionPicker" aria-role="button" aria-label="提醒好友">
+          <view class="ico ico-at"></view>
+        </view>
       </view>
       <view class="sheet-send {{commentInput || commentImages.length ? 'on' : ''}}" bindtap="sendComment">发布</view>
     </view>
@@ -219,27 +225,40 @@
     </view>
   </view>
 
-  <!-- 底部悬停操作栏：写评论 + 点赞 / 评论 / 分享 -->
+  <!-- 底部悬停操作栏：写评论 + 点赞 / 评论 / 分享 / 举报 -->
   <view class="bottom-bar">
-    <view class="bar-input" bindtap="openCommentSheet">
-      <text class="bar-input-icon">✏️</text>
-      <text class="bar-input-hint">写评论</text>
+    <view class="bar-input" hover-class="bar-input-hover" hover-stay-time="80" bindtap="openCommentSheet">
+      <view class="ico ico-edit bar-input-icon"></view>
+      <text class="bar-input-hint">写评论…</text>
     </view>
     <view class="bar-acts">
-      <view class="bar-act {{liked ? 'on' : ''}}" catchtap="toggleLike">
-        <text class="bar-icon">{{liked ? '💗' : '🤍'}}</text>
+      <view
+        class="bar-act {{liked ? 'on' : ''}}"
+        hover-class="bar-act-hover"
+        hover-stay-time="80"
+        catchtap="toggleLike"
+        aria-role="button"
+        aria-label="{{liked ? '取消点赞' : '点赞'}}"
+      >
+        <view class="ico bar-ico {{liked ? 'ico-like' : 'ico-like-o'}}"></view>
         <text class="bar-num">{{post.likeCount || 0}}</text>
       </view>
-      <view class="bar-act" catchtap="openCommentSheet">
-        <text class="bar-icon">💬</text>
+      <view
+        class="bar-act"
+        hover-class="bar-act-hover"
+        hover-stay-time="80"
+        catchtap="openCommentSheet"
+        aria-role="button"
+        aria-label="评论"
+      >
+        <view class="ico ico-comment bar-ico"></view>
         <text class="bar-num">{{post.commentCount || 0}}</text>
       </view>
-      <button class="bar-act bar-share" open-type="share" plain style="width: 89rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
-        <text class="bar-icon">↗️</text>
+      <button class="bar-act bar-share" open-type="share" plain hover-class="bar-act-hover" hover-stay-time="80" aria-label="分享">
+        <view class="ico ico-share bar-ico"></view>
       </button>
-      <view class="bar-act" catchtap="goReport">
-        <text class="bar-icon">⚐</text>
-        <text class="bar-num">举报</text>
+      <view class="bar-act" hover-class="bar-act-hover" hover-stay-time="80" catchtap="goReport" aria-role="button" aria-label="举报">
+        <view class="ico ico-flag bar-ico"></view>
       </view>
     </view>
   </view>

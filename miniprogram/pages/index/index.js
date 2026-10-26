@@ -9,9 +9,10 @@ const adMod = require('../../utils/ad')
  * 首页 = 功能区首页（不再用「频道 tab」）。
  *
  * 结构自上而下：
- *   1. 顶部栏：学校范围胶囊 / 搜索 / 通知
+ *   1. 顶部范围行（默认不渲染，仅未绑学校/本市模式时出现，见 scopeKindOf）
  *   2. 运营公告位
- *   3. 内容功能区：今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活
+ *   3. 运营 Banner
+ *   4. 内容功能区：今日最热 / 我想说 / 校园闲置 / 校园公告 / 校园生活
  *
  * 功能入口区（原顶部金刚区）已独立成 `pages/zone/index`（底部「功能区」tab），
  * 首页不再放功能选择，避免与底栏重复。入口配置仍只在 utils/zones.js#buildEntries 一处。
@@ -24,6 +25,8 @@ Page({
     scopeMode: 'school',
     scopeCity: '',
     schoolCity: '',
+    /** 顶部范围行的形态：'' 不渲染 / 'onboard' 未绑学校 / 'city' 本市（见 scopeKindOf） */
+    scopeKind: '',
     scopeShow: false,
     geoCity: null,
     /** 新用户选学校引导 */
@@ -64,18 +67,33 @@ Page({
     this.checkOnboard()
   },
 
-  /** 用最新用户信息刷新胶囊文案与范围展示 */
+  /** 用最新用户信息刷新范围行文案与展示 */
   applyUser: function (user) {
     // 没有学校时「本市」拿不到城市，没有意义 → 一律按「选择学校」展示，
-    // 避免残留的 feedScope=city 把胶囊显示成「某市 · 全市」
+    // 避免残留的 feedScope=city 把范围行显示成「某市 · 全市」
     const s = (user && user.schoolId) ? scopeMod.read() : { scope: 'school', city: '' }
     this.setData({
       user: user,
       schoolCity: (user && user.schoolCity) || '',
       scopeMode: s.scope,
       scopeCity: s.scope === 'city' ? s.city : '',
-      scopeLabel: scopeMod.label(user && user.schoolName, user && user.schoolCity)
+      scopeLabel: scopeMod.label(user && user.schoolName, user && user.schoolCity),
+      scopeKind: this.scopeKindOf(user, s.scope)
     })
+  },
+
+  /**
+   * 顶部范围行该不该出现、以哪种形态出现。
+   *
+   * 只有两种情况值得占用一行：
+   *   'onboard' 还没绑学校 —— 后端本校筛选此时不生效（schoolId 为空＝不过滤），
+   *             不提示的话新用户会以为自己看的就是本校内容；
+   *   'city'    已切到本市 —— 必须让用户看到当前不在本校，并能一键切回。
+   * 其余情况（已绑学校 + 本校模式）返回空串，顶部整块不渲染。
+   */
+  scopeKindOf: function (user, scope) {
+    if (!user || !user.schoolId) return 'onboard'
+    return scope === 'city' ? 'city' : ''
   },
 
   /* ---------- 新用户引导：选学校 ---------- */
@@ -165,8 +183,8 @@ Page({
   syncMe: function () {
     const self = this
     if (!http.getToken()) {
-      // 未登录：保持「选择学校」，不做任何提示
-      this.setData({ scopeLabel: '选择学校' })
+      // 未登录：保持「选择学校」引导（游客也是本校筛选失效的状态，需要提示）
+      this.setData({ scopeLabel: '选择学校', scopeKind: 'onboard' })
       return
     }
     http.get('/user/me', null, { silent: true }).then(function (me) {
@@ -192,7 +210,7 @@ Page({
           self.loadData()
           self.checkOnboard()
         }).catch(function () {
-          self.setData({ user: null, scopeLabel: '选择学校' })
+          self.setData({ user: null, scopeLabel: '选择学校', scopeKind: 'onboard' })
         })
         return
       }
@@ -346,6 +364,20 @@ Page({
     if (next.scope === 'city') {
       toast('已切换到' + (next.city || '本市') + ' · 全市')
     }
+  },
+
+  /**
+   * 本市模式下的一键「切回本校」。
+   *
+   * 顶部范围行出现时就是为了让用户能马上改回来，所以不再走一遍弹层，
+   * 直接写 feedScope + 重新拉流；城市参数随之清掉（scope=school 时后端不看 city）。
+   */
+  switchToSchool: function () {
+    scopeMod.write({ scope: 'school' })
+    this.applyUser(getApp().globalData.user)
+    this.setData({ zones: [], loading: true })
+    this.loadData()
+    toast('已切回本校')
   },
 
   /** 弹层里的「学籍认证 / 切换学校」 */

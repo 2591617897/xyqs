@@ -66,9 +66,13 @@ function run(targetType, targetId, opts) {
       token = res.token
       cb('issuing', res)
       if (res.mockAd) {
-        cb('countdown', { seconds: res.minWatchSeconds || 15 })
-        return waitSeconds(res.minWatchSeconds || 15, function (left) {
-          cb('countdown', { seconds: left })
+        // 多等 1 秒再上报：倒计时本身有毫秒级误差，加上网络往返，
+        // 卡着 minWatchSeconds 上报会被服务端判成「没看完」（边界踩坑）。
+        // 真实广告时长不固定，不存在这个问题。
+        const need = res.minWatchSeconds || 15
+        cb('countdown', { seconds: need })
+        return waitSeconds(need + 1, function (left) {
+          cb('countdown', { seconds: Math.max(0, left - 1) })
         })
       }
       cb('watching', res)

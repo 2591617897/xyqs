@@ -52,7 +52,7 @@ Page({
     const all = this.data.schools || []
     if (kw) {
       // 搜索时不分组：用户已经在缩小范围，再插标题反而碍事
-      this.setData({ list: schoolMod.buildList(schoolMod.search(all, kw), '') })
+      this.setData({ list: schoolMod.flatList(schoolMod.search(all, kw)) })
       return
     }
     this.setData({ list: schoolMod.buildList(all, this.data.geoCity) })

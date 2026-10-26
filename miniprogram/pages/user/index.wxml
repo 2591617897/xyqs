@@ -164,6 +164,13 @@
         <text class="mi-tip warn" wx:else>未认证</text>
         <text class="mi-arrow">›</text>
       </view>
+      <!-- 浏览范围：首页顶部的范围行已改成按需出现，这里是它常驻的入口 -->
+      <view class="menu-item" hover-class="tap-scale" bindtap="openScope">
+        <text class="mi-icon">📍</text>
+        <text class="mi-text">浏览范围</text>
+        <text class="mi-tip">{{scopeLabel}}</text>
+        <text class="mi-arrow">›</text>
+      </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="goMessages">
         <text class="mi-icon">🔔</text>
         <text class="mi-text">消息通知与隐私权限</text>
