@@ -9,6 +9,11 @@
           <el-option v-for="(v, k) in NOTICE_STATUS" :key="k" :label="v.label" :value="Number(k)" />
         </el-select>
       </el-form-item>
+      <el-form-item label="弹窗">
+        <el-select v-model="query.popupMode" placeholder="全部" clearable style="width: 140px">
+          <el-option v-for="(v, k) in POPUP_MODE" :key="k" :label="v" :value="Number(k)" />
+        </el-select>
+      </el-form-item>
       <template #extra>
         <el-button v-permission="'admin:notice:create'" type="success" :icon="Plus" @click="openCreate">
           新建公告
@@ -39,12 +44,28 @@
       </el-table-column>
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="tagOf(NOTICE_STATUS, row.status).type" size="small">
-            {{ tagOf(NOTICE_STATUS, row.status).label }}
+          <el-tag :type="statusOf(row).type" size="small">{{ statusOf(row).label }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="送达 / 确认" width="120" align="center">
+        <template #default="{ row }">
+          <el-tooltip placement="top"
+                      content="送达 = 弹窗实际弹出过的登录用户数；确认 = 其中点了「我知道了」的人数。游客弹窗不落库，不计入。">
+            <span class="stat">{{ row.shownCount || 0 }} / {{ row.confirmCount || 0 }}</span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column label="发布时间" width="170">
+        <template #default="{ row }">
+          <span :class="{ reserving: isReserving(row) }">{{ row.publishAt || '-' }}</span>
+          <el-tag v-if="isReserving(row)" size="small" type="warning" effect="plain" style="margin-left: 4px">
+            预约
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="publishAt" label="发布时间" width="170" />
+      <el-table-column label="自动下线" width="170">
+        <template #default="{ row }">{{ row.offlineAt || '-' }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="230" fixed="right">
         <template #default="{ row }">
           <el-button v-permission="'admin:notice:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -99,6 +120,16 @@
               : POPUP_HINT[form.popupMode] }}
           </div>
         </el-form-item>
+        <el-form-item label="发布时间">
+          <el-date-picker v-model="form.publishAt" type="datetime" placeholder="留空 = 点「发布」时立即生效"
+                          value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+          <div class="field-hint">填未来时间即<b>预约发布</b>：先点「发布」，到点自动出现在小程序，无需再操作。</div>
+        </el-form-item>
+        <el-form-item label="自动下线">
+          <el-date-picker v-model="form.offlineAt" type="datetime" placeholder="留空 = 不自动下线，需手动点「下线」"
+                          value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+          <div class="field-hint">到点后小程序立即不可见；后台状态由定时任务在 5 分钟内同步为「已下线」。</div>
+        </el-form-item>
         <el-form-item label="正文" prop="content">
           <el-input v-model="form.content" type="textarea" :rows="6" />
         </el-form-item>
@@ -141,14 +172,15 @@ const POPUP_HINT = {
 const rows = ref([])
 const total = ref(0)
 const loading = ref(false)
-const query = reactive({ keyword: '', status: null, page: 1, size: 10 })
+const query = reactive({ keyword: '', status: null, popupMode: null, page: 1, size: 10 })
 
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const editing = ref(null)
 const formRef = ref()
 const form = reactive({
-  title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0
+  title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0,
+  publishAt: null, offlineAt: null
 })
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
@@ -173,12 +205,29 @@ async function load () {
 }
 
 function reload () { query.page = 1; load() }
-function reset () { query.keyword = ''; query.status = null; reload() }
+function reset () { query.keyword = ''; query.status = null; query.popupMode = null; reload() }
+
+/** 后端时间是 yyyy-MM-dd HH:mm:ss，iOS 不认空格分隔，换 T 再解析 */
+function parseTime (s) {
+  const t = new Date(String(s || '').replace(' ', 'T')).getTime()
+  return isNaN(t) ? 0 : t
+}
+
+/** 已发布但发布时间在未来 = 预约中。不标出来的话运营会以为已经上线了 */
+function isReserving (row) {
+  return !!row && row.status === 1 && !!row.publishAt && parseTime(row.publishAt) > Date.now()
+}
+
+function statusOf (row) {
+  if (isReserving(row)) return { label: '预约中', type: 'warning' }
+  return tagOf(NOTICE_STATUS, row.status)
+}
 
 function openCreate () {
   editing.value = null
   Object.assign(form, {
-    title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0
+    title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0,
+    publishAt: null, offlineAt: null
   })
   dialogVisible.value = true
 }
@@ -189,7 +238,9 @@ async function openEdit (row) {
   Object.assign(form, {
     title: d.title, content: d.content, type: d.type,
     targetType: d.targetType, schoolId: d.schoolId, level: d.level,
-    popupMode: d.popupMode == null ? 0 : d.popupMode
+    popupMode: d.popupMode == null ? 0 : d.popupMode,
+    publishAt: d.publishAt || null,
+    offlineAt: d.offlineAt || null
   })
   dialogVisible.value = true
 }
@@ -242,5 +293,17 @@ onMounted(load)
   font-size: 12px;
   line-height: 1.5;
   color: #909399;
+}
+
+/* 送达/确认是给运营看的指标，用等宽数字避免列宽跳动 */
+.stat {
+  font-variant-numeric: tabular-nums;
+  color: #606266;
+  cursor: help;
+}
+
+/* 预约中的发布时间弱化显示，真正的提示在旁边的「预约」标签上 */
+.reserving {
+  color: #e6a23c;
 }
 </style>

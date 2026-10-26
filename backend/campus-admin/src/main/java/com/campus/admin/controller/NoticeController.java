@@ -30,10 +30,11 @@ public class NoticeController {
     @GetMapping
     public R<R.Page<AdminNotice>> page(@RequestParam(required = false, name = "keyword") String keyword,
                                        @RequestParam(required = false, name = "status") Integer status,
+                                       @RequestParam(required = false, name = "popupMode") Integer popupMode,
                                        @RequestParam(required = false, name = "targetType") Integer targetType,
                                        @RequestParam(defaultValue = "1", name = "page") long page,
                                        @RequestParam(defaultValue = "10", name = "size") long size) {
-        return R.ok(noticeService.pageNotices(keyword, status, targetType, page, size));
+        return R.ok(noticeService.pageNotices(keyword, status, popupMode, targetType, page, size));
     }
 
     @RequirePermission({"admin:notice:list"})

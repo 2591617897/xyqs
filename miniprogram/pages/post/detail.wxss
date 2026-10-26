@@ -301,21 +301,26 @@
 .bar-act.on.bar-act-hover {
   background: var(--like-100, #FFD9E3);
 }
-/* 分享（button 组件）样式复位
-   注意：只写 ::after{border:none} 压不住 button 自身的默认描边（会露一圈深色细线），
-   必须自身 border + ::after 一起清 */
+/* 转发位沿用 .bar-act 外观，额外提供定位上下文给覆盖层 */
 .bar-share {
+  position: relative;
+}
+/* 透明热区：<button> 只负责触发转发，视觉与描边全部由外层 view 承担。
+   用 opacity:0 而不是 display:none，保证点击依然命中 open-type="share" */
+.bar-share-hit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
-  padding: 0 16rpx;
-  line-height: 1;
-  font-size: inherit;
+  padding: 0;
   background: transparent;
   border: none;
   border-color: transparent;
-  border-radius: var(--radius-pill, 999rpx);
-  overflow: visible;
+  opacity: 0;
 }
-.bar-share::after {
+.bar-share-hit::after {
   border: none;
   box-shadow: none;
 }

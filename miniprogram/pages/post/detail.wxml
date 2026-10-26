@@ -254,9 +254,11 @@
         <view class="ico ico-comment bar-ico"></view>
         <text class="bar-num">{{post.commentCount || 0}}</text>
       </view>
-      <button class="bar-act bar-share" open-type="share" plain hover-class="bar-act-hover" hover-stay-time="80" aria-label="分享">
+      <!-- 转发：<button> 自带描边在部分基础库清不掉，改为 view 出图 + 透明 button 占位承接点击 -->
+      <view class="bar-act bar-share" hover-class="bar-act-hover" hover-stay-time="80" aria-role="button" aria-label="分享">
         <view class="ico ico-share bar-ico"></view>
-      </button>
+        <button class="bar-share-hit" open-type="share" plain></button>
+      </view>
       <view class="bar-act" hover-class="bar-act-hover" hover-stay-time="80" catchtap="goReport" aria-role="button" aria-label="举报">
         <view class="ico ico-flag bar-ico"></view>
       </view>
