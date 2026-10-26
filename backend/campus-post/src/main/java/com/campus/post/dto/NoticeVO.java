@@ -26,5 +26,13 @@ public class NoticeVO {
     /** 1普通 2重要 3紧急；列表按它倒序，紧急排最前 */
     private Integer level;
 
+    /**
+     * 小程序弹窗频次：0不弹窗 1每次进入 2每天一次 3确认收到后不再显示。
+     *
+     * <p>这里只透传给客户端，是否真的弹出由 {@code GET /notices/popup} 决定，
+     * 首页公告条据此可以在未读时给个提示。
+     */
+    private Integer popupMode;
+
     private LocalDateTime publishAt;
 }

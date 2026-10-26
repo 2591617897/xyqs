@@ -48,10 +48,12 @@
         <text class="announce-tag" wx:elif="{{notices[0].level === 2}}">重要</text>
         <text class="announce-title">{{notices[0].title}}</text>
       </view>
-      <view class="announce-sub">{{notices[0].content}}</view>
+      <!-- summary 在 JS 里截好：正文可能有几百字，直接塞进来会把首屏卡片撑高 -->
+      <view class="announce-sub">{{notices[0].summary}}</view>
     </view>
-    <view class="announce-btn" wx:if="{{notices.length > 1}}">全部 ›</view>
-    <view class="announce-btn" wx:else>详情 ›</view>
+    <!-- 公告只有详情页、没有列表页，所以这里固定是「详情」；
+         以前按 notices.length > 1 显示「全部 ›」，点了却还是进第一条，属于误导 -->
+    <view class="announce-btn">详情 ›</view>
   </view>
 
   <!-- 后台暂无公告时的默认运营位：跳蚤集市 -->
@@ -328,5 +330,14 @@
     saving="{{onboardSaving}}"
     bind:select="onOnboardSelect"
     bind:close="onOnboardClose"
+  />
+
+  <!-- 后台公告弹窗：频次（每次进入 / 每天一次 / 确认后不再显示）由 admin 选择，
+       该不该弹在 utils/notice.js 里判定，这里只管显示 -->
+  <notice-popup
+    visible="{{popupVisible}}"
+    notice="{{popup}}"
+    bind:close="closePopup"
+    bind:confirm="onPopupConfirm"
   />
 </view>

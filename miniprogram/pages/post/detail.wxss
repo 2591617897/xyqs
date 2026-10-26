@@ -301,17 +301,23 @@
 .bar-act.on.bar-act-hover {
   background: var(--like-100, #FFD9E3);
 }
-/* 分享（button 组件）样式复位 */
+/* 分享（button 组件）样式复位
+   注意：只写 ::after{border:none} 压不住 button 自身的默认描边（会露一圈深色细线），
+   必须自身 border + ::after 一起清 */
 .bar-share {
   margin: 0;
   padding: 0 16rpx;
   line-height: 1;
   font-size: inherit;
   background: transparent;
+  border: none;
+  border-color: transparent;
   border-radius: var(--radius-pill, 999rpx);
+  overflow: visible;
 }
 .bar-share::after {
   border: none;
+  box-shadow: none;
 }
 
 .retry-btn {

@@ -1,7 +1,8 @@
 {
   "usingComponents": {
     "scope-sheet": "/components/scope-sheet/index",
-    "school-onboard": "/components/school-onboard/index"
+    "school-onboard": "/components/school-onboard/index",
+    "notice-popup": "/components/notice-popup/index"
   },
   "navigationBarTitleText": "校园聚",
   "enablePullDownRefresh": true,

@@ -76,6 +76,16 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      */
     private static final Pattern PUBLIC_AD_CLICK =
             Pattern.compile("^/api/ads/materials/\\d+/click$");
+    /**
+     * 公告弹窗的「我知道了」回执。
+     *
+     * <p>同样是写操作，同样必须让游客可用：游客没有令牌，服务端拿到不到 user_id 时
+     * 直接 no-op（不落库），确认状态由小程序本地存储兜住。若这里要求登录，
+     * 游客点「我知道了」会拿到 401，弹窗关不掉——这比不弹更烦人。
+     * 只放行「数字 id + confirm」这一种形状，不放开 /api/notices 下的其它写接口。
+     */
+    private static final Pattern PUBLIC_NOTICE_CONFIRM =
+            Pattern.compile("^/api/notices/\\d+/confirm$");
 
     /**
      * 后台管理路径前缀。
@@ -137,7 +147,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         boolean publicProfile = "GET".equals(method) && PUBLIC_PROFILE.matcher(path).matches();
         boolean publicFollowStatus = "GET".equals(method) && "/api/user/follow/status".equals(path);
         boolean publicAdClick = "POST".equals(method) && PUBLIC_AD_CLICK.matcher(path).matches();
-        boolean publicRead = publicProfile || publicFollowStatus || publicAdClick
+        boolean publicNoticeConfirm = "POST".equals(method) && PUBLIC_NOTICE_CONFIRM.matcher(path).matches();
+        boolean publicRead = publicProfile || publicFollowStatus || publicAdClick || publicNoticeConfirm
                 || ("GET".equals(method)
                 && PUBLIC_READ_PREFIX.stream().anyMatch(path::startsWith)
                 && PRIVATE_HINTS.stream().noneMatch(path::contains));

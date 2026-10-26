@@ -639,8 +639,13 @@ page {
   to { opacity: 1; }
 }
 .sheet {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
-  background: var(--bg-card);
+  /* 兜底：意向单再多也不会把标题顶出屏幕，只有列表区滚动 */
+  max-height: 82vh;
+  background: var(--bg-card, #FFFFFF);
   border-radius: 40rpx 40rpx 0 0;
   padding: 36rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
   animation: sheetSlideUp 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -677,6 +682,9 @@ page {
   box-shadow: var(--shadow-2);
 }
 .order-scroll {
+  /* 父级 .sheet 是 flex 列时，scroll-view 必须 min-height:0 才能正常滚动（否则会被内容撑开） */
+  flex: 1;
+  min-height: 0;
   max-height: 56vh;
   margin-top: 8rpx;
 }

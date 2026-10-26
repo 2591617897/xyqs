@@ -1,13 +1,16 @@
 package com.campus.post.service;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.campus.common.security.UserContext;
 import com.campus.post.dto.AdMaterialVO;
+import com.campus.post.dto.NoticeReceipt;
 import com.campus.post.dto.NoticeVO;
 import com.campus.post.mapper.OperateQueryMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -94,5 +97,78 @@ public class OperateService {
     public NoticeVO notice(Long id, Long schoolId) {
         Long scope = schoolId != null ? schoolId : UserContext.schoolId();
         return operateMapper.selectNotice(id, scope);
+    }
+
+    /**
+     * 本次进入小程序该弹哪条公告；返回 null 表示不弹。
+     *
+     * <p>频次语义由后台的 popup_mode 决定，服务端只做「该不该弹」的判定：
+     * <ul>
+     *   <li>1 每次进入 —— 服务端不拦，靠客户端在本次冷启动内去重（切 tab 不再弹）；</li>
+     *   <li>2 每天一次 —— last_shown_at 不是今天才弹；</li>
+     *   <li>3 确认收到后不再显示 —— confirmed_at 为空才弹。</li>
+     * </ul>
+     *
+     * <p><b>游客（userId 为空）直接返回候选，不做回执判定</b>：没有 user_id 就落不了
+     * t_notice_receipt，硬拦会导致游客永远看不到弹窗。频次改由小程序本地存储兜底，
+     * 游客登录后本机记录仍然生效，不会出现「登录完又弹一次」。
+     */
+    public NoticeVO popup(Long userId) {
+        List<NoticeVO> candidates = operateMapper.selectPopupNotices(UserContext.schoolId());
+        for (NoticeVO n : candidates) {
+            int mode = n.getPopupMode() == null ? 0 : n.getPopupMode();
+            if (mode <= 0) {
+                continue;
+            }
+            if (userId == null) {
+                return n;
+            }
+            NoticeReceipt receipt = operateMapper.selectReceipt(userId, n.getId());
+            if (shouldPopup(mode, receipt)) {
+                markShown(userId, n.getId());
+                return n;
+            }
+        }
+        return null;
+    }
+
+    /** 频次判定：三种模式各自只看自己那一列，互不干扰 */
+    private boolean shouldPopup(int mode, NoticeReceipt receipt) {
+        if (mode == 1) {
+            return true;
+        }
+        if (mode == 2) {
+            return receipt == null || receipt.getLastShownAt() == null
+                    || !LocalDate.now().equals(receipt.getLastShownAt().toLocalDate());
+        }
+        if (mode == 3) {
+            return receipt == null || receipt.getConfirmedAt() == null;
+        }
+        return false;
+    }
+
+    /** 弹出即记一次回执：写失败不影响本次弹出，只是会让「每天一次」多弹一次 */
+    private void markShown(Long userId, Long noticeId) {
+        try {
+            operateMapper.upsertShown(IdWorker.getId(), userId, noticeId);
+        } catch (Exception e) {
+            log.warn("[notice] 弹窗回执写入失败，已忽略：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 用户点「我知道了」。游客不落库（没有 user_id），由客户端本地记住。
+     *
+     * <p>不做「是否已确认」的前置判断：UPDATE 里用 IFNULL 保证了幂等，
+     * 重复点不会改写第一次的确认时间。
+     */
+    public void confirm(Long noticeId, Long userId) {
+        if (noticeId == null || userId == null) {
+            return;
+        }
+        if (operateMapper.countNotice(noticeId) == 0) {
+            return;
+        }
+        operateMapper.upsertConfirm(IdWorker.getId(), userId, noticeId);
     }
 }

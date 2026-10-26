@@ -30,6 +30,13 @@
           <el-tag :type="LEVEL_TYPE[row.level]" size="small">{{ LEVEL[row.level] }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="弹窗" width="120" align="center">
+        <template #default="{ row }">
+          <el-tag :type="POPUP_MODE_TYPE[row.popupMode] || 'info'" size="small" effect="plain">
+            {{ POPUP_MODE[row.popupMode] || POPUP_MODE[0] }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="tagOf(NOTICE_STATUS, row.status).type" size="small">
@@ -79,6 +86,19 @@
             <el-radio :value="3">紧急</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="小程序弹窗">
+          <el-radio-group v-model="form.popupMode" :disabled="form.targetType === 1">
+            <el-radio :value="0">不弹窗</el-radio>
+            <el-radio :value="1">每次进入</el-radio>
+            <el-radio :value="2">每天一次</el-radio>
+            <el-radio :value="3">确认收到后不再显示</el-radio>
+          </el-radio-group>
+          <div class="field-hint">
+            {{ form.targetType === 1
+              ? '投放对象为「后台管理员」时公告不会进入小程序，无法开启弹窗。'
+              : POPUP_HINT[form.popupMode] }}
+          </div>
+        </el-form-item>
         <el-form-item label="正文" prop="content">
           <el-input v-model="form.content" type="textarea" :rows="6" />
         </el-form-item>
@@ -92,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import SearchForm from '@/components/SearchForm.vue'
@@ -105,6 +125,19 @@ const NOTICE_TARGET = { 1: '后台管理员', 2: '小程序全体', 3: '指定�
 const LEVEL = { 1: '普通', 2: '重要', 3: '紧急' }
 const LEVEL_TYPE = { 1: 'info', 2: 'warning', 3: 'danger' }
 
+/**
+ * 小程序弹窗频次。0 是默认值 —— 等于旧行为（只在首页公告条露出），
+ * 这样历史公告不需要迁移，也不会因为加了字段就突然开始打扰用户。
+ */
+const POPUP_MODE = { 0: '不弹窗', 1: '每次进入', 2: '每天一次', 3: '确认后不再弹' }
+const POPUP_MODE_TYPE = { 0: 'info', 1: 'warning', 2: 'success', 3: 'primary' }
+const POPUP_HINT = {
+  0: '只在首页顶部公告条展示，不打断用户。',
+  1: '每次打开小程序弹一次（切换页面、返回首页不会重复弹）。',
+  2: '同一用户当天只弹一次，第二天再进入会再弹。',
+  3: '用户点「我知道了」后长期不再弹出，适合必须送达的规则通知。'
+}
+
 const rows = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -114,11 +147,19 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 const editing = ref(null)
 const formRef = ref()
-const form = reactive({ title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1 })
+const form = reactive({
+  title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0
+})
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   content: [{ required: true, message: '请输入正文', trigger: 'blur' }]
 }
+
+// 投放给后台管理员的公告不进小程序，弹窗配置要跟着归零，
+// 否则提交时会被后端以「不能开启小程序弹窗」挡回来
+watch(() => form.targetType, (v) => {
+  if (v === 1) form.popupMode = 0
+})
 
 async function load () {
   loading.value = true
@@ -136,7 +177,9 @@ function reset () { query.keyword = ''; query.status = null; reload() }
 
 function openCreate () {
   editing.value = null
-  Object.assign(form, { title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1 })
+  Object.assign(form, {
+    title: '', content: '', type: 1, targetType: 1, schoolId: null, level: 1, popupMode: 0
+  })
   dialogVisible.value = true
 }
 
@@ -145,7 +188,8 @@ async function openEdit (row) {
   const d = await noticeApi.detail(row.id)
   Object.assign(form, {
     title: d.title, content: d.content, type: d.type,
-    targetType: d.targetType, schoolId: d.schoolId, level: d.level
+    targetType: d.targetType, schoolId: d.schoolId, level: d.level,
+    popupMode: d.popupMode == null ? 0 : d.popupMode
   })
   dialogVisible.value = true
 }
@@ -189,3 +233,14 @@ async function remove (row) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+/* 弹窗频次的解释文案：选项本身只有 4 个字，运营很难判断后果，补一行说明 */
+.field-hint {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #909399;
+}
+</style>

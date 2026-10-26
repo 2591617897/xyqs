@@ -2,6 +2,7 @@ package com.campus.post.controller;
 
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.common.security.UserContext;
 import com.campus.post.dto.AdMaterialVO;
 import com.campus.post.dto.NoticeVO;
 import com.campus.post.service.OperateService;
@@ -62,8 +63,31 @@ public class OperateController {
         return R.ok(operateService.notices(schoolId));
     }
 
-    /** 公告详情 */
-    @GetMapping("/notices/{id}")
+    /**
+     * 本次进入小程序该弹出的公告；不弹时 data 为 null。
+     *
+     * <p><b>公开接口</b>：游客也要能看到弹窗（运营的强提醒不能只对大号生效），
+     * 但游客没有回执，频次由客户端本地存储判定（见 miniprogram/utils/notice.js）。
+     * data 为 null 是正常结果，前端不做任何提示。
+     */
+    @GetMapping("/notices/popup")
+    public R<NoticeVO> popup() {
+        return R.ok(operateService.popup(UserContext.userId()));
+    }
+
+    /**
+     * 「我知道了」：记录确认回执，之后 popup_mode=3 的公告不再打扰该用户。
+     *
+     * <p>未登录时静默成功——不落库即可，前端本地已记住，没必要给游客报 401。
+     */
+    @PostMapping("/notices/{id:\\d+}/confirm")
+    public R<Void> confirm(@PathVariable("id") Long id) {
+        operateService.confirm(id, UserContext.userId());
+        return R.ok();
+    }
+
+    /** 公告详情：路径限定为纯数字，避免和 /notices/popup 抢路由 */
+    @GetMapping("/notices/{id:\\d+}")
     public R<NoticeVO> notice(@PathVariable("id") Long id,
                               @RequestParam(required = false, name = "schoolId") Long schoolId) {
         NoticeVO vo = operateService.notice(id, schoolId);

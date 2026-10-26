@@ -1,0 +1,126 @@
+/* 公告弹窗：白卡片 + 品牌绿主按钮，与首页卡片语言保持一致 */
+.np-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.55);
+  animation: np-fade 0.18s ease-out;
+}
+
+.np-card {
+  position: relative;
+  width: 620rpx;
+  max-width: 88vw;
+  box-sizing: border-box;
+  padding: 44rpx 36rpx calc(32rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-radius: 32rpx;
+  box-shadow: 0 24rpx 64rpx rgba(15, 23, 42, 0.22);
+  animation: np-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.np-close {
+  position: absolute;
+  right: 20rpx;
+  top: 16rpx;
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #9b9ba3;
+}
+
+.np-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.np-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  background: #f2f3f5;
+  color: #6b6b73;
+}
+
+/* 级别越高越醒目：紧急红、重要品牌绿 */
+.np-badge.level3 {
+  background: #fdecec;
+  color: #d93025;
+}
+.np-badge.level2 {
+  background: #e6f4ec;
+  color: #006c49;
+}
+
+.np-type {
+  font-size: 23rpx;
+  color: #9b9ba3;
+}
+
+.np-title {
+  margin-top: 18rpx;
+  padding-right: 48rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1.42;
+  color: #171a1e;
+}
+
+.np-date {
+  margin-top: 12rpx;
+  font-size: 23rpx;
+  color: #9b9ba3;
+}
+
+/* 正文可滚动但要定高：只给 max-height 配合 overflow 在部分机型不生效，
+   所以用固定 height + overflow-y:auto，长公告在卡片内部滚动，卡片本身不超屏 */
+.np-body {
+  margin-top: 24rpx;
+  height: 42vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 29rpx;
+  line-height: 1.75;
+  color: #3f4348;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.np-tip {
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9b9ba3;
+}
+
+.np-btn {
+  margin-top: 28rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: #006c49;
+  color: #ffffff;
+  font-size: 31rpx;
+  font-weight: 600;
+}
+
+@keyframes np-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes np-in {
+  from { opacity: 0; transform: translateY(28rpx) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

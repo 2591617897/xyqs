@@ -1,0 +1,18 @@
+<view wx:if="{{visible && notice}}" class="np-mask" catchtouchmove="noop">
+  <view class="np-card">
+    <view class="np-close" catchtap="onClose">✕</view>
+
+    <view class="np-head">
+      <text class="np-badge level{{notice.level}}">{{notice.levelText}}</text>
+      <text class="np-type">{{notice.typeText}}</text>
+    </view>
+
+    <view class="np-title">{{notice.title}}</view>
+    <view class="np-date" wx:if="{{notice.publishText}}">{{notice.publishText}}</view>
+
+    <view class="np-body">{{notice.content}}</view>
+
+    <view class="np-tip" wx:if="{{notice.permanent}}">点「我知道了」后不再显示此公告</view>
+    <view class="np-btn" catchtap="onConfirm">我知道了</view>
+  </view>
+</view>

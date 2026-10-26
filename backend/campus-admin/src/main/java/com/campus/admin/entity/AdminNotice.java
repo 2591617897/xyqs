@@ -34,6 +34,14 @@ public class AdminNotice {
     /** 1普通 2重要 3紧急 */
     private Integer level;
 
+    /**
+     * 小程序弹窗频次：0不弹窗 1每次进入 2每天一次 3确认收到后不再显示。
+     *
+     * <p>0 等同于旧行为（只出现在首页公告条）；大于 0 时用户进入小程序会被弹窗打断，
+     * 频次完全由运营选择，服务端只负责按 {@code t_notice_receipt} 判定是否该弹。
+     */
+    private Integer popupMode;
+
     /** 0草稿 1已发布 2已下线 */
     private Integer status;
 

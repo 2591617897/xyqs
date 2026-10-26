@@ -348,11 +348,15 @@ Page({
 
   openOrders: function () {
     if (!this.guard()) return
+    // 自定义 tabBar 是独立渲染层，页面里的 z-index 压不住它 → 必须显式隐藏，
+    // 否则弹层底部（意向单列表最后一行 / 安全区留白）会被底栏和中间发布钮盖住。
+    this.toggleTabBar(true)
     this.setData({ showOrders: true })
   },
 
   closeOrders: function () {
     this.setData({ showOrders: false })
+    this.toggleTabBar(false)
   },
 
   switchOrderRole: function (e) {

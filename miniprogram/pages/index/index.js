@@ -4,6 +4,7 @@ const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
 const zoneMod = require('../../utils/zones')
 const adMod = require('../../utils/ad')
+const noticeMod = require('../../utils/notice')
 
 /**
  * 首页 = 功能区首页（不再用「频道 tab」）。
@@ -46,6 +47,9 @@ Page({
      * 有则替换掉默认的「跳蚤集市」运营位；为空时保留默认卡片，保证首屏不空缺。
      */
     notices: [],
+    /** 进入小程序弹出的公告（后台把 popupMode 设成 1/2/3 才会返回，频次见 utils/notice.js） */
+    popup: null,
+    popupVisible: false,
     loading: true,
     loadError: false,
     errorMsg: ''
@@ -65,6 +69,40 @@ Page({
     this.syncMe()
     this.loadData()
     this.checkOnboard()
+    this.loadPopup()
+  },
+
+  /**
+   * 进入小程序时弹公告。
+   *
+   * 该不该弹由 utils/notice.js 判定（本地存储 + 服务端回执双保险），
+   * 这里只负责展示，并在展示后记一次「已弹过」——否则「每天一次」会变成每次 onShow 都弹。
+   */
+  loadPopup: function () {
+    const self = this
+    noticeMod.fetchPopup().then(function (n) {
+      if (!n) return
+      noticeMod.noteShown(n)
+      self.setData({ popup: n, popupVisible: true })
+      // 自定义 tabBar 是原生组件，层级压不住弹层 → 必须显式隐藏（onShow 里会兜底恢复）
+      if (typeof self.getTabBar === 'function' && self.getTabBar()) {
+        self.getTabBar().setData({ hidden: true })
+      }
+    })
+  },
+
+  /** 关闭弹窗：只关这一次，不写确认回执（mode=3 的用户下次进入还会看到） */
+  closePopup: function () {
+    this.setData({ popupVisible: false })
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ hidden: false })
+    }
+  },
+
+  /** 点「我知道了」：mode=3 从此静默，其余模式等同于关闭 */
+  onPopupConfirm: function () {
+    noticeMod.noteConfirmed(this.data.popup)
+    this.closePopup()
   },
 
   /** 用最新用户信息刷新范围行文案与展示 */
@@ -289,7 +327,10 @@ Page({
       }, channels)
 
       const banners = res[6] || []
-      const notices = res[7] || []
+      // 统一过一遍 decorate：公告条只显示摘要（summary），长正文不能把首屏卡片撑高
+      const notices = (res[7] || []).map(noticeMod.decorate).filter(function (x) {
+        return !!x
+      })
       self.setData({
         categories: res[5] || [],
         banners: banners,
