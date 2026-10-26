@@ -2,7 +2,7 @@
   <view class="ob-sheet" catchtap="noop">
     <view class="ob-head">
       <view class="ob-title">你在哪所学校？</view>
-      <view class="ob-sub">选好后，首页 / 表白墙 / 二手默认只看本校内容</view>
+      <view class="ob-sub">选好后，首页 / 树洞 / 二手默认只看本校内容</view>
     </view>
 
     <view class="ob-search">

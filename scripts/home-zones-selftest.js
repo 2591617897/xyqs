@@ -133,7 +133,7 @@ async function main() {
   // 金刚区已独立成「功能区」页，首页不再持有 entries：入口生成改由 zones.js 直接断言
   const entryList = zoneMod.buildEntries(mock.handle('GET', '/channels', {}).data)
   check('功能入口 8 个（3 固定 + 5 频道）', entryList.length === 8, entryList.length)
-  check('功能入口首项是「我想说」', entryList[0] && entryList[0].title === '我想说')
+  check('功能入口首项是「树洞闲谈」', entryList[0] && entryList[0].title === '树洞闲谈')
   check('功能入口没有「学习交流」', !entryList.some((e) => e.title === '学习交流'))
   check('首页不再渲染金刚区', d.entries === undefined)
   check('生成内容功能区', d.zones.length === 5, d.zones.map((z) => z.key))

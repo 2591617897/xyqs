@@ -59,7 +59,7 @@
       </view>
     </view>
 
-    <!-- 表白墙已不是 tab 页，这里改走 navigateTo（入口仍需匿名可达，不做认证拦截） -->
+    <!-- 树洞已不是 tab 页，这里改走 navigateTo（入口仍需匿名可达，不做认证拦截） -->
     <view class="pub-line pub-red" bindtap="goNav" data-url="/pages/wall/index" hover-class="card-press">
       <text class="pub-line-title">写匿名心事</text>
       <text class="pub-line-arrow">›</text>

@@ -2,7 +2,7 @@
   "usingComponents": {
     "ad-banner": "/components/ad-banner/ad-banner"
   },
-  "navigationBarTitleText": "匿名表白墙",
+  "navigationBarTitleText": "树洞闲谈",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"
 }

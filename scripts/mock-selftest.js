@@ -301,8 +301,8 @@ const zones = require(require('path').join(__dirname, '../miniprogram/utils/zone
 const chList = call('GET', '/channels').data
 const entries = zones.buildEntries(chList)
 check('金刚区 = 3 固定入口 + 5 频道', entries.length === 8, entries.length)
-check('金刚区首项是「我想说」', entries[0].title === '我想说' && entries[0].url === '/pages/wall/index')
-check('金刚区含校园闲置', entries.some((e) => e.title === '校园闲置' && e.url === '/pages/goods/list'))
+check('金刚区首项是「树洞闲谈」', entries[0].title === '树洞闲谈' && entries[0].url === '/pages/wall/index')
+check('金刚区含闲置交换', entries.some((e) => e.title === '闲置交换' && e.url === '/pages/goods/list'))
 check('频道入口带 channelId 参数', entries.some((e) => e.url === '/pages/post/list?channelId=2001'))
 check('入口都有图标与底色', entries.every((e) => !!e.icon && !!e.tone))
 

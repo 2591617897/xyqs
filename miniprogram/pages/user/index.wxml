@@ -198,15 +198,21 @@
         <text class="mi-tip">授权管理</text>
         <text class="mi-arrow">›</text>
       </view>
+      <view class="menu-item" hover-class="tap-scale" bindtap="goRule">
+        <text class="mi-icon">📋</text>
+        <text class="mi-text">社区规范</text>
+        <text class="mi-tip">发布必读</text>
+        <text class="mi-arrow">›</text>
+      </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="goDisclaimer">
         <text class="mi-icon">⚠️</text>
-        <text class="mi-text">免责声明</text>
+        <text class="mi-text">免责声明与反诈提示</text>
         <text class="mi-tip">交易风险必读</text>
         <text class="mi-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="about">
         <text class="mi-icon">ℹ️</text>
-        <text class="mi-text">关于校园聚</text>
+        <text class="mi-text">关于校聚一城</text>
         <text class="mi-tip">v2.4.1</text>
         <text class="mi-arrow">›</text>
       </view>
@@ -215,20 +221,20 @@
 
   <view class="logout fade-bounce-in {{pageReady ? 'animate-in' : ''}}" hover-class="tap-scale" wx:if="{{logged}}" bindtap="logout">⇄ 切换账号 / 退出登录</view>
   <view class="footer-tip" bindlongpress="resetMock">
-    校园聚 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '同校可信社区'}}
+    校聚一城 v2.4.1 · {{mockMode ? '模拟数据模式（长按可重置）' : '立足本校 · 同城相连'}}
   </view>
 
-  <!-- 意向单弹层 -->
+  <!-- 面交意向单弹层（无支付，仅约见记录） -->
   <view class="mask" wx:if="{{showOrders}}" bindtap="closeOrders">
     <view class="sheet" catchtap="stop">
       <view class="between">
-        <text class="h2">购买意向</text>
+        <text class="h2">面交意向</text>
         <text class="sheet-close" hover-class="scale-down" bindtap="closeOrders">✕</text>
       </view>
 
       <view class="seg mt16">
-        <view class="seg-item {{orderRole === 'buyer' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="buyer">我要求购的</view>
-        <view class="seg-item {{orderRole === 'seller' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="seller">别人想买我的</view>
+        <view class="seg-item {{orderRole === 'buyer' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="buyer">我想约的</view>
+        <view class="seg-item {{orderRole === 'seller' ? 'active' : ''}}" bindtap="switchOrderRole" data-role="seller">同学想约我的</view>
       </view>
 
       <scroll-view class="order-scroll" scroll-y="true">
@@ -242,7 +248,7 @@
             <view class="order-msg" wx:if="{{item.message}}">"{{item.message}}"</view>
           </view>
           <view class="empty" wx:if="{{!buyerOrders.length}}" style="padding: 60rpx 0;">
-            <text>还没有求购记录</text>
+            <text>还没有约见记录</text>
           </view>
         </block>
         <block wx:else>

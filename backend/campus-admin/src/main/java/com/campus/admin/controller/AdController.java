@@ -3,6 +3,7 @@ package com.campus.admin.controller;
 import com.campus.admin.config.annotation.AuditLog;
 import com.campus.admin.config.annotation.RequirePermission;
 import com.campus.admin.dto.AdSlotOption;
+import com.campus.admin.dto.AdTargetOptions;
 import com.campus.admin.dto.AuditReq;
 import com.campus.admin.entity.AdMaterial;
 import com.campus.admin.entity.AdSlot;
@@ -41,6 +42,19 @@ public class AdController {
     @GetMapping("/slots/codes")
     public R<List<AdSlotOption>> slotCodes() {
         return R.ok(adService.slotOptions());
+    }
+
+    /**
+     * 「投放范围」多选的候选值：城市列表 + 校区列表。
+     *
+     * <p>权限跟着广告位走（{@code admin:ad:slot:list}），不借用组织节点的
+     * {@code admin:region:list}——只给运营开了广告权限的账号，不该因为缺组织节点权限
+     * 就拿到空下拉，那会让「城市/校区」重新退化成不可用。
+     */
+    @RequirePermission({"admin:ad:slot:list"})
+    @GetMapping("/slots/targets")
+    public R<AdTargetOptions> targets() {
+        return R.ok(adService.targetOptions());
     }
 
     @RequirePermission({"admin:ad:slot:list"})

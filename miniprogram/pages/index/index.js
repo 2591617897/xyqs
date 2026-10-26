@@ -568,7 +568,7 @@ Page({
 
   onShareAppMessage: function () {
     return {
-      title: '校园聚 · 校园闲置与圈子社区',
+      title: '校聚一城 · 立足本校，结识同城各校同窗',
       path: '/pages/index/index'
     }
   }

@@ -349,7 +349,7 @@ function seed() {
         supportTrial: 0,
         images: '',
         tradeType: 2,
-        location: '可邮寄，邮费另算',
+        location: '南苑食堂门口',
         status: 1,
         viewCount: 27,
         likeCount: 2,
@@ -362,7 +362,7 @@ function seed() {
         sellerName: '阿泽',
         sellerAvatar: '',
         title: '宿舍小冰箱 50L',
-        description: '静音款，制冷正常，内胆干净。太重了不邮寄，需要自己来搬（可以帮忙抬下楼）。',
+        description: '静音款，制冷正常，内胆干净。有点重，需要自己来搬（可以帮忙抬下楼）。',
         price: 180,
         originalPrice: 399,
         categoryId: 3,
@@ -424,7 +424,7 @@ function seed() {
         supportTrial: 0,
         images: '',
         tradeType: 2,
-        location: '可邮寄',
+        location: '图书馆大厅',
         status: 1,
         viewCount: 19,
         likeCount: 0,
@@ -953,7 +953,7 @@ function seed() {
       {
         id: 3005,
         peerId: 0,
-        peerName: '校园聚小助手',
+        peerName: '校聚一城小助手',
         peerAvatar: '',
         official: true,
         peerTags: [{ text: '官方认证', cls: 'green' }],
@@ -1314,7 +1314,7 @@ function submitVerify(q) {
   p.verifyStatus = 2
   p.verifyRemark = ''
   save()
-  return ok({ verifyStatus: 2, token: 'mock-token-' + p.id, message: '认证成功，欢迎来到校园聚' })
+  return ok({ verifyStatus: 2, token: 'mock-token-' + p.id, message: '认证成功，欢迎来到校聚一城' })
 }
 
 function queryGoods(q) {
@@ -1751,7 +1751,7 @@ function mockNotices() {
   return [
     {
       id: '900101',
-      title: '校园聚社区规范上线啦',
+      title: '校聚一城社区规范上线啦',
       content: '为了维护良好的校园社区氛围，我们上线了社区规范。请大家文明发言，友善交流。',
       type: 1,
       level: 2,

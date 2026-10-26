@@ -29,14 +29,14 @@
 
   <!-- 毕业季 banner（粉色渐变） -->
   <view class="season">
-    <view class="season-kicker">🎓 GRADUATION ROMANCE SEASON</view>
-    <view class="season-title">毕业季浪漫留言季</view>
-    <view class="season-sub">没说出口的喜欢就趁夏天放飞吧，不留遗憾的青春。</view>
+    <view class="season-kicker">🎓 GRADUATION SEASON</view>
+    <view class="season-title">毕业季留言季</view>
+    <view class="season-sub">把想说的话留在夏天，给青春一个交代。</view>
     <view class="season-foot">
       <view class="season-avatars"><text>🌸</text><text>🌙</text><text>🍀</text></view>
-      <text class="season-count">已有 1,428 名同学送出</text>
+      <text class="season-count">已有 1,428 名同学留言</text>
       <view class="flex1"></view>
-      <view class="season-btn" bindtap="goSeason">我要匿名送花 →</view>
+      <view class="season-btn" bindtap="goSeason">我要匿名留言 →</view>
     </view>
   </view>
 
@@ -137,12 +137,12 @@
   <view class="mask" wx:if="{{showCompose}}" bindtap="closeCompose">
     <view class="sheet" catchtap="stop">
       <view class="between">
-        <text class="h2">写一条匿名心事</text>
+        <text class="h2">写一条树洞闲谈</text>
         <text class="sheet-close" bindtap="closeCompose">✕</text>
       </view>
       <textarea
         class="compose-textarea"
-        placeholder="匿名发布，不会展示你的昵称和头像（输入 # 可选分类）"
+        placeholder="匿名发布：不展示你的昵称和头像（输入 # 可选分类）"
         placeholder-class="placeholder"
         maxlength="1000"
         value="{{content}}"
@@ -193,8 +193,13 @@
         </view>
         <text class="muted">{{content.length}}/1000</text>
       </view>
+      <view class="anon-tip">
+        <view class="anon-tip-title">🔒 关于匿名</view>
+        <view class="anon-tip-line">匿名只对前台生效：其他同学看不到你的昵称、头像和主页，但后台会留存发布记录，仅用于处置网暴、造谣、诈骗、违法违规内容，以及配合公安机关依法调查。</view>
+        <view class="anon-tip-line anon-tip-warn">请勿发布：辱骂攻击、造谣传谣、曝光他人姓名 / 学号 / 照片 / 联系方式、引导私下转账或交易等内容。</view>
+      </view>
       <button class="btn btn-primary mt24" loading="{{submitting}}" bindtap="submitPost">匿名发布</button>
-      <view class="sheet-note">发布后仍可编辑或删除</view>
+      <view class="sheet-note">发布后仍可编辑或删除 · 内容会经过安全检测</view>
     </view>
   </view>
 </view>

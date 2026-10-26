@@ -21,6 +21,12 @@
        「我的闲置 / 我的收藏」是个人列表，插广告既打扰也不符合投放口径 -->
   <ad-banner wx:if="{{!mineMode && !favMode}}" code="goods_top" height="{{240}}" />
 
+  <!-- 合规提示条：闲置只做信息展示，不做线上交易 -->
+  <view class="list-tip">
+    <text class="list-tip-icon">ℹ️</text>
+    <text class="list-tip-text">本站仅展示闲置信息，不支持线上交易与支付，请校内当面验货、当面结清</text>
+  </view>
+
   <block wx:if="{{!mineMode && !favMode}}">
     <!-- 分类 -->
     <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false">

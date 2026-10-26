@@ -429,10 +429,15 @@ Page({
     mp.navigateTo({ url: '/pages/legal/disclaimer' })
   },
 
+  /** 社区规范：UGC 平台必须让用户能随时看到发布规则 */
+  goRule: function () {
+    mp.navigateTo({ url: '/pages/legal/rule' })
+  },
+
   about: function () {
     mp.showModal({
-      title: '校园聚',
-      content: '一个只属于同校同学的闲置流转与心事角落。发布内容需完成校园身份认证。',
+      title: '校聚一城',
+      content: '各校相聚，同城相连。\n\n这里可以逛本校圈子、在树洞匿名闲谈、看社团招新、交换闲置好物。\n\n注意：本站只做信息展示，不提供线上交易、支付与担保。闲置一律校内当面看货当面结清，请勿向任何人提前转账。',
       showCancel: false,
       confirmText: '知道啦'
     })

@@ -546,3 +546,27 @@
   font-size: 24rpx;
   color: #94a3b8;
 }
+
+/* 树洞发布弹层：匿名机制与禁止事项说明 */
+.anon-tip {
+  margin-top: 24rpx;
+  padding: 22rpx 26rpx;
+  border-radius: 20rpx;
+  background: #FFF8EC;
+  border: 1rpx solid #FFE2B8;
+}
+.anon-tip-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #8A5A00;
+  margin-bottom: 10rpx;
+}
+.anon-tip-line {
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: #916A2A;
+}
+.anon-tip-warn {
+  margin-top: 8rpx;
+  color: #B4471E;
+}

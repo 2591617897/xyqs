@@ -18,7 +18,7 @@ Page({
     needLogin: false,
     filters: [
       { key: 'all', name: '全部消息' },
-      { key: 'trade', name: '二手交易' },
+      { key: 'trade', name: '闲置' },
       { key: 'echo', name: '树洞回声' },
       { key: 'unread', name: '未读消息' }
     ],

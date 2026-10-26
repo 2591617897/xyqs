@@ -105,13 +105,16 @@
       <view class="desc-note" wx:if="{{goods.supportTrial === 1}}">支持校内任意地点当面验货！诚心想要的同校同学欢迎点击下方随时发起沟通～</view>
     </view>
 
-    <!-- 安全提示 -->
-    <view class="safety">
-      <text class="safety-icon">🛡️</text>
-      <view class="safety-body">
-        <view class="safety-title">校园同校交易安全提示</view>
-        <view class="safety-text">建议在食堂、宿舍楼前台大厅等人流密集处当面验货交易。警惕脱离平台私下微信转账、货到付款等风险行为。</view>
+    <!-- 安全提示：平台无支付功能，反诈 -->
+    <view class="trade-safety">
+      <view class="ts-head">
+        <text class="ts-icon">🛡️</text>
+        <text class="ts-title">校内当面交易 · 反诈提醒</text>
       </view>
+      <view class="ts-line">本平台<text class="ts-strong">不提供线上交易、支付、担保、退款</text>，也没有下单和邮寄功能，所有沟通与交付都在线下当面完成。</view>
+      <view class="ts-line">请约在食堂、宿舍楼下、图书馆大厅等人多处<text class="ts-strong">当面验货、当面结清</text>，贵重物品建议约同学同行。</view>
+      <view class="ts-line ts-warn">凡是要求你先转账、付定金、扫码付款、发红包、代付、刷单、贷款的，一律是诈骗。不要脱离当面场景付款，不要点陌生链接。</view>
+      <view class="ts-line ts-tip">如已转账被骗：立即拨打 96110 或 110 报警，并通过本页「举报」提交线索。</view>
     </view>
 
     <!-- 评论区（含楼中楼回复） -->
@@ -355,31 +358,32 @@
           <text class="cta-chat-emoji">💬</text>
           <text class="cta-chat-text">聊一聊</text>
         </view>
-        <view class="cta-buy {{goods.status === 1 ? '' : 'off'}}" hover-class="cta-buy-hover" bindtap="openOrder" aria-role="button" aria-label="申请自提">
-          <text class="cta-buy-text">{{goods.status === 1 ? '申请自提' : (goods.status === 2 ? '已售出' : '已下架')}}</text>
+        <view class="cta-buy {{goods.status === 1 ? '' : 'off'}}" hover-class="cta-buy-hover" bindtap="openOrder" aria-role="button" aria-label="约TA当面看货">
+          <text class="cta-buy-text">{{goods.status === 1 ? '约当面看货' : (goods.status === 2 ? '已出手' : '已下架')}}</text>
         </view>
       </view>
     </block>
   </view>
 
-  <!-- 购买意向弹层 -->
+  <!-- 当面交易意向弹层（无支付，仅站内约见） -->
   <view class="mask" wx:if="{{showOrder}}" style="padding-bottom: {{keyboardHeight}}px" bindtap="closeOrder">
     <view class="sheet" catchtap="stop">
       <view class="sheet-head">
-        <text class="h2">申请自提 · 联系卖家</text>
+        <text class="h2">约卖家当面看货</text>
         <text class="sheet-close" bindtap="closeOrder">✕</text>
       </view>
       <view class="sheet-goods">
         <view class="sheet-cover">{{goods.emoji}}</view>
         <view class="flex1">
           <view class="clamp2 sheet-title">{{goods.title}}</view>
-          <view class="sheet-price"><text class="price-symbol">¥</text>{{goods.priceText}}</view>
+          <view class="sheet-price"><text class="price-symbol">¥</text>{{goods.priceText}}<text class="sheet-price-label"> · 线下当面结清</text></view>
         </view>
       </view>
-      <input class="sheet-input" placeholder="留个联系方式（QQ / 微信 / 手机号）" placeholder-class="placeholder" value="{{contact}}" bindinput="onContact" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
-      <textarea class="sheet-textarea" placeholder="想对卖家说点什么（选填）" placeholder-class="placeholder" value="{{message}}" bindinput="onMessage" maxlength="200" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
-      <button class="btn btn-primary mt24" loading="{{submitting}}" bindtap="submitOrder">发送购买意向</button>
-      <view class="sheet-note">卖家确认后会主动联系你</view>
+      <input class="sheet-input" placeholder="联系方式（QQ / 微信 / 手机号，仅用于当面约见）" placeholder-class="placeholder" value="{{contact}}" bindinput="onContact" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
+      <textarea class="sheet-textarea" placeholder="想对卖家说点什么，比如约在哪个食堂门口、几点方便（选填）" placeholder-class="placeholder" value="{{message}}" bindinput="onMessage" maxlength="200" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeight" />
+      <view class="order-warn">⚠️ 本平台没有支付功能。对方让你先转账、付定金、扫码付款的，直接拒绝并举报。</view>
+      <button class="btn btn-primary mt24" loading="{{submitting}}" bindtap="submitOrder">发送当面交易意向</button>
+      <view class="sheet-note">卖家确认后会主动联系你 · 请坚持当面验货再付款</view>
     </view>
   </view>
 </view>

@@ -176,3 +176,25 @@
 .fab {
   bottom: calc(150rpx + env(safe-area-inset-bottom));
 }
+
+/* 合规提示条：仅信息展示，不做线上交易 */
+.list-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin: 20rpx 32rpx 0;
+  padding: 18rpx 22rpx;
+  border-radius: 16rpx;
+  background: #F2F8F5;
+  border: 1rpx solid #D7EADF;
+}
+.list-tip-icon {
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+.list-tip-text {
+  flex: 1;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #4A6B5A;
+}

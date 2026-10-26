@@ -1267,3 +1267,64 @@
   justify-content: center;
   font-size: 40rpx;
 }
+
+/* ===== 反诈与禁止线上交易提示（取代原 .safety 轻提示）===== */
+.trade-safety {
+  margin: 24rpx 32rpx 0;
+  padding: 26rpx 28rpx;
+  border-radius: 24rpx;
+  background: #FFF6F4;
+  border: 1rpx solid #FFD2C7;
+}
+.ts-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+.ts-icon {
+  font-size: 30rpx;
+  line-height: 1;
+}
+.ts-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #B2311A;
+}
+.ts-line {
+  font-size: 24rpx;
+  line-height: 1.72;
+  color: #7C4A3C;
+  margin-top: 8rpx;
+}
+.ts-strong {
+  font-weight: 700;
+  color: #B2311A;
+}
+.ts-warn {
+  color: #C0392B;
+  font-weight: 600;
+}
+.ts-tip {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx dashed #F0C9BE;
+  color: #6B6259;
+}
+
+/* 弹层内的付款风险提醒 */
+.order-warn {
+  margin-top: 20rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 16rpx;
+  background: #FFF7E6;
+  border: 1rpx solid #FFE0A3;
+  font-size: 23rpx;
+  line-height: 1.65;
+  color: #8A5A00;
+}
+.sheet-price-label {
+  font-size: 22rpx;
+  font-weight: 400;
+  color: #8A8F99;
+}

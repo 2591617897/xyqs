@@ -1,7 +1,18 @@
 <view class="page">
+  <!-- 合规警示：小程序无支付功能、不允许线上交易 -->
+  <view class="trade-warn">
+    <view class="trade-warn-head">
+      <text class="trade-warn-icon">⚠️</text>
+      <text class="trade-warn-title">本平台不提供线上交易</text>
+    </view>
+    <view class="trade-warn-line">校聚一城只做闲置信息展示，<text class="tw-strong">没有下单、支付、担保、退款功能</text>，也不支持邮寄、快递、代收货款。</view>
+    <view class="trade-warn-line">请约定在<text class="tw-strong">校内公共场所当面看货、当面结清</text>；任何要求你先转账、先付定金、扫码付款、发红包的，都是诈骗。</view>
+    <view class="trade-warn-line">发布即表示你承诺不在此发布线上收款、代购代付、刷单、贷款、卡券回收等交易类信息。</view>
+  </view>
+
   <view class="hint">
     <text class="hint-icon">💡</text>
-    <text class="hint-text">发布需完成校园认证。同校交易，描述越真实越容易卖出。</text>
+    <text class="hint-text">发布需完成校园认证。描述越真实，同校同学越容易联系你。</text>
   </view>
 
   <view class="card">
@@ -147,14 +158,21 @@
   </view>
 
   <view class="card">
-    <view class="h2">交易方式</view>
-    <view class="seg mt16">
-      <view class="seg-item {{tradeType === 1 ? 'active' : ''}}" bindtap="chooseTrade" data-type="1">校内自提</view>
-      <view class="seg-item {{tradeType === 2 ? 'active' : ''}}" bindtap="chooseTrade" data-type="2">支持邮寄</view>
-    </view>
+    <view class="h2">交付方式</view>
+    <view class="muted mt16">仅支持校内当面自提 · 本平台不提供邮寄与物流</view>
     <view class="field row mt16">
-      <text class="field-label">交易地点</text>
+      <text class="field-label">面交地点</text>
       <input class="field-input" placeholder="如：南苑食堂门口" placeholder-class="placeholder" maxlength="30" value="{{location}}" data-field="location" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="h2">发布承诺</view>
+    <view class="promise" bindtap="toggleAgree">
+      <view class="promise-box {{agreed ? 'on' : ''}}">{{agreed ? '✓' : ''}}</view>
+      <view class="promise-text">
+        我已知悉并承诺：本平台不提供线上交易与支付功能，我只在校内当面交付；如遇要求提前转账、扫码付款、收取定金的情况，我会立即停止并举报。
+      </view>
     </view>
   </view>
 

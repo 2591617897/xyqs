@@ -40,6 +40,7 @@ Page({
     warranty: '',
     warrantyOptions: ['官方保修中', '官方保修已过', '不确定'],
     supportTrial: 1,
+    agreed: false,
     submitting: false,
     loadError: false
   },
@@ -139,6 +140,11 @@ Page({
     this.setData({ supportTrial: e.detail.value ? 1 : 0 })
   },
 
+  /** 发布承诺勾选：不做线上交易的确认 */
+  toggleAgree: function () {
+    this.setData({ agreed: !this.data.agreed })
+  },
+
   chooseImage: function () {
     const self = this
     const rest = 9 - this.data.images.length
@@ -190,6 +196,10 @@ Page({
       toast('原价比售价还低啦')
       return
     }
+    if (!d.agreed) {
+      toast('请先勾选发布承诺（不支持线上交易）')
+      return
+    }
     if (this.data.submitting) return
 
     this.setData({ submitting: true })
@@ -213,7 +223,9 @@ Page({
           warranty: d.warranty || null,
           supportTrial: d.supportTrial,
           images: urls,
-          tradeType: d.tradeType,
+          // 只做校内当面自提：邮寄通道已关闭，固定 tradeType=1，
+          // 避免历史编辑数据把 2（邮寄）又带回去
+          tradeType: 1,
           location: d.location
         }
         return self.data.isEdit

@@ -77,7 +77,7 @@ Page({
         : ''
       g.sellerMeta = [
         { top: '在售 ' + (g.sellerSaleCount || 0) + ' 件', sub: '实时在售', icon: '🏅', brand: true },
-        { top: '累计发布 ' + (g.sellerTotalCount || 0) + ' 件', sub: '校园认证卖家', icon: '' }
+        { top: '累计发布 ' + (g.sellerTotalCount || 0) + ' 件', sub: '已完成校园认证', icon: '' }
       ]
       const specs = []
       const conditionLabel = conditionText(g.conditionLevel)
@@ -102,7 +102,7 @@ Page({
       specs.push({
         icon: '🚚',
         label: '交易方式',
-        value: (g.tradeType === 1 ? '限校内自提' : '支持邮寄') + (g.location ? '（' + g.location + '）' : ''),
+        value: (g.tradeType === 1 ? '仅限校内当面自提' : '仅限校内当面自提') + (g.location ? '（' + g.location + '）' : ''),
         warn: false,
         brand: true
       })
@@ -319,7 +319,7 @@ Page({
       self.setData({ showOrder: false, submitting: false, message: '', contact: '' })
       mp.showModal({
         title: '已通知卖家',
-        content: '卖家会在二手页的「收到的意向」里看到你的联系方式，也可以主动私聊卖家哦。',
+        content: '卖家会在闲置页的「收到的意向」里看到你的联系方式，也可以主动私聊卖家。\n\n提醒：本平台没有支付功能，请务必在校内当面验货、当面结清，不要提前转账。',
         showCancel: false,
         confirmText: '知道了'
       })

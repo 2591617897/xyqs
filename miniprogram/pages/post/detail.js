@@ -48,8 +48,8 @@ Page({
   onShareAppMessage: function () {
     const post = this.data.post
     const title = post
-      ? (post.title || (post.content || '校园聚').substring(0, 30))
-      : '校园聚'
+      ? (post.title || (post.content || '校聚一城').substring(0, 30))
+      : '校聚一城'
     return {
       title: title,
       path: '/pages/post/detail?id=' + this.postId

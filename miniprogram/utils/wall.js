@@ -11,10 +11,10 @@ const { resolveList } = require('./img')
 
 /** 分类 → 话题标签（发布时选的 category 字段） */
 const CAT_TAG = {
-  love: '#精选表白',
+  love: '#校园心情',
   tree: '#树洞吐槽',
   find: '#寻物启事',
-  findp: '#捞人'
+  findp: '#寻人互助'
 }
 
 /** 匿名头像 emoji（anonAvatar 1~8 对应） */

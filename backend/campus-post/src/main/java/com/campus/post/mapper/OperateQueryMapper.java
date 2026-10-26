@@ -30,6 +30,10 @@ public interface OperateQueryMapper {
     /**
      * 取某个广告位当前可投放的素材。
      *
+     * <p>定向匹配用 {@code FIND_IN_SET} 而不是 {@code =}：后台的 city / school_ids
+     * 都是<b>逗号分隔多值</b>（一个广告位可以同时投多个城市或校区），
+     * 等值比较只能命中「恰好只投这一个」的行，投给 3 所学校的广告位会一个都匹配不上。
+     *
      * @param code      广告位编码
      * @param city      用户所在城市（可为 null，此时不匹配「城市定向」的广告位）
      * @param schoolId  用户学校 id（可为 null，此时不匹配「校区定向」的广告位）
@@ -45,8 +49,8 @@ public interface OperateQueryMapper {
             + "  AND (m.start_at IS NULL OR m.start_at <= NOW()) "
             + "  AND (m.end_at IS NULL OR m.end_at >= NOW()) "
             + "  AND ( s.scope_type = 1 "
-            + "     OR (s.scope_type = 2 AND #{city} IS NOT NULL AND s.city = #{city}) "
-            + "     OR (s.scope_type = 3 AND #{schoolId} IS NOT NULL AND s.school_id = #{schoolId}) ) "
+            + "     OR (s.scope_type = 2 AND #{city} IS NOT NULL AND FIND_IN_SET(#{city}, s.city)) "
+            + "     OR (s.scope_type = 3 AND #{schoolId} IS NOT NULL AND FIND_IN_SET(#{schoolId}, s.school_ids)) ) "
             + "ORDER BY m.sort DESC, m.id DESC LIMIT #{limit}")
     List<AdMaterialVO> selectMaterials(@Param("code") String code,
                                        @Param("city") String city,

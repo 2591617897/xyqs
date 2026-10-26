@@ -21,13 +21,14 @@
     "pages/legal/agreement",
     "pages/legal/privacy",
     "pages/legal/disclaimer",
+    "pages/legal/rule",
     "pages/report/report",
     "pages/notice/index"
   ],
   "window": {
     "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#FFFFFF",
-    "navigationBarTitleText": "校园聚",
+    "navigationBarTitleText": "校聚一城",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#F5F7F6"
   },

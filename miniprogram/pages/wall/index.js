@@ -25,10 +25,10 @@ Page({
     showCatPicker: false,
     // 顶部分类 chips（对齐设计稿）
     cats: [
-      { key: 'love', name: '💗 精选表白', tag: CAT_TAG.love },
+      { key: 'love', name: '💗 校园心情', tag: CAT_TAG.love },
       { key: 'tree', name: '🌳 树洞吐槽', tag: CAT_TAG.tree },
       { key: 'find', name: '🔎 寻物启事', tag: CAT_TAG.find },
-      { key: 'findp', name: '🙋 捞人', tag: CAT_TAG.findp }
+      { key: 'findp', name: '🙋 寻人互助', tag: CAT_TAG.findp }
     ],
     cat: 'love',
     // 分类 chips 的 scroll-into-view 目标：滑动切换后把选中分类滚进可视区
@@ -36,7 +36,7 @@ Page({
   },
 
   onLoad: function () {
-    mp.setNavigationBarTitle({ title: '匿名表白墙' })
+    mp.setNavigationBarTitle({ title: '树洞闲谈' })
     // 序号：滑动/连点会并发多次请求，回来晚的旧结果不许覆盖新结果
     this._loadSeq = 0
     const self = this
@@ -48,7 +48,7 @@ Page({
   },
 
   onShow: function () {
-    // 表白墙已让位给「私信」tab，本页不再是 tab 页（无底栏），
+    // 树洞已让位给「私信」tab，本页不再是 tab 页（无底栏），
     // 也就不需要设置 getTabBar().selected
     // 从详情页返回时同步点赞数 / 评论数 / 编辑结果
     if (mp.getStorageSync('needRefreshWall')) {
@@ -184,7 +184,7 @@ Page({
     const post = id
       ? (this.data.posts || []).find(function (p) { return String(p.id) === String(id) })
       : null
-    let title = '匿名表白墙 · 校园聚'
+    let title = '树洞闲谈 · 校聚一城'
     if (post && post.content) {
       const brief = post.content.replace(/\s+/g, ' ').trim()
       title = brief.length > 24 ? brief.slice(0, 24) + '…' : brief

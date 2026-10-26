@@ -51,9 +51,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="定向" min-width="130" show-overflow-tooltip>
+      <el-table-column label="定向" min-width="210">
         <template #default="{ row }">
-          {{ row.scopeType === 2 ? row.city : (row.scopeType === 3 ? row.schoolId : '全国') }}
+          <span v-if="row.scopeType === 1" class="muted">不限</span>
+          <template v-else>
+            <el-tag v-for="t in targetTags(row).shown" :key="t.key" size="small"
+                    :type="row.scopeType === 3 ? 'info' : ''" class="target-tag">{{ t.label }}</el-tag>
+            <el-tooltip v-if="targetTags(row).more" :content="targetTags(row).full" placement="top">
+              <el-tag size="small" type="warning" class="target-tag">+{{ targetTags(row).more }}</el-tag>
+            </el-tooltip>
+            <span v-if="!targetTags(row).shown.length" class="muted">未设置</span>
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="审核" width="100" align="center">
@@ -114,17 +122,50 @@
           <el-input v-model="form.name" placeholder="默认与广告位同名，可改成对内可读的名字" />
         </el-form-item>
         <el-form-item label="投放范围" prop="scopeType">
-          <el-radio-group v-model="form.scopeType">
+          <el-radio-group v-model="form.scopeType" @change="onScopeChange">
             <el-radio :value="1">全国</el-radio>
             <el-radio :value="2">城市</el-radio>
             <el-radio :value="3">校区</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="form.scopeType === 2" label="城市" prop="city">
-          <el-input v-model="form.city" placeholder="如：贵阳（不带「市」字，与学校库一致）" />
+        <el-form-item v-if="form.scopeType === 2" label="城市" prop="cities">
+          <el-select
+            v-model="form.cities"
+            multiple
+            filterable
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="选择一个或多个城市"
+            style="width: 100%"
+          >
+            <el-option v-for="c in targets.cities" :key="c" :label="c" :value="c" />
+          </el-select>
+          <div class="form-hint">
+            选项来自学校库，与 t_school.city 逐字一致（不带「市」字）。
+            手输「贵阳市」会和学校表里的「贵阳」匹配不上，广告对任何人都不生效。
+          </div>
         </el-form-item>
-        <el-form-item v-if="form.scopeType === 3" label="校区ID" prop="schoolId">
-          <el-input v-model.number="form.schoolId" placeholder="t_school.id" />
+        <el-form-item v-if="form.scopeType === 3" label="校区" prop="schoolIds">
+          <el-select
+            v-model="form.schoolIds"
+            multiple
+            filterable
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="按名称搜索，可多选"
+            style="width: 100%"
+          >
+            <el-option-group v-for="g in schoolGroups" :key="g.city" :label="g.city">
+              <el-option v-for="s in g.schools" :key="s.id" :label="s.name" :value="String(s.id)">
+                <span>{{ s.name }}</span>
+                <span class="opt-code">{{ g.city }}</span>
+              </el-option>
+            </el-option-group>
+          </el-select>
+          <div class="form-hint">
+            已选 {{ form.schoolIds.length }} 所校区。一个广告位可同时投多所学校，
+            改完请确认这条广告位的素材对这些学校都合适。
+          </div>
         </el-form-item>
         <el-form-item label="素材上限" prop="maxCount">
           <el-input-number v-model="form.maxCount" :min="1" :max="20" />
@@ -168,13 +209,50 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 const editing = ref(null)
 const formRef = ref()
+
+/**
+ * 定向候选值：城市 / 校区。
+ *
+ * 两者都必须是下拉多选而不是输入框——手填「贵阳市」或手打 19 位校区 id
+ * 都曾经导致「后台显示已上架、C 端永远不展示」，而且两端都不报错。
+ */
+const targets = reactive({ cities: [], schools: [] })
+
+/** 校区按城市分组，81 条平铺在选择器里很难找 */
+const schoolGroups = computed(() => {
+  const map = new Map()
+  for (const s of targets.schools) {
+    const city = s.city || '其他'
+    if (!map.has(city)) map.set(city, [])
+    map.get(city).push(s)
+  }
+  return [...map.entries()].map(([city, schools]) => ({ city, schools }))
+})
+
 const form = reactive({
-  name: '', code: '', scopeType: 1, city: '', schoolId: null,
+  name: '', code: '', scopeType: 1, cities: [], schoolIds: [],
   maxCount: 3, sizeDesc: '', sort: 0
 })
+
+/** 城市 / 校区是否已选，取决于当前投放范围——两个字段互斥，不能都要求 */
+function validateCities (rule, value, cb) {
+  if (form.scopeType === 2 && !form.cities.length) {
+    return cb(new Error('请至少选择一个城市'))
+  }
+  cb()
+}
+function validateSchools (rule, value, cb) {
+  if (form.scopeType === 3 && !form.schoolIds.length) {
+    return cb(new Error('请至少选择一个校区'))
+  }
+  cb()
+}
+
 const rules = {
   code: [{ required: true, message: '请选择广告位', trigger: 'change' }],
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
+  cities: [{ validator: validateCities, trigger: 'change' }],
+  schoolIds: [{ validator: validateSchools, trigger: 'change' }]
 }
 
 const currentOption = computed(() => optionOf(form.code))
@@ -197,6 +275,40 @@ function canOnline (row) {
 }
 
 const invalidRows = computed(() => rows.value.filter((r) => !optionOf(r.code)))
+
+/** 逗号分隔字符串 → 数组（后端存的是多选结果） */
+function splitCsv (v) {
+  if (!v) return []
+  return String(v).split(',').map((x) => x.trim()).filter(Boolean)
+}
+
+function schoolName (id) {
+  const s = targets.schools.find((x) => String(x.id) === String(id))
+  return s ? s.name : id
+}
+
+/**
+ * 列表里最多展示 2 个标签，其余折成 +N。
+ * 不做整段文字：定向可能选了十几个校区，撑开列宽后其他列全被挤扁。
+ */
+function targetTags (row) {
+  const all = row.scopeType === 3 ? splitCsv(row.schoolIds) : splitCsv(row.city)
+  const labels = row.scopeType === 3 ? all.map(schoolName) : all
+  const shown = labels.slice(0, 2).map((label, i) => ({ key: i, label }))
+  return { shown, more: Math.max(0, labels.length - 2), full: labels.join('、') }
+}
+
+async function loadTargets () {
+  try {
+    const res = await adApi.targets()
+    targets.cities = res.cities || []
+    targets.schools = res.schools || []
+  } catch (e) {
+    // 拿不到候选值时选择器为空，但不该阻断列表浏览
+    targets.cities = []
+    targets.schools = []
+  }
+}
 
 async function loadOptions () {
   try {
@@ -232,20 +344,27 @@ function onCodeChange (code) {
 function openCreate () {
   editing.value = null
   Object.assign(form, {
-    name: '', code: '', scopeType: 1, city: '', schoolId: null,
+    name: '', code: '', scopeType: 1, cities: [], schoolIds: [],
     maxCount: 3, sizeDesc: '', sort: 0
   })
   dialogVisible.value = true
+  formRef.value && formRef.value.clearValidate()
 }
 
 function openEdit (row) {
   editing.value = row
   Object.assign(form, {
     name: row.name, code: row.code, scopeType: row.scopeType,
-    city: row.city || '', schoolId: row.schoolId, maxCount: row.maxCount,
-    sizeDesc: row.sizeDesc || '', sort: row.sort
+    cities: splitCsv(row.city), schoolIds: splitCsv(row.schoolIds),
+    maxCount: row.maxCount, sizeDesc: row.sizeDesc || '', sort: row.sort
   })
   dialogVisible.value = true
+  formRef.value && formRef.value.clearValidate()
+}
+
+/** 切换投放范围时清掉上一侧的错误提示（另一个字段会变成不显示） */
+function onScopeChange () {
+  formRef.value && formRef.value.clearValidate(['cities', 'schoolIds'])
 }
 
 async function submit () {
@@ -253,10 +372,21 @@ async function submit () {
   if (!valid) return
   submitting.value = true
   try {
+    // 只提交当前范围对应的那一侧，另一侧传空，后端会落 NULL
+    const payload = {
+      name: form.name,
+      code: form.code,
+      scopeType: form.scopeType,
+      city: form.scopeType === 2 ? form.cities.join(',') : '',
+      schoolIds: form.scopeType === 3 ? form.schoolIds.join(',') : '',
+      maxCount: form.maxCount,
+      sizeDesc: form.sizeDesc,
+      sort: form.sort
+    }
     if (editing.value) {
-      await adApi.updateSlot(editing.value.id, { ...form })
+      await adApi.updateSlot(editing.value.id, payload)
     } else {
-      await adApi.createSlot({ ...form })
+      await adApi.createSlot(payload)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -296,7 +426,8 @@ async function remove (row) {
 }
 
 onMounted(async () => {
-  await loadOptions()
+  // 两个请求互不阻塞：候选值拿不到也要能看列表
+  await Promise.all([loadOptions(), loadTargets()])
   load()
 })
 </script>
@@ -325,4 +456,6 @@ onMounted(async () => {
   font-size: 12px;
   line-height: 1.5;
 }
+.target-tag { margin-right: 4px; }
+.muted { color: var(--text-3, #909399); font-size: 12px; }
 </style>

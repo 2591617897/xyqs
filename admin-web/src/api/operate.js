@@ -3,6 +3,8 @@ import request from '@/utils/request'
 /** 广告位与素材 */
 export const adApi = {
   slotCodes: () => request.get('/admin/ads/slots/codes'),
+  /** 投放范围候选值：城市 + 校区，供多选下拉使用 */
+  targets: () => request.get('/admin/ads/slots/targets'),
   slots: (params) => request.get('/admin/ads/slots', { params }),
   createSlot: (data) => request.post('/admin/ads/slots', data),
   updateSlot: (id, data) => request.put('/admin/ads/slots/' + id, data),

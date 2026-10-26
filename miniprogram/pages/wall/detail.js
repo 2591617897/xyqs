@@ -63,7 +63,7 @@ Page({
   onShareAppMessage: function () {
     const post = this.data.post
     return {
-      title: post ? (post.content || '匿名心事').substring(0, 30) : '校园聚 · 匿名心事',
+      title: post ? (post.content || '匿名心事').substring(0, 30) : '校聚一城 · 匿名心事',
       path: '/pages/wall/detail?id=' + this.data.id
     }
   },
@@ -474,7 +474,7 @@ Page({
     const self = this
     mp.showModal({
       title: '删除这条心事？',
-      content: '删除后不可恢复，也不会再出现在表白墙',
+      content: '删除后不可恢复，也不会再出现在树洞',
       confirmColor: '#ff4d4f',
       success: function (res) {
         if (!res.confirm) return

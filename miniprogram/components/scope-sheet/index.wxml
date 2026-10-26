@@ -1,7 +1,7 @@
 <view class="sheet-mask" wx:if="{{show}}" bindtap="onClose">
   <view class="sheet" catchtap="noop">
     <view class="sheet-title">浏览范围</view>
-    <view class="sheet-sub">切换后首页与表白墙展示对应范围的内容</view>
+    <view class="sheet-sub">切换后首页与树洞展示对应范围的内容</view>
 
     <view class="scope-opt {{current === 'school' ? 'on' : ''}}" bindtap="onPickSchool">
       <view class="scope-icon">🏫</view>

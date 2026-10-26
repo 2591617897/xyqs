@@ -300,7 +300,7 @@
   <text class="empty-icon">{{loadError ? '📡' : '💌'}}</text>
   <text>{{loadError ? '加载失败，请检查网络或后端服务' : '这条表白不见了'}}</text>
   <view class="btn btn-ghost btn-sm back-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
-  <view class="btn btn-plain btn-sm back-btn" wx:else bindtap="goBack">回到表白墙</view>
+  <view class="btn btn-plain btn-sm back-btn" wx:else bindtap="goBack">回到树洞</view>
 </view>
 
 <promote-sheet

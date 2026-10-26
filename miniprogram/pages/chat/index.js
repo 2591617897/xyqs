@@ -343,11 +343,11 @@ Page({
     if (url) mp.previewImage({ current: url, urls: [url] })
   },
 
-  /** 发起预订 / 小刀还价：按闲鱼「小刀还价」的心智，直接发一条询价消息 */
+  /** 约面交：直接发一条约见消息（本平台无支付功能，只约校内当面看货） */
   onBargain: function () {
     const goods = this.data.goodsCard
-    const title = goods && goods.title ? '「' + goods.title + '」' : '这件宝贝'
-    this.send('你好！我想对' + title + '发起预订 / 小刀还价，请问方便优惠一些吗？😊')
+    const title = goods && goods.title ? '「' + goods.title + '」' : '这件闲置'
+    this.send('你好！我想看看' + title + '，方便约个时间在校内当面看看吗？😊')
   },
 
   /** 长按消息：微信同款，仅自己发的消息可在 2 分钟内撤回 */

@@ -76,3 +76,67 @@
 .submit {
   margin-top: 36rpx;
 }
+
+/* ===== 发布规范提示 ===== */
+.pub-rule {
+  margin: 24rpx 32rpx 0;
+  padding: 26rpx 28rpx;
+  border-radius: 24rpx;
+  background: #F4F8FF;
+  border: 1rpx solid #D8E4F8;
+}
+.pub-rule-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+.pub-rule-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+.pub-rule-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #2C4A73;
+}
+.pub-rule-line {
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: #4E6484;
+  margin-top: 6rpx;
+}
+
+/* ===== 规范与协议确认 ===== */
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+.promise-box {
+  width: 36rpx;
+  height: 36rpx;
+  flex: none;
+  margin-top: 2rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid #C6CDD4;
+  background: #FFFFFF;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+.promise-box.on {
+  background: #0E9A60;
+  border-color: #0E9A60;
+}
+.promise-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #5B6470;
+}
+.promise-link {
+  color: #0E9A60;
+  font-weight: 600;
+}

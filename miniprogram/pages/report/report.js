@@ -4,7 +4,7 @@ const auth = require('../../utils/auth')
 
 const TARGET_LABELS = {
   POST: '帖子',
-  WALL: '表白墙',
+  WALL: '树洞',
   GOODS: '闲置商品',
   COMMENT: '评论',
   USER: '用户',

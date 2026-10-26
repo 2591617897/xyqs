@@ -162,3 +162,68 @@
 .submit-wrap {
   margin-top: 36rpx;
 }
+
+/* ===== 合规提示：禁止线上交易 / 反诈 ===== */
+.trade-warn {
+  margin: 24rpx 32rpx 0;
+  padding: 26rpx 28rpx;
+  border-radius: 24rpx;
+  background: #FFF5F3;
+  border: 1rpx solid #FFCFC4;
+}
+.trade-warn-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+.trade-warn-icon {
+  font-size: 30rpx;
+  line-height: 1;
+}
+.trade-warn-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #B2311A;
+}
+.trade-warn-line {
+  font-size: 24rpx;
+  line-height: 1.72;
+  color: #8A4A3A;
+  margin-top: 6rpx;
+}
+.tw-strong {
+  font-weight: 700;
+  color: #B2311A;
+}
+
+/* ===== 发布承诺勾选 ===== */
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+.promise-box {
+  width: 36rpx;
+  height: 36rpx;
+  flex: none;
+  margin-top: 2rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid #C6CDD4;
+  background: #FFFFFF;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+.promise-box.on {
+  background: #0E9A60;
+  border-color: #0E9A60;
+}
+.promise-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #5B6470;
+}

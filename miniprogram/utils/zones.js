@@ -38,8 +38,8 @@ const ZONE_LIMIT = 3
 
 /** 金刚区固定入口（不含频道，频道入口由后端 t_channel 动态生成） */
 const ENTRIES = [
-  { key: 'wall', icon: '💌', title: '我想说', url: '/pages/wall/index', tone: 'like' },
-  { key: 'goods', icon: '🛍️', title: '校园闲置', url: '/pages/goods/list', tone: 'brand' },
+  { key: 'wall', icon: '🌳', title: '树洞闲谈', url: '/pages/wall/index', tone: 'like' },
+  { key: 'goods', icon: '♻️', title: '闲置交换', url: '/pages/goods/list', tone: 'brand' },
   { key: 'posts', icon: '🗂', title: '校园频道', url: '/pages/post/list', tone: 'info' }
 ]
 
@@ -105,9 +105,9 @@ function buildZones(src, channels) {
     out.push({
       key: 'wall',
       type: 'wall',
-      title: '我想说',
-      icon: '💌',
-      desc: '匿名把心里话说出来',
+      title: '树洞闲谈',
+      icon: '🌳',
+      desc: '匿名说说心里话',
       more: '/pages/wall/index',
       items: take(wallRecords).map(wallItem)
     })
@@ -117,9 +117,9 @@ function buildZones(src, channels) {
     out.push({
       key: 'goods',
       type: 'goods',
-      title: '校园闲置',
-      icon: '🛍️',
-      desc: '闲置流转，低碳又省钱',
+      title: '闲置交换',
+      icon: '♻️',
+      desc: '仅限校内当面自提，不支持线上交易',
       more: '/pages/goods/list',
       items: take(goodsRecords).map(goodsItem)
     })
@@ -235,7 +235,7 @@ function goodsItem(g) {
     id: g.id,
     authorId: g.userId,
     authorName: g.sellerName || '校园用户',
-    badge: g.tradeType === 1 ? '校内自提' : '支持邮寄',
+    badge: '校内面交',
     timeText: timeAgo(g.createdAt),
     title: g.title || '',
     excerpt: (g.description || '').replace(/\s+/g, ' '),

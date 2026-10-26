@@ -15,7 +15,7 @@
  */
 const { mp } = require('./util')
 
-const FALLBACK_NAME = '《校园聚隐私政策》'
+const FALLBACK_NAME = '《校聚一城隐私政策》'
 
 function supported(name) {
   return typeof mp[name] === 'function'

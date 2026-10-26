@@ -1,74 +1,95 @@
 <view class="page">
   <view class="doc-header">
-    <view class="doc-title">校园聚 · 免责声明</view>
-    <view class="doc-meta">更新日期：2026-10-25 · 生效日期：2026-10-25</view>
+    <view class="doc-title">校聚一城 · 免责声明与反诈提示</view>
+    <view class="doc-meta">更新日期：2026-10-27 · 生效日期：2026-10-27</view>
   </view>
 
   <view class="doc-callout warn">
     <text class="doc-callout-title">⚠️ 请在使用本平台前务必阅读</text>
-    <text class="doc-callout-body">本平台仅为校园信息发布的技术服务提供者，不参与任何实际交易、担保、支付、物流或身份真实性验证。使用本平台即视为你已理解并同意以下全部免责条款。</text>
+    <text class="doc-callout-body">本平台仅为校园信息发布的技术服务提供者，不提供线上交易、支付、担保、物流、退款，也不对用户身份真实性作法律担保。使用本平台即视为你已理解并同意以下全部免责条款。</text>
   </view>
 
   <view class="doc-section">
     <view class="doc-h2">一、平台定位与角色</view>
-    <view class="doc-p">1.1 本平台（"校园聚"）是一个面向在校大学生的<strong>信息发布与兴趣交流社区</strong>，为用户提供二手闲置发布、校园动态、匿名表白墙、私信等信息展示与沟通工具。</view>
-    <view class="doc-p">1.2 本平台<strong>不参与任何交易</strong>，不是交易方、不是居间方、不是担保方，不提供任何支付、担保、鉴定、物流、保险或售后服务。所有交易由用户自行在线下协商并完成。</view>
-    <view class="doc-p">1.3 本平台上所有信息、观点、商品价格、联系方式均由用户自行发布，不代表本平台立场。</view>
+    <view class="doc-p">1.1 本平台（"校聚一城"）是一个面向在校学生的<strong>信息发布与兴趣交流社区</strong>，为用户提供闲置交换信息、校园动态、树洞闲谈、私信等信息展示与沟通工具。</view>
+    <view class="doc-p">1.2 本平台<strong>不参与任何交易</strong>，不是交易方、不是居间方、不是担保方，不提供任何支付、担保、鉴定、物流、保险或售后服务。本平台<strong>没有下单、购物车、在线支付、代收货款、退款</strong>等功能入口。</view>
+    <view class="doc-p">1.3 本平台上所有信息、观点、商品价格、联系方式均由用户自行发布，不代表本平台立场。本平台不对信息的真实性、准确性、完整性作出任何保证。</view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">二、关于交易</view>
-    <view class="doc-p">2.1 <strong>一切交易风险由交易双方自行承担。</strong>本平台不承担任何因线上发布信息、线下当面交易或线上转账导致的损失或责任。</view>
-    <view class="doc-p">2.2 用户在交易过程中可能遭遇以下风险（包括但不限于）：</view>
+    <view class="doc-h2">二、闲置物品禁止线上交易</view>
+    <view class="doc-p">2.1 <strong>本平台明确不支持、不允许闲置物品线上交易。</strong>平台内闲置信息仅用于同校同学之间互通有无，实际交付必须在<strong>校内公共场所当面完成</strong>：当面看货、当面验货、当面结清。</view>
+    <view class="doc-p">2.2 平台不提供邮寄、快递、物流、代收货款、货到付款等任何履约方式；用户也不得在平台内发布线上收款、代购代付、代收代发、卡券回收、刷单、垫付、先款后货等信息。</view>
+    <view class="doc-p">2.3 <strong>一切交易风险由交易双方自行承担。</strong>本平台不承担任何因线上发布信息、线下当面交付或任何私下转账导致的损失或责任。</view>
+    <view class="doc-p">2.4 用户在交易过程中可能遭遇以下风险（包括但不限于）：</view>
     <view class="doc-list">
       <view class="doc-li">（1）发布者信息不真实、商品与描述不符；</view>
       <view class="doc-li">（2）收到伪劣、破损、被盗抢或无法正常使用的商品；</view>
-      <view class="doc-li">（3）被要求脱离平台进行私下微信/支付宝转账后对方失联；</view>
-      <view class="doc-li">（4）以"小刀还价""预定保留"为名诱骗用户先转账；</view>
-      <view class="doc-li">（5）冒充本平台运营方或客服进行诈骗。</view>
+      <view class="doc-li">（3）被要求脱离当面场景进行微信 / 支付宝转账后对方失联；</view>
+      <view class="doc-li">（4）以"小刀还价""预定保留""先付定金"为名诱骗用户先转账；</view>
+      <view class="doc-li">（5）冒充本平台运营方、客服、学长学姐、辅导员进行诈骗；</view>
+      <view class="doc-li">（6）以"帮你推广""交保证金""解冻账户"为名要求付款。</view>
     </view>
-    <view class="doc-p">2.3 本平台已尽力通过以下方式降低交易风险，但不保证能完全杜绝：</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">三、校园高频诈骗手法（请务必记住）</view>
     <view class="doc-list">
-      <view class="doc-li">（1）要求用户完成校园身份认证后才能发布与私信；</view>
-      <view class="doc-li">（2）系统对可疑内容（如明显异校、异常低价、含可疑联系方式）做标记；</view>
-      <view class="doc-li">（3）在帖子 / 表白墙 / 闲置的详情页提供"举报"入口，配合核实与处置，并协助警方调查；</view>
-      <view class="doc-li">（4）拉黑/屏蔽违规用户。</view>
+      <view class="doc-li">🚫 <strong>先付定金 / 先付邮费</strong>：说东西很抢手，让你先转 20 元占位，转完就消失。</view>
+      <view class="doc-li">🚫 <strong>假链接假二维码</strong>：发来一个"平台担保交易"链接或收款码，页面和真的长得一样。</view>
+      <view class="doc-li">🚫 <strong>屏幕共享 / 索要验证码</strong>：以"核实身份""帮你退款"为由，让你共享屏幕或念出短信验证码。</view>
+      <view class="doc-li">🚫 <strong>刷单 / 兼职 / 日结</strong>：先小额返现取得信任，再让你大额垫付。</view>
+      <view class="doc-li">🚫 <strong>校园贷 / 助学金 / 学费退费</strong>：索要身份证、银行卡、人脸验证。</view>
+      <view class="doc-li">🚫 <strong>冒充熟人 / 老师 / 辅导员</strong>：换头像昵称私信借钱，或以"处分""评优"为由索要财物。</view>
+      <view class="doc-li">🚫 <strong>游戏账号 / 演唱会票 / 卡券低价转让</strong>：脱离当面交易场景，一律高风险。</view>
     </view>
-    <view class="doc-p">2.4 <strong>一旦发生交易纠纷或涉嫌诈骗，请立即报警</strong>，同时可通过内容详情页的"举报"入口或邮件 {{contactEmail}} 提供相应线索，我们将积极配合司法机关调查，但不承担任何赔偿责任。</view>
+    <view class="doc-callout safe">
+      <text class="doc-callout-title">✅ 四不原则</text>
+      <text class="doc-callout-body">不轻信：陌生链接、陌生二维码一律不点不扫。不转账：任何理由的提前付款都拒绝，坚持当面结清。不泄露：身份证号、银行卡、验证码、学号不告诉任何人。不脱离：不脱离当面场景交易，不去偏僻地点单独见面。</text>
+    </view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">三、关于信息与内容</view>
-    <view class="doc-p">3.1 本平台上的所有内容（包括但不限于帖子、闲置商品描述、表白墙内容、私信、评论、图片）均由用户自行创作与发布。我们不保证任何内容的真实性、准确性、完整性、合法性。</view>
-    <view class="doc-p">3.2 若你认为本平台上的某项内容侵犯了你的合法权益，请通过内容详情页的"举报"入口或邮件 {{contactEmail}} 向我们提供详细说明与证据，我们将在 5 个工作日内依法处理。</view>
-    <view class="doc-p">3.3 本平台可能因系统维护、网络波动等原因造成信息丢失、延迟或错误展示，对此不承担责任。</view>
+    <view class="doc-h2">四、被骗之后怎么办</view>
+    <view class="doc-p">4.1 <strong>立即拨打 96110 反诈专线</strong>咨询止付，或直接拨打 <strong>110</strong> 报警；同时联系银行 / 支付平台申请冻结。</view>
+    <view class="doc-p">4.2 保留聊天记录、转账凭证、对方账号与二维码截图，这些都是报案的关键证据。</view>
+    <view class="doc-p">4.3 通过内容详情页的"举报"入口或邮件 {{contactEmail}} 向我们提供线索，我们将<strong>配合公安机关调查</strong>，并对涉事账号做限制、封禁处理，但不承担任何赔偿责任。</view>
+    <view class="doc-p">4.4 建议安装"国家反诈中心"App，开启来电预警。</view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">四、关于校园身份认证</view>
-    <view class="doc-p">4.1 本平台提供的校园身份认证功能仅用于"限制非本校用户互动"，<strong>不构成对发布者真实身份的法律担保</strong>。认证信息可能存在冒用、伪造、过期等情况。</view>
-    <view class="doc-p">4.2 你与他人交易或互动时，应自行通过合理方式核实对方真实身份（如约定在校园内公共场所面交、核对学生证原件等）。</view>
+    <view class="doc-h2">五、关于信息与内容</view>
+    <view class="doc-p">5.1 本平台上的所有内容（包括但不限于帖子、闲置描述、树洞闲谈、私信、评论、图片）均由用户自行创作与发布。我们不保证任何内容的真实性、准确性、完整性、合法性。</view>
+    <view class="doc-p">5.2 若你认为本平台上的某项内容侵犯了你的合法权益，请通过内容详情页的"举报"入口或邮件 {{contactEmail}} 向我们提供详细说明与证据，我们将在 5 个工作日内依法处理。</view>
+    <view class="doc-p">5.3 本平台可能因系统维护、网络波动等原因造成信息丢失、延迟或错误展示，对此不承担责任。</view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">五、关于第三方链接与资源</view>
-    <view class="doc-p">5.1 本平台可能包含指向第三方网站、应用或联系方式的内容。这些第三方内容不在我们控制范围内，我们对其合法性、安全性、隐私政策不承担任何保证或责任。</view>
-    <view class="doc-p">5.2 请勿轻易点击不明链接、扫描陌生二维码或下载来路不明的 App，以免造成财产损失或信息泄露。</view>
+    <view class="doc-h2">六、关于校园身份认证</view>
+    <view class="doc-p">6.1 本平台提供的校园身份认证功能仅用于"限制非本校用户互动"，<strong>不构成对发布者真实身份的法律担保</strong>。认证信息可能存在冒用、伪造、过期等情况。</view>
+    <view class="doc-p">6.2 你与他人互动或当面交付时，应自行通过合理方式核实对方真实身份（如约定在校园内公共场所见面、核对学生证原件等）。</view>
+    <view class="doc-p">6.3 不得冒用他人学生证、校园卡通过认证，一经发现将永久封禁并保留追究法律责任的权利。</view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">六、不可抗力</view>
+    <view class="doc-h2">七、关于第三方链接与资源</view>
+    <view class="doc-p">7.1 本平台可能包含指向第三方网站、应用或联系方式的内容。这些第三方内容不在我们控制范围内，我们对其合法性、安全性、隐私政策不承担任何保证或责任。</view>
+    <view class="doc-p">7.2 请勿轻易点击不明链接、扫描陌生二维码或下载来路不明的 App，以免造成财产损失或信息泄露。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">八、不可抗力</view>
     <view class="doc-p">因政府行为、法律法规变化、自然灾害、网络攻击、技术故障等不可抗力导致的服务中断或数据损失，本平台不承担责任。</view>
   </view>
 
   <view class="doc-section">
-    <view class="doc-h2">七、责任限制</view>
+    <view class="doc-h2">九、责任限制</view>
     <view class="doc-p">在法律允许的最大范围内，本平台对任何间接损失、附带损失、特殊损失、衍生损失或惩罚性损失不承担责任。</view>
   </view>
 
   <view class="doc-callout safe">
-    <text class="doc-callout-title">📍 平台建议的安全交易原则</text>
-    <text class="doc-callout-body">尽量选择与自己同校的用户交易；约定在宿舍楼下、食堂门口、图书馆大厅等公共场所面交；当面验货，确认无误后再付款；拒绝脱离平台的私下转账请求；贵重物品建议约同学陪同。</text>
+    <text class="doc-callout-title">📍 平台建议的安全交付原则</text>
+    <text class="doc-callout-body">只与同校同学交换；约在宿舍楼下、食堂门口、图书馆大厅等公共场所；当面验货，确认无误后再当面付款；拒绝任何形式的提前转账与站外支付；贵重物品建议约同学陪同；遇到催促、威胁、道德绑架，直接终止沟通并举报。</text>
   </view>
 
   <view class="doc-foot">

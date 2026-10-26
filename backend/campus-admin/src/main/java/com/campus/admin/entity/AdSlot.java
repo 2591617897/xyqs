@@ -32,9 +32,23 @@ public class AdSlot {
     /** 1全国 2城市 3校区 */
     private Integer scopeType;
 
+    /**
+     * 投放城市，<b>逗号分隔多值</b>（如 {@code 贵阳,遵义}）。
+     *
+     * <p>必须与 t_school.city 逐字一致（不带「市」字）：C 端拿用户学校所在城市做
+     * {@code FIND_IN_SET} 匹配，差一个字就永不命中，且两端都不报错。
+     * 后台已改成下拉多选，选项直接取自 t_school 的去重结果，杜绝手输。
+     */
     private String city;
 
-    private Long schoolId;
+    /**
+     * 投放校区 ID，<b>逗号分隔多值</b>（如 {@code 1001,1002}）。
+     *
+     * <p>原来是单值 bigint，只能定向一所学校；运营想「贵阳三所高校同投」
+     * 就必须建三个广告位，而 code 是唯一的根本建不出来。
+     * 换成多值后一个广告位就能覆盖多个校区。
+     */
+    private String schoolIds;
 
     private String sizeDesc;
 

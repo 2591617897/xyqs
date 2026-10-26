@@ -4,7 +4,7 @@
     "school-onboard": "/components/school-onboard/index",
     "notice-popup": "/components/notice-popup/index"
   },
-  "navigationBarTitleText": "校园聚",
+  "navigationBarTitleText": "校聚一城",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"
 }

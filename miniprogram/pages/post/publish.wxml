@@ -1,4 +1,17 @@
 <view class="page">
+  <!-- 发布规范：UGC 平台必须在写内容前明确告知 -->
+  <view class="pub-rule">
+    <view class="pub-rule-head">
+      <text class="pub-rule-icon">📋</text>
+      <text class="pub-rule-title">发帖前请确认</text>
+    </view>
+    <view class="pub-rule-line">1. 内容真实、来源可靠，不造谣、不传谣、不发布未经核实的“爆料”。</view>
+    <view class="pub-rule-line">2. 不辱骂攻击、不人身威胁、不曝光他人姓名 / 学号 / 手机号 / 宿舍号 / 照片。</view>
+    <view class="pub-rule-line">3. 不发布色情低俗、赌博、贷款、代考代写、刷单、兼职拉人头等违法违规信息。</view>
+    <view class="pub-rule-line">4. 本站不提供交易与支付功能，请勿发布买卖、代购、收款、引流到站外交易的内容。</view>
+    <view class="pub-rule-line">5. 转载他人内容请注明来源；涉及个人信息的图片请先打码。</view>
+  </view>
+
   <view class="card">
     <view class="h2">选择频道</view>
     <view class="channel-wrap mt16">
@@ -42,6 +55,15 @@
         <view class="img-del" catchtap="removeImage" data-index="{{index}}">✕</view>
       </view>
       <view class="img-add" wx:if="{{images.length < 9}}" bindtap="chooseImage">＋</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="promise" bindtap="toggleAgree">
+      <view class="promise-box {{agreed ? 'on' : ''}}">{{agreed ? '✓' : ''}}</view>
+      <view class="promise-text">
+        我已阅读并同意<text class="promise-link" catchtap="goRule">《社区规范》</text>与<text class="promise-link" catchtap="goAgreement">《用户服务协议》</text>，承诺发布内容真实合法、不侵犯他人权益，并接受内容安全检测。
+      </view>
     </view>
   </view>
 

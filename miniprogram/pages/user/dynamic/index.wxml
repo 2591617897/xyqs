@@ -22,7 +22,7 @@
   <view class="empty" wx:elif="{{!loading && items.length === 0}}">
     <view class="empty-icon">📝</view>
     <view class="empty-title">还没有任何动态</view>
-    <view class="empty-desc">去首页发一条帖子，或者在表白墙匿名说句心里话～</view>
+    <view class="empty-desc">去首页发一条帖子，或者在树洞匿名说句心里话～</view>
   </view>
 
   <!-- 时间线 -->
@@ -63,7 +63,7 @@
         </view>
       </block>
 
-      <!-- === 表白墙卡片 === -->
+      <!-- === 树洞卡片 === -->
       <block wx:else>
         <view class="tc-head">
           <view class="tc-type-badge wall">{{item.flair}}</view>

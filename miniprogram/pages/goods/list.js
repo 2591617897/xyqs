@@ -41,7 +41,7 @@ Page({
     if (mineMode !== this.data.mineMode || favMode !== this.data.favMode) {
       this.setData({ mineMode: mineMode, favMode: favMode, list: [] })
       mp.setNavigationBarTitle({
-        title: mineMode ? '我的闲置' : favMode ? '我的收藏' : '二手市场'
+        title: mineMode ? '我的闲置' : favMode ? '我的收藏' : '闲置交换'
       })
       this.load(true)
       return

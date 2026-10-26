@@ -56,15 +56,15 @@
     <view class="announce-btn">详情 ›</view>
   </view>
 
-  <!-- 后台暂无公告时的默认运营位：跳蚤集市 -->
+  <!-- 后台暂无公告时的默认运营位：闲置交换 -->
   <view wx:else class="announce" bindtap="onAnnounce" hover-class="announce-hover" hover-stay-time="60">
-    <view class="announce-icon">🛍️</view>
+    <view class="announce-icon">♻️</view>
     <view class="announce-main">
       <view class="announce-title-row">
         <text class="announce-tag">毕业季</text>
-        <text class="announce-title">跳蚤集市已开启</text>
+        <text class="announce-title">闲置交换开放中</text>
       </view>
-      <view class="announce-sub">校园闲置交易平台 低价买卖与无忧保障</view>
+      <view class="announce-sub">仅做信息展示 · 校内当面看货、当面结清</view>
     </view>
     <view class="announce-btn">去逛逛 ›</view>
   </view>
@@ -220,7 +220,7 @@
         </view>
       </block>
 
-      <!-- 我想说（表白墙）：匿名心事卡片 -->
+      <!-- 树洞闲谈：匿名心事卡片 -->
       <block wx:if="{{zone.type === 'wall'}}">
         <view class="zone-list">
           <view

@@ -1,0 +1,117 @@
+<view class="page">
+  <view class="doc-header">
+    <view class="doc-title">校聚一城 · 社区规范</view>
+    <view class="doc-meta">更新日期：2026-10-27 · 生效日期：2026-10-27</view>
+  </view>
+
+  <view class="doc-callout">
+    <text class="doc-callout-title">📋 一句话原则</text>
+    <text class="doc-callout-body">这里是同城校园同学交流的地方。发之前先问自己三句：这是真的吗？会不会伤到别人？会不会暴露别人的隐私？——三条都过了再发。</text>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">一、这个平台做什么</view>
+    <view class="doc-p">校聚一城是面向在校学生的校园信息发布与兴趣交流社区，可以：逛本校圈子、看同城各校动态、在学习答疑里互助、在社团招新里找组织、在树洞闲谈里匿名说说话、在闲置交换里把用不上的东西转给同学。</view>
+    <view class="doc-p">这里<strong>不是</strong>电商平台，<strong>不是</strong>交易平台，<strong>不是</strong>二手市场担保方，也<strong>不是</strong>交友相亲平台。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">二、绝对禁止的内容</view>
+    <view class="doc-list">
+      <view class="doc-li">🚫 违反法律法规、危害国家安全、破坏民族团结的内容；</view>
+      <view class="doc-li">🚫 色情低俗、性暗示、招嫖、裸聊、涉及未成年人的性相关内容；</view>
+      <view class="doc-li">🚫 赌博、毒品、枪支、管制刀具、邪教、迷信诈骗；</view>
+      <view class="doc-li">🚫 诈骗、刷单、兼职拉人头、校园贷、非法集资、代考代写、论文买卖；</view>
+      <view class="doc-li">🚫 人身攻击、辱骂、地域歧视、性别歧视、网络暴力、人肉搜索；</view>
+      <view class="doc-li">🚫 造谣传谣、编造突发事件、冒充学校官方发布通知；</view>
+      <view class="doc-li">🚫 暴露他人隐私：姓名、学号、身份证号、手机号、宿舍号、课表、照片、聊天记录；</view>
+      <view class="doc-li">🚫 侵犯知识产权：盗版教材、破解软件、盗录课程、未授权转载；</view>
+      <view class="doc-li">🚫 广告刷屏、站外引流、拉群、卖号、卖粉、卖流量。</view>
+    </view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">三、闲置交换规范</view>
+    <view class="doc-p">3.1 <strong>只做信息展示，不做线上交易。</strong>本平台没有下单、支付、担保、退款、物流功能，闲置物品一律在校内当面验货、当面结清。</view>
+    <view class="doc-p">3.2 <strong>禁止要求他人提前付款。</strong>包括付定金、付邮费、扫码付款、发红包、转账到个人账户、点击陌生链接付款、提供验证码等。发现即删帖，情节严重封号并保留移交线索的权利。</view>
+    <view class="doc-p">3.3 禁止发布：代购代付、代收代发、卡券回收、账号买卖、刷单返利、贷款垫资、先款后货、邮寄托运。</view>
+    <view class="doc-p">3.4 禁止发布违禁品：管制刀具、仿真枪、易燃易爆品、处方药、烟酒、宠物活体、作弊器材、盗抢物品、来历不明的电子产品。</view>
+    <view class="doc-p">3.5 描述要真实：成色、瑕疵、购买时间、是否拆修请如实填写，图片请用实拍，不要盗用网图。</view>
+    <view class="doc-p">3.6 面交建议：约在食堂、宿舍楼下、图书馆大厅等人多处；贵重物品约同学同行；当面验货再付款；不单独前往偏僻地点。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">四、树洞闲谈（匿名发布）规范</view>
+    <view class="doc-p">4.1 <strong>匿名只对前台生效。</strong>其他同学看不到你的昵称、头像和主页，但后台会留存发布记录，用于违规处置与配合公安机关依法调查。<strong>匿名不等于免责。</strong></view>
+    <view class="doc-p">4.2 允许：日常吐槽、心情记录、学习压力、生活琐事、对事不对人的建议。</view>
+    <view class="doc-p">4.3 禁止：</view>
+    <view class="doc-list">
+      <view class="doc-li">（1）指名道姓或可识别的攻击、影射、嘲讽特定个人；</view>
+      <view class="doc-li">（2）"捞人""扒皮""曝光"类内容，以及任何索要他人联系方式的行为；</view>
+      <view class="doc-li">（3）编造他人绯闻、传播未经证实的私生活信息；</view>
+      <view class="doc-li">（4）发布轻生、自伤、约架等危险内容（如你或他人正处于危险，请立即联系学校心理中心或拨打 110 / 12355）；</view>
+      <view class="doc-li">（5）以匿名形式进行性骚扰、示爱骚扰、跟踪骚扰。</view>
+    </view>
+    <view class="doc-p">4.4 若你是被匿名内容伤害的一方，请通过详情页「举报」提交证据，我们会核实处理；涉嫌侮辱诽谤的，可依法维权，我们会配合提供必要记录。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">五、发帖与评论规范</view>
+    <view class="doc-p">5.1 标题与正文应描述清楚、不夸大、不做标题党。禁止用"震惊""速看""紧急"等词制造恐慌。</view>
+    <view class="doc-p">5.2 转载他人内容请注明来源并取得授权；涉及个人信息的图片请先打码。</view>
+    <view class="doc-p">5.3 评论区禁止刷屏、引战、辱骂、恶意 @、反复发布相同内容。</view>
+    <view class="doc-p">5.4 禁止在帖子中留二维码、群号、站外链接引导他人离开本平台交易或加群。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">六、隐私与个人信息</view>
+    <view class="doc-p">6.1 不要发布自己或他人的学生证、身份证、校园卡、成绩单、宿舍门牌、车牌、快递单照片。</view>
+    <view class="doc-p">6.2 不要在公开内容里留手机号、微信号、QQ 号以外的敏感信息；需要联系请优先使用站内私信。</view>
+    <view class="doc-p">6.3 未经同意拍摄并发布他人肖像，属侵犯肖像权，请先征得对方同意。</view>
+    <view class="doc-p">6.4 更多数据处理规则见《隐私政策》。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">七、违规处理</view>
+    <view class="doc-table">
+      <view class="doc-tr doc-th">
+        <view class="doc-td">情节</view>
+        <view class="doc-td">处理方式</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">轻微（广告、重复刷屏、轻度不当用语）</view>
+        <view class="doc-td">内容下架 + 站内提醒</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">一般（人身攻击、曝光隐私、造谣）</view>
+        <view class="doc-td">删除内容 + 限制发布 7～30 天</view>
+      </view>
+      <view class="doc-tr">
+        <view class="doc-td">严重（诈骗、涉未成年人、色情、违禁品）</view>
+        <view class="doc-td">永久封禁 + 保留移交司法机关的权利</view>
+      </view>
+    </view>
+    <view class="doc-p">我们对涉嫌违法犯罪的内容，会主动向公安机关报告并提供必要记录。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">八、举报与申诉</view>
+    <view class="doc-p">8.1 帖子、树洞闲谈、闲置、评论、私信、用户主页均有「举报」入口，可选择色情低俗、诈骗信息、人身攻击、侵犯隐私等类型。</view>
+    <view class="doc-p">8.2 我们会在 7 个工作日内核实处理；紧急情况（人身安全、涉未成年人）会优先处置。</view>
+    <view class="doc-p">8.3 若你认为自己被误判，可通过邮件 {{contactEmail}} 申诉，附上内容截图与说明，我们将在 3 个工作日内复核。</view>
+  </view>
+
+  <view class="doc-section">
+    <view class="doc-h2">九、遇到诈骗怎么办</view>
+    <view class="doc-list">
+      <view class="doc-li">1️⃣ 立刻停止转账，不要再沟通；</view>
+      <view class="doc-li">2️⃣ 保存聊天记录、转账凭证、对方账号截图；</view>
+      <view class="doc-li">3️⃣ 拨打 96110 反诈专线或 110 报警；</view>
+      <view class="doc-li">4️⃣ 在平台内举报该用户与内容，我们会封禁并配合调查。</view>
+    </view>
+  </view>
+
+  <view class="doc-foot" bindtap="copyEmail">
+    <text>📧 规范申诉邮箱：{{contactEmail}}（点击复制）</text>
+  </view>
+</view>

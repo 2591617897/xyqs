@@ -13,6 +13,7 @@ Page({
     title: '',
     content: '',
     images: [],
+    agreed: false,
     submitting: false,
     loading: true
   },
@@ -66,6 +67,19 @@ Page({
     this.setData({ channelId: e.currentTarget.dataset.id })
   },
 
+  /** 规范与协议确认：UGC 发布前必须由用户主动勾选 */
+  toggleAgree: function () {
+    this.setData({ agreed: !this.data.agreed })
+  },
+
+  goRule: function () {
+    mp.navigateTo({ url: '/pages/legal/rule' })
+  },
+
+  goAgreement: function () {
+    mp.navigateTo({ url: '/pages/legal/agreement' })
+  },
+
   chooseImage: function () {
     const self = this
     const rest = 9 - this.data.images.length
@@ -105,6 +119,10 @@ Page({
     }
     if (!d.content.trim()) {
       toast('正文还没写呢')
+      return
+    }
+    if (!d.agreed) {
+      toast('请先勾选同意社区规范')
       return
     }
     if (this.data.submitting) return
