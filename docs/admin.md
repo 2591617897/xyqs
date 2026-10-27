@@ -37,6 +37,43 @@ admin-web  →  /api/admin/auth/login         网关放行（白名单）
 
 三层各管一段：**网关管身份、管类型；拦截器管权限点；Service 管数据范围**。
 
+### 找回密码（邮箱验证码）
+
+登录页「忘记密码？」→ 两步，两个接口都**免登录**（网关按 POST + 完整路径精确放行）：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/admin/auth/find-password/code` | body `{username}`，发 6 位验证码，回显脱敏邮箱 |
+| POST | `/api/admin/auth/find-password/reset` | body `{username, code, newPassword}`，校验通过即改密 |
+
+请求链路：
+
+```
+admin-web → 网关(放行) → campus-admin：验证码 BCrypt 落库 + 投 MQ
+        → campus.mail.send → campus-mail(:8109)：渲染模板 + SMTP 发送
+        → t_mail_log（status=1 成功 / 2 失败；失败重试 3 次后进 campus.mail.dlq）
+```
+
+**收件地址只取 `t_admin_user.email`，前端不能指定**——否则这两个免登录接口就等于
+「任意邮箱收码 + 任意账号改密」。验证码也只在邮件里有明文，库里是 BCrypt。
+
+限流（`campus.admin.reset-pwd.*` 可配）：
+
+| 规则 | 默认值 | 作用 |
+| --- | --- | --- |
+| 有效期 | 10 分钟 | 过期即作废 |
+| 试错次数 | 5 次 | 超了作废，必须重新获取 |
+| 重发冷却 | 60 秒 | 同一账号 |
+| 单账号 24h | 5 次 | 防邮件轰炸 |
+| 单 IP 1h | 20 次 | 防枚举账号（账号不存在也计数） |
+
+重置成功后：密码写入 BCrypt、`fail_count=0`、`locked_until=NULL`（**顺手解锁**，
+被锁 15 分钟的人正是最需要这条通道的）、`token_version+1`（所有旧令牌失效）、
+`must_change_pwd=0`。
+
+> 账号没绑邮箱走不了这条通道，会明确提示「该账号未绑定邮箱，请联系超级管理员」。
+> 绑邮箱的位置：**系统管理 → 管理员 → 编辑 → 邮箱**。
+
 ## 三、数据权限（DataScope）
 
 | dataScope | 含义 | 行为 |

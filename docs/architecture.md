@@ -48,6 +48,30 @@ campus-gateway :8888      ← Spring Cloud Gateway：路由 + JWT 鉴权 + 注�
 > 生产环境建议接入「学信网/校方统一身份」接口或人工审核台；本项目用 `campus.verify.auto-approve=true`
 > 在本地直接置为已认证，方便联调。
 
+## 3. 邮件服务与消息队列
+
+邮件是**基础设施能力**，不该散落在各业务服务里——否则 SMTP 凭据会被复制到每个服务，
+邮件版式也会随人肉复制漂移成好几种。因此单独拆出 `campus-mail :8109`：
+
+```
+任一业务服务 ──publish──▶ campus.mail (direct)
+                              └─ mail.send ──▶ campus.mail.send
+                                                 └─ campus-mail 消费 → 渲染模板 → SMTP
+                                                      失败重试 3 次 → campus.mail.dlq
+```
+
+| 约定 | 内容 |
+| --- | --- |
+| 消息体 | `campus-common` 的 `MailMessage`：`{requestId, to, template, params, bizType, bizId}`，**不含 HTML** |
+| 队列名 | `campus-common` 的 `MailQueues` 常量，生产方与消费方共用，避免拼错后消息静默丢失 |
+| 模板 | `MailTemplates` 只放编码，正文由 `campus-mail` 的 `MailTemplateRegistry` 生成 |
+| 幂等 | `t_mail_log.request_id` 唯一索引；MQ 至少一次投递，重复消息直接跳过 |
+| 失败 | 消费者异常向上抛，交 AMQP 重试；**绝不 catch 掉**——否则 MQ 认为已消费，邮件静默丢失 |
+| 观测 | `t_mail_log` 是「到底发出去没有」的唯一事实来源，可用 `GET /internal/mail/logs/{requestId}` 查 |
+
+队列拓扑在**生产端与消费端各声明一份**（参数必须逐字一致）：生产端声明是为了避免
+「消息发到还不存在的 exchange 上，AMQP 不报错、消息直接消失」。
+
 ## 4. 扩展方向
 
 - **搜索**：商品/帖子接入 Elasticsearch，关键词与同义词（如「显示器」≈「屏幕」）

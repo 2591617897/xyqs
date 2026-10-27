@@ -47,7 +47,7 @@
 
   <view class="empty-box" wx:elif="{{!shown.length}}">
     <text class="empty-ico">📝</text>
-    <view class="empty-txt">{{tab === 'all' ? '还没有任何动态' : (tab === 'post' ? '还没有发过帖子' : '还没有发过树洞')}}</view>
+    <view class="empty-txt">{{emptyTitle}}</view>
     <view class="empty-tip">去首页发一条帖子，或者在树洞匿名说句心里话～</view>
   </view>
 

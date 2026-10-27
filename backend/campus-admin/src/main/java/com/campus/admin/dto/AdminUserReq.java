@@ -18,7 +18,14 @@ public class AdminUserReq {
     @Size(min = 4, max = 32, message = "账号长度需在 4-32 之间")
     private String username;
 
-    @Size(min = 8, max = 64, message = "密码长度需在 8-64 之间")
+    /**
+     * 编辑场景允许留空（表示不修改），所以这里不能用 {@code @Size(min = 8)}：
+     * {@code @Size} 只放过 null，前端传空串 "" 会被判成「长度不足 8」，
+     * 请求在进 Service 之前就被 400 拦掉，根本走不到「留空不修改」的分支。
+     * 用 @Pattern 显式把空串和 8-64 位都放行，真正的强度校验交给
+     * {@code AdminPasswordUtil#checkStrength}。
+     */
+    @Pattern(regexp = "^$|^[\\s\\S]{8,64}$", message = "密码长度需在 8-64 之间")
     private String password;
 
     @Size(max = 32, message = "姓名不超过 32 字")

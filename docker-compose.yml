@@ -47,7 +47,25 @@ services:
     volumes:
       - campus-nacos-data:/home/nacos/data
 
+  # 邮件服务（campus-mail）依赖。本机若已单独装 RabbitMQ 可不起这个容器。
+  # guest 账号只允许从容器内 localhost 连接，所以这里另建账号：
+  # 用本 compose 起 MQ 时，后端需配 RABBITMQ_USER/RABBITMQ_PASSWORD 为下面的值。
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: campus-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: campus
+      RABBITMQ_DEFAULT_PASS: "campus123"
+      TZ: Asia/Shanghai
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - campus-rabbitmq-data:/var/lib/rabbitmq
+
 volumes:
   campus-mysql-data:
   campus-redis-data:
   campus-nacos-data:
+  campus-rabbitmq-data:

@@ -17,6 +17,8 @@ spring:
       max-file-size: 20MB
       max-request-size: 20MB
   # 找回密码走 MQ：本服务只投递消息，SMTP 凭据和邮件正文都归 campus-mail。
+  # 本机安装版默认 guest/guest；用根目录 docker-compose.yml 起的 MQ 请配
+  # RABBITMQ_USER=campus / RABBITMQ_PASSWORD=campus123
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}

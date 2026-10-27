@@ -354,12 +354,24 @@ Page({
     mp.navigateTo({ url: '/subpackages/me/dynamic/index' })
   },
 
-  openOrders: function () {
+  /**
+   * 面交意向弹层。
+   *
+   * data-role 指定打开哪个分支：
+   *   buyer（默认）→「我想约的」，对应「我买到的」
+   *   seller       →「同学想约我的」，对应「意向单」（待我确认的意向）
+   * 每次都显式写 orderRole：否则弹层会留着上一次点开的分支，「我买到的」可能打开卖家列表。
+   */
+  openOrders: function (e) {
     if (!this.guard()) return
+    const d = (e && e.currentTarget && e.currentTarget.dataset) || {}
     // 自定义 tabBar 是独立渲染层，页面里的 z-index 压不住它 → 必须显式隐藏，
     // 否则弹层底部（意向单列表最后一行 / 安全区留白）会被底栏和中间发布钮盖住。
     this.toggleTabBar(true)
-    this.setData({ showOrders: true })
+    this.setData({
+      showOrders: true,
+      orderRole: d.role === 'seller' ? 'seller' : 'buyer'
+    })
   },
 
   closeOrders: function () {
@@ -371,19 +383,35 @@ Page({
     this.setData({ orderRole: e.currentTarget.dataset.role })
   },
 
-  goPublish: function () {
+  /**
+   * 「我的动态」入口（社交互动区共用）。
+   *
+   * data-tab / data-cat 决定落到哪个分段：
+   *   不传            → 全部（帖子 + 树洞）
+   *   tab=wall        → 树洞分段
+   *   tab=wall&cat=love → 树洞里再筛出「表白」分类
+   * 分类走本地过滤（零请求切换），cat 只对树洞生效 —— 帖子没有 category 字段。
+   */
+  goSocial: function (e) {
     if (!this.guard()) return
-    auth.ensureVerified().then(function () {
-      mp.navigateTo({ url: '/pages/goods/publish' })
-    }).catch(function () {})
+    const d = (e && e.currentTarget && e.currentTarget.dataset) || {}
+    const qs = []
+    if (d.tab === 'wall') qs.push('tab=wall')
+    if (d.cat) qs.push('cat=' + d.cat)
+    mp.navigateTo({
+      url: '/subpackages/me/dynamic/index' + (qs.length ? '?' + qs.join('&') : '')
+    })
   },
 
-  /** 私信（已是 tab 页，走 switchTab） */
   /**
    * 「消息通知与隐私权限」入口。
    *
    * 消息页顶栏原本有个「设置」按钮，已按产品要求下沉到这里 ——
    * 消息页只留会话列表与筛选，设置类入口统一在「我的」里找。
+   *
+   * ⚠️ 只服务这一个入口：社交互动区那三个（校园回声 / 表白 / 树洞）走 goSocial。
+   *    2026-10-27 第二十一轮把 switchTab 改 navigateTo 时，三者共用一个函数被一起带跑，
+   *    点「树洞秘语」却进消息设置页，就是这么来的。
    */
   goMessages: function () {
     mp.navigateTo({ url: '/subpackages/msg/settings/index' })

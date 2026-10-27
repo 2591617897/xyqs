@@ -2,7 +2,7 @@
 
 ## 环境 / 构建
 - 库 guizhou_campus_fun/root/123456；Nacos8848、网关8888（唯一入口，前缀 `/api`）
-- 端口：auth8101 user8102 goods8103 wall8104 post8105 message8106 admin8107 promote8108
+- 端口：auth8101 user8102 goods8103 wall8104 post8105 message8106 admin8107 promote8108 mail8109
 - 线上 `https://campus-api.trkcwl.com`（`ACTIVE_ENV='prod'`）；上域名必须 `UPLOAD_BASE_URL`，上传目录必须绝对路径
 - 上传 404：`curl -D -` 见 `200+code:404` = 写 A 读 B（相对路径/多实例）
 - ⚠️ 上传大小三层会互相掩盖：**admin 的 `spring.servlet.multipart`（默认仅 1MB）→ 业务 `max-size`（5MB）→ 网关 codec 8MB**；报「图片太大」先查 multipart
@@ -68,6 +68,22 @@
 - 新增投放位：`AdSlotCatalog#ALL` 加一行（含 defaultSize）+ 小程序接 `<ad-banner code="..." />` + `preloadRule` 视情况，三处缺一就会出现「上架了但不展示」
 - 后台素材页按规格校验素材比例（>12% 偏差提醒，不拦截）
 
+## 邮件服务（campus-mail 8109 + RabbitMQ）
+- **业务服务不碰 SMTP、不拼邮件 HTML**：只投 `MailMessage{requestId,to,template,params,bizType,bizId}` 到 `campus.mail` / `mail.send`；正文与凭据全归 mail 服务
+- 契约在 `campus-common/mail/`（`MailQueues` 队列名 + `MailTemplates` 模板编码 + `MailMessage`），**禁止各服务自己写字符串**
+- 消费失败必须**向上抛**（AMQP 重试 3 次 → `campus.mail.dlq`）；catch 掉＝MQ 认为成功＝邮件静默丢失
+- 幂等靠 `t_mail_log.request_id` 唯一索引；`status` 1 成功 / 2 失败；`GET /internal/mail/logs/{requestId}` 查结果
+- ⚠️ **队列拓扑生产端和消费端各声明一份**（参数逐字一致，含 DLX），只让消费端声明会导致「生产端先启动→消息发到不存在的 exchange→静默消失」
+- ⚠️ **`scanBasePackages` 不能写 `"com.campus"`**：会扫到 common 的 `SecurityGuard`，它构造依赖 Feign 的 `SecurityClient` → 服务起不来。只挑 `com.campus.common.{config,exception,mybatis}`
+- ⚠️ **网关放行 ≠ 服务内放行**：`AdminSecurityConfig#excludePathPatterns` 必须同步加路径，否则网关放过去了、admin 拦截器又 401
+- 本机 RabbitMQ 是安装版 guest/guest（15672 管理台）；`docker-compose.yml` 里的容器用 campus/campus123（guest 只允许容器内 localhost）
+
+## 后台找回密码（邮箱验证码）
+- `/auth/find-password/{code,reset}` 两条免登录；**收件邮箱只取 `t_admin_user.email`，前端不能传**（否则＝任意邮箱收码 + 任意账号改密）
+- 验证码 6 位、BCrypt 存 `t_admin_pwd_reset`、10 分钟；限流 60s 冷却 / 单账号 24h 5 次 / 单 IP 1h 20 次 / 试错 5 次
+- 重置成功**顺手解锁**：`fail_count=0` + `locked_until=NULL` + `token_version+1` + `must_change_pwd=0`（被锁 15 分钟的人正是最需要这条通道的）
+- 账号必须先在「系统管理→管理员→编辑→邮箱」绑邮箱，否则提示去联系超管（当前 admin 账号 email 为 NULL）
+
 ## 推广（8108）
 - `/api/promote/**` 全部要登录；链路 quota→issue→播广告→complete→(cancel)，单次 100 分、7 天线性衰减
 - 防刷 nonce + 最短 15s + 日上限；`PROMOTE_MOCK_AD` 生产必须 false；时间窗口一律 `Duration.toMillis()`
@@ -86,3 +102,4 @@
 > 后台见 **`NOTES-admin.md`**（网关分层、独立 JWT、el-pagination total 必须 Number）
 - `check-miniprogram`（23+12 页）/ `mock` / `home-zones` / `content-security` / `message-notify`（**跑完清演示数据**）
 - `db-schema-check.js`：实体↔库直连比对，唯一能拦住「迁移写了没执行」
+- ⚠️ **「留空表示不修改」的字段禁止用 `@Size`**：`@Size` 只放过 `null`，空串 `""` 会被判长度不足 → 400「密码长度需在 8-64 之间」，请求在 Service 之前就被拦掉（`AdminUserReq.password` 已改 `@Pattern(regexp="^$|^[\\s\\S]{8,64}$")`）。前端配套：提交前 `delete payload.password`，编辑态 validator 留空直接放行

@@ -24,6 +24,8 @@ spring:
       keepalive-time: 300000
       connection-test-query: SELECT 1
   rabbitmq:
+    # 本机安装版默认 guest/guest（guest 仅允许本机连接）；
+    # 用根目录 docker-compose.yml 起的 MQ 请配 RABBITMQ_USER=campus / RABBITMQ_PASSWORD=campus123
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}

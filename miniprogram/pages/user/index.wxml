@@ -107,7 +107,7 @@
         <view class="grid-label">我的闲置</view>
         <view class="grid-sub">{{user.activeCount || 0}} 件</view>
       </view>
-      <view class="grid-item" hover-class="tap-scale" bindtap="openOrders">
+      <view class="grid-item" hover-class="tap-scale" bindtap="openOrders" data-role="seller">
         <view class="grid-icon gi-blue">✉️</view>
         <view class="grid-label">意向单</view>
         <view class="grid-sub">{{user.intentCount || 0}} 单</view>
@@ -121,17 +121,17 @@
       <view class="section-bar pink"></view>
       <text class="section-title">社交互动</text>
       <view class="flex1"></view>
-      <text class="section-more" hover-class="scale-down" bindtap="goMessages">校园回声 ›</text>
+      <text class="section-more" hover-class="scale-down" bindtap="goSocial">校园回声 ›</text>
     </view>
     <view class="grid2">
-      <view class="g2-item" hover-class="tap-scale" bindtap="goMessages">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goSocial" data-tab="wall" data-cat="love">
         <view class="g2-icon gi-pink">💗</view>
         <view class="g2-main">
           <view class="g2-title">发起的表白</view>
           <view class="g2-sub">{{user.confessionCount || 0}} 条表白</view>
         </view>
       </view>
-      <view class="g2-item" hover-class="tap-scale" bindtap="goMessages">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goSocial" data-tab="wall" data-cat="tree">
         <view class="g2-icon gi-teal">💬</view>
         <view class="g2-main">
           <view class="g2-title">树洞秘语</view>

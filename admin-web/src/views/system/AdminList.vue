@@ -69,13 +69,16 @@
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password" show-password
-                    :placeholder="editing ? '留空表示不修改' : '至少 8 位'" />
+                    :placeholder="editing ? '留空表示不修改' : '8-64 位，含大小写/数字/符号至少三类'" />
         </el-form-item>
         <el-form-item label="姓名" prop="realName">
           <el-input v-model="form.realName" />
         </el-form-item>
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="form.phone" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="form.email" placeholder="用于邮箱找回密码，留空则只能由超管重置" />
         </el-form-item>
         <el-form-item label="数据权限" prop="dataScope">
           <el-radio-group v-model="form.dataScope">
@@ -104,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import SearchForm from '@/components/SearchForm.vue'
@@ -123,11 +126,36 @@ const submitting = ref(false)
 const editing = ref(null)
 const formRef = ref()
 const form = reactive({
-  username: '', password: '', realName: '', phone: '',
+  username: '', password: '', realName: '', phone: '', email: '',
   dataScope: 1, status: 1, roleIds: []
 })
+// 密码：新建必填；编辑时留空＝不修改，只在填了内容时才校验格式与强度
+function validatePassword (rule, value, callback) {
+  const raw = value == null ? '' : String(value)
+  if (!raw.trim()) {
+    return editing.value ? callback() : callback(new Error('请输入初始密码'))
+  }
+  if (raw.length < 8 || raw.length > 64) {
+    return callback(new Error('密码长度需在 8-64 之间'))
+  }
+  if (form.username && raw.toLowerCase().includes(String(form.username).toLowerCase())) {
+    return callback(new Error('密码不能包含账号名'))
+  }
+  let kinds = 0
+  if (/[a-z]/.test(raw)) kinds++
+  if (/[A-Z]/.test(raw)) kinds++
+  if (/\d/.test(raw)) kinds++
+  if (/[^A-Za-z0-9]/.test(raw)) kinds++
+  if (kinds < 3) {
+    return callback(new Error('密码需包含大写字母、小写字母、数字、符号中的至少三类'))
+  }
+  callback()
+}
+
 const rules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  password: [{ validator: validatePassword, trigger: 'blur' }],
+  email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
   roleIds: [{ required: true, message: '请至少选择一个角色', trigger: 'change' }]
 }
 
@@ -174,8 +202,9 @@ function roleNames (row) {
 
 function openCreate () {
   editing.value = null
-  Object.assign(form, { username: '', password: '', realName: '', phone: '', dataScope: 1, status: 1, roleIds: [] })
+  Object.assign(form, { username: '', password: '', realName: '', phone: '', email: '', dataScope: 1, status: 1, roleIds: [] })
   dialogVisible.value = true
+  nextTick(() => formRef.value && formRef.value.clearValidate())
 }
 
 async function openEdit (row) {
@@ -183,9 +212,10 @@ async function openEdit (row) {
   const detail = await adminApi.detail(row.id)
   Object.assign(form, {
     username: detail.username, password: '', realName: detail.realName, phone: detail.phone,
-    dataScope: detail.dataScope, status: detail.status, roleIds: detail.roleIds || []
+    email: detail.email || '', dataScope: detail.dataScope, status: detail.status, roleIds: detail.roleIds || []
   })
   dialogVisible.value = true
+  nextTick(() => formRef.value && formRef.value.clearValidate())
 }
 
 function onDialogClosed () {
@@ -197,10 +227,13 @@ async function submit () {
   if (!valid) return
   submitting.value = true
   try {
+    // 编辑时密码留空表示「不修改」，不要把空串发给后端
+    const payload = { ...form }
+    if (!String(payload.password || '').trim()) delete payload.password
     if (editing.value) {
-      await adminApi.update(editing.value.id, { ...form })
+      await adminApi.update(editing.value.id, payload)
     } else {
-      await adminApi.create({ ...form })
+      await adminApi.create(payload)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false

@@ -21,6 +21,12 @@ public class AdminSecurityConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminAuthInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/auth/login", "/error", "/actuator/**");
+                // 免登录的只有三条：登录 + 找回密码的两步。
+                // 它们由网关按「POST + 完整路径」精确放行（AuthGlobalFilter#ADMIN_PUBLIC_POST），
+                // 这里同步排除，否则请求进了服务也会被拦成 401。
+                .excludePathPatterns("/auth/login",
+                        "/auth/find-password/code",
+                        "/auth/find-password/reset",
+                        "/error", "/actuator/**");
     }
 }

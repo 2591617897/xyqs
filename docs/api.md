@@ -161,6 +161,26 @@
 | POST | `/internal/admin/users/{id}/mute` | campus-user：刷禁言投影 `mute_until`，传 null 表示解除 |
 | POST | `/internal/admin/users/{id}/verify` | campus-user：实名审核结论（2通过 3驳回，驳回必填原因） |
 | POST | `/internal/admin/messages/{id}/delete` | campus-message：后台删违规消息（软删 `deleted=1`，幂等） |
+| POST | `/internal/mail/send` | campus-mail：同步发信，SMTP 失败直接报错；body `{to, template, params, bizType?, bizId?, requestId?}` |
+| POST | `/internal/mail/queue` | campus-mail：投 MQ 立即返回（不关心发信时延用这个） |
+| GET | `/internal/mail/logs/{requestId}` | campus-mail：查这封信到底发出去没有（`status` 1 成功 / 2 失败） |
+
+> `/internal/mail/**` 可配 `MAIL_INTERNAL_TOKEN`：置空不校验（本机），生产建议配上并在请求头带 `X-Internal-Token`。
+
+## 邮件服务（campus-mail 8109）
+
+业务服务**不持有 SMTP 凭据、也不拼邮件正文**，只发一条消息：
+
+```json
+{ "to": "a@b.com", "template": "ADMIN_RESET_CODE",
+  "params": {"username":"admin","code":"123456","expireMinutes":"10"},
+  "bizType": "ADMIN_RESET_CODE", "bizId": "900000000000000001" }
+```
+
+- 队列：`campus.mail`（direct）/ `mail.send` → `campus.mail.send`；失败重试 3 次后进 `campus.mail.dlq`
+- 模板编码见 `campus-common` 的 `MailTemplates`；正文排版在 `campus-mail` 的 `MailTemplateRegistry`
+- 发信结果落在 `t_mail_log`（`request_id` 唯一索引 = 消费幂等键）
+- 新增一种邮件＝`MailTemplates` 加常量 + `MailTemplateRegistry` 加一个 case，消息结构不变
 
 > 这一组 `/internal/admin/**` 由 campus-admin 调用，**不经过网关**，走 Nacos 内直连。
 > 调用失败时 campus-admin 会降级为自己直写同一张表，最终结果一致。
@@ -174,6 +194,7 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | POST | `/api/admin/auth/login` | 🔓 管理员登录，默认 `admin` / `admin123` |
+| POST | `/api/admin/auth/find-password/code` `/reset` | 🔓 邮箱找回密码：发验证码 / 重置密码。收件邮箱只取 `t_admin_user.email`，前端不能指定 |
 | GET | `/api/admin/auth/info` `/auth/menus` | 当前管理员信息与可见菜单 |
 | GET | `/api/admin/content/**` | 内容管理：帖子 / 表白墙 / 商品 / 评论 / 处置流水 |
 | GET | `/api/admin/users/**` | 用户管理：列表、封禁、禁言、黑名单、实名审核 |
