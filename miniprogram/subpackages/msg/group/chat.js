@@ -394,6 +394,14 @@ Page({
     if (incoming.clientMsgId) {
       for (let i = list.length - 1; i >= 0; i--) {
         if (list[i].clientMsgId && list[i].clientMsgId === incoming.clientMsgId) {
+          const local = list[i]
+          // 兜底：服务端快照偶发为空（旧包未部署引用逻辑 / 瞬时抖动），
+          // 本地乐观消息已带引用信息，直接沿用，避免回显后引用块凭空消失。
+          if (!incoming.replyToName && local.replyToName) {
+            incoming.replyToId = incoming.replyToId || local.replyToId
+            incoming.replyToName = local.replyToName
+            incoming.replyToText = incoming.replyToText || local.replyToText
+          }
           list[i] = incoming
           this.setData({ msgs: list, scrollInto: 'm-last' })
           this.reportRead()
@@ -504,7 +512,10 @@ Page({
       return
     }
     const clientMsgId = genId()
-    const reply = this.data.replyTo
+    let reply = this.data.replyTo
+    // 兜底：万一引用了一跳还没上服务器的本地消息（id 形如 local-xxxx），
+    // 服务端取不到快照会让引用块回显后消失 —— 直接当作普通发言发出去。
+    if (reply && String(reply.id).indexOf('local-') === 0) reply = null
     // ★ 必须先把 atUserIds 取出来再清 atUsers：
     //   之前是先 setData({atUsers: []}) 再 map，取到的永远是空数组，
     //   表现就是「@ 了人但对方收不到提醒」（t_group_mention 也不落库）。
@@ -643,7 +654,11 @@ Page({
     if (!m) return
 
     const actions = []
-    if (!m.deleted) actions.push({ key: 'reply', label: '回复' })
+    // 本地乐观消息（id 形如 local-xxxx）还在「发送中」、没上服务器，
+    // 引用它毫无意义：服务端解析不出真实消息 id，取不到快照，
+    // 回显后引用块会凭空消失。所以本地消息不给「回复」入口。
+    const isLocal = m.id && String(m.id).indexOf('local-') === 0
+    if (!m.deleted && !isLocal) actions.push({ key: 'reply', label: '回复' })
     if (this.canRecall(m)) actions.push({ key: 'recall', label: '撤回' })
     if (!m.deleted && m.type === 'text' && m.content) actions.push({ key: 'copy', label: '复制' })
     if (!m.deleted && !m.mine) actions.push({ key: 'report', label: '举报' })
@@ -726,6 +741,12 @@ Page({
 
   /** 引用某条消息：只记 id + 展示用文案，真正发出去时服务端重新取快照 */
   replyToMsg: function (m) {
+    // 本地乐观消息（id 形如 local-xxxx）还在发送中、没上服务器，不能引用：
+    // 服务端解析不出真实消息 id，取不到快照，回显后引用块会消失。
+    if (!m || !m.id || String(m.id).indexOf('local-') === 0) {
+      toast('消息还在发送中，稍后会自动刷新，请过两秒再回复')
+      return
+    }
     this.setData({
       replyTo: {
         id: String(m.id),
