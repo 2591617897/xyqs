@@ -24,6 +24,80 @@
   margin-top: 56rpx;
 }
 
+/* 已认证卡片里的「认证学校 / 认证方式」 */
+.done-info {
+  margin: 40rpx auto 0;
+  padding: 20rpx 28rpx;
+  width: 100%;
+  box-sizing: border-box;
+  background: #F7F8FA;
+  border-radius: 18rpx;
+}
+.di-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  font-size: 25rpx;
+}
+.di-row + .di-row {
+  border-top: 1rpx solid #EFF1F5;
+}
+.di-k {
+  color: #8A8F99;
+}
+.di-v {
+  color: #2D2D2D;
+  font-weight: 500;
+  max-width: 60%;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 「毕业/换校了？重新认证」——做成文字链，不抢主按钮的视线 */
+.done-relink {
+  margin-top: 36rpx;
+  font-size: 25rpx;
+  color: #E8925E;
+}
+
+/* 驳回原因 / 重认证提示条 */
+.hint {
+  border-radius: 18rpx;
+  padding: 22rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+.hint-warn {
+  background: #FFF6F0;
+  border: 1rpx solid #FBE0CF;
+}
+.hint-info {
+  background: #F2F7FF;
+  border: 1rpx solid #D8E5F8;
+}
+.hint-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.hint-warn .hint-title {
+  color: #C2571B;
+}
+.hint-info .hint-title {
+  color: #2A5D9F;
+}
+.hint-text {
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: #6B7280;
+}
+.hint-link {
+  margin-top: 14rpx;
+  font-size: 23rpx;
+  color: #2A5D9F;
+}
+
 /* 说明 */
 .intro {
   background: #f0faf8;
@@ -271,4 +345,23 @@
   text-align: center;
   font-size: 25rpx;
   color: #0E9A60;
+}
+
+/* 注销入口：弱化成文字链，不与「提交认证 / 开始逛逛」抢视线，也降低误触 */
+.danger-zone {
+  margin-top: 64rpx;
+  text-align: center;
+}
+.dz-link {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  font-size: 26rpx;
+  color: #A9AEB6;
+}
+.dz-note {
+  margin-top: 4rpx;
+  padding: 0 48rpx;
+  font-size: 21rpx;
+  line-height: 1.7;
+  color: #C4C8CF;
 }

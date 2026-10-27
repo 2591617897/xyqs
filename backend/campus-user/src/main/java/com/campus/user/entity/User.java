@@ -87,6 +87,15 @@ public class User {
     /** 微信学生认证通过时间。微信侧毕业到期会解绑，这里只是我方通过时间 */
     private LocalDateTime wxStudentVerifyAt;
 
+    /**
+     * 最近一次提交认证的时间（首次提交与重认证都会写）。
+     *
+     * <p>只服务于「重认证冷却」：已认证用户想换学校 / 换材料时，两次提交之间
+     * 必须间隔若干天，否则可以把认证当成「选校开关」反复刷，绕过同校区隔。
+     * 用 {@code updated_at} 顶替不行——改昵称、换头像都会刷新它。
+     */
+    private LocalDateTime verifySubmitAt;
+
     /** 学生证 / 校园卡照片地址。认证材料，仅本人与后台可见 */
     private String verifyImg;
 
@@ -109,6 +118,30 @@ public class User {
      * —— 真正的禁言记录是 t_user_mute。NULL 表示未禁言。
      */
     private LocalDateTime muteUntil;
+
+    /**
+     * 注销申请时间；NULL = 正常账号。
+     *
+     * <p>刻意不复用 {@link #status}：那是「后台封禁」，解封流程与注销恢复完全不同，
+     * 混用会让运营点一下「解封」就把注销账号放回来。注销期间账号不可用，
+     * 但数据保留——满保留期（默认 365 天）才由定时任务清理个人信息。
+     */
+    private LocalDateTime cancelledAt;
+
+    /**
+     * 注销前的昵称。注销时昵称会被改成「已注销用户」让内容区显示为已注销，
+     * 保留期内重新登录恢复账号时用它还原；满保留期清理时一并删除。
+     */
+    private String cancelNicknameBak;
+
+    /** 注销前头像，恢复时还原（注销期间置空，避免用头像把人认出来） */
+    private String cancelAvatarBak;
+
+    /** 注销前个人简介，恢复时还原 */
+    private String cancelBioBak;
+
+    /** 个人信息清理完成时间（满保留期后）。NULL = 尚未清理；清理后 openid 会被占位替换，无法再恢复 */
+    private LocalDateTime purgedAt;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

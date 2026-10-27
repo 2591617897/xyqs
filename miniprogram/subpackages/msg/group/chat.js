@@ -1,5 +1,6 @@
 const http = require('../../../utils/request')
 const ws = require('../utils/ws')
+const upload = require('../../../utils/upload')
 const { mp, toast } = require('../../../utils/util')
 
 /** 轮询兜底间隔：WebSocket 降级后每 8 秒拉一次增量 */
@@ -8,6 +9,13 @@ const POLL_MS = 8000
 const RECALL_MS = 2 * 60 * 1000
 /** 单条消息最多 @ 的人数：与后端 GroupService.MAX_AT_USER 对齐 */
 const MAX_AT = 10
+/**
+ * 时间分隔条的聚合间隔（毫秒）。
+ *
+ * <p>QQ / 微信都不是「每条消息下面挂一个时间」，而是相隔够久才插一条居中的时间：
+ * 5 分钟内连续聊天不重复打扰，超过 5 分钟给用户一个「换了一段对话」的锚点。
+ */
+const TIME_GAP_MS = 5 * 60 * 1000
 
 /**
  * 表情面板数据。
@@ -98,6 +106,8 @@ Page({
     msgPadBottom: 0,
     /** 上滑看历史时显示「回到底部」浮层按钮 */
     showToBottom: false,
+    /** 上滑期间新到的消息数：只做角标提示，不打断用户看历史（QQ 同款） */
+    unread: 0,
     loading: true,
     /** 我是否已确认群规（确认后才允许发第一条） */
     needAgree: false
@@ -111,6 +121,9 @@ Page({
     // 屏幕换算：px↔rpx，以及消息区可视高度（用于「回到底部」按钮显隐判定）
     this._px2rpx = 750 / (info.windowWidth || 375)
     this._scrollH = (info.windowHeight || 700) - 140
+    // 图片尺寸缓存 / 在途标记：同一张图只量一次，滚动回来看历史不重复请求
+    this._sizeCache = {}
+    this._sizing = {}
     let capsuleGap = 96
     try {
       const rect = mp.getMenuButtonBoundingClientRect()
@@ -176,6 +189,11 @@ Page({
       clearTimeout(this._atTimer)
       this._atTimer = null
     }
+    // 图片尺寸的合并定时器同理（E-09：销毁时必须清干净）
+    if (this._sizeTimer) {
+      clearTimeout(this._sizeTimer)
+      this._sizeTimer = null
+    }
     // 先注销回调再断连：不注销的话页面销毁后闭包还挂在 ws 模块上，
     // 下次进群会收到两份回调（同一条消息渲染两次），并且内存不释放（E-09）
     this.unbindWs()
@@ -213,6 +231,8 @@ Page({
       self.bindWs()
       ws.connect()
       self.reportRead()
+      // 历史消息里的图片没有宽高，进页面量一轮（同 URL 有缓存）
+      self.resolveImageSizes()
     })
   },
 
@@ -379,12 +399,19 @@ Page({
         replyToId: m.replyToId ? String(m.replyToId) : '',
         replyToName: m.replyToName || '',
         replyToText: m.replyToText || '',
+        // 引用块里的时间：服务端快照只有 name/text，时间由 relayoutAll 按
+        // replyToId 回查被引用消息补上（QQ 的引用卡片是「昵称 + 时间 + 展开箭头」）
+        replyToTime: m.replyToTime || '',
         deleted: m.deleted || 0,
         // 1 本人撤回 / 2 管理员删除：文案不同，所以不能只看 deleted
         deletedBy: m.deletedBy || 0,
         recalled: Number(m.deletedBy) === 1,
         createdAt: m.createdAt || '',
         timeText: shortTime(m.createdAt),
+        // 图片消息：imgW/imgH 由 getImageInfo 算（服务端只存 URL，不知道宽高）
+        imgW: 0,
+        imgH: 0,
+        uploading: false,
         mine: mine,
         pending: false,
         failed: false
@@ -393,13 +420,47 @@ Page({
   },
 
   /**
-   * 消息布局重排（保留接口：历史调用点都走这里，便于后续扩展）。
+   * 消息布局重排 —— 所有「msgs 变了」的地方都走这里，统一算两件事：
    *
-   * <p>原「同一人连续发言自动合并 / 居中时间分割线」需求已取消，
-   * 这里直接原样返回，每条消息独立显示头像与昵称。
+   * <p>1. **时间分隔条**：与上一条间隔 ≥5 分钟（或第一条）才给 showTime，
+   *    文案按「今天 HH:mm / 昨天 HH:mm / 前天 HH:mm / M月D日 HH:mm」分级。
+   *    时间不再挂在每条气泡下面 —— QQ 就是这么做的，一屏里少十几个灰点，干净的。
+   *
+   * <p>2. **引用块时间**：服务端快照只存 replyToName / replyToText，没有时间。
+   *    被引用的消息通常就在当前列表里，按 replyToId 回查一下就能补上，
+   *    不用为这个字段改表、改接口（聊天记录只留最近 200 条，回查命中率很高）。
+   *
+   * <p>本地乐观消息 createdAt 为空，parseTime 返回 0：既不显示分隔条，
+   * 也不能污染 lastTs（否则下一条真实消息会算错间隔）。
    */
   relayoutAll: function (arr) {
-    return arr
+    if (!arr || !arr.length) return arr || []
+    const byId = {}
+    arr.forEach(function (m) {
+      if (m && m.id) byId[String(m.id)] = m
+    })
+
+    let lastTs = 0
+    return arr.map(function (m) {
+      const ts = parseTime(m.createdAt)
+      let showTime = false
+      // ts 为 0（本地发送中 / 时间串异常）时既不出分隔条，也不动 lastTs，
+      // 否则后续真实消息的间隔会被算成「跟 0 比」，全都显示分隔条
+      if (ts) {
+        if (!lastTs || ts - lastTs >= TIME_GAP_MS) showTime = true
+        lastTs = ts
+      }
+
+      const patch = {
+        showTime: showTime,
+        timeLabel: showTime ? fullTime(m.createdAt) : ''
+      }
+      if (m.replyToId && !m.replyToTime) {
+        const src = byId[m.replyToId]
+        if (src) patch.replyToTime = shortTime(src.createdAt)
+      }
+      return Object.assign({}, m, patch)
+    })
   },
 
   appendMessage: function (msg) {
@@ -419,6 +480,12 @@ Page({
             incoming.replyToName = local.replyToName
             incoming.replyToText = incoming.replyToText || local.replyToText
           }
+          // 回显的 VO 不带尺寸（服务端只存 URL）：图片气泡已经按本地量的尺寸
+          // 占好位了，这里丢掉会先缩成一个兜底方块再跳回来，必须沿用
+          if (local.imgW) {
+            incoming.imgW = local.imgW
+            incoming.imgH = local.imgH
+          }
           list[i] = incoming
           list = this.relayoutAll(list)
           this.setData({ msgs: list, scrollInto: 'm-last' })
@@ -432,9 +499,16 @@ Page({
       if (list[i].id === incoming.id) return
     }
     list.push(incoming)
+    // 追加的是别人的消息、且用户正在看历史 → 角标 +1（自己的消息不提示）
+    if (!incoming.mine) this.bumpUnread(1)
     list = this.relayoutAll(list)
-    this.setData({ msgs: list.slice(-200), scrollInto: 'm-last' })
+    const patch = { msgs: list.slice(-200) }
+    // 用户正上滑看历史时不要把他拽回底部（QQ / 微信都不拽），只加角标
+    if (!this.data.showToBottom) patch.scrollInto = 'm-last'
+    this.setData(patch)
     this.reportRead()
+    // 别人实时发来的图片：我们不知道宽高，量一下再按比例排版
+    if (incoming.type === 'image') this.resolveImageSizes()
   },
 
   /** 增量补拉（断线重连 / 轮询兜底都走这里） */
@@ -466,8 +540,15 @@ Page({
         }
         if (!dup) merged.push(m)
       })
-      self.setData({ msgs: self.relayoutAll(merged.slice(-200)), scrollInto: 'm-last' })
+      // 补拉回来的别人消息也要计未读（重连补拉常常一次好几条）
+      const others = fresh.filter(function (m) { return !m.mine }).length
+      if (others) self.bumpUnread(others)
+      const patch = { msgs: self.relayoutAll(merged.slice(-200)) }
+      if (!self.data.showToBottom) patch.scrollInto = 'm-last'
+      self.setData(patch)
       self.reportRead()
+      // 补拉可能带回别人的图片，尺寸同样要补
+      self.resolveImageSizes()
     }).catch(function () {})
   },
 
@@ -527,13 +608,28 @@ Page({
     const sh = this._scrollH || 0
     const atBottom = (d.scrollTop || 0) + sh >= (d.scrollHeight || 0) - 40
     const show = !atBottom && (this.data.msgs || []).length > 0
-    if (show !== this.data.showToBottom) this.setData({ showToBottom: show })
+    const patch = {}
+    if (show !== this.data.showToBottom) patch.showToBottom = show
+    // 滚回底部 = 已读，角标必须清掉（否则用户看着最新消息还挂着红点）
+    if (atBottom && this.data.unread) patch.unread = 0
+    if (patch.showToBottom !== undefined || patch.unread !== undefined) this.setData(patch)
+  },
+
+  /**
+   * 累加未读角标。
+   *
+   * <p>只在「用户正上滑看历史」时计数：停在底部看新消息是正常浏览，
+   * 给它戴个红点纯属噪音。计数本身不做截断，展示时再按 99+ 处理。
+   */
+  bumpUnread: function (n) {
+    if (!this.data.showToBottom) return
+    this.setData({ unread: (this.data.unread || 0) + (n || 1) })
   },
 
   /** 点浮层按钮：滚到最新消息 */
   scrollToBottom: function () {
     const self = this
-    this.setData({ scrollInto: '', showToBottom: false })
+    this.setData({ scrollInto: '', showToBottom: false, unread: 0 })
     setTimeout(function () {
       if (!self._unloaded) self.setData({ scrollInto: 'm-last' })
     }, 30)
@@ -543,8 +639,293 @@ Page({
     toast('语音功能开发中')
   },
 
+  /**
+   * 「＋」→ 拍照 / 相册。
+   *
+   * <p>没有做成「点一下直接弹相册」：群聊里发图有两种真实场景 ——
+   * 拍一张现成的（拍黑板、拍快递柜取件码）和从相册挑一张，
+   * 多一次选择比让用户先退出相册再找相机快。
+   */
   onPlusTap: function () {
-    toast('更多功能开发中')
+    const self = this
+    // 先拦不能发言的状态，别等用户挑完图才告诉他发不出去
+    if (!this.data.canSend) {
+      toast(this.data.blockReason || '当前无法发言')
+      return
+    }
+    if (this.data.needAgree) {
+      this.setData({ showRules: true })
+      return
+    }
+    if (typeof mp.showActionSheet !== 'function') return
+    mp.showActionSheet({
+      itemList: ['拍照', '从相册选择'],
+      success: function (res) {
+        self.pickImage(res.tapIndex === 0 ? 'camera' : 'album')
+      },
+      fail: function () { /* 用户取消 */ }
+    })
+  },
+
+  /**
+   * 选一张图。
+   *
+   * <p><b>count 只能是 1</b>：群发言有间隔频控（≤500 人的群 10 秒 1 条），
+   * 一次多选 9 张，第 2 张必然 429「发言太频繁」。与其让用户挑完 9 张再被打回，
+   * 不如一张一张发。真要支持多图，得后端把同一 clientMsgId 批次的频控合并计算。
+   *
+   * <p>基础库 <2.10.0 没有 chooseMedia，退回老的 chooseImage。
+   */
+  pickImage: function (source) {
+    const self = this
+    const onPicked = function (path, size) {
+      if (path) self.sendImage(path, size)
+    }
+    const onFail = function (err) {
+      const msg = (err && err.errMsg) || ''
+      if (msg.indexOf('cancel') >= 0) return
+      toast('打不开相机/相册，检查一下权限吧')
+    }
+
+    if (typeof mp.chooseMedia === 'function') {
+      mp.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: [source],
+        sizeType: ['compressed'],
+        success: function (res) {
+          const f = res.tempFiles && res.tempFiles[0]
+          if (f && f.tempFilePath) onPicked(f.tempFilePath, f.size)
+        },
+        fail: onFail
+      })
+      return
+    }
+    mp.chooseImage({
+      count: 1,
+      sourceType: [source],
+      sizeType: ['compressed'],
+      success: function (res) {
+        const f = (res.tempFiles && res.tempFiles[0]) || null
+        const path = f ? f.path : (res.tempFilePaths && res.tempFilePaths[0])
+        onPicked(path, f ? f.size : 0)
+      },
+      fail: onFail
+    })
+  },
+
+  /**
+   * 发一张图：先上本地占位气泡（立刻有反馈），上传成功再发消息。
+   *
+   * <p>顺序很重要 —— 先插入气泡再上传，用户在弱网下也能看到「上传中…」，
+   * 而不是点了没反应。上传失败只把这一个气泡标红，可以点着重试。
+   */
+  sendImage: function (path, size) {
+    const self = this
+    if (this.data.needAgree) {
+      this.setData({ showRules: true })
+      return
+    }
+    if (!this.data.canSend) {
+      toast(this.data.blockReason || '当前无法发言')
+      return
+    }
+    if (size && size > 20 * 1024 * 1024) {
+      toast('这张图太大了，换一张吧')
+      return
+    }
+
+    const clientMsgId = genId()
+    let reply = this.data.replyTo
+    // 引用正在发送中的本地消息没有意义（服务端取不到快照）
+    if (reply && String(reply.id).indexOf('local-') === 0) reply = null
+
+    // 图片消息不携带 @：@ 是文本里的锚点，图片里没有地方显示它，
+    // 带上只会给对方一个「被 @ 了但找不到在哪」的提醒。
+    const local = {
+      id: 'local-' + clientMsgId,
+      clientMsgId: clientMsgId,
+      senderId: this.data.myId,
+      senderName: '我',
+      senderAvatar: this.data.myAvatar || '',
+      content: path,
+      type: 'image',
+      segments: null,
+      atAll: false,
+      atText: '',
+      replyToId: reply ? reply.id : '',
+      replyToName: reply ? reply.name : '',
+      replyToText: reply ? reply.text : '',
+      deleted: 0,
+      deletedBy: 0,
+      recalled: false,
+      createdAt: '',
+      timeText: '发送中',
+      mine: true,
+      pending: true,
+      failed: false,
+      uploading: true,
+      imgW: 0,
+      imgH: 0
+    }
+
+    this.setData({
+      msgs: this.relayoutAll(this.data.msgs.concat([local])),
+      replyTo: null,
+      panel: '',
+      scrollInto: 'm-last'
+    })
+    // 本地就能量出尺寸，气泡按原图比例先占好位，上传回来不用再跳一下
+    this.measureLocalImage(clientMsgId, path)
+    this.doUploadAndSend(clientMsgId, path, reply)
+  },
+
+  /** 上传 + 发送。retryImage 也复用这条路（clientMsgId 不变，服务端幂等） */
+  doUploadAndSend: function (clientMsgId, path, reply) {
+    const self = this
+    upload.uploadImage(path).then(function (url) {
+      if (self._unloaded) return
+      self.patchLocal(clientMsgId, { content: url, uploading: false })
+      const payload = {
+        msgType: 'image',
+        content: url,
+        clientMsgId: clientMsgId,
+        atUserIds: [],
+        atAll: false,
+        replyToId: reply ? reply.id : ''
+      }
+      const sent = ws.sendMsg(self.data.groupId, payload)
+      if (!sent) self.sendByHttp(payload)
+    }).catch(function () {
+      if (self._unloaded) return
+      // upload.js 内部已经按具体原因 toast 过了（超 5MB / 网络 / 登录失效），
+      // 这里不再叠一层，气泡上的「发送失败，点一下重试」就是引导
+      self.markLocalFailed(clientMsgId)
+    })
+  },
+
+  /** 发送失败的图片：点一下重传重发（clientMsgId 不变 → 服务端幂等，不会发两条） */
+  retryImage: function (m) {
+    if (!m || !m.clientMsgId) return
+    const path = m.content
+    // content 已经是服务端地址 = 图传上去了、只是消息没发出去，直接重发消息
+    const ready = upload.isServerUrl(path)
+    this.patchLocal(m.clientMsgId, { pending: true, failed: false, uploading: !ready })
+    if (ready) {
+      const payload = {
+        msgType: 'image',
+        content: path,
+        clientMsgId: m.clientMsgId,
+        atUserIds: [],
+        atAll: false,
+        replyToId: m.replyToId || ''
+      }
+      if (!ws.sendMsg(this.data.groupId, payload)) this.sendByHttp(payload)
+      return
+    }
+    this.patchLocal(m.clientMsgId, { content: path })
+    this.doUploadAndSend(m.clientMsgId, path, {
+      id: m.replyToId || '',
+      name: m.replyToName || '',
+      text: m.replyToText || ''
+    })
+  },
+
+  /** 本地图片量尺寸（getImageInfo 对 tempFilePath 同样有效） */
+  measureLocalImage: function (clientMsgId, path) {
+    const self = this
+    if (typeof mp.getImageInfo !== 'function') return
+    mp.getImageInfo({
+      src: path,
+      success: function (res) {
+        if (self._unloaded) return
+        const box = fitImageBox(res.width, res.height)
+        self.patchLocal(clientMsgId, { imgW: box.w, imgH: box.h })
+      },
+      fail: function () { /* 量不出就用兜底尺寸，不影响发送 */ }
+    })
+  },
+
+  /**
+   * 补算图片尺寸（历史消息 / 别人的实时消息）。
+   *
+   * <p>服务端只存 URL，不知道宽高。不知道宽高就只能给死尺寸，
+   * 长截图会被裁得只剩中间一条。所以进页面后按 URL 量一次，
+   * 同 URL 走内存缓存（_sizeCache），异步结果攒 80ms 合并成一次 setData。
+   */
+  resolveImageSizes: function () {
+    const self = this
+    if (typeof mp.getImageInfo !== 'function') return
+    this._sizeCache = this._sizeCache || {}
+
+    ;(this.data.msgs || []).forEach(function (m) {
+      if (m.type !== 'image' || m.imgW || m.uploading || m.deleted) return
+      const url = m.content
+      if (!url || url.indexOf('http') !== 0) return
+      if (self._sizeCache[url]) {
+        self.queueImageSize(url, self._sizeCache[url])
+        return
+      }
+      if (self._sizing[url]) return
+      self._sizing[url] = true
+      mp.getImageInfo({
+        src: url,
+        success: function (res) {
+          const box = fitImageBox(res.width, res.height)
+          self._sizeCache[url] = box
+          delete self._sizing[url]
+          if (!self._unloaded) self.queueImageSize(url, box)
+        },
+        fail: function () { delete self._sizing[url] }
+      })
+    })
+  },
+
+  /** 攒批量：一张图一次 setData 太浪费（E-02） */
+  queueImageSize: function (url, box) {
+    const self = this
+    this._sizeQ = this._sizeQ || {}
+    this._sizeQ[url] = box
+    if (this._sizeTimer) return
+    this._sizeTimer = setTimeout(function () {
+      self._sizeTimer = null
+      const q = self._sizeQ || {}
+      self._sizeQ = {}
+      if (self._unloaded || !Object.keys(q).length) return
+      const msgs = (self.data.msgs || []).map(function (m) {
+        if (m.type !== 'image' || !q[m.content]) return m
+        return Object.assign({}, m, { imgW: q[m.content].w, imgH: q[m.content].h })
+      })
+      self.setData({ msgs: msgs })
+    }, 80)
+  },
+
+  /** 按 clientMsgId 改一条本地消息（乐观更新专用） */
+  patchLocal: function (clientMsgId, patch) {
+    let hit = false
+    const msgs = (this.data.msgs || []).map(function (m) {
+      if (!m.clientMsgId || m.clientMsgId !== clientMsgId) return m
+      hit = true
+      return Object.assign({}, m, patch)
+    })
+    if (hit) this.setData({ msgs: msgs })
+  },
+
+  /** 点图片：正常 → 全屏预览（可左右翻群里所有图）；失败 → 重试 */
+  onTapImage: function (e) {
+    const idx = Number(e.currentTarget.dataset.idx)
+    const m = (this.data.msgs || [])[idx]
+    if (!m) return
+    if (m.failed) {
+      this.retryImage(m)
+      return
+    }
+    if (m.uploading) return
+    const urls = (this.data.msgs || []).filter(function (x) {
+      return x.type === 'image' && !x.deleted && !x.uploading && x.content
+    }).map(function (x) { return x.content })
+    if (!urls.length || typeof mp.previewImage !== 'function') return
+    mp.previewImage({ current: m.content, urls: urls })
   },
 
   onSend: function () {
@@ -592,7 +973,8 @@ Page({
     }
 
     this.setData({
-      msgs: this.data.msgs.concat([local]),
+      // 走一次重排：本地消息也要能显示引用块时间（被引用那条就在列表里）
+      msgs: this.relayoutAll(this.data.msgs.concat([local])),
       inputText: '',
       inputCursor: 0,
       atUsers: [],
@@ -637,9 +1019,19 @@ Page({
     })
   },
 
-  markLocalFailed: function () {
+  /**
+   * 把「还在发」的消息标成失败。
+   *
+   * @param clientMsgId 传了就只标这一条（图片单独上传失败时用）；
+   *                    不传标全部 pending（WS 报错时连带的保守处理）。
+   */
+  markLocalFailed: function (clientMsgId) {
     const msgs = this.data.msgs.map(function (m) {
-      return m.pending ? Object.assign({}, m, { pending: false, failed: true, timeText: '发送失败' }) : m
+      if (!m.pending) return m
+      if (clientMsgId && m.clientMsgId !== clientMsgId) return m
+      return Object.assign({}, m, {
+        pending: false, failed: true, uploading: false, timeText: '发送失败'
+      })
     })
     this.setData({ msgs: msgs })
   },
@@ -1082,6 +1474,30 @@ function shortTime(t) {
   return (d.getMonth() + 1) + '-' + d.getDate() + ' ' + hm
 }
 
+/**
+ * 时间分隔条文案（居中那条）。
+ *
+ * <p>按「离今天几天」分级，而不是简单拼日期：聊天场景里「昨天」「前天」
+ * 比「10-26」更容易一眼定位。跨年的消息才带年份。
+ */
+function fullTime(t) {
+  if (!t) return ''
+  const d = new Date(String(t).replace(/-/g, '/'))
+  if (isNaN(d.getTime())) return ''
+  const now = new Date()
+  const hm = pad2(d.getHours()) + ':' + pad2(d.getMinutes())
+  const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const that0 = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const diffDay = Math.round((today0 - that0) / 86400000)
+  if (diffDay === 0) return hm
+  if (diffDay === 1) return '昨天 ' + hm
+  if (diffDay === 2) return '前天 ' + hm
+  if (d.getFullYear() === now.getFullYear()) {
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hm
+  }
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hm
+}
+
 function pad2(n) {
   return n < 10 ? '0' + n : '' + n
 }
@@ -1097,6 +1513,33 @@ function parseTime(t) {
 function clipText(s, n) {
   const t = String(s || '').replace(/\s+/g, ' ').trim()
   return t.length > n ? t.slice(0, n) + '…' : t
+}
+
+/**
+ * 图片气泡尺寸（rpx）：按原图比例缩放到「限宽 + 限高」的框里。
+ *
+ * <p>为什么不用 {@code mode="widthFix"}：那玩意儿的宽度就是气泡宽度、
+ * 高度 = 比例 × 宽度，长截图（比例 1:5）会把整个消息流撑穿，一屏只能看半条。
+ * 全站单图口径统一是「算出尺寸 + aspectFill」，看全图走 previewImage。
+ */
+function fitImageBox(w, h) {
+  const MAX_W = 360
+  const MAX_H = 420
+  const MIN_W = 140
+  if (!w || !h) return { w: 300, h: 225 }
+  const r = w / h
+  let dw = MAX_W
+  let dh = Math.round(MAX_W / r)
+  if (dh > MAX_H) {
+    dh = MAX_H
+    dw = Math.round(MAX_H * r)
+  }
+  // 极窄的图（长截图）：宽度会被算成一根牙签，抬到最小宽度，高度继续限死
+  if (dw < MIN_W) {
+    dw = MIN_W
+    dh = Math.min(MAX_H, Math.round(MIN_W / r))
+  }
+  return { w: dw, h: dh }
 }
 
 /** 客户端幂等 id（不依赖 crypto，低版本基础库也能跑） */

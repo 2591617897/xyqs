@@ -315,6 +315,40 @@ public class UserManageService {
         userVerifyLogMapper.insert(log);
     }
 
+    /**
+     * 撤销认证：已认证(2) → 驳回(3)，必须填原因（用户在小程序可见）。
+     *
+     * <p>为什么需要这个动作：认证决定「能发到哪个学校分区」，用户毕业后换校、
+     * 或当初靠模糊材料混过去的，只能由后台先撤销，用户才能重新提交。
+     * 直接改成 0（未认证）会丢掉原因，用户不知道为什么要重来，所以落 3。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void revokeVerify(Long userId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw BizException.of("撤销认证必须填写原因（用户可见）");
+        }
+        UserRow row = userDetail(userId);
+        if (!Integer.valueOf(2).equals(row.getVerifyStatus())) {
+            throw BizException.of("只有「已认证」用户可以撤销认证，当前状态：" + row.getVerifyStatus());
+        }
+        gateway.setUserVerify(userId, 3, reason);
+
+        UserVerifyLog log = new UserVerifyLog();
+        log.setUserId(userId);
+        log.setUserName(row.getNickname());
+        log.setSchoolId(row.getSchoolId());
+        log.setSchoolName(row.getSchoolName());
+        log.setRealName(row.getRealName());
+        log.setStudentNo(row.getStudentNo());
+        log.setVerifyImg(row.getVerifyImg());
+        log.setFromStatus(row.getVerifyStatus());
+        log.setToStatus(3);
+        log.setReason(reason);
+        log.setAdminId(AdminContext.adminId());
+        log.setAdminName(AdminContext.username());
+        userVerifyLogMapper.insert(log);
+    }
+
     public R.Page<UserVerifyLog> pageVerifyLogs(Long userId, Integer toStatus, long page, long size) {
         IPage<UserVerifyLog> p = userVerifyLogMapper.selectPage(new Page<>(page, size),
                 Wrappers.<UserVerifyLog>lambdaQuery()

@@ -3,6 +3,7 @@ package com.campus.user.controller;
 import com.campus.common.api.R;
 import com.campus.common.security.UserContext;
 import com.campus.user.dto.ProfileVO;
+import com.campus.user.dto.RestoreResp;
 import com.campus.user.dto.UpdateProfileReq;
 import com.campus.user.dto.UserVO;
 import com.campus.user.dto.VerifyReq;
@@ -60,5 +61,28 @@ public class UserController {
     @PostMapping("/verify/wx-student")
     public R<VerifyResp> verifyByWxStudent(@RequestBody @Valid WxVerifyReq req) {
         return R.ok(userService.submitWxStudentVerify(UserContext.requireUserId(), req));
+    }
+
+    /**
+     * 注销账号。
+     *
+     * <p>不是立即删除：昵称落为「已注销用户」、认证与手机号清空，内容保留，
+     * 保留期（默认 365 天）内重新登录可恢复，满期由定时任务清除个人信息。
+     */
+    @PostMapping("/cancel")
+    public R<Void> cancel() {
+        userService.cancelAccount(UserContext.requireUserId());
+        return R.ok();
+    }
+
+    /**
+     * 恢复注销账号。
+     *
+     * <p>登录接口会带回 {@code cancelledAt}，前端据此问用户「是否恢复」。
+     * 同意后调这里换一张新 token（学校、认证状态可能已变化，旧 token 是注销瞬间的快照）。
+     */
+    @PostMapping("/cancel/restore")
+    public R<RestoreResp> restore() {
+        return R.ok(userService.restoreAccount(UserContext.requireUserId()));
     }
 }

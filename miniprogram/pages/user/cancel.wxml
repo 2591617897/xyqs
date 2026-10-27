@@ -1,0 +1,32 @@
+<view class="page">
+  <!-- 待注销账号：多账号 / 换过号的用户要能确认自己注销的是哪一个 -->
+  <view class="who" wx:if="{{nickname}}">
+    <view class="who-avatar">👤</view>
+    <view class="flex1">
+      <view class="who-name">{{nickname}}</view>
+      <view class="who-school">{{schoolName || '未绑定学校'}}</view>
+    </view>
+  </view>
+
+  <view class="warn">
+    <view class="warn-title">注销后会立即发生</view>
+    <view class="warn-item">· 昵称显示为「已注销用户」，头像与个人简介被清除</view>
+    <view class="warn-item">· 校园认证、学号、真实姓名、手机号被清除，期间不能发布内容</view>
+    <view class="warn-item">· 已发布的闲置、帖子、树洞保留，作者显示为「已注销用户」</view>
+  </view>
+
+  <view class="card">
+    <view class="h2">以后还能找回吗？</view>
+    <view class="line">· 1 年内用同一个微信登录，会先问你要不要恢复</view>
+    <view class="line">· 恢复后昵称、头像、关注关系会回来，校园认证需重新完成</view>
+    <view class="line">· 满 1 年后个人信息永久删除，无法恢复，同一微信登录会得到一个新账号</view>
+  </view>
+
+  <view class="agree-row" bindtap="toggleAgree">
+    <view class="checkbox {{agreed ? 'on' : ''}}">{{agreed ? '✓' : ''}}</view>
+    <view class="agree-text">我已阅读并了解上述后果，确认注销账号</view>
+  </view>
+
+  <button class="btn btn-danger {{agreed ? '' : 'btn-danger-off'}}" loading="{{submitting}}" bindtap="submit">确认注销</button>
+  <view class="cancel-link" bindtap="back">暂不注销，返回</view>
+</view>

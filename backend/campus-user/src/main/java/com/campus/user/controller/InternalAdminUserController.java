@@ -4,6 +4,7 @@ import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import com.campus.user.entity.User;
 import com.campus.user.mapper.UserMapper;
+import com.campus.user.service.AccountPurgeService;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import java.util.Map;
 public class InternalAdminUserController {
 
     private final UserMapper userMapper;
+    private final AccountPurgeService accountPurgeService;
 
     /** 封禁 / 解封：status 0封禁 1正常 */
     @PostMapping("/{id}/status")
@@ -99,5 +101,24 @@ public class InternalAdminUserController {
 
     private Integer intOf(Object v) {
         return v == null ? null : Integer.valueOf(String.valueOf(v));
+    }
+
+    /**
+     * 清理满保留期的注销账号（campus-admin 每日定时触发）。
+     *
+     * <p>保留期天数由 campus-user 自己配置（{@code campus.account.cancel-retain-days}），
+     * 后台只传单批条数，避免两处天数不一致导致「后台以为到期了，用户服务还没到期」。
+     */
+    @PostMapping("/purge-cancelled")
+    public R<Integer> purgeCancelled(@RequestBody(required = false) Map<String, Object> body) {
+        int limit = 200;
+        if (body != null && body.get("limit") != null) {
+            limit = Math.min(Math.max(intOf(body.get("limit")), 1), 1000);
+        }
+        int n = accountPurgeService.purgeExpired(limit);
+        if (n > 0) {
+            log.info("[admin] 清理满保留期注销账号 {} 个", n);
+        }
+        return R.ok(n);
     }
 }

@@ -33,7 +33,7 @@ public interface UserQueryMapper {
     })
     @Select("<script>"
             + "SELECT u.id, u.nickname, u.avatar, u.phone, u.gender, u.school_id schoolId, s.name schoolName, "
-            + "       u.verify_status verifyStatus, u.status, u.mute_until muteUntil, "
+            + "       u.verify_status verifyStatus, u.status, u.mute_until muteUntil, u.cancelled_at cancelledAt, "
             + "       u.fans_count fansCount, u.follow_count followCount, u.created_at createdAt, "
             + "       IF(EXISTS(SELECT 1 FROM t_user_blacklist b WHERE b.user_id = u.id AND b.status = 1), 1, 0) blacklisted, "
             + "       IF(EXISTS(SELECT 1 FROM t_user_mute m WHERE m.user_id = u.id AND m.status = 1 "
@@ -85,6 +85,7 @@ public interface UserQueryMapper {
     @Select("<script>"
             + "SELECT u.id, u.nickname, u.avatar, u.phone, u.gender, u.school_id schoolId, s.name schoolName, "
             + "       u.verify_status verifyStatus, u.status, u.mute_until muteUntil, u.bio, "
+            + "       u.cancelled_at cancelledAt, "
             + "       u.real_name realName, u.student_no studentNo, u.verify_img verifyImg, u.verify_remark verifyRemark, "
             + "       u.fans_count fansCount, u.follow_count followCount, u.created_at createdAt, "
             + "       IF(EXISTS(SELECT 1 FROM t_user_blacklist b WHERE b.user_id = u.id AND b.status = 1), 1, 0) blacklisted, "

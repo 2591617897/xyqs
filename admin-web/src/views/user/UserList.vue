@@ -46,7 +46,11 @@
       </el-table-column>
       <el-table-column label="账号" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="tagOf(USER_STATUS, row.status).type" size="small">
+          <!-- 注销优先于封禁：运营看到「已注销」才知道认证被清空是用户自己操作的，不是数据异常 -->
+          <el-tooltip v-if="row.cancelledAt" :content="'注销于 ' + row.cancelledAt + '，满 1 年后自动清除资料'" placement="top">
+            <el-tag type="info" size="small">已注销</el-tag>
+          </el-tooltip>
+          <el-tag v-else :type="tagOf(USER_STATUS, row.status).type" size="small">
             {{ tagOf(USER_STATUS, row.status).label }}
           </el-tag>
         </template>
@@ -64,9 +68,11 @@
         <template #default="{ row }">{{ row.fansCount }}</template>
       </el-table-column>
       <el-table-column prop="createdAt" label="注册时间" width="170" />
-      <el-table-column label="操作" width="250" fixed="right">
+      <el-table-column label="操作" width="330" fixed="right">
         <template #default="{ row }">
           <el-button v-permission="'admin:user:detail'" link type="primary" @click="openDetail(row)">详情</el-button>
+          <el-button v-permission="'admin:user:verify'" link type="warning"
+                     :disabled="row.verifyStatus !== 2" @click="revokeVerify(row)">撤销认证</el-button>
           <el-button v-permission="'admin:user:ban'" link :type="row.status === 1 ? 'danger' : 'success'"
                      @click="toggleBan(row)">
             {{ row.status === 1 ? '封禁' : '解封' }}
@@ -100,6 +106,12 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="禁言到期">{{ detail.muteUntil || '未禁言' }}</el-descriptions-item>
+        <el-descriptions-item label="账号注销">
+          <span v-if="detail.cancelledAt" class="warn-text">
+            {{ detail.cancelledAt }}（保留期内可恢复，满 1 年自动清除资料）
+          </span>
+          <span v-else>-</span>
+        </el-descriptions-item>
         <el-descriptions-item label="内容量" :span="2">
           帖子 {{ stats.posts }} · 表白墙 {{ stats.wall }} · 商品 {{ stats.goods }} · 意向单 {{ stats.orders }}
         </el-descriptions-item>
@@ -107,6 +119,9 @@
           <el-image v-if="detail.verifyImg" :src="detail.verifyImg" :preview-src-list="[detail.verifyImg]"
                     preview-teleported :z-index="3000" fit="cover" class="verify-img" />
           <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detail.verifyRemark" label="认证备注" :span="2">
+          <span class="warn-text">{{ detail.verifyRemark }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="个性签名" :span="2">{{ detail.bio || '-' }}</el-descriptions-item>
       </el-descriptions>
@@ -225,6 +240,23 @@ async function unmute (row) {
   load()
 }
 
+async function revokeVerify (row) {
+  const ok = await ElMessageBox.confirm(
+    '撤销后「' + (row.nickname || '该用户') + '」将失去认证，需在小程序重新提交（后台再审核通过才能恢复）。'
+      + '适用于毕业后换校、材料造假等情况。',
+    '撤销学籍认证',
+    { type: 'warning', confirmButtonText: '继续' }
+  ).catch(() => false)
+  if (!ok) return
+  const { value } = await ElMessageBox.prompt('填写撤销原因（用户在小程序可见）', '撤销学籍认证', {
+    inputPlaceholder: '如：已毕业离校，请重新选择学校并提交材料'
+  }).catch(() => ({ value: null }))
+  if (!value) return
+  await userApi.revokeVerify(row.id, value)
+  ElMessage.success('已撤销认证，用户可重新提交')
+  load()
+}
+
 async function openBlacklist (row) {
   const { value } = await ElMessageBox.prompt('填写拉黑原因', '拉黑用户', { inputPlaceholder: '如：恶意骚扰他人' })
     .catch(() => ({ value: null }))
@@ -241,4 +273,5 @@ onMounted(load)
 .user-cell { display: flex; align-items: center; gap: 10px; }
 .sub { font-size: 12px; color: #909399; }
 .verify-img { width: 160px; height: 120px; border-radius: 4px; }
+.warn-text { color: #e6a23c; }
 </style>

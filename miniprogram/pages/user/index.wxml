@@ -16,8 +16,13 @@
           <view class="user-name-row">
             <text class="user-name">{{user ? user.nickname : '还没有登录'}}</text>
             <view class="verify-pill {{user && user.verifyStatus === 2 ? 'ok' : ''}}" hover-class="scale-down" catchtap="goVerify">
-              <text class="vp-check">✓</text>
-              <text>{{user && user.verifyStatus === 2 ? '已认证' : '去认证'}}</text>
+              <block wx:if="{{user && user.verifyStatus === 2}}">
+                <text class="vp-check">✓</text>
+                <text>已认证</text>
+              </block>
+              <text wx:elif="{{user && user.verifyStatus === 1}}">审核中</text>
+              <text wx:elif="{{user && user.verifyStatus === 3}}">已驳回</text>
+              <text wx:else>去认证</text>
             </view>
           </view>
           <view class="user-school" wx:if="{{user}}" catchtap="goPickSchool">
@@ -161,7 +166,9 @@
       <view class="menu-item" hover-class="tap-scale" bindtap="goVerify">
         <text class="mi-icon">🎓</text>
         <text class="mi-text">实名学籍认证中心</text>
-        <text class="mi-tip" wx:if="{{user && user.verifyStatus === 2}}">认证有效（至 2026）</text>
+        <text class="mi-tip" wx:if="{{user && user.verifyStatus === 2}}">已认证</text>
+        <text class="mi-tip warn" wx:elif="{{user && user.verifyStatus === 3}}">已驳回，待重新提交</text>
+        <text class="mi-tip warn" wx:elif="{{user && user.verifyStatus === 1}}">审核中</text>
         <text class="mi-tip warn" wx:else>未认证</text>
         <text class="mi-arrow">›</text>
       </view>

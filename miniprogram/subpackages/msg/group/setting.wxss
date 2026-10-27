@@ -22,13 +22,11 @@
   align-items: center;
   justify-content: center;
 }
+/* 返回图标走全局 styles/icons.wxss（mask + currentColor），页面只调尺寸与颜色。
+   不能用 border 自绘 .ico-back —— 全局 mask 会把自绘边框裁成一小块残影。 */
 .ico-back {
-  width: 20rpx;
-  height: 20rpx;
-  border-left: 4rpx solid #0f1a16;
-  border-bottom: 4rpx solid #0f1a16;
-  transform: rotate(45deg);
-  margin-left: 8rpx;
+  font-size: 40rpx;
+  color: #0f1a16;
 }
 .tb-title {
   flex: 1;

@@ -1,0 +1,115 @@
+.page {
+  padding: 24rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+/* 待注销账号 */
+.who {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+}
+.who-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: #F2F3F5;
+  text-align: center;
+  line-height: 76rpx;
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+.who-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1F2329;
+}
+.who-school {
+  font-size: 24rpx;
+  color: #8B8F99;
+  margin-top: 6rpx;
+}
+
+/* 后果警示 */
+.warn {
+  padding: 24rpx 28rpx;
+  border-radius: 20rpx;
+  background: #FFF4F2;
+  border: 1rpx solid #FBDAD4;
+  margin-bottom: 20rpx;
+}
+.warn-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  color: #D23B32;
+  margin-bottom: 12rpx;
+}
+.warn-item {
+  font-size: 25rpx;
+  color: #8C4A42;
+  line-height: 1.7;
+}
+
+/* 恢复说明 */
+.line {
+  font-size: 25rpx;
+  color: #5C6169;
+  line-height: 1.8;
+}
+.line + .line {
+  margin-top: 4rpx;
+}
+
+/* 勾选 */
+.agree-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 8rpx 4rpx 0;
+  margin-top: 24rpx;
+}
+.checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  flex: 0 0 36rpx;
+  border-radius: 8rpx;
+  border: 2rpx solid #C9CDD4;
+  background: #FFFFFF;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  text-align: center;
+  margin-right: 14rpx;
+}
+.checkbox.on {
+  background: #E5484D;
+  border-color: #E5484D;
+}
+.agree-text {
+  flex: 1;
+  font-size: 25rpx;
+  color: #5C6169;
+  line-height: 1.6;
+}
+
+/* 危险按钮：全局 .btn 只提供主色/幽灵/朴素，这里单独给红色 */
+.btn-danger {
+  margin-top: 36rpx;
+  background: #E5484D;
+  color: #FFFFFF;
+}
+.btn-danger:active {
+  background: #C93B40;
+}
+/* 未勾选时降饱和度：仍然可点，点了会明确提示先勾选，比灰按钮不响应更好懂 */
+.btn-danger-off {
+  background: #F3B9BB;
+  color: #FFF6F6;
+}
+.cancel-link {
+  margin-top: 28rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #8B8F99;
+}

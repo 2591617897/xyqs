@@ -48,6 +48,12 @@
       </view>
 
       <block wx:for="{{msgs}}" wx:key="id" wx:for-item="item" wx:for-index="idx">
+        <!-- 时间分隔条：与上一条间隔 ≥5 分钟才出现（QQ 口径），
+             不再每条消息下面挂一个时间，一屏能多看清好几条消息 -->
+        <view class="time-sep" wx:if="{{item.showTime}}">
+          <text class="time-sep-text">{{item.timeLabel}}</text>
+        </view>
+
         <view
           class="msg {{item.mine ? 'mine' : ''}}"
           id="m-{{item.id}}"
@@ -71,39 +77,74 @@
           </view>
 
           <view class="msg-body">
-            <text class="msg-name" wx:if="{{!item.mine}}">{{item.senderName || '校友'}}</text>
+            <!-- 昵称在气泡上方（QQ 习惯），自己的不显示；
+                 @所有人 标签跟着昵称走，不再单独占气泡下面一行 ——
+                 那一行现在只留给「发送中 / 发送失败」 -->
+            <view class="msg-head" wx:if="{{!item.mine}}">
+              <text class="msg-name">{{item.senderName || '校友'}}</text>
+              <text class="msg-at" wx:if="{{item.atAll}}">@所有人</text>
+            </view>
             <!-- 长按气泡出操作菜单：回复 / 撤回（2 分钟内且是自己发的）/ 复制 / 举报 -->
             <view
-              class="bubble {{item.mine ? 'bubble-mine' : ''}} {{item.deleted ? 'bubble-deleted' : ''}}"
+              class="bubble {{item.mine ? 'bubble-mine' : ''}} {{item.deleted ? 'bubble-deleted' : ''}} {{item.type === 'image' && !item.deleted ? (item.replyToName ? 'is-media has-quote' : 'is-media') : ''}}"
               data-idx="{{idx}}"
               bindlongpress="onMsgLong"
             >
-              <!-- 引用块：被回复内容用服务端快照，原消息撤回后仍能看懂 -->
+              <!-- 引用块：QQ 是气泡里顶部一块浅灰卡片 ——
+                   头部「昵称 + 时间 + 右上展开箭头」，下面是引用正文（2 行截断）。
+                   点卡片任意位置跳到原消息，原消息撤回后仍能看懂上下文。 -->
               <view
                 class="quote"
                 wx:if="{{item.replyToName && !item.deleted}}"
                 data-id="{{item.replyToId}}"
                 catchtap="jumpTo"
               >
-                <text class="quote-name">{{item.replyToName}}</text>
+                <view class="quote-head">
+                  <text class="quote-name">{{item.replyToName}}</text>
+                  <text class="quote-time" wx:if="{{item.replyToTime}}">{{item.replyToTime}}</text>
+                  <view class="quote-expand"><view class="qe-arrow"></view></view>
+                </view>
                 <text class="quote-text">{{item.replyToText || '[消息]'}}</text>
               </view>
-              <!-- 正文：有 @ 片段时按片段渲染（@昵称 高亮可点开资料卡），
-                   segments 为空（普通消息）走兜底直接显示 content -->
-              <text class="msg-text" wx:if="{{!item.deleted && item.segments}}">
-                <block wx:for="{{item.segments}}" wx:key="k" wx:for-item="seg" wx:for-index="si">
-                  <text wx:if="{{seg.t === 'text'}}">{{seg.v}}</text>
-                  <text wx:elif="{{seg.t === 'at'}}" class="at-link" catchtap="onTapAt" data-uid="{{seg.uid}}">{{seg.v}}</text>
-                  <text wx:elif="{{seg.t === 'atall'}}" class="at-all-link">{{seg.v}}</text>
-                </block>
-              </text>
-              <text class="msg-text" wx:elif="{{!item.deleted}}">{{item.content}}</text>
-              <text class="msg-text" wx:elif="{{item.recalled}}">{{item.mine ? '你撤回了一条消息' : '对方撤回了一条消息'}}</text>
-              <text class="msg-text" wx:else>该消息已被删除</text>
+              <!-- 图片消息：尺寸已按原图比例算好（fitImageBox），这里只渲染。
+                   点开走 previewImage 能翻群里所有图；上传中/失败各有覆盖层。 -->
+              <block wx:if="{{item.type === 'image' && !item.deleted}}">
+                <view
+                  class="bubble-img"
+                  style="width: {{item.imgW || 300}}rpx; height: {{item.imgH || 225}}rpx"
+                  data-idx="{{idx}}"
+                  bindtap="onTapImage"
+                >
+                  <image class="bubble-img-el" src="{{item.content}}" mode="aspectFill" lazy-load="true" />
+                  <view class="img-mask" wx:if="{{item.uploading}}">
+                    <view class="img-spin"></view>
+                    <text class="img-mask-text">上传中…</text>
+                  </view>
+                  <view class="img-mask img-mask-fail" wx:elif="{{item.failed}}">
+                    <text class="img-mask-text">发送失败，点一下重试</text>
+                  </view>
+                </view>
+              </block>
+
+              <!-- 文本 / 撤回 / 已删除 -->
+              <block wx:else>
+                <!-- 正文：有 @ 片段时按片段渲染（@昵称 高亮可点开资料卡），
+                     segments 为空（普通消息）走兜底直接显示 content -->
+                <text class="msg-text" wx:if="{{!item.deleted && item.segments}}">
+                  <block wx:for="{{item.segments}}" wx:key="k" wx:for-item="seg" wx:for-index="si">
+                    <text wx:if="{{seg.t === 'text'}}">{{seg.v}}</text>
+                    <text wx:elif="{{seg.t === 'at'}}" class="at-link" catchtap="onTapAt" data-uid="{{seg.uid}}">{{seg.v}}</text>
+                    <text wx:elif="{{seg.t === 'atall'}}" class="at-all-link">{{seg.v}}</text>
+                  </block>
+                </text>
+                <text class="msg-text" wx:elif="{{!item.deleted}}">{{item.content}}</text>
+                <text class="msg-text" wx:elif="{{item.recalled}}">{{item.mine ? '你撤回了一条消息' : '对方撤回了一条消息'}}</text>
+                <text class="msg-text" wx:else>该消息已被删除</text>
+              </block>
             </view>
-            <view class="msg-meta">
-              <text class="msg-at" wx:if="{{item.atAll}}">@所有人</text>
-              <text class="msg-time">{{item.timeText}}</text>
+            <!-- 气泡下方只在「发送中 / 发送失败」时出现，正常消息不挂时间 -->
+            <view class="msg-meta" wx:if="{{item.pending || item.failed}}">
+              <text class="msg-state {{item.failed ? 'err' : ''}}">{{item.pending ? '发送中…' : '发送失败'}}</text>
             </view>
           </view>
         </view>
@@ -135,9 +176,11 @@
     <!-- 回到底部浮层按钮：上滑看历史时出现，点一下滚到最新 -->
     <view class="to-bottom" wx:if="{{showToBottom}}" bindtap="scrollToBottom">
       <view class="tb-arrow"></view>
+      <!-- 未读角标：上滑看历史时新到的消息计数（QQ 也是这个位置） -->
+      <text class="tb-unread" wx:if="{{unread > 0}}">{{unread > 99 ? '99+' : unread}}</text>
     </view>
 
-    <view class="bottom-dock" style="bottom: {{keyboardHeight}}px">
+    <view class="bottom-dock {{keyboardHeight > 0 ? 'kb-up' : ''}}" style="bottom: {{keyboardHeight}}px">
       <view class="reply-bar" wx:if="{{replyTo}}">
         <view class="rb-line"></view>
         <view class="rb-main">
@@ -259,6 +302,9 @@
       class="input-hold"
       style="height: {{100 + (replyTo ? 100 : 0) + ((atUsers.length || atAll) ? 70 : 0) + (panel === 'at' ? 520 : 0) + (panel === 'emoji' ? 430 : 0)}}rpx"
     ></view>
+    <!-- 底部安全区占位：全面屏多出的 home 指示条高度，不进 .input-hold 的 rpx 表达式，
+         因为它是环境相关的 px 值，混进 rpx 算术里没法换算 -->
+    <view class="input-safe {{keyboardHeight > 0 ? 'kb-up' : ''}}"></view>
   </block>
 
   <!-- 首次进群：全屏群规 + 安全提醒（不是 toast，也不是半屏弹窗——要用户真的看完） -->

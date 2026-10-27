@@ -31,4 +31,13 @@ public interface UserAdminClient {
     /** 实名审核结论：verifyStatus 2通过 3驳回 */
     @PostMapping("/{id}/verify")
     R<Void> verify(@PathVariable("id") Long id, @RequestBody Map<String, Object> body);
+
+    /**
+     * 清理满保留期的注销账号（定时任务调用）。
+     *
+     * <p>返回本次处理的条数；账号数据的归属方是 campus-user，
+     * 后台只负责按天触发，不碰 t_user。
+     */
+    @PostMapping("/purge-cancelled")
+    R<Integer> purgeCancelled(@RequestBody Map<String, Object> body);
 }

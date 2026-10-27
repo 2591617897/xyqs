@@ -1,6 +1,6 @@
 <view class="page">
   <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
-    <view class="tb-back" bindtap="goBack"><view class="ico-back"></view></view>
+    <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
     <text class="tb-title">群设置</text>
   </view>
 

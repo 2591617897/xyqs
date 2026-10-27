@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS t_user (
   wx_student_verified TINYINT NOT NULL DEFAULT 0 COMMENT '微信学生身份是否已核验通过',
   wx_student_status  TINYINT DEFAULT NULL COMMENT '微信 bind_status 1未绑定 2审核中 3已绑定',
   wx_student_verify_at DATETIME DEFAULT NULL COMMENT '微信学生认证通过时间',
+  -- 最近一次提交认证时间：只用于「重认证冷却」，不能拿 updated_at 顶替
+  -- （改昵称/换头像都会刷新 updated_at，冷却会被意外重置）。
+  verify_submit_at DATETIME  DEFAULT NULL COMMENT '最近一次提交认证时间（重认证冷却判断）',
   verify_img    VARCHAR(255) DEFAULT NULL COMMENT '学生证/校园卡照片',
   verify_remark VARCHAR(255) DEFAULT NULL COMMENT '驳回原因',
   bio           VARCHAR(255) DEFAULT NULL,
@@ -53,6 +56,13 @@ CREATE TABLE IF NOT EXISTS t_user (
   -- 禁言到期时间：只是投影列，事实源是后台的 t_user_mute，由 campus-admin 跨服务写入。
   -- NULL = 未禁言；C 端判断只读这一列，后台改事实源后同事务同步到这里。
   mute_until    DATETIME     DEFAULT NULL COMMENT '禁言到期时间，NULL 表示未禁言',
+  -- 账号注销：不复用 status（那是后台封禁）。注销 ≠ 立即删除，见 migration-20261027-account-cancel.sql。
+  -- 注销中：昵称已落为「已注销用户」、认证与手机号已清空，内容保留；保留期内重新登录可恢复。
+  cancelled_at  DATETIME     DEFAULT NULL COMMENT '注销申请时间，NULL=正常账号；保留期内重新登录可恢复',
+  cancel_nickname_bak VARCHAR(64) DEFAULT NULL COMMENT '注销前昵称，恢复时还原；满保留期清理时删除',
+  cancel_avatar_bak VARCHAR(255) DEFAULT NULL COMMENT '注销前头像，恢复时还原',
+  cancel_bio_bak VARCHAR(255) DEFAULT NULL COMMENT '注销前个人简介，恢复时还原',
+  purged_at     DATETIME     DEFAULT NULL COMMENT '个人信息清理完成时间（满保留期后），NULL=未清理',
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_platform_openid (platform, openid),
@@ -60,7 +70,8 @@ CREATE TABLE IF NOT EXISTS t_user (
   KEY idx_verify_source (verify_source),
   KEY idx_phone_hash (phone_hash),
   KEY idx_student_no_hash (school_id, student_no_hash),
-  KEY idx_mute_until (mute_until)
+  KEY idx_mute_until (mute_until),
+  KEY idx_cancelled_at (cancelled_at, purged_at)
 ) COMMENT '用户';
 
 -- 关注关系（关注/粉丝）

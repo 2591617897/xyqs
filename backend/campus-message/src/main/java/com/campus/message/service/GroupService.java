@@ -401,6 +401,16 @@ public class GroupService {
             throw BizException.of("发送失败，请重试");
         }
 
+        // ⑥.5 图片消息送审
+        //   文本在落库前同步拦截，图片没有同步接口，只能先发后审：
+        //   media_check_async 只返回 trace_id，结论由微信回调写入 t_media_check /
+        //   t_content_audit，运营在后台处置。这里不提交的话，群图片等于零审核 ——
+        //   一万人的群，一张违规图就是一次事故。
+        //   checkImages 内部 fail-open（网络异常只打日志），不会因为审核服务挂了发不出图。
+        if ("image".equals(type)) {
+            securityGuard.checkImages(userId, SecurityGuard.BIZ_GROUP_MSG, msg.getId(), List.of(content));
+        }
+
         // ⑦ 群摘要 + @ 效果
         groupMapper.updateLastMessage(groupId, msg.getId(), brief(content, type), LocalDateTime.now());
         mentionService.apply(groupId, msg.getId(), userId, atIds, atAll);

@@ -1,15 +1,44 @@
 <view class="page">
-  <!-- 已认证 -->
-  <view class="done-wrap" wx:if="{{done}}">
+  <!-- 结果态：审核中 / 已认证。点「重新认证」后 done 置 false，回落到下面的表单 -->
+  <view class="done-wrap" wx:if="{{done && !reapplyOpen}}">
     <view class="done-icon">{{doneStatus === 1 ? '⏳' : '🎓'}}</view>
-    <view class="done-title">{{doneStatus === 1 ? '认证审核中' : (alreadyVerified ? '你已完成校园认证' : '认证成功')}}</view>
+    <view class="done-title">{{doneStatus === 1 ? '认证审核中' : '你已完成校园认证'}}</view>
     <view class="done-sub">{{doneStatus === 1 ? '预计 1 个工作日内完成审核，通过后即可发布' : '现在可以发布闲置、发帖和写匿名心事了'}}</view>
+
+    <!-- 已认证：把「认证到哪个学校、用什么方式」摆出来，换校前用户得先能确认现状 -->
+    <view class="done-info" wx:if="{{doneStatus === 2}}">
+      <view class="di-row">
+        <text class="di-k">认证学校</text>
+        <text class="di-v">{{schoolName || '未绑定学校'}}</text>
+      </view>
+      <view class="di-row">
+        <text class="di-k">认证方式</text>
+        <text class="di-v">{{verifySource === 2 ? '微信学生认证' : '学生证材料认证'}}</text>
+      </view>
+    </view>
+
     <button class="btn btn-primary done-btn" bindtap="goBack">{{doneStatus === 1 ? '先去逛逛' : '开始逛逛'}}</button>
+    <view class="done-relink" wx:if="{{doneStatus === 2}}" bindtap="openReapply">
+      {{reapplyAt ? '换校或材料有误？' + reapplyAt + ' 可重新认证' : '毕业 / 换校了？重新认证 ›'}}
+    </view>
   </view>
 
-  <block wx:else>
+  <block wx:elif="{{done === false}}">
+    <!-- 驳回原因：不带这个，用户只能盲猜为什么没过 -->
+    <view class="hint hint-warn" wx:if="{{rejectReason}}">
+      <view class="hint-title">上次认证未通过</view>
+      <view class="hint-text">{{rejectReason}}</view>
+    </view>
+
+    <!-- 重认证提示：说清代价（复核期间不能发布），别让用户以为点一下就能换校 -->
+    <view class="hint hint-info" wx:if="{{reapplyOpen}}">
+      <view class="hint-title">正在重新认证</view>
+      <view class="hint-text">更换学校或重新上传材料后需人工复核，复核通过前暂时不能发布内容。学号与真实姓名需重新填写。</view>
+      <view class="hint-link" bindtap="cancelReapply">取消，返回认证结果 ›</view>
+    </view>
+
     <!-- 说明 -->
-    <view class="intro">
+    <view class="intro" wx:if="{{!reapplyOpen}}">
       <view class="intro-title">认证后可以做什么？</view>
       <view class="intro-item">· 发布闲置、发帖、写树洞，只有同校同学才能发</view>
       <view class="intro-item">· 认证只用于确认学生身份，不会展示给其他用户</view>
@@ -99,10 +128,17 @@
         </view>
       </view>
 
-      <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">提交认证</button>
+      <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">{{reapplyOpen ? '提交重认证申请' : '提交认证'}}</button>
       <view class="agree">提交即表示同意《校聚一城社区规范》与《隐私政策》</view>
     </block>
   </block>
+
+  <!-- 注销入口：放在认证中心，是因为注销最常发生在「认证信息要变 / 要彻底离开」的场景。
+       做成弱化的文字链，不与认证主按钮抢视线，也避免误触。 -->
+  <view class="danger-zone" wx:if="{{done !== null}}">
+    <view class="dz-link" bindtap="goCancel">注销账号</view>
+    <view class="dz-note">注销后昵称显示为「已注销用户」，1 年内重新登录可恢复</view>
+  </view>
 
   <!-- 学校选择弹层 -->
   <view class="mask" wx:if="{{showPicker}}" bindtap="closePicker">

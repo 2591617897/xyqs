@@ -44,6 +44,14 @@ campus:
   verify:
     # true：提交即视为认证通过（本地联调）；false：进入人工/接口审核
     auto-approve: ${VERIFY_AUTO_APPROVE:true}
+    # 重认证冷却天数：已认证用户换学校/换材料的两次提交最短间隔。
+    # 重认证一律转人工审核（不看 auto-approve），否则一次调用就能改学校分区。
+    reapply-cooldown-days: ${VERIFY_REAPPLY_COOLDOWN_DAYS:7}
+  account:
+    # 注销后个人信息保留天数：期间重新登录可恢复（昵称/头像/简介还原），
+    # 满期由定时任务清除全部个人信息并把 openid 换成占位值。
+    # 需求写死「1 年」，做成配置是为了法务口径变更时不用改代码。
+    cancel-retain-days: ${ACCOUNT_CANCEL_RETAIN_DAYS:365}
   upload:
     # 图片落盘目录（相对启动目录，IDEA/mvn 启动 = <模块目录>/uploads）。
     # 生产建议用绝对路径并对齐 Nginx 的 /uploads/ alias，或直接换对象存储

@@ -132,6 +132,12 @@ const ENTRIES = [
     file: 'campus-message/src/main/java/com/campus/message/service/MessageService.java',
     method: 'send',
     need: ['checkText', 'checkImages', 'BIZ_MESSAGE']
+  },
+  {
+    name: '群消息发送',
+    file: 'campus-message/src/main/java/com/campus/message/service/GroupService.java',
+    method: 'send',
+    need: ['checkText', 'checkImages', 'BIZ_GROUP_MSG']
   }
 ]
 

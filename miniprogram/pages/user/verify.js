@@ -7,6 +7,12 @@ const CONFIG = require('../../utils/config')
 /** 微信学生身份验证插件 appid（官方固定值，不要改） */
 const STUDENT_PLUGIN_ID = 'wxa16657d57059e0f0'
 
+/** 后端 LocalDateTime 是 ISO 字符串（2026-11-03T10:20:30），转成「2026-11-03 10:20」 */
+function fmtTime(at) {
+  if (!at) return ''
+  return String(at).replace('T', ' ').slice(0, 16)
+}
+
 Page({
   data: {
     /**
@@ -31,9 +37,24 @@ Page({
     verifyImg: '',
     submitting: false,
     showPicker: false,
-    done: false,
+    /**
+     * 结果态开关。
+     * null = 还没拉到认证状态（此时两个分支都不渲染，避免已认证用户先闪一下表单）
+     * true = 展示结果卡片 / false = 展示表单
+     */
+    done: null,
     doneStatus: 0,
-    alreadyVerified: false
+    alreadyVerified: false,
+
+    /* ===== 认证状态回显（已认证卡片 / 驳回原因 / 重认证） ===== */
+    /** 认证来源 1学生证 2微信，已认证卡片上展示 */
+    verifySource: 0,
+    /** status=3 时后端给的驳回原因，用户可见 */
+    rejectReason: '',
+    /** true = 已认证用户点开了重新认证，此时不显示结果卡片、显示表单 */
+    reapplyOpen: false,
+    /** 重认证冷却中：可再次申请的时间文案（"2026-11-03 10:20"），空串表示可以申请 */
+    reapplyAt: ''
   },
 
   /** code 只在内存里放一份：插件 auth 与 close 都会回调，靠它去重 */
@@ -48,15 +69,48 @@ Page({
       this.setData({ mode: 'manual' })
     }
     const self = this
-    auth.ensureLogin().then(function (user) {
-      if (user && user.verifyStatus === 2) {
-        self.setData({ alreadyVerified: true, done: true, doneStatus: 2 })
-      }
-      self.loadSchools()
+    // 登录返回的用户对象只有 brief 字段（id/nickname/avatar/schoolId/verifyStatus），
+    // 认证页要展示学校名、认证方式、驳回原因、冷却时间，必须单独拉一次 /user/me
+    auth.ensureLogin().then(function () {
+      return self.loadMe()
     }).catch(function () {
+      // 拉不到认证状态（拒绝登录 / 接口异常）就按「未认证」展示表单，别让人对着空白页
+      self.setData({ done: false })
       self.loadSchools()
     })
     this.checkPluginUpdate()
+  },
+
+  /**
+   * 拉当前认证状态并存进 data。
+   * silent 静默请求：这页已有登录态，失败时让用户看到表单，比弹错误框好。
+   */
+  loadMe: function () {
+    const self = this
+    return http.get('/user/me', null, { silent: true }).then(function (me) {
+      self.applyMe(me)
+      self.loadSchools()
+    }).catch(function () {
+      self.setData({ done: false })
+      self.loadSchools()
+    })
+  },
+
+  /** 把 /user/me 的结果映射成页面状态（onLoad 与提交成功后共用） */
+  applyMe: function (me) {
+    const st = me.verifyStatus || 0
+    this.setData({
+      schoolId: me.schoolId || null,
+      schoolName: me.schoolName || '',
+      verifySource: me.verifySource || 0,
+      // 驳回原因只在「驳回」状态有意义：审核中/已认证时 remark 是后台内部备注，
+      // 当原因展示会误导用户（例如「重认证申请：原学校 XX」）
+      rejectReason: st === 3 ? (me.verifyRemark || '') : '',
+      done: st === 1 || st === 2,
+      doneStatus: st,
+      alreadyVerified: st === 2,
+      reapplyAt: fmtTime(me.reapplyAt)
+    })
   },
 
   /**
@@ -173,6 +227,37 @@ Page({
 
   removeImage: function () {
     this.setData({ verifyImg: '' })
+  },
+
+  /* ==================== 重新认证 ==================== */
+
+  /**
+   * 已认证用户点「重新认证」。
+   *
+   * 冷却期没到就直接提示剩余时间，不进表单——否则用户填完材料、传完照片，
+   * 提交时才被后端拦下，白折腾一套。
+   */
+  openReapply: function () {
+    if (this.data.reapplyAt) {
+      toast('重认证冷却中，' + this.data.reapplyAt + ' 后可再次申请')
+      return
+    }
+    this.setData({
+      done: false,
+      reapplyOpen: true,
+      // 学号/姓名是加密字段，接口只返回脱敏值，重认证必须重新填；
+      // 这里清空，避免把上次残留的输入带进来
+      studentNo: '',
+      realName: '',
+      verifyImg: ''
+    })
+  },
+
+  /** 放弃重认证，回到认证结果卡片 */
+  cancelReapply: function () {
+    this.setData({ reapplyOpen: false, done: this.data.doneStatus === 1 || this.data.doneStatus === 2 })
+    // 重新拉一次：表单里可能改过学校但没提交，卡片不能显示成新学校
+    this.loadMe()
   },
 
   /* ==================== 微信学生认证 ==================== */
@@ -302,16 +387,28 @@ Page({
         schoolName: me.schoolName || '',
         verifyStatus: me.verifyStatus
       })
+      // 提交成功后清掉表单临时输入：照片是临时路径，留着下次容易误传旧图
       self.setData({
         submitting: false,
         wxSubmitting: false,
         showWxVerify: false,
-        done: me.verifyStatus === 1 || me.verifyStatus === 2,
-        doneStatus: me.verifyStatus,
-        alreadyVerified: me.verifyStatus === 2
+        reapplyOpen: false,
+        studentNo: '',
+        realName: '',
+        verifyImg: ''
       })
+      self.applyMe(me)
       toast((res && res.message) || '提交成功')
     })
+  },
+
+  /**
+   * 进注销页。
+   * 认证中心放这个入口，是因为「要改认证信息」和「要彻底离开」是同一批用户；
+   * 真正的后果说明与勾选确认都在 cancel 页，这里只负责跳转。
+   */
+  goCancel: function () {
+    mp.navigateTo({ url: '/pages/user/cancel' })
   },
 
   goBack: function () {

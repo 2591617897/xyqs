@@ -20,6 +20,8 @@
 - 不在启动时登录；`ensureLogin()` 无 token 先 `confirmLogin()`，拒绝绝不建号
 - **schoolId=null 会让「本校」筛选退化**（＝看全站）→ 有选学校引导；「学籍认证」=verifyStatus==2
 - **JWT 的 schoolId/vs 是登录快照** → 改库必须重签（`ensureLogin(true)` + `markTokenFresh()`）
+- 学籍认证 `verifyStatus=2` 可重认证（`t_user.verify_submit_at` + 7 天冷却 + **强制转人工**，不走 `auto-approve`）；`verifyRemark` 在 `status=1` 是后台备注、`status=3` 才是驳回原因，前端只在 3 时展示
+- **账号注销**：**不复用 `status`**（那是封禁），用 `cancelled_at`；昵称落「已注销用户」→ 三个内容服务直查 `t_user` 快照，作者名自动变，**不用改内容服务**；必须清 `verify_status`（否则注销-恢复会重置重认证冷却）；学号留到保留期结束（防换号绕学号唯一）；满期清理把 `openid` 换 `purged:<id>`；恢复必须弹窗让用户确认；`requireUser` 对注销号抛 **403 而非 401**（401 会被前端当掉线清登录态）
 
 ## 安全基线（改前跑 `security-baseline-check.js`，失败须 0）
 - 身份只认 JWT；后台要求 token 与 `X-Admin-Id` 一致
@@ -38,6 +40,7 @@
 ## 布局 / 图片坑
 - `scroll-view` 在 flex 列里必须 `min-height:0`；弹层 `height:Xvh` 加 `box-sizing`
 - 底部弹层避键盘：`adjust-position="{{false}}"` + `bottom:{{keyboardHeight}}px`
+- **全面屏底部安全区**：`fixed;bottom:0` 的可点条（输入栏/工具条/操作栏）必须 `padding-bottom: env(safe-area-inset-bottom)`（先写 `0` 兜底），键盘弹起时用 `kb-up` 类归零（键盘已盖住安全区，留着是一截灰缝）；配套占位单独一层 `.input-safe{height:env(...)}`，**不能塞进 rpx 表达式**（env 是环境 px，混 rpx 没法换算）；浮层按钮 bottom 用 `calc(Xrpx + env(...))` 同步抬
 - `.json` 必须显式 `"usingComponents": {}`（缺了整页白屏）
 - **引用根目录组件写 `/components/xxx/xxx`（带前导 `/`）**；**主包只放主包用的 js**（否则报冗余）
 - ⚠️ **WXML 内联 `style` 会静默覆盖 wxss**（「改了没生效」第一反应查它）→ 改布局一律写进 wxss；开发者工具「复制样式」会带 `width/left/top`

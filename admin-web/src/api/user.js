@@ -17,6 +17,7 @@ export const userApi = {
   blacklistPage: (params) => request.get(BASE + '/blacklist', { params }),
   verifyPending: (params) => request.get(BASE + '/verify/pending', { params }),
   verify: (id, pass, reason) => request.post(BASE + '/' + id + '/verify', { pass, reason }),
+  revokeVerify: (id, reason) => request.post(BASE + '/' + id + '/verify/revoke', { reason }),
   verifyLogs: (params) => request.get(BASE + '/verify/logs', { params })
 }
 

@@ -156,6 +156,14 @@ public class UserManageController {
         return R.ok();
     }
 
+    @AuditLog(value = "撤销学籍认证", module = "USER")
+    @RequirePermission({"admin:user:verify"})
+    @PostMapping("/{id}/verify/revoke")
+    public R<Void> revokeVerify(@PathVariable("id") Long id, @RequestBody AuditReq req) {
+        userManageService.revokeVerify(id, req.getReason());
+        return R.ok();
+    }
+
     @RequirePermission({"admin:user:verify:list"})
     @GetMapping("/verify/logs")
     public R<R.Page<UserVerifyLog>> pageVerifyLogs(@RequestParam(required = false, name = "userId") Long userId,

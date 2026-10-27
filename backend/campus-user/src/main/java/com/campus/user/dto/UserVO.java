@@ -55,6 +55,18 @@ public class UserVO {
 
     private String verifyImg;
 
+    /**
+     * 最近一次提交认证时间。前端据此算「还要等几天才能重新认证」，
+     * 不要在前端写死冷却天数——那是后端配置项。
+     */
+    private LocalDateTime verifySubmitAt;
+
+    /**
+     * 已认证用户可再次申请认证的最早时间（= verifySubmitAt + 冷却天数）。
+     * 只有 verifyStatus=2 且冷却未过时才有值；null 表示当前可以立即申请。
+     */
+    private LocalDateTime reapplyAt;
+
     /** 粉丝数（「我的」页展示，Integer 保持数字） */
     private Integer fansCount;
 

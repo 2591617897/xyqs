@@ -20,13 +20,82 @@ function exchange(code) {
   if (DEV_LOGIN) payload.devOpenid = DEV_OPENID
   return http.post('/auth/login', payload).then(function (res) {
     mp.setStorageSync('token', res.token)
-    mp.setStorageSync('user', res.user)
     const app = getApp()
     app.globalData.token = res.token
+    // 注销中的账号先别放进主流程：问清楚是「恢复」还是「保持注销」。
+    // 登录接口一定会带回这条记录（同一微信号仍指向同一个 user 行），
+    // 所以恢复判断只能在这里做，不能指望后端直接拦。
+    if (res.user && res.user.cancelledAt) {
+      return handleCancelled(res.user)
+    }
+    mp.setStorageSync('user', res.user)
     app.globalData.user = res.user
     // 登录时后端按库里的最新状态签发 token（含 schoolId / verifyStatus），视为最新
     verifiedTokenReady = true
     return res.user
+  })
+}
+
+/**
+ * 注销账号的恢复询问（登录链路里调用）。
+ *
+ * 规则：
+ * - 用户同意 → 调 /user/cancel/restore 换新 token 与恢复后的资料，继续正常流程；
+ * - 用户拒绝 → 立刻清掉本地登录态，本次运行不再主动弹登录（避免刚注销就被弹窗追着）。
+ *
+ * 为什么必须由用户点一下：注销是明确表达过的意愿，自动恢复等于把「注销」变成
+ * 「退出登录」，用户下次打开小程序会以为自己的注销请求没生效。
+ *
+ * @param {Object} user 登录接口带回的用户（含 cancelledAt）
+ * @returns {Promise<Object>} 恢复后的用户；拒绝时抛 401（canceled）
+ */
+function handleCancelled(user) {
+  const day = String(user.cancelledAt || '').replace('T', ' ').slice(0, 10)
+  return new Promise(function (resolve) {
+    mp.showModal({
+      title: '账号已注销',
+      content: '这个微信号在 ' + (day || '此前') + ' 申请了注销。现在恢复：昵称、头像、关注关系会回来，'
+        + '校园认证需要重新完成。要继续使用吗？',
+      confirmText: '恢复账号',
+      cancelText: '保持注销',
+      confirmColor: '#006C49',
+      success: function (res) {
+        resolve(!!res.confirm)
+      },
+      fail: function () {
+        resolve(false)
+      }
+    })
+  }).then(function (agreed) {
+    if (!agreed) {
+      http.cleanLogin()
+      // 本次运行不再主动弹登录，但「我的」页的主动登录（force=true）不受影响
+      loginDeclined = true
+      throw { code: 401, msg: '账号保持注销状态', canceled: true }
+    }
+    return http.post('/user/cancel/restore').then(function (data) {
+      const token = data && data.token
+      const me = (data && data.user) || user
+      if (token) {
+        mp.setStorageSync('token', token)
+        getApp().globalData.token = token
+      }
+      mp.setStorageSync('user', me)
+      getApp().globalData.user = me
+      verifiedTokenReady = true
+      toast('账号已恢复，欢迎回来')
+      // 恢复接口给的是 UserBrief（没有 schoolName / schoolCity），
+      // 首页学校胶囊和本校筛选要用它们，补一次完整资料；失败不影响登录
+      return http.get('/user/me', null, { silent: true }).then(function (profile) {
+        return profile && profile.id ? updateUser(profile) : me
+      }).catch(function () {
+        return me
+      })
+    }).catch(function (err) {
+      // 恢复失败（例如刚好满保留期被清理）不能留着半登录状态
+      http.cleanLogin()
+      throw err
+    })
   })
 }
 
@@ -267,6 +336,16 @@ function loginErrorText(err) {
   return text.length > 28 ? text.slice(0, 28) + '…' : text
 }
 
+/**
+ * 本次运行内不再主动弹登录确认框。
+ *
+ * 目前只有「刚注销完账号」会用：注销后回到首页/我的，若立刻又弹「需要登录」，
+ * 用户会以为注销没生效。用户主动点登录按钮走 force=true，不受影响。
+ */
+function suspendPrompt() {
+  loginDeclined = true
+}
+
 module.exports = {
   ensureLogin,
   ensureVerified,
@@ -274,6 +353,7 @@ module.exports = {
   doLogin,
   relogin,
   markTokenFresh,
+  suspendPrompt,
   platformInfo,
   loginErrorText
 }

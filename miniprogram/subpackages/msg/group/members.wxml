@@ -1,6 +1,6 @@
 <view class="page">
   <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
-    <view class="tb-back" bindtap="goBack"><view class="ico-back"></view></view>
+    <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
     <text class="tb-title">{{selectMode ? '选择要 @ 的人' : '群成员'}}</text>
     <text class="tb-count">{{total}} 人</text>
   </view>

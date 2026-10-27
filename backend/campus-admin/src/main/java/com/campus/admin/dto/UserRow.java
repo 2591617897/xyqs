@@ -36,6 +36,13 @@ public class UserRow {
     /** 禁言到期时间投影（t_user.mute_until），NULL 表示未禁言 */
     private LocalDateTime muteUntil;
 
+    /**
+     * 注销申请时间，NULL = 正常账号。
+     * 注销中的账号昵称已落库为「已注销用户」，列表据此打「已注销」标签，
+     * 否则运营看到认证被清空会误判成数据异常。
+     */
+    private LocalDateTime cancelledAt;
+
     private Integer fansCount;
 
     private Integer followCount;
