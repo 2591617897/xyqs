@@ -55,7 +55,8 @@
 - **Nginx 必须独立 `location /api/ws`** 且在 `location /` 之前
 - 前端 `subpackages/msg/utils/ws.js`：3 次失败降级轮询，重连**必须按 sinceId 补拉**；撤回 `toMillis` 判 2 分钟并广播 `recall` 帧（≠ 管理员 `delete`）
 - 长按气泡＝回复/撤回/复制/举报；长按头像＝@；输入栏要包在 `.bottom-dock` 里才能随键盘抬
-- @ 面板页内展开（不跳页）：手打 `@` / `@` 按钮 / 长按头像；**input 不绑 `cursor` 属性**（会把光标强行挪走）
+- @ 面板页内展开（不跳页）：手打 `@` / 长按头像（输入栏 `@` 按钮已移除）；**input 不绑 `cursor` 属性**（会把光标强行挪走）
+- **展示名一律用 nickname（「我的」设置的昵称），绝不用 real_name**：UserVO 已移除 realName 字段（仅人工审核/VerifyReq 才碰真实姓名，且不过前端）
 
 ## 后台 / 自测
 > 后台见 **`NOTES-admin.md`**（网关分层、独立 JWT、el-pagination total 必须 Number）

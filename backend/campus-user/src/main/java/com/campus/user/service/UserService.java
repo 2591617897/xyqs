@@ -131,7 +131,6 @@ public class UserService {
             }
         }
         vo.setStudentNo(maskStudentNo(user.getStudentNo()));
-        vo.setRealName(maskName(user.getRealName()));
         vo.setVerifyStatus(user.getVerifyStatus());
         vo.setVerifySource(user.getVerifySource());
         vo.setWxStudentVerified(user.getWxStudentVerified());
@@ -496,15 +495,5 @@ public class UserService {
         }
         String tail = studentNo.substring(studentNo.length() - 4);
         return "****" + tail;
-    }
-
-    private String maskName(String name) {
-        if (!StringUtils.hasText(name)) {
-            return null;
-        }
-        if (name.length() == 1) {
-            return name;
-        }
-        return name.charAt(0) + "*".repeat(name.length() - 1);
     }
 }

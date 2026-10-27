@@ -465,7 +465,7 @@ Page({
       this.setData(patch)
       // 记住这个 @ 的位置，选完人要把 @ 替换成「@昵称 」
       this._atAnchor = cursor - 1
-      this.openAtPanel(true)
+      this.openAtPanel()
       return
     }
     this.setData(patch)
@@ -753,19 +753,11 @@ Page({
 
   // ============ @ 面板（底部浮层，不跳页） ============
 
-  /** 点输入栏的 @ 按钮 */
-  toggleAtPanel: function () {
-    if (this.data.panel === 'at') {
-      this.closePanel()
-      return
-    }
-    // 点按钮打开时没有「现成的 @」可以替换，插入位置交给输入框光标
-    this._atAnchor = -1
-    this.openAtPanel()
-  },
-
   /**
    * 打开成员面板。
+   *
+   * <p>只有「手打 @」一条入口（输入栏不再放 @ 按钮，避免和表情按钮挤在一起、
+   * 也避免误点）；长按头像走 addAt，不经过这里。
    *
    * <p>面板和键盘互斥：同时存在会把消息区压成一条缝，
    * 所以打开前先收键盘，键盘高度归零后 .bottom-dock 自然落到底部。

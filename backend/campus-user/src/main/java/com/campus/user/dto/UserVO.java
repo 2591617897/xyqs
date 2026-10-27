@@ -38,9 +38,11 @@ public class UserVO {
     /** 脱敏：2022****0101 */
     private String studentNo;
 
-    /** 脱敏：林* */
-    private String realName;
-
+    /**
+     * 注意：UserVO 绝不携带真实姓名。
+     * 真实姓名仅在校验提交（VerifyReq）与后台人工审核（admin 服务）中出现，
+     * 对外展示统一使用 nickname（即「我的」里设置的昵称），避免真实姓名泄漏。
+     */
     private Integer verifyStatus;
 
     /** 认证来源 0未认证 1学生证材料 2微信学生认证（前端展示「微信认证」徽标用） */

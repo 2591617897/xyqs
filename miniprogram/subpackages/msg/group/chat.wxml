@@ -207,9 +207,9 @@
       </view>
 
       <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞。
-           @ 和表情都留在输入栏里做左右对称的入口，别把表情塞到「更多」里。 -->
+           @ 没有按钮入口了（只剩「手打 @ 自动弹面板」和「长按头像」两条），
+           表情留在右侧做唯一的面板开关。 -->
       <view class="input-bar">
-        <view class="ib-tool {{panel === 'at' ? 'on' : ''}}" catchtap="toggleAtPanel">@</view>
         <input
           class="ib-input {{canSend ? '' : 'disabled'}}"
           value="{{inputText}}"

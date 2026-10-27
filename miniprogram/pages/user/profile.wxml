@@ -99,10 +99,6 @@
         <text class="ro-value">{{user.studentNo || (user.verifySource === 2 ? '微信核验免填' : '未认证')}}</text>
       </view>
       <view class="ro-row">
-        <text class="ro-label">姓名</text>
-        <text class="ro-value">{{user.realName || (user.verifySource === 2 ? '由微信核验' : '未认证')}}</text>
-      </view>
-      <view class="ro-row">
         <text class="ro-label">认证状态</text>
         <text class="ro-value {{user.verifyStatus === 2 ? 'ok' : (user.verifyStatus === 3 ? 'bad' : '')}}">
           {{user.verifyStatus === 2 ? '🛡️ 已通过' : (user.verifyStatus === 3 ? '⚠️ 已驳回' : '未认证')}}
@@ -113,6 +109,9 @@
         <text class="ro-value">{{user.verifySource === 2 ? '微信学生认证' : '学生证材料审核'}}</text>
       </view>
       <view class="ro-tip" wx:if="{{user.verifyStatus === 3}}">驳回原因：{{user.verifyRemark || '资料不清晰，请重新提交'}}</view>
+      <!-- 这里刻意不展示真实姓名：姓名只在人工审核时给管理员看，
+           任何对外页面（帖子/评论/群聊/主页）都只显示上面设置的那个昵称 -->
+      <view class="ro-tip">首页、帖子、评论、群聊里只展示你设置的昵称，不会显示真实姓名</view>
       <view class="ro-tip">学籍信息涉及校园身份：未认证前可自行选择所在学校，认证通过后更换学校需重新认证</view>
     </view>
 
