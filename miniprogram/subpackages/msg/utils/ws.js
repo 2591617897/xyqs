@@ -208,6 +208,9 @@ function leave(groupId) {
  * 返回 false 表示当前不可用，调用方应改走 HTTP（保证弱网也能发出去）。
  */
 function sendMsg(groupId, payload) {
+  // 注意：必须原样带上 replyToId —— 引用回复只走这一个字段，
+  // 之前漏传导致「针对回复」在 WebSocket 主路径下完全失效
+  // （HTTP 兜底路径 sendByHttp 带了，所以只有弱网降级时才偶尔能回显引用）。
   return rawSend({
     type: 'msg',
     groupId: String(groupId),
@@ -215,7 +218,8 @@ function sendMsg(groupId, payload) {
     content: payload.content || '',
     clientMsgId: payload.clientMsgId || '',
     atUserIds: payload.atUserIds || [],
-    atAll: !!payload.atAll
+    atAll: !!payload.atAll,
+    replyToId: payload.replyToId || ''
   })
 }
 
