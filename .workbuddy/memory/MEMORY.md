@@ -31,6 +31,8 @@
 - tabBar：`index/zone/messages/user`（`wall/index`、`goods/list` 只能 navigateTo）
 - 首页＝功能区布局，**单列全宽**、每区最多 3 张、空区不渲染；入口只来自 `utils/zones.js#buildEntries`
 - 品牌=`校聚一城`；闲置只做信息展示**禁止线上交易**（无支付/下单/邮寄）
+- **首页闲置卡口径（2026-10-27）**：`utils/zones.js#goodsItem` 产出 `sellParts`/`featureMain`/`featureSub`，卡片五层＝标题·描述·卖点行(位置/分类/成色/浏览)·特色条(N人想要|发布时间)·价格行(橙价+划线原价+绿色「看详情」)
+- ⚠️ **不抄电商话术**：参考图里的「全网热销20万+件 / 7天无理由退货 / 包邮 / 抢」一律不写 —— 无数据=虚假宣传（审核驳回），「抢」字也违反「闲置仅信息展示」红线；所有槽位只填真实字段
 - 自定义 tabBar 压不住弹层 → 页面 `getTabBar().setData({hidden:true})`
 
 ## 布局 / 图片坑

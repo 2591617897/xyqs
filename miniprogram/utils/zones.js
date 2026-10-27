@@ -254,6 +254,29 @@ function wallItem(p) {
 function goodsItem(g) {
   const price = Number(g.price || 0)
   const origin = Number(g.originalPrice || 0)
+  const likeCount = g.likeCount || 0
+  const commentCount = g.commentCount || 0
+  const viewCount = g.viewCount || 0
+  const cond = conditionText(g.conditionLevel)
+
+  // 卖点行：位置 / 分类 / 成色 / 浏览量 —— 全部是卖家自己填的真实属性。
+  // 不写「全网热销 20 万+件」「7 天无理由退货」「包邮」这类电商话术：
+  // 我们没有这些数据，写了就是虚假宣传，审核和用户两头都不落好。
+  const sellParts = []
+  if (g.location) sellParts.push({ k: 'loc', v: '📍 ' + g.location, cls: 'sell-loc' })
+  if (g.categoryName) sellParts.push({ k: 'cat', v: '🔥 ' + g.categoryName })
+  if (cond) sellParts.push({ k: 'cond', v: cond })
+  sellParts.push({ k: 'view', v: '👀 ' + fmtCount(viewCount) + ' 浏览' })
+
+  // 特色条（对应参考图的「券 · 已补 X 元」条）：左边说多少人想要，右边说什么时候发布。
+  // 想要数为 0 时不硬凑「0 人想要」，退到留言数，再没有就说在校在售。
+  let featureMain = '💗 ' + fmtCount(likeCount) + ' 人想要'
+  if (!likeCount) {
+    featureMain = commentCount > 0
+      ? '💬 ' + fmtCount(commentCount) + ' 条留言'
+      : '✨ 校内在售'
+  }
+
   return {
     kind: 'goods',
     key: 'goods-' + g.id,
@@ -270,15 +293,19 @@ function goodsItem(g) {
     showOrigin: origin > price && price > 0,
     location: g.location || '',
     categoryName: g.categoryName || '',
-    conditionText: conditionText(g.conditionLevel),
+    conditionText: cond,
     imageList: resolveList(g.imageList),
     liked: !!g.liked,
-    likeCount: g.likeCount || 0,
-    likeText: fmtCount(g.likeCount || 0),
-    viewCount: g.viewCount || 0,
-    viewText: fmtCount(g.viewCount || 0),
-    commentCount: g.commentCount || 0,
-    commentText: fmtCount(g.commentCount || 0)
+    likeCount: likeCount,
+    likeText: fmtCount(likeCount),
+    viewCount: viewCount,
+    viewText: fmtCount(viewCount),
+    commentCount: commentCount,
+    commentText: fmtCount(commentCount),
+    // 新版排版用：卖点行分段 + 特色条左右两段
+    sellParts: sellParts,
+    featureMain: featureMain,
+    featureSub: timeAgo(g.createdAt)
   }
 }
 

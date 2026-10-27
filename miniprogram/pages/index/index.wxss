@@ -500,18 +500,20 @@
 .zcard-goods-price {
   display: flex;
   align-items: baseline;
-  margin-top: 12rpx;
+  /* 吸底：价格与按钮永远贴在卡片底部，多张卡片视觉齐平 */
+  margin-top: auto;
+  padding-top: 12rpx;
 }
 .zcard-price-symbol {
   font-size: 22rpx;
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--price, #D97706);
   margin-right: 2rpx;
 }
 .zcard-price-num {
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--price, #D97706);
 }
 /* 划线原价：仅当确实高于现价时才有意义 */
 .zcard-price-origin {
@@ -520,46 +522,68 @@
   color: var(--text-4);
   text-decoration: line-through;
 }
-/* 分类 / 成色标签 */
-.zcard-goods-tags {
+
+/*/* 卖点行：位置 / 分类 / 成色 / 浏览量（红字小字，对齐参考图的红色卖点行） */
+.zcard-goods-sell {
   display: flex;
   align-items: center;
   gap: 10rpx;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
 }
-.zcard-goods-tag {
-  display: inline-flex;
-  align-items: center;
-  height: 34rpx;
-  padding: 0 12rpx;
-  border-radius: 10rpx;
-  font-size: 20rpx;
-  background: var(--surface-2);
-  color: var(--text-2);
+.zcard-goods-sell-t {
+  flex-shrink: 0;
+  font-size: 21rpx;
+  line-height: 1.3;
+  color: var(--danger-500, #DC2626);
 }
-.zcard-goods-tag.mint {
-  background: var(--success-50);
-  color: var(--success-500);
+/* 位置可能写得很长，单独限宽省略，别把后面的成色、浏览量挤没 */
+.zcard-goods-sell-t.sell-loc {
+  max-width: 220rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-/* 底部信息行：地址 / 浏览 / 想要 */
-.zcard-goods-foot {
+
+/* 特色条：左「多少人想要」/ 右「什么时候发布」（对应参考图的补贴条） */
+.zcard-goods-feature {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  /* 吸底：多张卡片的分隔线与统计数字对齐，视觉更齐 */
-  margin-top: auto;
-  padding-top: 12rpx;
-  border-top: 1rpx solid var(--border);
-  font-size: 20rpx;
-  line-height: 1;
-  color: var(--text-4);
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 10rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 10rpx;
+  background: var(--warning-50, #FFFBEB);
 }
-.zcard-goods-loc {
+.zcard-goods-feature-main {
   min-width: 0;
-  max-width: 220rpx;
+  font-size: 21rpx;
+  font-weight: 600;
+  color: var(--warning-500, #D97706);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.zcard-goods-stat {
+.zcard-goods-feature-sub {
   flex-shrink: 0;
+  font-size: 20rpx;
+  color: var(--text-3, #6B7B76);
+}
+
+/* 「看详情」按钮：只做跳转。闲置是信息展示，不做下单 / 支付 / 邮寄 */
+.zcard-goods-cta {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 12rpx;
+  padding: 8rpx 22rpx;
+  border-radius: 12rpx;
+  background: var(--brand-500, #006C49);
+  color: #fff;
+  font-size: 23rpx;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 /* 校园闲置区的分类子筛选 */

@@ -368,27 +368,35 @@
               <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
             </view>
             <view class="zcard-goods-body">
+              <!-- 标题 -->
               <view class="zcard-goods-title clamp2">{{it.title}}</view>
               <!-- 描述摘要：标题短时把卡片撑起来，长描述只留一行 -->
               <view class="zcard-goods-desc clamp1" wx:if="{{it.excerpt}}">{{it.excerpt}}</view>
-              <!-- 价格紧跟描述：价格是这张卡的核心信息，不能被推到最底下 -->
+
+              <!-- 卖点行（对齐参考图的红色卖点行）：位置 / 分类 / 成色 / 浏览量，全是真实属性 -->
+              <view class="zcard-goods-sell">
+                <text
+                  class="zcard-goods-sell-t {{sp.cls}}"
+                  wx:for="{{it.sellParts}}"
+                  wx:for-item="sp"
+                  wx:key="k"
+                >{{sp.v}}</text>
+              </view>
+
+              <!-- 特色条（对齐参考图的补贴条）：左「多少人想要」/ 右「什么时候发布」 -->
+              <view class="zcard-goods-feature">
+                <text class="zcard-goods-feature-main">{{it.featureMain}}</text>
+                <text class="zcard-goods-feature-sub">{{it.featureSub}}</text>
+              </view>
+
+              <!-- 价格行 + 看详情：价格是核心信息，吸底对齐；按钮只跳转，不含下单 / 支付 -->
               <view class="zcard-goods-price">
                 <text class="zcard-price-symbol">¥</text>
                 <text class="zcard-price-num">{{it.priceText}}</text>
                 <!-- 划线原价：只有确实比现价高才显示，否则「原价 = 现价」是噪音 -->
                 <text class="zcard-price-origin" wx:if="{{it.showOrigin}}">原价 ¥{{it.originalPriceText}}</text>
-              </view>
-              <!-- 标签行：分类 + 成色 -->
-              <view class="zcard-goods-tags">
-                <text class="zcard-goods-tag" wx:if="{{it.categoryName}}">{{it.categoryName}}</text>
-                <text class="zcard-goods-tag mint" wx:if="{{it.conditionText}}">{{it.conditionText}}</text>
-              </view>
-              <!-- 底部信息行：地址 / 浏览 / 想要（吸底对齐，两张卡视觉齐平） -->
-              <view class="zcard-goods-foot">
-                <text class="zcard-goods-loc ellipsis">📍 {{it.location || '校内自提'}}</text>
                 <view class="flex1"></view>
-                <text class="zcard-goods-stat">👁 {{it.viewText}}</text>
-                <text class="zcard-goods-stat">💗 {{it.likeText}}想要</text>
+                <view class="zcard-goods-cta">看详情</view>
               </view>
             </view>
           </view>
