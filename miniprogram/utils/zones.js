@@ -1,5 +1,5 @@
 const { timeAgo, priceText, fmtCount, conditionText } = require('./util')
-const { resolveList } = require('./img')
+const { resolveList, imgGridClass, imgMode } = require('./img')
 const { decorateWall } = require('./wall')
 
 /**
@@ -196,18 +196,6 @@ function findChannel(channels, id) {
   return null
 }
 
-/**
- * 图片网格档位（参考今日头条帖子排版）。
- *   1 张 → 单列大图
- *   2~4 张 → 两列网格
- *   5 张以上 → 三列网格（九宫格）
- */
-function imgGridClass(n) {
-  if (!n || n <= 1) return 'g1'
-  if (n <= 4) return 'g2'
-  return 'g3'
-}
-
 /** 帖子 → 卡片数据 */
 function postItem(p) {
   const images = resolveList(p.imageList)
@@ -224,6 +212,7 @@ function postItem(p) {
     excerpt: (p.content || '').replace(/\s+/g, ' '),
     imageList: images,
     imgGrid: imgGridClass(images.length),
+    imgMode: imgMode(images.length),
     liked: !!p.liked,
     likeCount: p.likeCount || 0,
     likeText: fmtCount(p.likeCount || 0),
@@ -250,6 +239,7 @@ function wallItem(p) {
     content: w.content || '',
     imageList: w.imageList,
     imgGrid: imgGridClass((w.imageList || []).length),
+    imgMode: imgMode((w.imageList || []).length),
     liked: !!w.liked,
     likeCount: w.likeCount || 0,
     likeText: fmtCount(w.likeCount || 0),

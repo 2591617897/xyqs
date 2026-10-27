@@ -480,6 +480,26 @@ Page({
   },
 
   /**
+   * 点击卡片里的图片 → 打开大图预览。
+   *
+   * 用 catchtap 而不是 bindtap：不加 catch 会冒泡到卡片的 bindtap="goZoneDetail"，
+   * 点图就变成「进详情页」，看不到大图了。
+   */
+  previewZoneImage: function (e) {
+    const ds = e.currentTarget.dataset
+    const zone = (this.data.zones || [])[ds.zi]
+    if (!zone) return
+    const item = (zone.items || [])[ds.ii]
+    if (!item) return
+    const urls = item.imageList || []
+    if (!urls.length) return
+    mp.previewImage({
+      current: ds.url || urls[0],
+      urls: urls
+    })
+  },
+
+  /**
    * Banner 图片加载失败：把这条从列表里摘掉，避免留一个灰块占位。
    * 常见原因是素材图被删或用了局域网地址（真机 <image> 加载 http://192.168.x.x 会静默失败）。
    */
@@ -567,27 +587,41 @@ Page({
   noop: function () {},
 
   /**
-   * 分享：首页默认分享首页；树洞卡片上的分享按钮带 data-id，
-   * 这时分享具体那条心事（标题取正文摘要，路径指向树洞详情页）。
+   * 分享：首页默认分享首页。
+   *
+   * 卡片上的分享按钮带 data-id + data-kind，这里按 kind 分流到对应详情页：
+   *   post → /pages/post/detail?id=   帖子
+   *   wall → /pages/wall/detail?id=   树洞闲谈（匿名心事）
+   * 标题取内容摘要（超长截断），没有匹配到则回落到分享首页。
    */
   onShareAppMessage: function (res) {
-    var id = res && res.target && res.target.dataset ? res.target.dataset.id : ''
-    if (id) {
+    var ds = (res && res.target && res.target.dataset) ? res.target.dataset : {}
+    var id = ds.id || ''
+    var kind = ds.kind || ''
+    if (id && kind) {
       var brief = ''
+      var title = ''
       var zones = this.data.zones || []
-      for (var i = 0; i < zones.length; i++) {
+      for (var i = 0; i < zones.length && !brief; i++) {
         var items = (zones[i] && zones[i].items) || []
         for (var j = 0; j < items.length; j++) {
-          if (String(items[j].id) === String(id) && items[j].kind === 'wall') {
-            brief = String(items[j].content || '').replace(/\s+/g, ' ').trim()
+          if (String(items[j].id) === String(id) && items[j].kind === kind) {
+            brief = String(items[j].content || items[j].excerpt || '').replace(/\s+/g, ' ').trim()
+            title = String(items[j].title || '')
             break
           }
         }
       }
       if (brief) {
+        // 有标题的帖子用「标题 · 摘要」，没有标题的树洞只取摘要
+        var shareTitle = title ? (title + ' · ' + brief) : brief
+        if (shareTitle.length > 30) shareTitle = shareTitle.slice(0, 30) + '…'
+        var path = kind === 'wall'
+          ? '/pages/wall/detail?id=' + id
+          : '/pages/post/detail?id=' + id
         return {
-          title: brief.length > 24 ? brief.slice(0, 24) + '…' : brief,
-          path: '/pages/wall/detail?id=' + id
+          title: shareTitle,
+          path: path
         }
       }
     }

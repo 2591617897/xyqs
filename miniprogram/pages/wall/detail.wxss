@@ -61,8 +61,15 @@
 }
 .img {
   width: 100%;
+  /* 高度限定：mode 是 aspectFill，必须给固定 height，否则图片按原比例撑高。
+     超长竖图上下被裁掉一点（可裁内容），点图可放大看原图。 */
+  height: 340rpx;
   border-radius: 16rpx;
   background: #f4f5f9;
+}
+/* 只有 1 张时给足高度，看得清 */
+.imgs.single .img {
+  height: 480rpx;
 }
 .meta {
   display: flex;

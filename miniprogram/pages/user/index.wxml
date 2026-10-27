@@ -172,10 +172,11 @@
         <text class="mi-tip">{{scopeLabel}}</text>
         <text class="mi-arrow">›</text>
       </view>
+      <!-- 消息设置入口：消息页顶栏的「设置」按钮已下沉到这里 -->
       <view class="menu-item" hover-class="tap-scale" bindtap="goMessages">
         <text class="mi-icon">🔔</text>
         <text class="mi-text">消息通知与隐私权限</text>
-        <text class="mi-tip orange">· 即时推送</text>
+        <text class="mi-tip">提醒与免打扰</text>
         <text class="mi-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="tap-scale" bindtap="goFeedback">

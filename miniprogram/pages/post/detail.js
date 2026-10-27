@@ -2,7 +2,7 @@ const http = require('../../utils/request')
 const { timeAgo, mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
-const { resolveList } = require('../../utils/img')
+const { resolveList, imgGridClass, imgMode } = require('../../utils/img')
 
 /**
  * LV 等级 → 徽章文案（如 "LV3"）。
@@ -83,6 +83,9 @@ Page({
     http.get('/posts/' + this.postId, null, { silent: true }).then(function (post) {
       post.timeText = timeAgo(post.createdAt)
       post.imageList = resolveList(post.imageList)
+      // 图片网格档位：1 张大图 / 2、4 张两列 / 3 张起三列九宫格（与首页同一口径）
+      post.imgGrid = imgGridClass(post.imageList.length)
+      post.imgMode = imgMode(post.imageList.length)
       // 与首页信息流同一口径：只有拿得到「我的学校」和「帖子学校」时才区分，
       // 全市范围下外校同学的帖子要标「同市」，不能一律写「同校」
       const me = getApp().globalData.user || mp.getStorageSync('user') || {}

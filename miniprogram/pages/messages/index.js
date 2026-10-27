@@ -2,6 +2,7 @@ const http = require('../../utils/request')
 const kwUtil = require('../../utils/kw')
 const { mp, timeAgo, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+const { confirm } = require('../../utils/ui')
 
 /** 防骗贴士「关掉后不再出现」的本地标记：只存本机，不占后端字段 */
 const TIP_CLOSED_KEY = 'msg_tip_closed'
@@ -184,8 +185,45 @@ Page({
     mp.navigateTo({ url: url })
   },
 
-  markAllRead: function () {
+  /**
+   * 长按「全部消息」tab → 标记全部已读。
+   *
+   * 头部原本有个「✓✓ 全部已读」按钮，已按产品要求移除，改为长按触发。
+   * 标记已读是**不可撤销**的批量操作（红点会真的清零），所以必须先让用户确认。
+   */
+  onFilterLongPress: function (e) {
+    const key = e.currentTarget.dataset.key
+    // 只有「全部消息」这一档支持长按标记；其它分档点了只切筛选
+    if (key !== 'all') return
+    this.confirmMarkAllRead()
+  },
+
+  /** 标记全部已读：弹确认框，用户确认后才执行 */
+  confirmMarkAllRead: function () {
     const self = this
+    const unreadTotal = this.data.allConvos.reduce(function (sum, c) {
+      return sum + (c.unread > 0 ? 1 : 0)
+    }, 0)
+    const notifyUnread = this.data.summary
+      ? (this.data.summary.unreadTotal || 0)
+      : 0
+    if (unreadTotal === 0 && notifyUnread === 0) {
+      toast('没有未读消息')
+      return
+    }
+    confirm({
+      title: '标记全部已读',
+      content: '将把全部会话与通知标记为已读，未读红点会清零。确定继续吗？',
+      confirmText: '全部已读',
+      cancelText: '取消'
+    }).then(function (ok) {
+      if (!ok) return
+      self.doMarkAllRead()
+    })
+  },
+
+  /** 真正执行标记全部已读（已获用户确认） */
+  doMarkAllRead: function () {
     const unread = this.data.convos.filter(function (c) { return c.unread > 0 })
     const patch = {}
     this.data.allConvos.forEach(function (c, i) {
@@ -206,12 +244,7 @@ Page({
     })
     this.setData({ summary: cleared })
     this.syncTabUnread(0)
-    mp.showToast({ title: '已全部标为已读', icon: 'none' })
-  },
-
-  /** 消息设置：跳分包页面（提醒开关 / 免打扰 / 微信服务通知授权） */
-  onSettings: function () {
-    mp.navigateTo({ url: '/subpackages/msg/settings/index' })
+    toast('已全部标为已读')
   },
 
   /** 左滑卡片展开/收起：受控，保证同时只有一个展开 */

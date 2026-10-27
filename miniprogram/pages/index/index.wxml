@@ -154,6 +154,26 @@
             <text>{{it.excerpt}}</text>
           </view>
 
+          <!-- 图片网格：有照片才渲染，1 张放大 / 2、4 张两列 / 3 张及以上三列 -->
+          <view
+            class="wall-imgs {{it.imgGrid}}"
+            wx:if="{{it.imageList.length}}"
+          >
+            <image
+              class="wall-img"
+              wx:for="{{it.imageList}}"
+              wx:for-item="img"
+              wx:key="*this"
+              src="{{img}}"
+              mode="{{it.imgMode}}"
+              lazy-load
+              catchtap="previewZoneImage"
+              data-zi="{{zi}}"
+              data-ii="{{ii}}"
+              data-url="{{img}}"
+            />
+          </view>
+
           <!-- 热评预览 -->
           <view class="hot-comment" wx:if="{{it.hotComment}}">
             <view class="hot-like-badge">{{it.likeCount}}赞</view>
@@ -163,23 +183,23 @@
             </view>
           </view>
 
-          <view class="feed-actions">
+          <!-- 操作条：与下方帖子卡 / 树洞卡完全同一套（各项等宽均分、内容居中） -->
+          <view class="zcard-foot">
             <!-- 后端 Post 没有 view_count 字段，没有浏览数时整块不显示（避免出现「👁 0」） -->
-            <view class="feed-view" wx:if="{{it.viewCount}}">
-              <text class="fa-icon">👁</text>
+            <view class="zcard-act" wx:if="{{it.viewCount}}">
+              <text class="zcard-act-icon">👁</text>
               <text>{{it.viewText}}</text>
             </view>
-            <view class="flex1"></view>
-            <view class="feed-act {{it.liked ? 'liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-              <text class="fa-icon">{{it.liked ? '💚' : '👍'}}</text>
+            <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+              <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
               <text>{{it.likeText}}</text>
             </view>
-            <view class="feed-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-              <text class="fa-icon">💬</text>
+            <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+              <text class="zcard-act-icon">💬</text>
               <text>{{it.commentText}}</text>
             </view>
-            <button class="feed-share" open-type="share" catchtap="noop" hover-class="share-hover" style="width: 58rpx; display: flex; box-sizing: border-box; left: 0rpx; top: 0rpx">
-              <text class="fa-icon">↗</text>
+<button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
+              <text class="zcard-act-icon">↗</text>
             </button>
           </view>
         </view>
@@ -206,15 +226,37 @@
             </view>
             <view class="zcard-title clamp2">{{it.title}}</view>
             <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
+            <!-- 图片网格：有照片才渲染 -->
+            <view
+              class="wall-imgs {{it.imgGrid}}"
+              wx:if="{{it.imageList.length}}"
+            >
+              <image
+                class="wall-img"
+                wx:for="{{it.imageList}}"
+                wx:for-item="img"
+                wx:key="*this"
+                src="{{img}}"
+                mode="{{it.imgMode}}"
+                lazy-load
+                catchtap="previewZoneImage"
+                data-zi="{{zi}}"
+                data-ii="{{ii}}"
+                data-url="{{img}}"
+              />
+            </view>
             <view class="zcard-foot">
-              <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
+              <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
                 <text>{{it.likeText}}</text>
               </view>
               <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
                 <text class="zcard-act-icon">💬</text>
                 <text>{{it.commentText}}</text>
               </view>
+<button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
+                <text class="zcard-act-icon">↗</text>
+              </button>
             </view>
           </view>
         </view>
@@ -256,27 +298,35 @@
             <view class="zcard-excerpt clamp3">{{it.content}}</view>
 
             <!-- 配图：九宫格，无图不渲染；1 张放大、2/4 张两列、其余三列 -->
-            <view
-              class="wall-imgs {{it.imageList.length === 1 ? 'cols-1' : (it.imageList.length === 2 || it.imageList.length === 4 ? 'cols-2' : 'cols-3')}}"
-              wx:if="{{it.imageList.length}}"
-            >
+            <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
               <image
                 class="wall-img"
                 wx:for="{{it.imageList}}"
                 wx:for-item="img"
                 wx:key="*this"
                 src="{{img}}"
-                mode="aspectFill"
+                mode="{{it.imgMode}}"
                 lazy-load
+                catchtap="previewZoneImage"
+                data-zi="{{zi}}"
+                data-ii="{{ii}}"
+                data-url="{{img}}"
               />
             </view>
 
-            <!-- 底部操作条：仅保留点赞（左对齐，与帖子卡一致：扁平图标 + 计数，无分隔线） -->
-            <view class="wall-foot">
-              <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
+            <!-- 底部操作条：与帖子卡完全同一套（赞 / 评 / 分享，各项等宽均分、内容居中） -->
+            <view class="zcard-foot">
+              <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
                 <text>{{it.likeText}}</text>
               </view>
+              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                <text class="zcard-act-icon">💬</text>
+                <text>{{it.commentText}}</text>
+              </view>
+              <button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
+                <text class="zcard-act-icon">↗</text>
+              </button>
             </view>
           </view>
         </view>

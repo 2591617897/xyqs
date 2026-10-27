@@ -53,7 +53,7 @@
   "preloadRule": {
     "pages/user/index": {
       "network": "all",
-      "packages": ["subpackages/me"]
+      "packages": ["subpackages/me", "subpackages/msg"]
     },
     "pages/messages/index": {
       "network": "all",

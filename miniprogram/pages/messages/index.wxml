@@ -1,14 +1,10 @@
 <view class="page">
-  <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏；右侧预留胶囊宽度） -->
-  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px; padding-right: {{capsuleGap}}px">
-    <view class="tb-left">
-      <!-- 本页已是底部「私信」tab 页：没有上一级可返回，不显示返回箭头 -->
-      <text class="tb-title">私信与消息中心</text>
-    </view>
-    <view class="tb-right">
-      <view class="tb-act" bindtap="markAllRead"><view class="ico ico-done-all"></view></view>
-      <view class="tb-act" bindtap="onSettings"><view class="ico ico-tune"></view></view>
-    </view>
+  <!-- 顶栏（自绘单层，navigationStyle:custom，不再叠原生导航栏；右侧预留胶囊宽度）
+       本页是底部「消息」tab 页，没有上一级可返回，左侧不再显示标题；
+       「全部已读」与「设置」都已下沉（长按「全部消息」/ 「我的 → 消息通知与隐私权限」），
+       顶栏右侧只保留微信胶囊占位。 -->
+  <view class="topbar topbar-plain" style="padding-top: {{statusBarHeight + 8}}px; padding-right: {{capsuleGap}}px">
+    <view class="tb-left"></view>
   </view>
 
   <!-- 搜索框 -->
@@ -124,6 +120,7 @@
         wx:for="{{filters}}"
         wx:key="key"
         bindtap="switchFilter"
+        bindlongpress="onFilterLongPress"
         data-key="{{item.key}}"
       >
         <text>{{item.name}}</text>

@@ -261,25 +261,62 @@
   line-height: 1.5;
   color: #6b6b73;
 }
+/* 底部操作条：今日最热 / 帖子 / 树洞三卡共用同一套（参考今日头条帖子排版）
+   —— 扁平图标 + 计数，各项**等宽均分**（flex:1）且自身内容居中
+
+   ⚠️ 关键：容器必须撑满整行（width:100%）。
+   之前在 WXML 里用内联 style="width:217rpx" 锁死了宽度，
+   内联样式优先级高于 wxss，导致 flex:1 只在那 217rpx 里分，
+   三项挤成一小撮贴左边 —— 视觉上就是"均分没生效"。 */
 .zcard-foot {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  margin-top: 16rpx;
+  width: 100%;
+  margin-top: 18rpx;
 }
 .zcard-act {
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6rpx;
-  font-size: 21rpx;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 23rpx;
   color: #6b6b73;
-}
-.zcard-act-icon {
-  font-size: 24rpx;
   line-height: 1;
 }
+.zcard-act-icon {
+  font-size: 26rpx;
+  line-height: 1;
+}
+/* 点赞态：图标和计数一起变粉。
+   选择器同时覆盖两种挂法 —— .zcard-act.is-liked（容器态，帖子卡/树洞）
+   和 .zcard-act-icon.is-liked（图标态，兼容旧写法） */
+.zcard-act.is-liked,
 .zcard-act-icon.is-liked {
   color: var(--like-500, #FF4D7D);
+}
+/* 分享：button 默认样式要去掉，视觉上与赞/评对齐（同样占一份均分）。
+   button 有默认的 width/display，必须显式清掉才能吃到 flex:1 */
+.zcard-share {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  background: transparent;
+  border: none;
+  line-height: 1;
+  font-size: 23rpx;
+  color: #6b6b73;
+  box-sizing: border-box;
+}
+.zcard-share::after {
+  border: none;
 }
 
 /* 帖子卡片 */
@@ -292,13 +329,7 @@
   display: block;
   padding: 24rpx;
 }
-/* 底部操作条：仅点赞，右对齐（与上方帖子卡 feed-actions 一致） */
-.wall-foot {
-  display: flex;
-  align-items: center;
-  margin-top: 16rpx;
-}
-/* 复用 .zcard-act 的点赞图标样式；这里仅占位说明，实际样式在下方补充时不冲突 */
+/* 树洞底部操作条已统一到 .zcard-foot（与帖子卡完全同一套：赞 / 评 / 分享） */
 .zcard-user {
   display: flex;
   align-items: center;
@@ -311,6 +342,21 @@
   align-items: center;
   gap: 10rpx;
   min-width: 0;
+}
+.zcard-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zcard-meta {
+  font-size: 20rpx;
+  color: #9b9ba3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .zcard-flair {
   flex-shrink: 0;
@@ -337,21 +383,6 @@
   display: flex;
   flex-direction: column;
   gap: 4rpx;
-}
-.zcard-name {
-  font-size: 25rpx;
-  font-weight: 700;
-  color: #1a1a1a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.zcard-meta {
-  font-size: 20rpx;
-  color: #9b9ba3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .zcard-tags {
   display: flex;
@@ -396,10 +427,12 @@
   background: #f2f3f5;
   display: block;
 }
-/* 1 张：放大，限制宽度避免被拉成正方形 */
+/* 1 张：宽度水平铺满整行 + 高度限定。
+   mode 已是 aspectFill，所以这里**必须给固定 height**（否则图片按原比例撑高）：
+   超长竖图上下被裁掉一点（可裁内容），点图仍能预览原图。 */
 .wall-imgs.cols-1 .wall-img {
-  width: 420rpx;
-  height: 320rpx;
+  width: 100%;
+  height: 420rpx;
 }
 /* 2 / 4 张：两列（4 张即 2×2） */
 .wall-imgs.cols-2 .wall-img {
@@ -664,68 +697,9 @@
   background: #fcfcfd;
 }
 
-/* ===== 底部操作：胶囊图标 + 计数 ===== */
-.feed-actions {
-  display: flex;
-  align-items: center;
-  margin-top: 20rpx;
-  color: #9b9ba3;
-  font-size: 23rpx;
-}
-.feed-view {
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  background: #f4f5f7;
-  color: #8a8f99;
-  font-size: 22rpx;
-}
-.feed-view .fa-icon {
-  font-size: 24rpx;
-  opacity: 0.8;
-}
-.fa-icon {
-  font-size: 28rpx;
-  line-height: 1;
-}
-.feed-act {
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  color: #6b6b73;
-  font-size: 22rpx;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.feed-act:active {
-  background: #f4f5f7;
-}
-.feed-act.liked {
-  color: var(--like-500, #FF4D7D);
-  background: rgba(255, 77, 125, 0.1);
-}
-.feed-share {
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  margin: 0;
-  padding: 8rpx 18rpx;
-  background: transparent;
-  border: none;
-  border-radius: 999rpx;
-  line-height: 1;
-  font-size: 22rpx;
-  color: #6b6b73;
-}
-.feed-share:active {
-  background: #f4f5f7;
-}
-.feed-share::after {
-  border: none;
-}
+/* 底部操作条样式已统一到 .zcard-foot / .zcard-act / .zcard-share
+   （原 .feed-actions 系列是胶囊底 + 右对齐，现改为扁平图标 + 左对齐，
+     三张卡片共用一套；此处的 .share-hover 仍被 zcard-share 引用） */
 .share-hover {
   opacity: 0.6;
 }

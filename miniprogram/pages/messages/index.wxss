@@ -42,12 +42,14 @@
 }
 
 /* ---------- 顶栏 ---------- */
+/* 标题与右侧按钮都已移除（设置下沉到「我的」、全部已读改长按「全部消息」），
+   顶栏现在只负责把内容让开状态栏与微信胶囊，不再占一行标题高度 */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   /* 顶部留白由内联 statusBarHeight 控制（自绘顶栏避开状态栏） */
-  padding: 0 24rpx 20rpx;
+  padding: 0 24rpx 8rpx;
 }
 .tb-left {
   display: flex;
@@ -55,24 +57,6 @@
   gap: 16rpx;
 }
 .tb-back {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-}
-.tb-title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #191c1e;
-}
-.tb-right {
-  display: flex;
-  gap: 12rpx;
-}
-.tb-act {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
@@ -91,13 +75,6 @@
 .tb-back .ico {
   width: 48rpx;
   height: 48rpx;
-}
-.tb-act {
-  color: #475569;
-}
-.tb-act .ico {
-  width: 44rpx;
-  height: 44rpx;
 }
 .search-box .ico {
   width: 36rpx;

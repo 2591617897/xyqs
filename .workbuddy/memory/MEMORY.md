@@ -38,6 +38,12 @@
 - 底部弹层避键盘：`adjust-position="{{false}}"` + `bottom:{{keyboardHeight}}px`
 - `.json` 必须显式 `"usingComponents": {}`（缺了整页白屏）
 - **引用根目录组件写 `/components/xxx/xxx`（带前导 `/`）**；**主包只放主包用的 js**（否则报冗余）
+- ⚠️ **WXML 内联 `style` 会静默覆盖 wxss**（「改了没生效」第一反应查它）→ 改布局一律写进 wxss；开发者工具「复制样式」会带 `width/left/top`
+- ⚠️ **跳分包必须配 `preloadRule`**，否则首次 navigateTo 白屏等待（如「我的」→`subpackages/msg`）
+- ⚠️ **部分 js 是 CRLF 行尾**（`pages/messages/index.js` 等）→ 正则 `/^const x = .*$/m` **匹配不到**（`$` 不匹配 `\r` 前），静默不替换；改文件用 `.replace("精确字符串", ...)` 或先 `cat -A` 看行尾
+- **单图口径（2026-10-27 定，全站统一）**：`utils/img.js#imgMode` 统一 `aspectFill`；`imgGridClass(1)=cols-1` → 宽度 100% + CSS **写死 height**（首页 420rpx / 帖子详情 480rpx / 树洞详情 480rpx / 树洞列表 340rpx）。**widthFix 高度=比例×宽，天生无法限高** → 超长竖图会把卡片撑穿；aspectFill 会裁切，想看全图点图走 `mp.previewImage`
+- ⚠️ **Python 批量改文件**：写前先判 CRLF/LF（repl 里写死换行符会混进裸 LF，git diff 立刻暴露）；**跨函数的多行正则必须锚定唯一标识**（如 `function resolve(`），否则惰性匹配会吃掉中间整段函数
+- `utils/ui.js` 的 `confirm()` 返回 `Promise<boolean>`（`wx.showModal` 封装），二次确认统一用它，别手写 `mp.showModal` 回调
 
 ## 内容安全
 - 任何 UGC 落库前必须过 `SecurityGuard#checkText`（带图再 `checkImages`），并加进 `content-security-check.js` 的 `ENTRIES`

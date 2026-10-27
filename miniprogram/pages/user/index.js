@@ -379,8 +379,14 @@ Page({
   },
 
   /** 私信（已是 tab 页，走 switchTab） */
+  /**
+   * 「消息通知与隐私权限」入口。
+   *
+   * 消息页顶栏原本有个「设置」按钮，已按产品要求下沉到这里 ——
+   * 消息页只留会话列表与筛选，设置类入口统一在「我的」里找。
+   */
   goMessages: function () {
-    mp.switchTab({ url: '/pages/messages/index' })
+    mp.navigateTo({ url: '/subpackages/msg/settings/index' })
   },
 
   /** 未实现的演示入口统一占位 */

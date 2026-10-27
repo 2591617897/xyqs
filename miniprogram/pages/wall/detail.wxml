@@ -27,13 +27,14 @@
 
     <view class="content">{{post.content}}</view>
 
-    <view class="imgs" wx:if="{{post.imageList.length}}">
+    <!-- 图片：宽度铺满整行 + 高度限定（超长竖图上下裁切，点图可放大预览原图） -->
+    <view class="imgs {{post.imageList.length === 1 ? 'single' : ''}}" wx:if="{{post.imageList.length}}">
       <image
         wx:for="{{post.imageList}}"
         wx:key="*this"
         class="img"
         src="{{item}}"
-        mode="widthFix"
+        mode="aspectFill"
         bindtap="preview"
         data-url="{{item}}"
       />
