@@ -542,3 +542,177 @@
   font-size: 22rpx;
   color: #b6bdc8;
 }
+
+/* ===== 我的校友群卡片 ===== */
+.group-card {
+  display: flex;
+  gap: 20rpx;
+  margin: 16rpx 24rpx 0;
+  padding: 24rpx;
+  background: linear-gradient(135deg, #eaf5f0 0%, #ffffff 62%);
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 18rpx rgba(15, 26, 22, 0.06);
+  border: 2rpx solid #dcece4;
+}
+.group-card-hover {
+  background: #f2f8f5;
+}
+.gc-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: #006c49;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46rpx;
+  flex-shrink: 0;
+}
+.gc-main {
+  flex: 1;
+  min-width: 0;
+}
+.gc-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.gc-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0f1a16;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gc-at {
+  min-width: 40rpx;
+  height: 34rpx;
+  padding: 0 10rpx;
+  border-radius: 999rpx;
+  background: #c2410c;
+  color: #ffffff;
+  font-size: 20rpx;
+  line-height: 34rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+.gc-badge {
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 10rpx;
+  border-radius: 999rpx;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 20rpx;
+  line-height: 34rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+.gc-join {
+  font-size: 21rpx;
+  color: #006c49;
+  background: #e8f3ee;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+.gc-mid {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+.gc-count {
+  font-size: 21rpx;
+  color: #7b8a84;
+  flex-shrink: 0;
+}
+.gc-dot {
+  font-size: 20rpx;
+  color: #cfd9d5;
+}
+.gc-last {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  color: #7b8a84;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gc-tags {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 10rpx;
+}
+.gc-tag {
+  font-size: 18rpx;
+  padding: 3rpx 10rpx;
+  border-radius: 8rpx;
+}
+.tag-night {
+  color: #1d4ed8;
+  background: #eef2ff;
+}
+.tag-mute {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.tag-new {
+  color: #a8730f;
+  background: #fff7e6;
+}
+.gc-time {
+  margin-left: auto;
+  font-size: 19rpx;
+  color: #b9c4bf;
+}
+
+/* ===== 群引导（未登录 / 未绑学校） ===== */
+.group-empty {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 16rpx 24rpx 0;
+  padding: 24rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  border: 2rpx dashed #dcece4;
+}
+.ge-icon {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 20rpx;
+  background: #f2f5f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+.ge-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.ge-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  color: #0f1a16;
+}
+.ge-sub {
+  font-size: 21rpx;
+  color: #7b8a84;
+}
+.ge-act {
+  font-size: 24rpx;
+  color: #006c49;
+  font-weight: 600;
+  flex-shrink: 0;
+}

@@ -19,6 +19,51 @@
     </view>
   </view>
 
+  <!-- 我的校友群：一所学校一个群。未绑学校给「选校引导」，绝不显示空群 -->
+  <view class="group-card" wx:if="{{group}}" bindtap="goGroup" hover-class="group-card-hover">
+    <view class="gc-avatar">🏫</view>
+    <view class="gc-main">
+      <view class="gc-top">
+        <text class="gc-name">{{group.name}}</text>
+        <!-- @ 角标优先于普通未读：被点名比「有新消息」更需要立刻处理 -->
+        <view class="gc-at" wx:if="{{group.mentionUnread}}">@{{group.mentionUnread > 99 ? '99+' : group.mentionUnread}}</view>
+        <view class="gc-badge" wx:elif="{{group.unread}}">{{group.unread > 99 ? '99+' : group.unread}}</view>
+        <text class="gc-join" wx:if="{{!group.joined}}">重新加入</text>
+      </view>
+      <view class="gc-mid">
+        <text class="gc-count">{{group.memberCount}} 人</text>
+        <text class="gc-dot">·</text>
+        <text class="gc-last">{{group.lastMsgText || '还没有人说话，来打个招呼吧'}}</text>
+      </view>
+      <view class="gc-tags">
+        <text class="gc-tag tag-night" wx:if="{{group.nightMute}}">夜间静默</text>
+        <text class="gc-tag tag-mute" wx:if="{{group.muted}}">你已被禁言</text>
+        <text class="gc-tag tag-new" wx:if="{{group.joined && !group.rulesAgreed}}">先看群规</text>
+        <text class="gc-time" wx:if="{{group.lastMsgTime}}">{{group.lastMsgTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 已登录但没绑定学校：给引导，不给空群 -->
+  <view class="group-empty" wx:if="{{!needLogin && groupNeedSchool}}" bindtap="openOnboard">
+    <view class="ge-icon">🏫</view>
+    <view class="ge-main">
+      <text class="ge-title">选择学校，加入校友群</text>
+      <text class="ge-sub">一所学校一个群，同校同学都在这里</text>
+    </view>
+    <text class="ge-act">去选择</text>
+  </view>
+
+  <!-- 游客：登录后才建号入群 -->
+  <view class="group-empty" wx:if="{{needLogin}}" bindtap="goLogin">
+    <view class="ge-icon">🏫</view>
+    <view class="ge-main">
+      <text class="ge-title">登录后加入校友群</text>
+      <text class="ge-sub">和同校同学聊课程、拼车、约自习</text>
+    </view>
+    <text class="ge-act">去登录</text>
+  </view>
+
   <!-- 四大快捷入口 -->
   <view class="quick">
     <view class="quick-item" bindtap="onQuick" data-name="赞与收藏">
@@ -166,4 +211,11 @@
     <text class="end-sub">友善交流，共筑可信温暖的校园圈子 🌱</text>
   </view>
 
+  <!-- 未绑定学校时的选校弹层（与首页 / 我的 共用同一个组件） -->
+  <school-onboard
+    show="{{onboardShow}}"
+    saving="{{onboardSaving}}"
+    bind:select="onOnboardSelect"
+    bind:close="onOnboardClose"
+  />
 </view>

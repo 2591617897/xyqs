@@ -57,6 +57,17 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      * 这条前缀下只有回调一个接口，不放任何业务能力。
      */
     private static final String WX_CALLBACK_PREFIX = "/api/wx/";
+    /**
+     * 校友群 WebSocket 握手路径。
+     *
+     * <p>小程序 {@code wx.connectSocket} 无法自定义请求头，握手请求不带 Authorization，
+     * 这里若不单独放行会直接被 401 打回，表现为「连上立刻断、日志看不出原因」。
+     *
+     * <p>⚠️ <b>放行不等于裸奔</b>：连接建立前服务端必须校验一次性 ticket
+     * （60 秒有效、取即删），无效 ticket 在 beforeHandshake 阶段就被拒，
+     * 连 handler 都进不来。安全边界在服务端，不在这里。
+     */
+    private static final String WS_PREFIX = "/api/ws";
     private static final List<String> PUBLIC_READ_PREFIX =
             List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels",
                     // 首页运营位：广告素材与后台公告要在游客首屏就可见，
@@ -146,6 +157,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         }
 
         boolean whitelisted = WHITE_PREFIX.stream().anyMatch(path::startsWith)
+                // 校友群 WebSocket 握手：鉴权交给服务端 ticket 校验（见 WS_PREFIX 注释）
+                || path.startsWith(WS_PREFIX)
                 // 健康检查只认精确路径，其余 /actuator/** 一律要求令牌
                 || ACTUATOR_HEALTH_EXACT.equals(path)
                 // 微信消息推送回调：只放行 GET/POST /api/wx/callback 这一条精确路径，

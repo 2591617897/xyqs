@@ -46,6 +46,24 @@ spring:
             - Path=/api/messages/**
           filters:
             - StripPrefix=1
+        # 校友群 C 端接口（HTTP）：全部需要登录。
+        # 注意 /api/groups/** 不进 PUBLIC_READ_PREFIX —— 群消息必须登录才能看。
+        - id: campus-groups
+          uri: lb://campus-message
+          predicates:
+            - Path=/api/groups/**
+          filters:
+            - StripPrefix=1
+        # 校友群实时通道（WebSocket）。
+        # 握手请求不带 Authorization 头，网关必须放行，安全由服务端的一次性
+        # ticket 校验兜住（见 campus-message 的 WsHandshakeInterceptor）。
+        # 改完这段必须重启网关，否则 /api/ws 直接 404。
+        - id: campus-ws
+          uri: lb:ws://campus-message
+          predicates:
+            - Path=/api/ws/**
+          filters:
+            - StripPrefix=1
         # 内容推广：看激励视频广告换排序权重。
         # 全部接口都要登录（不在 PUBLIC_READ_PREFIX 里），且只能推广自己的内容。
         - id: campus-promote

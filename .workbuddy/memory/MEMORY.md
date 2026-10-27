@@ -108,6 +108,18 @@
 - 手动重启服务最容易漏 8108 → 见到 `501/502` 先查它起没起（网关路由有 ≠ 实例在）
 - 脚本要 token 又不想改 auth 参数：`node scripts/make-dev-token.js <userId> [schoolId] [vs]` → `PROMOTE_TOKEN=<token>`
 
+## 校友群（campus-message 8106，WS 实时）
+- 一校一群 `t_group(type=1,biz_key=schoolId)`，6 表；后台菜单 **9320 段**（9310 与「系统日志」撞车）
+- **项目无 Redis**：ticket/频控/禁言缓存/广播全是进程内单例 → 单实例 OK，多实例必须换 Redis（ticket 会跨实例失效、频控阈值放大 N 倍、广播收不到）
+- 发消息裁定顺序 **单人禁言 → 夜间静音 → 频率 → 内容安全**，顺序错会给出误导性拒绝原因
+- `clientMsgId` 走 `uk_client` 幂等（`DuplicateKeyException` 返已存在那条）；@所有人只更 `last_at_all_msg_id`（零写放大）
+- auto-join 只认「无成员记录」；status=0/2 绝不自动拉回；建群 `DuplicateKeyException` **直接 return 重查结果**
+- 绑定学校三入口统一走 `UserService#afterSchoolBound`，必须在 `updateById` **之后**（未提交跨服务查不到）
+- **Nginx 必须独立 `location /api/ws`** 且写在 `location /` 之前：`location /` 的 `Connection ""` 会覆盖 Upgrade 头
+- 网关 `lb:ws://` 路由 + `AuthGlobalFilter` 放行 WS_PREFIX（握手无 Authorization，安全边界是一次性 ticket）
+- `@EnableScheduling` 已在 `MessageApplication`；归档每天迁 12 个月前，批 500 + sleep 200ms，同步迁 `t_group_mention`
+- 前端 `utils/ws.js`：退避 1→2→4→8s 封顶 15s、3 次失败降级轮询、重连**必须按 sinceId 补拉**；`onUnload` 先 `unbindWs()` 再断连
+
 ## 后台
 > 细节见同目录 **`NOTES-admin.md`**（网关分层、独立 JWT、AdminWriteGateway 降级、el-container 竖排、el-pagination total 必须 Number、动态路由幂等、`t_notification.content_snapshot` 等），做后台任务先读它。
 

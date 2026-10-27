@@ -1,0 +1,77 @@
+<view class="page">
+  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
+    <view class="tb-back" bindtap="goBack"><view class="ico-back"></view></view>
+    <text class="tb-title">群设置</text>
+  </view>
+
+  <block wx:if="{{loading}}">
+    <view class="loading">加载中…</view>
+  </block>
+
+  <block wx:else>
+    <!-- 群信息 -->
+    <view class="card">
+      <view class="group-head">
+        <view class="group-avatar">🏫</view>
+        <view class="group-main">
+          <text class="group-name">{{group.name}}</text>
+          <text class="group-sub">{{group.memberCount}} 位校友 · {{group.schoolName || '本校'}}</text>
+        </view>
+      </view>
+      <view class="group-notice" wx:if="{{group.notice}}">{{group.notice}}</view>
+    </view>
+
+    <!-- 提醒方式 -->
+    <view class="card">
+      <view class="card-title">消息提醒</view>
+      <view
+        class="opt {{notifyMode === item.value ? 'opt-on' : ''}}"
+        wx:for="{{notifyOptions}}"
+        wx:key="value"
+        wx:for-item="item"
+        bindtap="onPickNotify"
+        data-value="{{item.value}}"
+      >
+        <view class="opt-main">
+          <text class="opt-title">{{item.title}}</text>
+          <text class="opt-desc">{{item.desc}}</text>
+        </view>
+        <view class="radio {{notifyMode === item.value ? 'radio-on' : ''}}"></view>
+      </view>
+      <view class="card-tip">「提醒」目前只在打开小程序时生效（群卡片角标 + 底栏红点）。微信服务通知需订阅消息，后续版本开放。</view>
+    </view>
+
+    <!-- 群规则 -->
+    <view class="card">
+      <view class="card-title">本群规则</view>
+      <view class="rule-row">
+        <text class="rule-k">发言频率</text>
+        <text class="rule-v">每 {{group.rateGapSec || 10}} 秒 1 条 · 每天 {{group.rateDayMax || 50}} 条</text>
+      </view>
+      <view class="rule-row">
+        <text class="rule-k">夜间静默</text>
+        <text class="rule-v">{{group.nightRange || '00:30-06:30'}}（管理员可发言）</text>
+      </view>
+      <view class="rule-row">
+        <text class="rule-k">我的身份</text>
+        <text class="rule-v">{{group.myRole === 1 ? '群管理员' : '普通成员'}}</text>
+      </view>
+      <view class="rule-more">禁止广告、刷屏、人身攻击与违法内容；违规内容会被删除并可能被禁言。</view>
+    </view>
+
+    <!-- 成员与举报 -->
+    <view class="card">
+      <view class="link-row" bindtap="goMembers">
+        <text class="link-text">查看群成员</text>
+        <text class="link-act">›</text>
+      </view>
+      <view class="link-row" bindtap="goReport">
+        <text class="link-text">举报本群</text>
+        <text class="link-act">›</text>
+      </view>
+    </view>
+
+    <view class="danger" bindtap="onQuit">退出群聊</view>
+    <view class="bottom-tip">退出后不会再自动加入；重新进入可在消息页点「重新加入」</view>
+  </block>
+</view>

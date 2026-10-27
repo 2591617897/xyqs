@@ -38,6 +38,14 @@ mybatis-plus:
       id-type: assign_id
 
 campus:
+  # ---------------- 校友群 ----------------
+  group:
+    # WebSocket 一次性票据有效期（秒）。短到足以让泄露无意义，
+    # 长到足够小程序「拿票 → connectSocket」这段往返。
+    ws-ticket-seconds: ${WS_TICKET_SECONDS:60}
+    # WebSocket 对外地址（含 /api/ws）。留空时前端用 SERVER 自己拼。
+    # 生产示例：wss://campus-api.trkcwl.com/api/ws
+    ws-url: ${WS_PUBLIC_URL:}
   jwt:
     # 【安全】密钥来自环境变量 JWT_SECRET 或 ~/.campus-secrets/jwt.key
     secret: ${JWT_SECRET:}

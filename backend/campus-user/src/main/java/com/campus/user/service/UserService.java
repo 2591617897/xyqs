@@ -9,6 +9,7 @@ import com.campus.common.crypto.SearchHash;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.client.GoodsCountClient;
+import com.campus.user.client.GroupJoinClient;
 import com.campus.user.client.PostCountClient;
 import com.campus.user.client.StudentVerifyClient;
 import com.campus.user.client.WallCountClient;
@@ -49,6 +50,7 @@ public class UserService {
     private final WallCountClient wallCountClient;
     private final SecurityGuard securityGuard;
     private final StudentVerifyClient studentVerifyClient;
+    private final GroupJoinClient groupJoinClient;
 
     @Value("${campus.verify.auto-approve:true}")
     private boolean autoApprove;
@@ -228,6 +230,8 @@ public class UserService {
             user.setSchoolId(req.getSchoolId());
         }
         userMapper.updateById(user);
+        // 绑定学校的三个入口之一：选校（主入口）
+        afterSchoolBound(user.getId(), user.getSchoolId());
         return me(userId);
     }
 
@@ -262,6 +266,8 @@ public class UserService {
         user.setVerifySource(1);
         user.setVerifyRemark("");
         userMapper.updateById(user);
+        // 绑定学校的三个入口之二：学生证认证
+        afterSchoolBound(user.getId(), user.getSchoolId());
 
         String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
         String msg = autoApprove ? "认证成功，欢迎来到校聚一城" : "已提交认证，预计 1 个工作日内完成审核";
@@ -329,10 +335,39 @@ public class UserService {
         user.setWxStudentVerifyAt(LocalDateTime.now());
         user.setVerifyRemark("");
         userMapper.updateById(user);
+        // 绑定学校的三个入口之三：微信学生认证
+        afterSchoolBound(user.getId(), user.getSchoolId());
 
         // JWT 里的 schoolId / vs 是登录快照，认证后必须重签，否则前端仍是「未认证」
         String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
         return new VerifyResp(2, token, "微信学生认证通过，欢迎来到校聚一城");
+    }
+
+    /**
+     * 绑定学校后自动加入校友群（学校没有群则由 message 侧自动建群）。
+     *
+     * <p><b>必须在 {@code userMapper.updateById(user)} 之后调用</b>：
+     * 放前面时事务还没提交，message 服务通过 Feign 查到的是旧数据。
+     *
+     * <p>fail-soft：入群失败绝不能让「绑定学校」失败（用户会以为选校没成功）。
+     * 真正的兜底在进群页的 lazy join —— 学校匹配但无成员记录时会自动补加入。
+     */
+    private void afterSchoolBound(Long userId, Long schoolId) {
+        if (userId == null || schoolId == null) {
+            return;
+        }
+        try {
+            R<java.util.Map<String, Object>> r = groupJoinClient.autoJoin(
+                    new com.campus.user.dto.AutoJoinReq(userId, schoolId));
+            if (r == null || r.getCode() != 0) {
+                log.warn("自动入群未成功 userId={} schoolId={} code={} msg={}",
+                        userId, schoolId, r == null ? null : r.getCode(), r == null ? null : r.getMsg());
+            }
+        } catch (Exception e) {
+            // 群服务临时不可用 / 未启动：不能影响选校流程
+            log.warn("自动入群失败 userId={} schoolId={}: {}: {}",
+                    userId, schoolId, e.getClass().getSimpleName(), e.getMessage());
+        }
     }
 
     public UserBrief brief(Long userId) {

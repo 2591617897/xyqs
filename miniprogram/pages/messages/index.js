@@ -38,6 +38,12 @@ Page({
     /** 当前处于左滑展开状态的会话 id（受控，保证同时只有一个展开） */
     openSwipeId: '',
     /** 四宫格不再弹抽屉：每类通知都是一个分包页面（subpackages/msg） */
+    /** 我的校友群卡片（一所学校一个群；null = 还没拉到） */
+    group: null,
+    /** 未绑定学校：显示选校引导，绝不给空群 */
+    groupNeedSchool: false,
+    onboardShow: false,
+    onboardSaving: false,
   },
 
   onLoad: function () {
@@ -81,7 +87,9 @@ Page({
         allConvos: [],
         convos: [],
         summary: { likes: 0, followers: 0, mentions: 0, notice: '' },
-        unread: 0
+        unread: 0,
+        group: null,
+        groupNeedSchool: false
       })
       return
     }
@@ -89,9 +97,13 @@ Page({
     // 并行拉会话列表 + 通知未读统计
     const convosPromise = http.get('/messages', null, { silent: true }).catch(function () { return {} })
     const notifyPromise = http.get('/messages/notifications/unread', null, { silent: true }).catch(function () { return null })
-    Promise.all([convosPromise, notifyPromise]).then(function (results) {
+    // 群卡片：失败不影响私信列表（运营位 / 增强能力不能拖垮主流程）
+    const groupPromise = http.get('/groups/mine', null, { silent: true }).catch(function () { return null })
+    Promise.all([convosPromise, notifyPromise, groupPromise]).then(function (results) {
       const res = results[0] || {}
       const unread = results[1] || {}
+      const groupRes = results[2] || null
+      self.applyGroup(groupRes)
       const all = (res.convos || []).map(function (c) {
         c.timeText = shortTime(c.lastTime)
         c.id = String(c.id)
@@ -258,6 +270,92 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ unread: Number(n) || 0 })
     }
+  },
+
+  /**
+   * 落地群卡片。
+   *
+   * 三种状态互斥：未登录（needLogin 分支不拉接口）/ 未绑学校（引导选校）/ 有群。
+   * 「未绑学校给引导而不是空群」是产品底线 —— 用户看到「还没有人说话」会直接
+   * 得出「这 app 没人用」的结论，死群比没有群更伤。
+   */
+  applyGroup: function (res) {
+    if (!res) {
+      this.setData({ group: null, groupNeedSchool: false })
+      return
+    }
+    if (res.needSchool) {
+      this.setData({ group: null, groupNeedSchool: true })
+      return
+    }
+    const g = res.group
+    if (!g) {
+      this.setData({ group: null, groupNeedSchool: false })
+      return
+    }
+    this.setData({ group: g, groupNeedSchool: false })
+  },
+
+  /** 进群：未确认群规也会进去（进群页自己弹引导层） */
+  goGroup: function () {
+    const g = this.data.group
+    if (!g) {
+      if (this.data.groupNeedSchool) this.openOnboard()
+      return
+    }
+    if (!g.joined) {
+      this.rejoinGroup(g.id)
+      return
+    }
+    mp.navigateTo({ url: '/subpackages/msg/group/chat?id=' + g.id })
+  },
+
+  /** 退群后重新加入 */
+  rejoinGroup: function (id) {
+    const self = this
+    mp.showModal({
+      title: '重新加入',
+      content: '你之前退出了本群，确定重新加入吗？',
+      confirmText: '加入',
+      success: function (res) {
+        if (!res.confirm) return
+        http.post('/groups/' + id + '/join', null, { silent: true }).then(function () {
+          self.load()
+          mp.navigateTo({ url: '/subpackages/msg/group/chat?id=' + id })
+        }).catch(function (err) {
+          toast((err && err.msg) || '加入失败，请重试')
+        })
+      }
+    })
+  },
+
+  openOnboard: function () {
+    this.setData({ onboardShow: true })
+  },
+
+  onOnboardClose: function () {
+    this.setData({ onboardShow: false })
+  },
+
+  /** 选校落地：写 schoolId → 重签 token（JWT 里的 schoolId 是快照）→ 刷新群卡片 */
+  onOnboardSelect: function (e) {
+    const self = this
+    const school = e.detail && e.detail.school
+    if (!school || this.data.onboardSaving) return
+    this.setData({ onboardSaving: true })
+    auth.ensureLogin().then(function () {
+      return http.put('/user/me', { schoolId: school.id })
+    }).then(function () {
+      return auth.ensureLogin(true)
+    }).then(function () {
+      self.setData({ onboardShow: false, onboardSaving: false })
+      // 绑定学校后后端已自动入群，重新拉一次就能看到群卡片
+      self.load()
+      mp.showToast({ title: '已加入' + (school.name || '本校') + '校友群', icon: 'none' })
+    }).catch(function () {
+      self.setData({ onboardSaving: false })
+      toast('设置失败，请重试')
+    })
   },
 
   /** 游客态：点「去登录」才真正建号（拒绝则继续浏览） */

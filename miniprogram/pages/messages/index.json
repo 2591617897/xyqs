@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "swipe-cell": "/components/swipe-cell/index"
+    "swipe-cell": "/components/swipe-cell/index",
+    "school-onboard": "/components/school-onboard/index"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "私信与消息中心",

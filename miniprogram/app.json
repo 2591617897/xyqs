@@ -43,7 +43,10 @@
         "notice/fans",
         "notice/comment",
         "notice/system",
-        "settings/index"
+        "settings/index",
+        "group/chat",
+        "group/members",
+        "group/setting"
       ]
     }
   ],

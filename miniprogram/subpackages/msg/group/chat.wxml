@@ -1,0 +1,149 @@
+<view class="page">
+  <!-- 自绘顶栏：左侧返回 + 群名 + 人数，右侧「⋯」进群设置 -->
+  <view class="topbar" style="padding-top: {{statusBarHeight + 6}}px; padding-right: {{capsuleGap}}px">
+    <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
+    <view class="tb-main">
+      <text class="tb-title">{{group.name || '校友群'}}</text>
+      <text class="tb-sub">{{group.memberCount || 0}} 位校友</text>
+    </view>
+    <view class="tb-set" bindtap="goSetting"><view class="ico ico-more"></view></view>
+  </view>
+
+  <block wx:if="{{loading}}">
+    <view class="loading"><text>正在进入群聊…</text></view>
+  </block>
+
+  <block wx:else>
+    <!-- 离线降级提示：不吓人，说明会自动恢复 -->
+    <view class="degrade" wx:if="{{degraded}}">
+      <text>当前网络较弱，已切换为定时刷新，消息仍会送达</text>
+    </view>
+
+    <!-- 群公告（可折叠，默认收起一行） -->
+    <view class="notice {{noticeOpen ? 'open' : ''}}" wx:if="{{group.notice}}" bindtap="toggleNotice">
+      <view class="notice-head">
+        <text class="notice-label">群公告</text>
+        <text class="notice-toggle">{{noticeOpen ? '收起' : '展开'}}</text>
+      </view>
+      <text class="notice-text {{noticeOpen ? '' : 'ellipsis'}}">{{group.notice}}</text>
+    </view>
+
+    <!-- 消息区：scroll-view 在 flex 列里必须 min-height:0，否则撑不出滚动 -->
+    <scroll-view
+      class="msgs"
+      scroll-y="true"
+      scroll-into-view="{{scrollInto}}"
+      scroll-with-animation="true"
+      enhanced="true"
+      show-scrollbar="false"
+    >
+      <view class="msgs-pad"></view>
+      <view wx:if="{{!msgs.length}}" class="empty">
+        <text class="empty-ico">👋</text>
+        <text class="empty-title">还没有人说话</text>
+        <text class="empty-sub">打个招呼吧：约自习、拼车回家、问课程都行</text>
+      </view>
+
+      <view class="msg {{item.mine ? 'mine' : ''}}" wx:for="{{msgs}}" wx:key="id" wx:for-item="item" id="{{index === msgs.length - 1 ? 'm-last' : ''}}">
+        <image
+          wx:if="{{!item.mine && item.senderAvatar}}"
+          class="msg-avatar"
+          src="{{item.senderAvatar}}"
+          mode="aspectFill"
+          data-uid="{{item.senderId}}"
+          bindtap="onAvatar"
+        />
+        <view wx:elif="{{!item.mine}}" class="msg-avatar msg-avatar-default" data-uid="{{item.senderId}}" bindtap="onAvatar">
+          <view class="avatar-default"><view class="ad-head"></view><view class="ad-body"></view></view>
+        </view>
+
+        <view class="msg-body">
+          <text class="msg-name" wx:if="{{!item.mine}}">{{item.senderName || '校友'}}</text>
+          <view class="bubble {{item.mine ? 'bubble-mine' : ''}} {{item.deleted ? 'bubble-deleted' : ''}}">
+            <text class="msg-text" wx:if="{{!item.deleted}}">{{item.content}}</text>
+            <text class="msg-text" wx:else>该消息已被删除</text>
+          </view>
+          <view class="msg-meta">
+            <text class="msg-at" wx:if="{{item.atAll}}">@所有人</text>
+            <text class="msg-time">{{item.timeText}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="msgs-end" wx:if="{{msgs.length}}">— 只保留最近的消息，更多请上滑 —</view>
+    </scroll-view>
+
+    <!-- 不能发言的原因：常驻在输入框上方，绝不等用户打完字才拒绝 -->
+    <view class="block-bar" wx:if="{{!canSend && blockReason}}">
+      <text class="block-ico">🌙</text>
+      <text class="block-text">{{blockReason}}</text>
+    </view>
+
+    <!-- 已 @ 的人 -->
+    <view class="at-row" wx:if="{{atUsers.length || atAll}}">
+      <view class="at-chip" wx:for="{{atUsers}}" wx:key="id" wx:for-item="u" wx:for-index="i" bindtap="removeAt" data-idx="{{i}}">
+        <text>@{{u.nickname}}</text>
+        <text class="at-x">×</text>
+      </view>
+      <view class="at-chip at-chip-all" wx:if="{{atAll}}" bindtap="toggleAtAll">
+        <text>@所有人</text>
+        <text class="at-x">×</text>
+      </view>
+    </view>
+
+    <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞 -->
+    <view class="input-bar" style="bottom: {{keyboardHeight}}px">
+      <view class="ib-at" bindtap="openAtPicker">@</view>
+      <input
+        class="ib-input {{canSend ? '' : 'disabled'}}"
+        value="{{inputText}}"
+        placeholder="{{canSend ? '说点什么…' : (nightMute ? '夜间静默中' : '暂时不能发言')}}"
+        placeholder-class="ph"
+        confirm-type="send"
+        adjust-position="false"
+        disabled="{{!canSend}}"
+        bindinput="onInput"
+        bindconfirm="onSend"
+        bindkeyboardheightchange="onKeyboard"
+      />
+      <view class="ib-all {{atAll ? 'on' : ''}}" wx:if="{{atAllAllowed}}" bindtap="toggleAtAll">全体</view>
+      <view class="ib-send {{(inputText && canSend) ? 'on' : ''}}" bindtap="onSend">发送</view>
+    </view>
+    <view class="input-hold"></view>
+  </block>
+
+  <!-- 首次进群：全屏群规 + 安全提醒（不是 toast，也不是半屏弹窗——要用户真的看完） -->
+  <view class="rules-mask" wx:if="{{showRules}}" catchtap="noop" catchtouchmove="noop">
+    <view class="rules">
+      <view class="rules-head">
+        <text class="rules-title">{{group.name || '校友群'}}</text>
+        <text class="rules-sub">{{group.memberCount || 0}} 位校友在这里</text>
+      </view>
+
+      <scroll-view class="rules-body" scroll-y="true">
+        <view class="rules-block">
+          <text class="rb-title">🛡 安全提醒</text>
+          <text class="rb-item">· 不要透露学号、身份证、住址等个人信息</text>
+          <text class="rb-item">· 谨防冒充同学的借钱、代付、刷单诈骗</text>
+          <text class="rb-item">· 交易请走平台，勿私下转账</text>
+        </view>
+
+        <view class="rules-block">
+          <text class="rb-title">📋 发言规则</text>
+          <text class="rb-item">· 禁止广告、刷屏、人身攻击、违法内容</text>
+          <text class="rb-item">· 每 {{group.rateGapSec || 10}} 秒可发 1 条，每天最多 {{group.rateDayMax || 50}} 条</text>
+          <text class="rb-item" wx:if="{{group.nightRange}}">· {{group.nightRange}} 为夜间静默，可浏览不可发言</text>
+          <text class="rb-item">· 违规内容将被删除，并可能被禁言</text>
+        </view>
+
+        <view class="rules-block">
+          <text class="rb-title">🙋 遇到违规</text>
+          <text class="rb-item">· 长按消息可举报，管理员会尽快处理</text>
+          <text class="rb-item">· 群里只聊校园生活，别发与学校无关的推广</text>
+        </view>
+      </scroll-view>
+
+      <view class="rules-btn" bindtap="agreeRules">我已知晓，进入群聊</view>
+      <text class="rules-tip">点击即表示你已阅读并同意以上规则</text>
+    </view>
+  </view>
+</view>

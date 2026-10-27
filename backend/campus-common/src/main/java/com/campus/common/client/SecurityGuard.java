@@ -62,6 +62,14 @@ public class SecurityGuard {
     public static final String BIZ_GOODS_COMMENT = "G_COMMENT";
     public static final String BIZ_MESSAGE = "MESSAGE";
     public static final String BIZ_NICKNAME = "NICKNAME";
+    /**
+     * 校友群消息。
+     *
+     * <p>群聊是公开多对多场景，审核口径比私信更严：私信只影响两个人，
+     * 群消息一万人可见。所以群消息必须走 {@code SCENE_FORUM}（论坛）而不是
+     * {@code SCENE_LOG}，且落库前同步拦截（违规直接 400，不落库）。
+     */
+    public static final String BIZ_GROUP_MSG = "GROUP_MSG";
 
     private final SecurityClient securityClient;
 

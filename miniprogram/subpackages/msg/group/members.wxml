@@ -1,0 +1,50 @@
+<view class="page">
+  <view class="topbar" style="padding-top: {{statusBarHeight + 8}}px">
+    <view class="tb-back" bindtap="goBack"><view class="ico-back"></view></view>
+    <text class="tb-title">{{selectMode ? '选择要 @ 的人' : '群成员'}}</text>
+    <text class="tb-count">{{total}} 人</text>
+  </view>
+
+  <view class="search-wrap">
+    <view class="search-box">
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜索群成员昵称"
+        placeholder-class="ph"
+        confirm-type="search"
+        bindinput="onSearch"
+      />
+      <text class="search-clear" wx:if="{{keyword}}" bindtap="onClear">×</text>
+    </view>
+  </view>
+
+  <view class="tip" wx:if="{{selectMode}}">选中后会插入到输入框，单条消息最多 @ 10 人</view>
+
+  <view class="list">
+    <view class="row" wx:for="{{list}}" wx:key="id" wx:for-item="item" data-item="{{item}}" bindtap="onTap" hover-class="row-hover">
+      <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar-default"><view class="ad-head"></view><view class="ad-body"></view></view>
+
+      <view class="row-main">
+        <view class="row-top">
+          <text class="row-name">{{item.nickname || ('校友' + item.userId)}}</text>
+          <text class="tag tag-admin" wx:if="{{item.role === 1}}">管理员</text>
+          <text class="tag tag-verify" wx:if="{{item.verifyStatus === 2}}">已认证</text>
+          <text class="tag tag-mute" wx:if="{{item.muted}}">禁言中</text>
+        </view>
+        <text class="row-sub">加入于 {{item.joinAt}}</text>
+      </view>
+
+      <text class="row-act">{{selectMode ? '@' : '›'}}</text>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !list.length}}">
+    <text class="empty-ico">🔍</text>
+    <text>没有找到匹配的成员</text>
+  </view>
+
+  <view class="more" wx:if="{{loading}}">加载中…</view>
+  <view class="more" wx:elif="{{!hasMore && list.length}}">— 已经到底了 —</view>
+</view>
