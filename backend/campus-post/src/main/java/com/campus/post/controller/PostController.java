@@ -107,6 +107,15 @@ public class PostController {
         return R.ok();
     }
 
+    /**
+     * 点赞 / 取消点赞一条评论（含楼中楼回复）。
+     * 返回值：true=已点赞，false=已取消。
+     */
+    @PostMapping("/posts/{postId}/comments/{id}/like")
+    public R<Boolean> likeComment(@PathVariable("postId") Long postId, @PathVariable("id") Long id) {
+        return R.ok(postService.toggleCommentLike(postId, id, UserContext.requireUserId()));
+    }
+
     @Data
     public static class ContentReq {
 

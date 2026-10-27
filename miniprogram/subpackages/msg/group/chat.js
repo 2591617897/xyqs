@@ -94,6 +94,10 @@ Page({
     /** 正在回复的消息 { id, name, text }；null = 普通发言 */
     replyTo: null,
     scrollInto: '',
+    /** 消息区底部留白（键盘/面板弹出时撑高，保证最新消息不被悬浮输入栏盖住） */
+    msgPadBottom: 0,
+    /** 上滑看历史时显示「回到底部」浮层按钮 */
+    showToBottom: false,
     loading: true,
     /** 我是否已确认群规（确认后才允许发第一条） */
     needAgree: false
@@ -104,6 +108,9 @@ Page({
   onLoad: function (opt) {
     const self = this
     const info = typeof mp.getWindowInfo === 'function' ? mp.getWindowInfo() : mp.getSystemInfoSync()
+    // 屏幕换算：px↔rpx，以及消息区可视高度（用于「回到底部」按钮显隐判定）
+    this._px2rpx = 750 / (info.windowWidth || 375)
+    this._scrollH = (info.windowHeight || 700) - 140
     let capsuleGap = 96
     try {
       const rect = mp.getMenuButtonBoundingClientRect()
@@ -195,7 +202,7 @@ Page({
         return
       }
       self.applyDetail(detail)
-      const msgs = self.decorate(list, false)
+      const msgs = self.relayoutAll(self.decorate(list, false))
       self.setData({
         msgs: msgs,
         loading: false,
@@ -385,6 +392,16 @@ Page({
     })
   },
 
+  /**
+   * 消息布局重排（保留接口：历史调用点都走这里，便于后续扩展）。
+   *
+   * <p>原「同一人连续发言自动合并 / 居中时间分割线」需求已取消，
+   * 这里直接原样返回，每条消息独立显示头像与昵称。
+   */
+  relayoutAll: function (arr) {
+    return arr
+  },
+
   appendMessage: function (msg) {
     if (!msg) return
     const list = this.data.msgs.slice()
@@ -403,6 +420,7 @@ Page({
             incoming.replyToText = incoming.replyToText || local.replyToText
           }
           list[i] = incoming
+          list = this.relayoutAll(list)
           this.setData({ msgs: list, scrollInto: 'm-last' })
           this.reportRead()
           return
@@ -414,6 +432,7 @@ Page({
       if (list[i].id === incoming.id) return
     }
     list.push(incoming)
+    list = this.relayoutAll(list)
     this.setData({ msgs: list.slice(-200), scrollInto: 'm-last' })
     this.reportRead()
   },
@@ -447,7 +466,7 @@ Page({
         }
         if (!dup) merged.push(m)
       })
-      self.setData({ msgs: merged.slice(-200), scrollInto: 'm-last' })
+      self.setData({ msgs: self.relayoutAll(merged.slice(-200)), scrollInto: 'm-last' })
       self.reportRead()
     }).catch(function () {})
   },
@@ -494,10 +513,38 @@ Page({
   onKeyboard: function (e) {
     const h = (e.detail && e.detail.height) || 0
     const patch = { keyboardHeight: h }
+    // 键盘弹起：消息区底部留白撑到「键盘高度 + 余量」，最新消息才不会被悬浮输入栏盖住
+    patch.msgPadBottom = h > 0 ? Math.round(h * (this._px2rpx || 2)) + 24 : 0
     // 键盘起来了要打字：表情面板必须收（它没有输入需求，叠着只会把消息区压没）。
     // @ 面板反而允许键盘共存 —— 面板顶部就是成员搜索框，点它必然弹键盘。
     if (h > 0 && this.data.panel === 'emoji') patch.panel = ''
     this.setData(patch)
+  },
+
+  /** 消息区滚动：判断是否离开底部，决定是否显示「回到底部」浮层 */
+  onScroll: function (e) {
+    const d = e.detail || {}
+    const sh = this._scrollH || 0
+    const atBottom = (d.scrollTop || 0) + sh >= (d.scrollHeight || 0) - 40
+    const show = !atBottom && (this.data.msgs || []).length > 0
+    if (show !== this.data.showToBottom) this.setData({ showToBottom: show })
+  },
+
+  /** 点浮层按钮：滚到最新消息 */
+  scrollToBottom: function () {
+    const self = this
+    this.setData({ scrollInto: '', showToBottom: false })
+    setTimeout(function () {
+      if (!self._unloaded) self.setData({ scrollInto: 'm-last' })
+    }, 30)
+  },
+
+  onMicTap: function () {
+    toast('语音功能开发中')
+  },
+
+  onPlusTap: function () {
+    toast('更多功能开发中')
   },
 
   onSend: function () {
@@ -736,7 +783,7 @@ Page({
       if (String(m.id) !== target) return m
       return Object.assign({}, m, { deleted: 1, deletedBy: 1, recalled: true })
     })
-    this.setData({ msgs: msgs })
+    this.setData({ msgs: this.relayoutAll(msgs) })
   },
 
   /** 引用某条消息：只记 id + 展示用文案，真正发出去时服务端重新取快照 */
@@ -796,7 +843,8 @@ Page({
       atLoading: true,
       atError: false,
       keyboardHeight: 0,
-      focusInput: false
+      focusInput: false,
+      msgPadBottom: 610
     })
     http.get('/groups/' + this.data.groupId + '/members',
       { page: 1, size: 50 }, { silent: true }
@@ -843,7 +891,7 @@ Page({
     }
     if (!this.data.panel) return
     const self = this
-    this.setData({ panel: '', scrollInto: '' })
+    this.setData({ panel: '', scrollInto: '', msgPadBottom: 0 })
     // 面板收掉后消息区变高，最后一条会被压在底部之外，重新滚一次
     setTimeout(function () {
       // 60ms 内用户可能已经退出群聊页，此时 setData 会告警
@@ -935,7 +983,8 @@ Page({
       panel: 'emoji',
       keyboardHeight: 0,
       focusInput: false,
-      scrollInto: ''
+      scrollInto: '',
+      msgPadBottom: 520
     })
     setTimeout(function () {
       if (self._unloaded) return

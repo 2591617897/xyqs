@@ -107,6 +107,9 @@
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 6rpx 20rpx rgba(31, 35, 41, 0.05);
+  /* 竖向 flex：同一行的两张卡等高时，内部内容能撑满而不是顶部堆积 */
+  display: flex;
+  flex-direction: column;
 }
 .goods-cover {
   position: relative;
@@ -153,13 +156,44 @@
   font-weight: 600;
 }
 .goods-body {
-  padding: 18rpx 20rpx 22rpx;
+  padding: 18rpx 20rpx 20rpx;
+  /* 撑满剩余高度，配合 .goods-stats 的 margin-top:auto 让统计行吸底 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .goods-title {
   font-size: 27rpx;
   font-weight: 600;
   line-height: 1.45;
-  height: 78rpx;
+  color: var(--text-1);
+}
+/* 描述摘要：标题只有一行时，它接在下面把卡片下半部分填起来 */
+.goods-desc {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+/* 地址 / 浏览 / 想要：详情页才看得到的数据，提前摊在卡片上 */
+.goods-stats {
+  margin-top: auto;
+  padding-top: 14rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  font-size: 20rpx;
+  line-height: 1;
+  color: var(--text-4);
+}
+.gs-item {
+  flex-shrink: 0;
+}
+.gs-loc {
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .list-tip {
   text-align: center;

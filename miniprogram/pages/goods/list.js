@@ -1,5 +1,5 @@
 const http = require('../../utils/request')
-const { timeAgo, priceText, mp, categoryEmoji, toast } = require('../../utils/util')
+const { timeAgo, priceText, fmtCount, mp, categoryEmoji, conditionText, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const { resolveList } = require('../../utils/img')
 // 多词搜索：拆词 / 匹配 / 高亮统一走 utils/kw，规则与后端 SearchKit 一致
@@ -354,5 +354,10 @@ function decorate(item, kw) {
   item.emoji = categoryEmoji(item.categoryId)
   item.imageList = resolveList(item.imageList)
   item.titleParts = kwUtil.splitHighlight(item.title || '', kw)
+  // 描述摘要：标题短的时候用它把卡片撑起来，长描述只留一行
+  item.descText = (item.description || '').replace(/\s+/g, ' ').trim()
+  item.conditionText = conditionText(item.conditionLevel)
+  item.viewText = fmtCount(item.viewCount || 0)
+  item.likeText = fmtCount(item.likeCount || 0)
   return item
 }

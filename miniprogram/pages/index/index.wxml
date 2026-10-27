@@ -220,7 +220,7 @@
         </view>
       </block>
 
-      <!-- 树洞闲谈：匿名心事卡片 -->
+      <!-- 树洞闲谈：匿名心事卡片（排版与上方「今日最热 / 帖子」一致：头像行 + 正文 + 配图 + 底部操作条） -->
       <block wx:if="{{zone.type === 'wall'}}">
         <view class="zone-list">
           <view
@@ -235,23 +235,47 @@
             hover-class="zcard-hover"
             hover-stay-time="60"
           >
+            <!-- 顶部：匿名身份行（头像 emoji / 昵称 / 徽标 / 时间） -->
             <view class="zcard-user">
               <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
               <view class="zcard-user-info">
-                <text class="zcard-name">{{it.anonName}}</text>
-                <text class="zcard-meta">{{it.timeText}} · {{it.flair}}</text>
+                <view class="zcard-name-row">
+                  <text class="zcard-name">{{it.anonName}}</text>
+                  <text class="zcard-flair" wx:if="{{it.flair}}">{{it.flair}}</text>
+                </view>
+                <text class="zcard-meta">{{it.timeText}} · 匿名保护中</text>
               </view>
             </view>
-            <text class="zcard-tag">{{it.tags[0]}}</text>
+
+            <!-- 话题标签 -->
+            <view class="zcard-tags" wx:if="{{it.tags.length}}">
+              <text class="zcard-tag" wx:for="{{it.tags}}" wx:for-item="tg" wx:key="*this">{{tg}}</text>
+            </view>
+
+            <!-- 正文：浅底色块，即使只有一行也有视觉重量，不会显得空 -->
             <view class="zcard-excerpt clamp3">{{it.content}}</view>
-            <view class="zcard-foot">
+
+            <!-- 配图：九宫格，无图不渲染；1 张放大、2/4 张两列、其余三列 -->
+            <view
+              class="wall-imgs {{it.imageList.length === 1 ? 'cols-1' : (it.imageList.length === 2 || it.imageList.length === 4 ? 'cols-2' : 'cols-3')}}"
+              wx:if="{{it.imageList.length}}"
+            >
+              <image
+                class="wall-img"
+                wx:for="{{it.imageList}}"
+                wx:for-item="img"
+                wx:key="*this"
+                src="{{img}}"
+                mode="aspectFill"
+                lazy-load
+              />
+            </view>
+
+            <!-- 底部操作条：仅保留点赞（左对齐，与帖子卡一致：扁平图标 + 计数，无分隔线） -->
+            <view class="wall-foot">
               <view class="zcard-act" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💗' : '🤍'}}</text>
+                <text class="zcard-act-icon {{it.liked ? 'is-liked' : ''}}">{{it.liked ? '💚' : '👍'}}</text>
                 <text>{{it.likeText}}</text>
-              </view>
-              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-                <text class="zcard-act-icon">💬</text>
-                <text>{{it.commentText}}</text>
               </view>
             </view>
           </view>
@@ -288,15 +312,34 @@
             hover-class="zcard-hover"
             hover-stay-time="60"
           >
-            <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
-            <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+            <!-- 图片容器：定宽不写死高，随右侧文字区一起拉高，图下方不留白边 -->
+            <view class="zcard-goods-thumb">
+              <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
+              <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+            </view>
             <view class="zcard-goods-body">
               <view class="zcard-goods-title clamp2">{{it.title}}</view>
+              <!-- 描述摘要：标题短时把卡片撑起来，长描述只留一行 -->
+              <view class="zcard-goods-desc clamp1" wx:if="{{it.excerpt}}">{{it.excerpt}}</view>
+              <!-- 价格紧跟描述：价格是这张卡的核心信息，不能被推到最底下 -->
               <view class="zcard-goods-price">
                 <text class="zcard-price-symbol">¥</text>
                 <text class="zcard-price-num">{{it.priceText}}</text>
+                <!-- 划线原价：只有确实比现价高才显示，否则「原价 = 现价」是噪音 -->
+                <text class="zcard-price-origin" wx:if="{{it.showOrigin}}">原价 ¥{{it.originalPriceText}}</text>
               </view>
-              <text class="zcard-goods-loc ellipsis">{{it.location}}</text>
+              <!-- 标签行：分类 + 成色 -->
+              <view class="zcard-goods-tags">
+                <text class="zcard-goods-tag" wx:if="{{it.categoryName}}">{{it.categoryName}}</text>
+                <text class="zcard-goods-tag mint" wx:if="{{it.conditionText}}">{{it.conditionText}}</text>
+              </view>
+              <!-- 底部信息行：地址 / 浏览 / 想要（吸底对齐，两张卡视觉齐平） -->
+              <view class="zcard-goods-foot">
+                <text class="zcard-goods-loc ellipsis">📍 {{it.location || '校内自提'}}</text>
+                <view class="flex1"></view>
+                <text class="zcard-goods-stat">👁 {{it.viewText}}</text>
+                <text class="zcard-goods-stat">💗 {{it.likeText}}想要</text>
+              </view>
             </view>
           </view>
         </view>

@@ -1,4 +1,4 @@
-const { timeAgo, priceText, fmtCount } = require('./util')
+const { timeAgo, priceText, fmtCount, conditionText } = require('./util')
 const { resolveList } = require('./img')
 const { decorateWall } = require('./wall')
 
@@ -196,8 +196,21 @@ function findChannel(channels, id) {
   return null
 }
 
+/**
+ * 图片网格档位（参考今日头条帖子排版）。
+ *   1 张 → 单列大图
+ *   2~4 张 → 两列网格
+ *   5 张以上 → 三列网格（九宫格）
+ */
+function imgGridClass(n) {
+  if (!n || n <= 1) return 'g1'
+  if (n <= 4) return 'g2'
+  return 'g3'
+}
+
 /** 帖子 → 卡片数据 */
 function postItem(p) {
+  const images = resolveList(p.imageList)
   return {
     kind: 'post',
     key: 'post-' + p.id,
@@ -209,7 +222,8 @@ function postItem(p) {
     timeText: timeAgo(p.createdAt),
     title: p.title || '',
     excerpt: (p.content || '').replace(/\s+/g, ' '),
-    imageList: resolveList(p.imageList),
+    imageList: images,
+    imgGrid: imgGridClass(images.length),
     liked: !!p.liked,
     likeCount: p.likeCount || 0,
     likeText: fmtCount(p.likeCount || 0),
@@ -235,6 +249,7 @@ function wallItem(p) {
     timeText: w.timeText,
     content: w.content || '',
     imageList: w.imageList,
+    imgGrid: imgGridClass((w.imageList || []).length),
     liked: !!w.liked,
     likeCount: w.likeCount || 0,
     likeText: fmtCount(w.likeCount || 0),
@@ -247,6 +262,8 @@ function wallItem(p) {
 
 /** 闲置 → 卡片数据 */
 function goodsItem(g) {
+  const price = Number(g.price || 0)
+  const origin = Number(g.originalPrice || 0)
   return {
     kind: 'goods',
     key: 'goods-' + g.id,
@@ -256,19 +273,27 @@ function goodsItem(g) {
     badge: '校内面交',
     timeText: timeAgo(g.createdAt),
     title: g.title || '',
-    excerpt: (g.description || '').replace(/\s+/g, ' '),
+    excerpt: (g.description || '').replace(/\s+/g, ' ').trim(),
     priceText: priceText(g.price),
-    originalPriceText: g.originalPrice ? priceText(g.originalPrice) : '',
+    originalPriceText: origin ? priceText(g.originalPrice) : '',
+    // 原价必须确实高于现价才划线显示，否则「原价 = 现价」纯属噪音
+    showOrigin: origin > price && price > 0,
     location: g.location || '',
     categoryName: g.categoryName || '',
+    conditionText: conditionText(g.conditionLevel),
     imageList: resolveList(g.imageList),
     liked: !!g.liked,
     likeCount: g.likeCount || 0,
-    likeText: fmtCount(g.likeCount || 0)
+    likeText: fmtCount(g.likeCount || 0),
+    viewCount: g.viewCount || 0,
+    viewText: fmtCount(g.viewCount || 0),
+    commentCount: g.commentCount || 0,
+    commentText: fmtCount(g.commentCount || 0)
   }
 }
 
 module.exports = {
+  imgGridClass,
   NOTICE_CHANNEL_ID,
   ENTRIES,
   buildEntries,

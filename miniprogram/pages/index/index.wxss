@@ -287,15 +287,39 @@
   padding: 24rpx;
 }
 
-/* 我想说（表白墙）卡片 */
+/* 树洞（表白墙）卡片：单列全宽，排版与上方「今日最热 / 帖子」一致 */
 .zcard-wall {
+  display: block;
   padding: 24rpx;
 }
+/* 底部操作条：仅点赞，右对齐（与上方帖子卡 feed-actions 一致） */
+.wall-foot {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+}
+/* 复用 .zcard-act 的点赞图标样式；这里仅占位说明，实际样式在下方补充时不冲突 */
 .zcard-user {
   display: flex;
   align-items: center;
   gap: 12rpx;
   margin-bottom: 12rpx;
+}
+/* 昵称 + 徽标同一行 */
+.zcard-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+.zcard-flair {
+  flex-shrink: 0;
+  padding: 3rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 18rpx;
+  font-weight: 600;
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
 }
 .zcard-avatar {
   width: 56rpx;
@@ -329,6 +353,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.zcard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
 .zcard-tag {
   display: inline-block;
   font-size: 20rpx;
@@ -336,6 +366,50 @@
   background: var(--like-50, #FFF0F4);
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
+}
+/* 树洞正文：浅底色块，内容只有一行时也有视觉重量，不显得空 */
+.zcard-wall .zcard-excerpt {
+  margin-top: 12rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 14rpx;
+  background: #f7f8fa;
+  color: #3a3f47;
+  font-size: 26rpx;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+/* 树洞配图：九宫格，无图不渲染（WXML 已 wx:if 控制）。
+   圆角只落在整块外缘（outer-corner-only，仿帖子九宫格观感），
+   内部图片不单独圆角，靠容器 overflow:hidden 统一裁切。 */
+.wall-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 14rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+.wall-img {
+  width: 170rpx;
+  height: 170rpx;
+  border-radius: 0;
+  background: #f2f3f5;
+  display: block;
+}
+/* 1 张：放大，限制宽度避免被拉成正方形 */
+.wall-imgs.cols-1 .wall-img {
+  width: 420rpx;
+  height: 320rpx;
+}
+/* 2 / 4 张：两列（4 张即 2×2） */
+.wall-imgs.cols-2 .wall-img {
+  width: calc((100% - 10rpx) / 2);
+  height: 220rpx;
+}
+/* 3 张及以上：三列 */
+.wall-imgs.cols-3 .wall-img {
+  width: calc((100% - 20rpx) / 3);
+  height: 210rpx;
 }
 
 /* 校园闲置卡片：左图右文的整行卡片 */
@@ -345,11 +419,22 @@
   gap: 20rpx;
   padding: 16rpx;
 }
-.zcard-goods-img {
+/* 图片容器：定宽、高度由 flex stretch 决定，图片绝对定位铺满 */
+.zcard-goods-thumb {
   width: 200rpx;
-  height: 200rpx;
+  min-height: 200rpx;
   flex-shrink: 0;
+  position: relative;
   border-radius: 14rpx;
+  overflow: hidden;
+  background: #f2f3f5;
+}
+.zcard-goods-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   display: block;
   background: #f2f3f5;
 }
@@ -372,11 +457,17 @@
   color: #1a1a1a;
   line-height: 1.4;
 }
+/* 描述摘要：标题只有一行时接在下面，把卡片下半部分填起来 */
+.zcard-goods-desc {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.4;
+  color: var(--text-3);
+}
 .zcard-goods-price {
   display: flex;
   align-items: baseline;
-  margin-top: auto;
-  padding-top: 10rpx;
+  margin-top: 12rpx;
 }
 .zcard-price-symbol {
   font-size: 22rpx;
@@ -389,11 +480,53 @@
   font-weight: 800;
   color: #1a1a1a;
 }
-.zcard-goods-loc {
-  display: block;
-  margin-top: 6rpx;
+/* 划线原价：仅当确实高于现价时才有意义 */
+.zcard-price-origin {
+  margin-left: 10rpx;
+  font-size: 21rpx;
+  color: var(--text-4);
+  text-decoration: line-through;
+}
+/* 分类 / 成色标签 */
+.zcard-goods-tags {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 10rpx;
+}
+.zcard-goods-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 34rpx;
+  padding: 0 12rpx;
+  border-radius: 10rpx;
   font-size: 20rpx;
-  color: #9b9ba3;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.zcard-goods-tag.mint {
+  background: var(--success-50);
+  color: var(--success-500);
+}
+/* 底部信息行：地址 / 浏览 / 想要 */
+.zcard-goods-foot {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  /* 吸底：多张卡片的分隔线与统计数字对齐，视觉更齐 */
+  margin-top: auto;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border);
+  font-size: 20rpx;
+  line-height: 1;
+  color: var(--text-4);
+}
+.zcard-goods-loc {
+  min-width: 0;
+  max-width: 220rpx;
+}
+.zcard-goods-stat {
+  flex-shrink: 0;
 }
 
 /* 校园闲置区的分类子筛选 */

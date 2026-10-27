@@ -52,4 +52,20 @@ public class PostComment {
     /** 回复总数 */
     @TableField(exist = false)
     private Integer replyCount;
+
+    /** 评论获赞数（t_like 里 target_type=COMMENT 的行数，实时聚合，不冗余计数列） */
+    @TableField(exist = false)
+    private Integer likeCount;
+
+    /** 当前登录用户是否已给这条评论点赞 */
+    @TableField(exist = false)
+    private Boolean liked;
+
+    /** 评论者等级 LV（由发帖数 + 评论数算出，见 UserLevel） */
+    @TableField(exist = false)
+    private Integer userLevel;
+
+    /** 评论者所在省份（学校所在省；没绑学校时为空，前端不显示这一段） */
+    @TableField(exist = false)
+    private String userProvince;
 }

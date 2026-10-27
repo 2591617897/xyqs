@@ -60,3 +60,50 @@
 2. 配环境变量 `WX_SUBSCRIBE_TEMPLATES=tpl1,tpl2`（最多 3 个，上限以官方文档为准），重启 8106
 3. 设置页会自动从「待开通」变成「开启」，用户点一下即走授权
 4. 需要真推送时再在 campus-auth 加发送服务，按 5 个开关 + 免打扰过滤
+
+---
+
+## 闲置商品卡片信息补全（2026-10-27 第十五轮）
+
+**问题**：内容文字少时卡片太空（用户截图：闲置交换列表页 + 首页闲置交换区）。
+
+**解法**：把详情页才看得到的信息提前摊到卡片上 —— 地址 / 浏览量 / 想要 / 成色 / 描述摘要。
+
+| 位置 | 改动 |
+|---|---|
+| `pages/goods/list.wxml` `.wxss` | 描述摘要 `.goods-desc`、成色 tag、底部 `.goods-stats`（📍地址 · 👁浏览 · 💗想要）；`.goods-title` 去掉写死的 `height:78rpx`（标题一行时原来下方空一大块），改竖向 flex + 统计行吸底 |
+| `pages/index/index.wxml` `.wxss` | `.zcard-goods-desc`、`.zcard-goods-tags`（分类+成色）、`.zcard-goods-foot`（地址/浏览/想要）、划线原价 `.zcard-price-origin`；价格从「吸底」改为紧跟描述；图片改「定宽容器 + 绝对定位铺满」，图下方不留白边 |
+| `utils/zones.js` | `goodsItem` 补 `conditionText` / `viewText` / `viewCount` / `commentText` / `showOrigin` |
+| `pages/goods/list.js` | `decorate` 补 `descText` / `conditionText` / `viewText` / `likeText` |
+| `app.wxss` | 新增 `.clamp1`（全局缺单行截断） |
+
+**关键决策**
+
+- **零后端改动**：`GET /goods` 本就返回 `location` / `viewCount` / `likeCount` / `conditionLevel` / `description` / `originalPrice`
+- **「想要」= `likeCount`**（闲置的 like 语义是想要，不是帖子点赞），文案统一「想要 N」
+- **划线原价仅在 `originalPrice > price` 时显示**（`showOrigin`），「原价 = 现价」是噪音（测试数据里就有）
+
+**验证**：check-miniprogram / db-schema-check / security-baseline / mock / home-zones / msg-subpackage / goods-search 全部 PASS；JS 语法 OK；WXML handler 与标签配对通过。
+
+---
+
+## 首页树洞闲谈卡片改版（2026-10-27 第十六轮）
+
+**问题**：截图反馈 —— 首页「树洞闲谈」区卡片右侧大片空白，点赞/评论挤在左下角；正文只有一行时卡片显得很空。
+
+**解法**：卡片从「上下堆叠」改为 **左内容 + 右竖排互动栏**，点赞按要求移到右边。
+
+| 位置 | 改动 |
+|---|---|
+| `pages/index/index.wxml` | 树洞卡片重写：`.wall-main`（左：头像行 + 标签 + 正文 + 配图）/ `.wall-side`（右：💗赞 · 💬评 · ↗分享 竖排）；徽标提到昵称旁成胶囊；副行改「时间 · 匿名保护中」；补 `.wall-imgs` 配图渲染 |
+| `pages/index/index.wxss` | 新增 `.wall-main` `.wall-side` `.wall-act` `.wall-act-ico` `.wall-act-num` `.wall-share` `.zcard-name-row` `.zcard-flair` `.zcard-tags` `.wall-imgs` `.wall-img`；`.zcard-wall .zcard-excerpt` 改浅灰底色块 |
+| `pages/index/index.js` | `onShareAppMessage` 支持按 `data-id` 分享**具体树洞帖子**（标题取正文摘要、路径 `/pages/wall/detail?id=`），之前固定分享首页 |
+
+**关键决策**
+
+- **点赞放右边 = 竖排互动栏**，不是简单右对齐 —— 单列全宽卡片的右边天然是空位，竖排栏把空间填上而不是白白留着
+- **正文改浅灰底色块**（`#f7f8fa` + 圆角 + padding）：一行字也有视觉重量，是解决「太空」最直接的手段
+- **补了配图渲染**：首页树洞卡片之前完全没渲染 `imageList`，带图的心事等于丢了图
+- 分享按钮用 `catchtap="noop"` 阻止冒泡 —— 否则会连带触发卡片外层的 `bindtap="goZoneDetail"`
+
+**验证**：check-miniprogram / db-schema-check / security-baseline / mock / home-zones / msg-subpackage / goods-search 全部 PASS；JS 语法 OK；WXML handler 与标签配对通过；网关 200。**零后端改动，无需重启服务。**

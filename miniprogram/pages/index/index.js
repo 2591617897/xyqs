@@ -566,7 +566,31 @@ Page({
   /** 阻止分享按钮的 tap 冒泡到卡片详情跳转 */
   noop: function () {},
 
-  onShareAppMessage: function () {
+  /**
+   * 分享：首页默认分享首页；树洞卡片上的分享按钮带 data-id，
+   * 这时分享具体那条心事（标题取正文摘要，路径指向树洞详情页）。
+   */
+  onShareAppMessage: function (res) {
+    var id = res && res.target && res.target.dataset ? res.target.dataset.id : ''
+    if (id) {
+      var brief = ''
+      var zones = this.data.zones || []
+      for (var i = 0; i < zones.length; i++) {
+        var items = (zones[i] && zones[i].items) || []
+        for (var j = 0; j < items.length; j++) {
+          if (String(items[j].id) === String(id) && items[j].kind === 'wall') {
+            brief = String(items[j].content || '').replace(/\s+/g, ' ').trim()
+            break
+          }
+        }
+      }
+      if (brief) {
+        return {
+          title: brief.length > 24 ? brief.slice(0, 24) + '…' : brief,
+          path: '/pages/wall/detail?id=' + id
+        }
+      }
+    }
     return {
       title: '校聚一城 · 立足本校，结识同城各校同窗',
       path: '/pages/index/index'

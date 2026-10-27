@@ -4,6 +4,28 @@ const auth = require('../../utils/auth')
 const upload = require('../../utils/upload')
 const { resolveList } = require('../../utils/img')
 
+/**
+ * LV 等级 → 徽章文案（如 "LV3"）。
+ * 在 JS 里拼好，WXML 直接输出，避免在模板表达式里做字符串拼接。
+ */
+function lvText(level) {
+  const lv = Number(level) || 0
+  return lv > 0 ? 'LV' + lv : ''
+}
+
+/**
+ * LV 等级 → 徽章配色档位（1-5 档）。
+ * 后端 UserLevel 最高可到 LV21+，前端只分 5 档视觉，避免出现十几种颜色。
+ */
+function lvTier(level) {
+  const lv = Number(level) || 0
+  if (lv <= 1) return 1
+  if (lv <= 3) return 2
+  if (lv <= 6) return 3
+  if (lv <= 10) return 4
+  return 5
+}
+
 const EMOJIS = [
   '😀', '😃', '😄', '😁', '😊', '🥰', '😍', '😘',
   '😜', '🤪', '😳', '🥺', '😭', '😅', '😴', '🤔',
@@ -86,10 +108,18 @@ Page({
         c.timeText = timeAgo(c.createdAt)
         c.imageList = resolveList(c.imageList)
         c.expanded = false
+        c.likeCount = c.likeCount || 0
+        c.liked = !!c.liked
+        c.lvTier = lvTier(c.userLevel)
+        c.lvText = lvText(c.userLevel)
         c.replyCount = c.replyCount || (c.replies || []).length
         c.replies = (c.replies || []).map(function (r) {
           r.timeText = timeAgo(r.createdAt)
           r.imageList = resolveList(r.imageList)
+          r.likeCount = r.likeCount || 0
+          r.liked = !!r.liked
+          r.lvTier = lvTier(r.userLevel)
+          r.lvText = lvText(r.userLevel)
           return r
         })
         // WXML 不支持数组方法，默认展示的回复列表在 JS 里预计算
@@ -99,6 +129,52 @@ Page({
       if (self.data.commentSort === 'newest') arr.reverse()
       self.setData({ comments: arr })
     }).catch(function () {})
+  },
+
+  /**
+   * 点赞 / 取消点赞一条评论（含楼中楼回复）。
+   * rindex 有值说明点的是楼中楼那条回复，否则是顶层评论。
+   */
+  toggleCommentLike: function (e) {
+    const self = this
+    const ds = e.currentTarget.dataset
+    const id = ds.id
+    const pindex = ds.index
+    const rindex = ds.rindex
+    const comment = this.data.comments[pindex]
+    if (!comment) return
+    const target = rindex === undefined ? comment : (comment.repliesShown || [])[rindex]
+    if (!target) return
+    // 未登录先引导登录；登录态确认后再发请求
+    auth.ensureLogin().then(function () {
+      return http.post('/posts/' + self.postId + '/comments/' + id + '/like')
+    }).then(function (liked) {
+      // 乐观更新：先改 UI，再后台校准（失败时按服务端返回回滚）
+      const nextCount = Math.max(0, (target.likeCount || 0) + (liked ? 1 : -1))
+      const patch = {}
+      if (rindex === undefined) {
+        patch['comments[' + pindex + '].liked'] = liked
+        patch['comments[' + pindex + '].likeCount'] = nextCount
+      } else {
+        // ⚠️ repliesShown 与 replies 在 setData 后是两棵独立的树：
+        //    只改 repliesShown 的话，用户收起再展开回复时（toggleReplies 会用 replies 重建
+        //    repliesShown），点赞态会退回旧值。两处一起改，保持一致。
+        const shownPath = 'comments[' + pindex + '].repliesShown[' + rindex + ']'
+        const srcPath = 'comments[' + pindex + '].replies[' + rindex + ']'
+        patch[shownPath + '.liked'] = liked
+        patch[shownPath + '.likeCount'] = nextCount
+        patch[srcPath + '.liked'] = liked
+        patch[srcPath + '.likeCount'] = nextCount
+      }
+      self.setData(patch)
+    }).catch(function () {})
+  },
+
+  /** 点评论者头像/昵称进对方个人主页 */
+  goUserSpaceById: function (e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + id })
   },
 
   retry: function () {
@@ -143,7 +219,16 @@ Page({
     const expanded = !comment.expanded
     const patch = {}
     patch['comments[' + index + '].expanded'] = expanded
-    patch['comments[' + index + '].repliesShown'] = expanded ? comment.replies : comment.replies.slice(0, 5)
+    // 重建 repliesShown 时保留每条回复的点赞态（点赞可能刚发生、还没重新拉列表）
+    const withLike = (comment.replies || []).map(function (r) {
+      const shown = (comment.repliesShown || []).find(function (x) { return String(x.id) === String(r.id) })
+      if (shown && shown.liked !== undefined) {
+        r.liked = shown.liked
+        r.likeCount = shown.likeCount
+      }
+      return r
+    })
+    patch['comments[' + index + '].repliesShown'] = expanded ? withLike : withLike.slice(0, 5)
     this.setData(patch)
   },
 

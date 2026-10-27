@@ -50,8 +50,9 @@
       </view>
     </view>
 
+    <!-- 顶层评论 -->
     <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="pindex">
-      <view class="c-avatar">
+      <view class="c-avatar" catchtap="goUserSpaceById" data-id="{{item.userId}}">
         <image wx:if="{{item.userAvatar}}" class="c-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
         <view wx:else class="avatar-default">
           <view class="ad-head"></view>
@@ -59,13 +60,14 @@
         </view>
       </view>
       <view class="flex1">
+        <!-- 头部：昵称 + LV 徽章 + 省份 -->
         <view class="c-head">
-          <text class="c-name">{{item.userName || '校园用户'}}</text>
-          <view class="row gap12">
-            <text class="muted">{{item.timeText}}</text>
-            <text class="c-reply-btn" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">回复</text>
-            <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+          <view class="c-head-left">
+            <text class="c-name" catchtap="goUserSpaceById" data-id="{{item.userId}}">{{item.userName || '校园用户'}}</text>
+            <text class="c-lv lv-{{item.lvTier}}" wx:if="{{item.lvText}}">{{item.lvText}}</text>
+            <text class="c-province" wx:if="{{item.userProvince}}">{{item.userProvince}}</text>
           </view>
+          <text class="c-time">{{item.timeText}}</text>
         </view>
 
         <view class="c-text" wx:if="{{item.content}}">{{item.content}}</view>
@@ -85,17 +87,38 @@
           />
         </view>
 
+        <!-- 底部操作栏：点赞 / 回复 / 删除 -->
+        <view class="c-actions">
+          <view class="c-action" hover-class="c-action-hover" hover-stay-time="80" catchtap="toggleCommentLike" data-id="{{item.id}}" data-index="{{pindex}}" aria-role="button" aria-label="点赞评论">
+            <view class="ico ico-like-o c-like-ico {{item.liked ? 'ico-like c-liked' : ''}}"></view>
+            <text class="c-action-num {{item.liked ? 'c-liked' : ''}}">{{item.likeCount || 0}}</text>
+          </view>
+          <view class="c-action" hover-class="c-action-hover" hover-stay-time="80" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}" aria-role="button" aria-label="回复评论">
+            <view class="ico ico-comment c-like-ico"></view>
+            <text class="c-action-num">{{item.replyCount || 0}}</text>
+          </view>
+          <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+        </view>
+
         <!-- 楼中楼回复 -->
         <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
           <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
+            <!-- 回复者头像：比主评论小一号，点进对方个人主页 -->
+            <view class="r-avatar" catchtap="goUserSpaceById" data-id="{{rp.userId}}">
+              <image wx:if="{{rp.userAvatar}}" class="r-avatar-img" src="{{rp.userAvatar}}" mode="aspectFill" />
+              <view wx:else class="avatar-default">
+                <view class="ad-head"></view>
+                <view class="ad-body"></view>
+              </view>
+            </view>
             <view class="flex1">
               <view class="c-head">
-                <text class="c-name">{{rp.userName || '校园用户'}}</text>
-                <view class="row gap12">
-                  <text class="muted">{{rp.timeText}}</text>
-                  <text class="c-reply-btn" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">回复</text>
-                  <text class="c-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+                <view class="c-head-left">
+                  <text class="c-name" catchtap="goUserSpaceById" data-id="{{rp.userId}}">{{rp.userName || '校园用户'}}</text>
+                  <text class="c-lv lv-{{rp.lvTier}}" wx:if="{{rp.lvText}}">{{rp.lvText}}</text>
+                  <text class="c-province" wx:if="{{rp.userProvince}}">{{rp.userProvince}}</text>
                 </view>
+                <text class="c-time">{{rp.timeText}}</text>
               </view>
               <view class="c-text">
                 <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
@@ -115,10 +138,24 @@
                   data-url="{{img}}"
                 />
               </view>
+              <view class="c-actions">
+                <view class="c-action" hover-class="c-action-hover" hover-stay-time="80" catchtap="toggleCommentLike" data-id="{{rp.id}}" data-index="{{pindex}}" data-rindex="{{rindex}}" aria-role="button" aria-label="点赞回复">
+                  <view class="ico ico-like-o c-like-ico {{rp.liked ? 'ico-like c-liked' : ''}}"></view>
+                  <text class="c-action-num {{rp.liked ? 'c-liked' : ''}}">{{rp.likeCount || 0}}</text>
+                </view>
+                <view class="c-action" hover-class="c-action-hover" hover-stay-time="80" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}" aria-role="button" aria-label="回复">
+                  <view class="ico ico-comment c-like-ico"></view>
+                  <text class="c-action-num">回复</text>
+                </view>
+                <text class="c-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+              </view>
             </view>
           </view>
           <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
             查看全部 {{item.replyCount}} 条回复 ›
+          </view>
+          <view class="reply-more" wx:if="{{item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
+            收起回复 ‹
           </view>
         </view>
       </view>

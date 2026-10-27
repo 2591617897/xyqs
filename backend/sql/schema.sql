@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS t_message_setting (
 -- 通用点赞表（target_type: GOODS / WALL / POST）
 CREATE TABLE IF NOT EXISTS t_like (
   id          BIGINT      NOT NULL PRIMARY KEY,
-  target_type VARCHAR(16) NOT NULL,
+  target_type VARCHAR(16) NOT NULL COMMENT '目标类型 POST / GOODS / WALL / COMMENT',
   target_id   BIGINT      NOT NULL,
   user_id     BIGINT      NOT NULL,
   created_at  DATETIME    DEFAULT CURRENT_TIMESTAMP,
@@ -241,7 +241,11 @@ CREATE TABLE IF NOT EXISTS t_post_comment (
   parent_id  BIGINT       NOT NULL DEFAULT 0 COMMENT '父评论id，0=直接评论；>0=对该评论的回复',
   reply_to_name VARCHAR(64) DEFAULT NULL COMMENT '被回复人展示名快照',
   created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
-  KEY idx_post (post_id)
+  KEY idx_post (post_id),
+  -- idx_user：评论者 LV 等级按 user_id 聚合发帖数+评论数，全表扫会拖慢评论列表
+  KEY idx_user (user_id),
+  -- idx_parent：楼中楼回复按 parent_id 组树
+  KEY idx_parent (parent_id)
 ) COMMENT '帖子评论';
 
 -- 商品评论（含楼中楼回复，parent_id=0 为顶层）

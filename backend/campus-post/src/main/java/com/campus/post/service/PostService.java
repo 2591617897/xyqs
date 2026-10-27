@@ -18,11 +18,15 @@ import com.campus.post.entity.Channel;
 import com.campus.post.entity.Post;
 import com.campus.post.entity.PostComment;
 import com.campus.post.mapper.ChannelMapper;
+import com.campus.post.mapper.CommentMetaMapper;
 import com.campus.post.mapper.PostCommentMapper;
 import com.campus.post.mapper.PostMapper;
 import com.campus.post.mapper.SchoolRegionMapper;
 import com.campus.post.mapper.UserSnapshotMapper;
+import com.campus.post.dto.CommentUserBrief;
 import com.campus.post.dto.PostReq;
+import com.campus.post.dto.TargetCountBrief;
+import com.campus.post.dto.UserCountBrief;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -31,7 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,11 +53,15 @@ public class PostService {
 
     private static final String TARGET = "POST";
 
+    /** 评论点赞在通用点赞表里的 target_type */
+    private static final String COMMENT_TARGET = "COMMENT";
+
     private final PostMapper postMapper;
     private final ChannelMapper channelMapper;
     private final PostCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
     private final UserSnapshotMapper userSnapshotMapper;
+    private final CommentMetaMapper commentMetaMapper;
     private final LikeMapper likeMapper;
     private final UserClient userClient;
     private final FollowClient followClient;
@@ -249,6 +260,15 @@ public class PostService {
         }
         post.setStatus(0);
         postMapper.updateById(post);
+        // 帖子软删后，它下面评论的点赞关系就成孤儿行了，一并清掉
+        List<PostComment> comments = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
+                .select(PostComment::getId)
+                .eq(PostComment::getPostId, id));
+        if (!comments.isEmpty()) {
+            likeMapper.delete(Wrappers.<Like>lambdaQuery()
+                    .eq(Like::getTargetType, COMMENT_TARGET)
+                    .in(Like::getTargetId, comments.stream().map(PostComment::getId).toList()));
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -301,6 +321,12 @@ public class PostService {
         });
     }
 
+    /**
+     * 评论列表：两层树（顶层评论 + 各自挂载的回复），并补齐前端展示需要的元数据。
+     *
+     * <p>每条评论额外带：昵称/头像（t_user 最新值）、所在省份、等级 LV、点赞数、是否已赞。
+     * 全部走批量查询（{@link #attachUserMeta} / {@link #attachLikeMeta}），不做 N+1。
+     */
     public List<PostComment> comments(Long postId, Long userId) {
         List<PostComment> all = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
                 .eq(PostComment::getPostId, postId)
@@ -310,21 +336,156 @@ public class PostService {
         Map<Long, List<PostComment>> replyMap = all.stream()
                 .filter(c -> c.getParentId() != null && c.getParentId() > 0)
                 .collect(Collectors.groupingBy(PostComment::getParentId));
-        return all.stream()
+        List<PostComment> top = all.stream()
                 .filter(c -> c.getParentId() == null || c.getParentId() == 0)
-                .map(c -> {
-                    c.setMine(userId != null && userId.equals(c.getUserId()));
-                    c.setImageList(splitImages(c.getImages()));
-                    List<PostComment> replies = replyMap.getOrDefault(c.getId(), List.of());
-                    replies.forEach(r -> {
-                        r.setMine(userId != null && userId.equals(r.getUserId()));
-                        r.setImageList(splitImages(r.getImages()));
-                    });
-                    c.setReplies(replies);
-                    c.setReplyCount(replies.size());
-                    return c;
-                })
                 .toList();
+
+        // 元数据一次批量查完（顶层评论和楼中楼回复都要，所以传 all）
+        attachUserMeta(all);
+        attachLikeMeta(all, userId);
+
+        top.forEach(c -> {
+            c.setMine(userId != null && userId.equals(c.getUserId()));
+            c.setImageList(splitImages(c.getImages()));
+            List<PostComment> replies = replyMap.getOrDefault(c.getId(), List.of());
+            replies.forEach(r -> {
+                r.setMine(userId != null && userId.equals(r.getUserId()));
+                r.setImageList(splitImages(r.getImages()));
+            });
+            c.setReplies(replies);
+            c.setReplyCount(replies.size());
+        });
+        return top;
+    }
+
+    /**
+     * 点赞 / 取消点赞一条评论。
+     *
+     * <p>复用通用点赞表 t_like（target_type=COMMENT），唯一键 uk_target_user 保证
+     * 「同一人对同一条评论只有一条关系行」。
+     * 评论表**没有** like_count 冗余列，点赞数是实时聚合出来的，所以这里不需要维护计数器，
+     * 也就不会出现计数漂移。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean toggleCommentLike(Long postId, Long commentId, Long userId) {
+        PostComment comment = commentMapper.selectById(commentId);
+        if (comment == null || !postId.equals(comment.getPostId())) {
+            throw BizException.notFound("评论不存在或已删除");
+        }
+        Like exist = likeMapper.selectOne(Wrappers.<Like>lambdaQuery()
+                .eq(Like::getTargetType, COMMENT_TARGET)
+                .eq(Like::getTargetId, commentId)
+                .eq(Like::getUserId, userId));
+        if (exist != null) {
+            likeMapper.deleteById(exist.getId());
+            return false;
+        }
+        Like like = new Like();
+        like.setTargetType(COMMENT_TARGET);
+        like.setTargetId(commentId);
+        like.setUserId(userId);
+        try {
+            likeMapper.insert(like);
+        } catch (DuplicateKeyException e) {
+            // uk_target_user 并发兜底：并发双点赞时后到者插入失败，视为已点赞
+            return true;
+        }
+        return true;
+    }
+
+    /**
+     * 补齐评论者资料：昵称/头像用 t_user 最新值（评论表里的是发表时的快照）、
+     * 省份取学校所在省、等级按「发帖数 + 评论数」算（见 {@link UserLevel}）。
+     * 任一步失败都不影响评论列表返回（沿用快照，等级缺失就不显示徽章）。
+     */
+    private void attachUserMeta(List<PostComment> comments) {
+        if (comments == null || comments.isEmpty()) {
+            return;
+        }
+        List<Long> userIds = comments.stream()
+                .map(PostComment::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return;
+        }
+        try {
+            Map<Long, CommentUserBrief> users = commentMetaMapper.selectUsers(userIds).stream()
+                    .collect(Collectors.toMap(CommentUserBrief::getId, u -> u, (a, b) -> a));
+            Map<Long, Integer> postCounts = countMap(commentMetaMapper.selectPostCounts(userIds));
+            Map<Long, Integer> commentCounts = countMap(commentMetaMapper.selectCommentCounts(userIds));
+            for (PostComment c : comments) {
+                CommentUserBrief u = users.get(c.getUserId());
+                if (u == null) {
+                    continue;
+                }
+                if (StringUtils.hasText(u.getNickname())) {
+                    c.setUserName(u.getNickname());
+                }
+                if (StringUtils.hasText(u.getAvatar())) {
+                    c.setUserAvatar(u.getAvatar());
+                }
+                // 省份：学校所在省优先；没有省退到市；都没有就不显示这一段
+                if (StringUtils.hasText(u.getProvince())) {
+                    c.setUserProvince(u.getProvince());
+                } else if (StringUtils.hasText(u.getCity())) {
+                    c.setUserProvince(u.getCity());
+                }
+                int activity = postCounts.getOrDefault(c.getUserId(), 0)
+                        + commentCounts.getOrDefault(c.getUserId(), 0);
+                c.setUserLevel(UserLevel.of(activity));
+            }
+        } catch (Exception e) {
+            log.warn("补齐评论者资料失败，沿用快照: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 补齐评论点赞数与「我是否点过赞」。
+     * 计数直接来自 t_like 聚合，没有冗余计数列 → 不存在计数漂移。
+     */
+    private void attachLikeMeta(List<PostComment> comments, Long userId) {
+        if (comments == null || comments.isEmpty()) {
+            return;
+        }
+        List<Long> ids = comments.stream()
+                .map(PostComment::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (ids.isEmpty()) {
+            return;
+        }
+        try {
+            Map<Long, Integer> counts = new HashMap<>();
+            for (TargetCountBrief row : commentMetaMapper.selectLikeCounts(COMMENT_TARGET, ids)) {
+                counts.put(row.getTargetId(), row.getCnt() == null ? 0 : row.getCnt());
+            }
+            Set<Long> liked = userId == null
+                    ? Set.of()
+                    : new HashSet<>(commentMetaMapper.selectLikedTargetIds(COMMENT_TARGET, userId, ids));
+            for (PostComment c : comments) {
+                c.setLikeCount(counts.getOrDefault(c.getId(), 0));
+                c.setLiked(liked.contains(c.getId()));
+            }
+        } catch (Exception e) {
+            log.warn("查询评论点赞数失败，按 0 处理: {}", e.getMessage());
+            comments.forEach(c -> {
+                c.setLikeCount(0);
+                c.setLiked(false);
+            });
+        }
+    }
+
+    private Map<Long, Integer> countMap(List<UserCountBrief> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Integer> map = new HashMap<>();
+        for (UserCountBrief row : rows) {
+            map.put(row.getUserId(), row.getCnt() == null ? 0 : row.getCnt());
+        }
+        return map;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -429,7 +590,7 @@ public class PostService {
         req.setContentSnapshot(content);
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try { notificationClient.send(req); }
-            catch (Exception e) { log.warn("[notify] commentPost failed postId={}: {}", post.getId(), e.getMessage()); }
+            catch (Exception e) { log.warn("[notify] commentPost failed postId={} actorId={}: {}", post.getId(), actorId, e.getMessage()); }
         });
     }
 
@@ -468,15 +629,22 @@ public class PostService {
             throw BizException.forbidden("只能删除自己的评论");
         }
         int removed = 0;
+        List<Long> removedIds = new ArrayList<>();
         if (comment.getParentId() == null || comment.getParentId() == 0) {
             List<PostComment> replies = commentMapper.selectList(Wrappers.<PostComment>lambdaQuery()
                     .eq(PostComment::getParentId, commentId));
             if (!replies.isEmpty()) {
-                commentMapper.deleteByIds(replies.stream().map(PostComment::getId).toList());
+                removedIds.addAll(replies.stream().map(PostComment::getId).toList());
+                commentMapper.deleteByIds(removedIds);
                 removed = replies.size();
             }
         }
+        removedIds.add(commentId);
         commentMapper.deleteById(commentId);
+        // 顺手清掉这些评论的点赞关系，避免留下孤儿行
+        likeMapper.delete(Wrappers.<Like>lambdaQuery()
+                .eq(Like::getTargetType, COMMENT_TARGET)
+                .in(Like::getTargetId, removedIds));
         postMapper.incrComment(postId, -(1 + removed));
     }
 

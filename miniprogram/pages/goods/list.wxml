@@ -142,13 +142,22 @@
             class="{{seg.hit ? 'kw-hit' : ''}}"
           >{{seg.t}}</text>
         </view>
+        <!-- 描述摘要：标题短的时候用它顶上来，避免卡片下半截空一大块 -->
+        <view class="goods-desc clamp1" wx:if="{{item.descText}}">{{item.descText}}</view>
         <view class="between mt8">
           <view class="price"><text class="price-symbol">¥</text>{{item.priceText}}</view>
           <text class="muted">{{item.timeText}}</text>
         </view>
+        <!-- 分类 + 成色：两个小标签，扫一眼就知道是什么东西、几成新 -->
         <view class="row gap8 mt8">
-          <text class="tag">{{item.categoryName}}</text>
-          <text class="muted ellipsis flex1">{{item.location || '校内交易'}}</text>
+          <text class="tag" wx:if="{{item.categoryName}}">{{item.categoryName}}</text>
+          <text class="tag tag-mint" wx:if="{{item.conditionText}}">{{item.conditionText}}</text>
+        </view>
+        <!-- 地址 / 浏览 / 想要：详情页才看得到的数据，提前摊在卡片上 -->
+        <view class="goods-stats">
+          <text class="gs-item gs-loc ellipsis">📍 {{item.location || '校内自提'}}</text>
+          <text class="gs-item">👁 {{item.viewText}}</text>
+          <text class="gs-item">💗 {{item.likeText}}想要</text>
         </view>
       </view>
     </view>

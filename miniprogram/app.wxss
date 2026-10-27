@@ -64,6 +64,12 @@ view, text, button, input, textarea {
 .sub { font-size: 26rpx; color: var(--text-2); }
 .muted { font-size: 24rpx; color: var(--text-3); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .clamp2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
