@@ -10,8 +10,8 @@
  * 鉴权：先 POST /groups/ws-ticket 换一次性票据（60 秒、用一次即废），
  * 不把 JWT 拼进 URL —— Nginx 的 access_log 会记录完整 URL，token 落进日志等于泄露。
  */
-const { BASE_URL } = require('./config')
-const http = require('./request')
+const { BASE_URL } = require('../../../utils/config')
+const http = require('../../../utils/request')
 
 /** 连接状态：idle 未连 / connecting / open / degraded（已降级为轮询） */
 let state = 'idle'

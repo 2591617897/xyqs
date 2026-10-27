@@ -9,6 +9,7 @@ const TARGET_LABELS = {
   COMMENT: '评论',
   USER: '用户',
   MESSAGE: '私信',
+  GROUP_MSG: '群消息',
   FEEDBACK: '意见反馈'
 }
 const REASONS = ['色情低俗', '暴力血腥', '诈骗信息', '广告骚扰', '人身攻击', '虚假信息', '侵权举报', '其他']

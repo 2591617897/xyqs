@@ -246,6 +246,27 @@ function platformInfo() {
   return { platform: PLATFORM, name: PLATFORM_NAME }
 }
 
+/**
+ * 把登录失败的错误对象转成一句能看懂的提示。
+ *
+ * 以前页面里一律 toast「登录失败，请重试」，后端明明返回了
+ * 「微信登录失败：登录凭证 code 已失效」或「Unknown column 'verify_source'」，
+ * 却被这句通用文案吃掉，只能靠翻服务端日志才定位得到。
+ *
+ * 规则：后端的 msg 本身就是中文可读文案，优先透出；
+ * 但 500 会把 SQL 异常拼进 msg，toast 放不下，所以去掉前缀并截断。
+ */
+function loginErrorText(err) {
+  const raw = err && (err.msg || err.message)
+  if (!raw) return '登录失败，请重试'
+  const text = String(raw)
+    .replace(/^服务器开小差了\s*[:：]\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!text) return '登录失败，请重试'
+  return text.length > 28 ? text.slice(0, 28) + '…' : text
+}
+
 module.exports = {
   ensureLogin,
   ensureVerified,
@@ -253,5 +274,6 @@ module.exports = {
   doLogin,
   relogin,
   markTokenFresh,
-  platformInfo
+  platformInfo,
+  loginErrorText
 }

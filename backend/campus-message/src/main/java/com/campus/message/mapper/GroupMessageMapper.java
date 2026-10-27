@@ -60,7 +60,24 @@ public interface GroupMessageMapper extends BaseMapper<GroupMessage> {
             + "</script>")
     int deleteByIds(@Param("ids") List<Long> ids);
 
-    /** 后台删消息：软删，与用户撤回写同一列 */
-    @Update("update t_group_message set deleted = 1 where id = #{id} and group_id = #{groupId} and deleted = 0")
+    /** 后台删消息：软删，与用户撤回写同一列（deleted_by=2 区分「管理员删除」） */
+    @Update("update t_group_message set deleted = 1, deleted_by = 2 "
+            + "where id = #{id} and group_id = #{groupId} and deleted = 0")
     int softDelete(@Param("id") Long id, @Param("groupId") Long groupId);
+
+    /**
+     * 本人撤回：{@code sender_id} 一起进 where 条件。
+     *
+     * <p>Service 里已经校验过发送者，但这里再挡一次——撤回是不可逆的写操作，
+     * 不能只依赖上层判断（改天有人复用它时不会记得那条约定）。
+     */
+    @Update("update t_group_message set deleted = 1, deleted_by = 1 "
+            + "where id = #{id} and group_id = #{groupId} and sender_id = #{senderId} and deleted = 0")
+    int softDeleteOwn(@Param("id") Long id, @Param("groupId") Long groupId,
+                      @Param("senderId") Long senderId);
+
+    /** 撤回后重算群卡片摘要：最后一条未撤回的消息（没有则返回 null） */
+    @Select("select * from t_group_message where group_id = #{groupId} and deleted = 0 "
+            + "order by id desc limit 1")
+    GroupMessage selectLastAlive(@Param("groupId") Long groupId);
 }

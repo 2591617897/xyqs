@@ -114,6 +114,8 @@ public class GroupWsHandler extends TextWebSocketHandler {
             atNode.forEach(it -> atIds.add(it.asText()));
         }
         req.setAtUserIds(atIds);
+        // 引用回复：只带 id，昵称/摘要由服务端取快照（不信任前端内容）
+        req.setReplyToId(node.path("replyToId").asText(null));
 
         try {
             GroupMsgVO vo = groupService.send(groupId, ws.getUserId(), req);

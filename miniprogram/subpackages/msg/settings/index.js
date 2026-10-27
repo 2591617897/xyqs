@@ -1,5 +1,5 @@
 const http = require('../../../utils/request')
-const subscribe = require('../../../utils/subscribe')
+const subscribe = require('../utils/subscribe')
 const { mp, toast } = require('../../../utils/util')
 
 /** 五类站内提醒。顺序与消息中心四宫格 + 私信保持一致，用户对得上号 */

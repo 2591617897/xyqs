@@ -38,6 +38,10 @@ public interface ReportBriefMapper {
     @Select("SELECT content FROM t_message WHERE id = #{id}")
     String message(@Param("id") Long id);
 
+    /** 校友群消息（群聊长按举报）；取到的是发送时的正文快照 */
+    @Select("SELECT content FROM t_group_message WHERE id = #{id}")
+    String groupMsg(@Param("id") Long id);
+
     /** 评论：三张评论表按 id 依次找，t_post_comment 优先 */
     @Select("SELECT content FROM t_post_comment WHERE id = #{id}")
     String postComment(@Param("id") Long id);

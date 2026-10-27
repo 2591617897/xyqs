@@ -29,8 +29,13 @@ CREATE TABLE IF NOT EXISTS t_user (
   avatar        VARCHAR(255) DEFAULT NULL,
   gender        TINYINT      NOT NULL DEFAULT 0 COMMENT '0未知 1男 2女',
   phone         VARCHAR(20)  DEFAULT NULL,
+  -- 盲索引：phone/student_no 用 EncryptedStringTypeHandler 加密存储，密文无法等值查询，
+  -- 查重与后台检索一律走这两列（SearchHash.of(scope, value)，HMAC-SHA256 十六进制）。
+  -- 漏建会导致「查手机号查不到」或直接 Unknown column。
+  phone_hash    VARCHAR(64)  DEFAULT NULL COMMENT '手机号盲索引（HMAC）',
   school_id     BIGINT       DEFAULT NULL COMMENT '所属学校，注册时选择',
   student_no    VARCHAR(32)  DEFAULT NULL COMMENT '学号',
+  student_no_hash VARCHAR(64) DEFAULT NULL COMMENT '学号盲索引（HMAC），按学校加盐',
   real_name     VARCHAR(32)  DEFAULT NULL COMMENT '真实姓名',
   verify_status TINYINT      NOT NULL DEFAULT 0 COMMENT '0未认证 1审核中 2已认证 3驳回',
   -- 认证来源：0未认证 1学生证材料（人工）2微信学生认证（免材料）。
@@ -53,6 +58,8 @@ CREATE TABLE IF NOT EXISTS t_user (
   UNIQUE KEY uk_platform_openid (platform, openid),
   KEY idx_school (school_id, verify_status),
   KEY idx_verify_source (verify_source),
+  KEY idx_phone_hash (phone_hash),
+  KEY idx_student_no_hash (school_id, student_no_hash),
   KEY idx_mute_until (mute_until)
 ) COMMENT '用户';
 

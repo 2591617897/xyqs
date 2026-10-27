@@ -36,7 +36,19 @@ public class GroupMessageArchive {
 
     private String atUserIds;
 
+    /** 被回复的消息 id（归档后原消息可能已不在热表，只作追溯线索） */
+    private Long replyToId;
+
+    /** 被回复者昵称快照 */
+    private String replyToName;
+
+    /** 被回复内容摘要快照 */
+    private String replyToText;
+
     private Integer deleted;
+
+    /** 删除来源：0 未删除 1 本人撤回 2 管理员删除 */
+    private Integer deletedBy;
 
     private LocalDateTime createdAt;
 

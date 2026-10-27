@@ -116,7 +116,7 @@ global.wx = {
   showToast: function () {}
 }
 
-const subscribe = require(path.join(MP, 'utils/subscribe.js'))
+const subscribe = require(path.join(MP, 'subpackages/msg/utils/subscribe.js'))
 
 async function testSubscribe() {
   // 4.1 无模板：绝不能调接口（调了必失败，还会弹一个空模板的报错框）

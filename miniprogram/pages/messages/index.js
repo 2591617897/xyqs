@@ -42,6 +42,8 @@ Page({
     group: null,
     /** 未绑定学校：显示选校引导，绝不给空群 */
     groupNeedSchool: false,
+    /** 群接口请求失败：保留一个可重试的入口，绝不静默消失 */
+    groupError: false,
     onboardShow: false,
     onboardSaving: false,
   },
@@ -89,7 +91,8 @@ Page({
         summary: { likes: 0, followers: 0, mentions: 0, notice: '' },
         unread: 0,
         group: null,
-        groupNeedSchool: false
+        groupNeedSchool: false,
+        groupError: false
       })
       return
     }
@@ -280,20 +283,31 @@ Page({
    * 得出「这 app 没人用」的结论，死群比没有群更伤。
    */
   applyGroup: function (res) {
+    // 接口失败 ≠ 没有群。失败时留一个可点的重试入口，
+    // 否则卡片整块消失，用户只会以为「这功能没做」（2026-10-27 网关漏重启踩到过）。
     if (!res) {
-      this.setData({ group: null, groupNeedSchool: false })
+      this.setData({ group: null, groupNeedSchool: false, groupError: true })
       return
     }
     if (res.needSchool) {
-      this.setData({ group: null, groupNeedSchool: true })
+      this.setData({ group: null, groupNeedSchool: true, groupError: false })
       return
     }
     const g = res.group
     if (!g) {
-      this.setData({ group: null, groupNeedSchool: false })
+      this.setData({ group: null, groupNeedSchool: false, groupError: false })
       return
     }
-    this.setData({ group: g, groupNeedSchool: false })
+    this.setData({ group: g, groupNeedSchool: false, groupError: false })
+  },
+
+  /** 群卡片加载失败后手动重试（只重拉群信息，不动私信列表） */
+  retryGroup: function () {
+    const self = this
+    if (this.data.groupError) this.setData({ groupError: false })
+    http.get('/groups/mine', null, { silent: true })
+      .then(function (res) { self.applyGroup(res) })
+      .catch(function () { self.applyGroup(null) })
   },
 
   /** 进群：未确认群规也会进去（进群页自己弹引导层） */

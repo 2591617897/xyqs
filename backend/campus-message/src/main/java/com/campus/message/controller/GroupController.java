@@ -85,6 +85,19 @@ public class GroupController {
         return R.ok(groupService.send(id, UserContext.requireUserId(), req));
     }
 
+    /**
+     * 撤回自己发的消息（发送后 2 分钟内，与微信一致）。
+     *
+     * <p>走 HTTP 而不是 WebSocket：撤回是一次性的强一致写操作，
+     * 需要明确的成功/失败回执（HTTP 状态 + 业务码），
+     * 让前端能把「超过 2 分钟无法撤回」原样提示给用户。
+     */
+    @PostMapping("/{id}/messages/{msgId}/recall")
+    public R<Void> recall(@PathVariable("id") Long id, @PathVariable("msgId") Long msgId) {
+        groupService.recall(id, UserContext.requireUserId(), msgId);
+        return R.ok();
+    }
+
     /** 上报已读游标（同时清 @我 的未读）；不传 lastReadId 视为「全部已读」到最新 */
     @PostMapping("/{id}/read")
     public R<Void> read(@PathVariable("id") Long id, @RequestBody(required = false) ReadReq req) {

@@ -44,23 +44,45 @@
         <text class="empty-sub">打个招呼吧：约自习、拼车回家、问课程都行</text>
       </view>
 
-      <view class="msg {{item.mine ? 'mine' : ''}}" wx:for="{{msgs}}" wx:key="id" wx:for-item="item" id="{{index === msgs.length - 1 ? 'm-last' : ''}}">
+      <view class="msg {{item.mine ? 'mine' : ''}}" wx:for="{{msgs}}" wx:key="id" wx:for-item="item" wx:for-index="idx" id="m-{{item.id}}">
+        <!-- 头像双方都要有：.msg.mine 用 row-reverse 自动排到右侧，
+             不能再用 !item.mine 过滤，否则自己发的消息整行只有气泡，
+             视觉上和别人的消息对不齐（只剩气泡贴边）。
+             长按头像 = @ 这个成员（比先去成员列表里找人快得多）。 -->
         <image
-          wx:if="{{!item.mine && item.senderAvatar}}"
+          wx:if="{{item.senderAvatar}}"
           class="msg-avatar"
           src="{{item.senderAvatar}}"
           mode="aspectFill"
           data-uid="{{item.senderId}}"
+          data-name="{{item.senderName}}"
           bindtap="onAvatar"
+          bindlongpress="onAvatarLong"
         />
-        <view wx:elif="{{!item.mine}}" class="msg-avatar msg-avatar-default" data-uid="{{item.senderId}}" bindtap="onAvatar">
+        <view wx:else class="msg-avatar msg-avatar-default" data-uid="{{item.senderId}}" data-name="{{item.senderName}}" bindtap="onAvatar" bindlongpress="onAvatarLong">
           <view class="avatar-default"><view class="ad-head"></view><view class="ad-body"></view></view>
         </view>
 
         <view class="msg-body">
           <text class="msg-name" wx:if="{{!item.mine}}">{{item.senderName || '校友'}}</text>
-          <view class="bubble {{item.mine ? 'bubble-mine' : ''}} {{item.deleted ? 'bubble-deleted' : ''}}">
+          <!-- 长按气泡出操作菜单：回复 / 撤回（2 分钟内且是自己发的）/ 复制 / 举报 -->
+          <view
+            class="bubble {{item.mine ? 'bubble-mine' : ''}} {{item.deleted ? 'bubble-deleted' : ''}}"
+            data-idx="{{idx}}"
+            bindlongpress="onMsgLong"
+          >
+            <!-- 引用块：被回复内容用服务端快照，原消息撤回后仍能看懂 -->
+            <view
+              class="quote"
+              wx:if="{{item.replyToName && !item.deleted}}"
+              data-id="{{item.replyToId}}"
+              catchtap="jumpTo"
+            >
+              <text class="quote-name">{{item.replyToName}}</text>
+              <text class="quote-text">{{item.replyToText || '[消息]'}}</text>
+            </view>
             <text class="msg-text" wx:if="{{!item.deleted}}">{{item.content}}</text>
+            <text class="msg-text" wx:elif="{{item.recalled}}">{{item.mine ? '你撤回了一条消息' : '对方撤回了一条消息'}}</text>
             <text class="msg-text" wx:else>该消息已被删除</text>
           </view>
           <view class="msg-meta">
@@ -69,7 +91,8 @@
           </view>
         </view>
       </view>
-      <view class="msgs-end" wx:if="{{msgs.length}}">— 只保留最近的消息，更多请上滑 —</view>
+      <!-- 滚动锚点：新消息 / 补拉统一滚到这里（行 id 已改成 m-{{id}}，不能再靠最后一行） -->
+      <view class="msgs-end" wx:if="{{msgs.length}}" id="m-last">— 只保留最近的消息，更多请上滑 —</view>
     </scroll-view>
 
     <!-- 不能发言的原因：常驻在输入框上方，绝不等用户打完字才拒绝 -->
@@ -90,25 +113,38 @@
       </view>
     </view>
 
-    <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞 -->
-    <view class="input-bar" style="bottom: {{keyboardHeight}}px">
-      <view class="ib-at" bindtap="openAtPicker">@</view>
-      <input
-        class="ib-input {{canSend ? '' : 'disabled'}}"
-        value="{{inputText}}"
-        placeholder="{{canSend ? '说点什么…' : (nightMute ? '夜间静默中' : '暂时不能发言')}}"
-        placeholder-class="ph"
-        confirm-type="send"
-        adjust-position="false"
-        disabled="{{!canSend}}"
-        bindinput="onInput"
-        bindconfirm="onSend"
-        bindkeyboardheightchange="onKeyboard"
-      />
-      <view class="ib-all {{atAll ? 'on' : ''}}" wx:if="{{atAllAllowed}}" bindtap="toggleAtAll">全体</view>
-      <view class="ib-send {{(inputText && canSend) ? 'on' : ''}}" bindtap="onSend">发送</view>
+    <!-- 底部固定区：回复栏 + 输入栏必须一起抬，分开定位的话
+         键盘弹起时输入栏上移、回复栏留在原地被键盘盖住 -->
+    <view class="bottom-dock" style="bottom: {{keyboardHeight}}px">
+      <view class="reply-bar" wx:if="{{replyTo}}">
+        <view class="rb-line"></view>
+        <view class="rb-main">
+          <text class="rb-name">回复 {{replyTo.name || '校友'}}</text>
+          <text class="rb-text">{{replyTo.text || '[消息]'}}</text>
+        </view>
+        <view class="rb-close" catchtap="cancelReply">✕</view>
+      </view>
+
+      <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞 -->
+      <view class="input-bar">
+        <view class="ib-at" bindtap="openAtPicker">@</view>
+        <input
+          class="ib-input {{canSend ? '' : 'disabled'}}"
+          value="{{inputText}}"
+          placeholder="{{replyTo ? '回复 ' + replyTo.name : (canSend ? '说点什么…' : (nightMute ? '夜间静默中' : '暂时不能发言'))}}"
+          placeholder-class="ph"
+          confirm-type="send"
+          adjust-position="false"
+          disabled="{{!canSend}}"
+          bindinput="onInput"
+          bindconfirm="onSend"
+          bindkeyboardheightchange="onKeyboard"
+        />
+        <view class="ib-all {{atAll ? 'on' : ''}}" wx:if="{{atAllAllowed}}" bindtap="toggleAtAll">全体</view>
+        <view class="ib-send {{(inputText && canSend) ? 'on' : ''}}" bindtap="onSend">发送</view>
+      </view>
     </view>
-    <view class="input-hold"></view>
+    <view class="input-hold" style="height: {{replyTo ? 200 : 100}}rpx"></view>
   </block>
 
   <!-- 首次进群：全屏群规 + 安全提醒（不是 toast，也不是半屏弹窗——要用户真的看完） -->

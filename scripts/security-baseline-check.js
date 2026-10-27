@@ -286,6 +286,79 @@ if (!wxStudentOn && pluginDeclared) {
   warn('学生认证', 'app.json 声明了插件但前端开关是 false，多了一处无效声明')
 }
 
+// ---------------------------------------------------------------- 实体字段 ↔ 建表脚本一致性
+/**
+ * 事故背景（2026-10-27）：
+ *   User 实体先加了 verify_source / wx_student_verified / wx_student_status /
+ *   wx_student_verify_at 四个字段，但迁移脚本没在库上执行。
+ *   MyBatis-Plus 的 select 会把所有非 exist=false 的字段带进 SQL，
+ *   于是任何读写 t_user 的操作全部 `Unknown column 'verify_source'`，
+ *   表现成「微信登录失败，请重试」——登录、我的页、发布全挂。
+ *
+ *   所以这里做一道最便宜的静态拦截：实体里的持久化字段，
+ *   必须能在 schema.sql 对应建表语句里找到列名。
+ *   只警告不阻断的话没有意义，这类问题一旦上线就是全站不可用，因此判失败。
+ */
+function camelToSnake(name) {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
+}
+
+function checkEntityColumns(entityPath, tableName) {
+  const src = read(entityPath)
+  if (!src) {
+    warn('实体建表一致性', `找不到实体 ${entityPath}`)
+    return
+  }
+  const schema = read('backend/sql/schema.sql') || ''
+  // 建表语句有 `CREATE TABLE t_x (` 与 `CREATE TABLE IF NOT EXISTS t_x (` 两种写法，
+  // 表名可能带反引号，用正则统一匹配，避免只认一种写法就静默跳过检查
+  const createRe = new RegExp(
+    'CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?' + tableName + '`?\\s*\\(',
+    'i'
+  )
+  const createMatch = createRe.exec(schema)
+  if (!createMatch) {
+    warn('实体建表一致性', `schema.sql 里找不到 ${tableName} 的建表语句`)
+    return
+  }
+  const start = createMatch.index
+  const semi = schema.indexOf(';', start)
+  const block = schema.slice(start, semi < 0 ? schema.length : semi)
+
+  const columns = new Set()
+  const colRe = /^[ \t]*`?([a-z][a-z0-9_]*)`?[ \t]+(?:BIGINT|INT|TINYINT|SMALLINT|VARCHAR|CHAR|TEXT|DATETIME|TIMESTAMP|DECIMAL|DATE)\b/gim
+  for (const m of block.matchAll(colRe)) columns.add(m[1].toLowerCase())
+
+  // 迁移脚本里的列名也算「有出处」，用于区分「schema 漏同步」和「压根没写迁移」
+  const sqlDir = path.join(ROOT, 'backend/sql')
+  const migrations = fs.existsSync(sqlDir)
+    ? fs.readdirSync(sqlDir)
+        .filter((f) => /^migration-.*\.sql$/.test(f))
+        .map((f) => fs.readFileSync(path.join(sqlDir, f), 'utf8'))
+        .join('\n')
+    : ''
+  const migrationCols = new Set()
+  for (const m of migrations.matchAll(/ADD[ \t]+COLUMN[ \t]+`?([a-z][a-z0-9_]*)`?/gi)) {
+    migrationCols.add(m[1].toLowerCase())
+  }
+
+  const missing = []
+  for (const m of src.matchAll(/^[ \t]*private[ \t]+(?!static)[\w<>\[\], ]+?[ \t]+(\w+)[ \t]*;/gm)) {
+    const snake = camelToSnake(m[1])
+    if (columns.has(snake)) continue
+    if (migrationCols.has(snake)) {
+      warn('实体建表一致性', `${tableName}.${snake} 只在迁移脚本里，schema.sql 未同步（全新部署会对不上）`)
+    } else {
+      missing.push(snake)
+    }
+  }
+  if (missing.length) {
+    fail('实体建表一致性', `${tableName} 实体字段没有对应列：${missing.join(', ')} —— 先补迁移并执行，否则该表所有读写都会 Unknown column`)
+  }
+}
+
+checkEntityColumns('backend/campus-user/src/main/java/com/campus/user/entity/User.java', 't_user')
+
 // ---------------------------------------------------------------- 输出
 const okCount = failures.length === 0
 console.log('')

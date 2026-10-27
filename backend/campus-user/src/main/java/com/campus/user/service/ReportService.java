@@ -87,6 +87,7 @@ public class ReportService {
             case "GOODS" -> raw = briefMapper.goods(targetId);
             case "USER" -> raw = briefMapper.user(targetId);
             case "MESSAGE" -> raw = briefMapper.message(targetId);
+            case "GROUP_MSG" -> raw = briefMapper.groupMsg(targetId);
             case "COMMENT" -> {
                 // 工单只记了 targetId，不知归属哪张评论表，依次试探
                 raw = briefMapper.postComment(targetId);

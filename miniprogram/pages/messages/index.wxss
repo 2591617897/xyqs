@@ -716,3 +716,12 @@
   font-weight: 600;
   flex-shrink: 0;
 }
+/* 接口失败态：换成实线+警示色，和「正常引导」视觉上区分开，别让人以为要选学校 */
+.ge-error {
+  border-style: solid;
+  border-color: #f3d9d3;
+  background: #fffaf8;
+}
+.ge-error .ge-act {
+  color: #c2452d;
+}

@@ -26,6 +26,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -59,6 +60,8 @@ public class GroupService {
     private static final int UNREAD_CAP = 100;
     /** 摘要长度：群卡片只展示一行 */
     private static final int BRIEF_LEN = 40;
+    /** 撤回时间窗口（毫秒）：与微信一致，发送后 2 分钟内可撤回 */
+    private static final long RECALL_WINDOW_MS = 2 * 60 * 1000L;
 
     private final GroupMapper groupMapper;
     private final GroupMemberMapper memberMapper;
@@ -317,7 +320,32 @@ public class GroupService {
             atIds = List.of();
         }
 
-        // ⑤ 落库（clientMsgId 幂等）
+        // ⑤ 引用回复：只认本群消息，昵称与摘要由服务端取快照
+        //    —— 绝不信任前端传来的引用内容，否则可以伪造成任何人说过的话
+        Long replyToId = parseId(req.getReplyToId());
+        String replyName = "";
+        String replyText = "";
+        if (replyToId != null) {
+            GroupMessage quoted = messageMapper.selectOne(Wrappers.<GroupMessage>lambdaQuery()
+                    .eq(GroupMessage::getId, replyToId)
+                    .eq(GroupMessage::getGroupId, groupId)
+                    .last("limit 1"));
+            if (quoted == null) {
+                throw BizException.of("被回复的消息不存在");
+            }
+            replyName = quoted.getSenderName() == null ? "" : quoted.getSenderName();
+            if (replyName.isBlank()) {
+                List<Map<String, Object>> qb = groupMapper.selectUserBriefs(List.of(quoted.getSenderId()));
+                if (!qb.isEmpty() && qb.get(0).get("nickname") != null) {
+                    replyName = String.valueOf(qb.get(0).get("nickname"));
+                }
+            }
+            replyText = Integer.valueOf(1).equals(quoted.getDeleted())
+                    ? "[该消息已撤回]"
+                    : brief(quoted.getContent(), quoted.getType());
+        }
+
+        // ⑥ 落库（clientMsgId 幂等）
         String clientMsgId = req.getClientMsgId();
         if (clientMsgId == null || clientMsgId.isBlank()) {
             // 必须给个值：uk_client 上的空字符串会让第二条无 id 的消息直接冲突
@@ -327,13 +355,35 @@ public class GroupService {
         GroupMessage msg = new GroupMessage();
         msg.setGroupId(groupId);
         msg.setSenderId(userId);
-        msg.setSenderName("");
-        msg.setSenderAvatar("");
+
+        // 昵称/头像是**发送时快照**。
+        // 历史消息查询会走 refreshAuthors 用最新资料覆盖，但 WebSocket 实时推送
+        // 不经过那条路径——快照写空的话，对方收到的新消息头像恒为空，
+        // 前端只能退化成一个灰头像。一次 IN 查询换实时消息显示正确，值得。
+        String snapName = "";
+        String snapAvatar = "";
+        List<Map<String, Object>> briefs = groupMapper.selectUserBriefs(List.of(userId));
+        if (!briefs.isEmpty()) {
+            Object nickname = briefs.get(0).get("nickname");
+            Object avatar = briefs.get(0).get("avatar");
+            if (nickname != null && !String.valueOf(nickname).isBlank()) {
+                snapName = String.valueOf(nickname);
+            }
+            if (avatar != null) {
+                snapAvatar = String.valueOf(avatar);
+            }
+        }
+        msg.setSenderName(snapName);
+        msg.setSenderAvatar(snapAvatar);
         msg.setType(type);
         msg.setContent(content);
         msg.setAtType(atAll ? 2 : (atIds.isEmpty() ? 0 : 1));
         msg.setAtUserIds(toJson(atIds));
+        msg.setReplyToId(replyToId);
+        msg.setReplyToName(replyName);
+        msg.setReplyToText(replyText);
         msg.setDeleted(0);
+        msg.setDeletedBy(0);
         msg.setClientMsgId(clientMsgId);
 
         try {
@@ -351,14 +401,73 @@ public class GroupService {
             throw BizException.of("发送失败，请重试");
         }
 
-        // ⑥ 群摘要 + @ 效果
+        // ⑦ 群摘要 + @ 效果
         groupMapper.updateLastMessage(groupId, msg.getId(), brief(content, type), LocalDateTime.now());
         mentionService.apply(groupId, msg.getId(), userId, atIds, atAll);
 
-        // ⑦ 广播（自己发的也走这里，前端按 clientMsgId 替换本地气泡）
+        // ⑧ 广播（自己发的也走这里，前端按 clientMsgId 替换本地气泡）
         GroupMsgVO vo = toVO(msg, null);   // self 由前端用 senderId 判断
         broadcaster.broadcast(groupId, WsBroadcaster.frame("msg", "message", vo));
         return toVO(msg, userId);
+    }
+
+    /**
+     * 撤回自己发的消息（2 分钟内，与微信一致）。
+     *
+     * <p>三条必须守住的口径：
+     * <ol>
+     *   <li><b>只能撤回自己的</b>：{@code sender_id} 进 where 条件，不靠前端隐藏按钮；</li>
+     *   <li><b>时间窗口用毫秒比较</b>：{@code Duration.toMillis()}，
+     *       用 {@code getSeconds()} 会截断小数，14.98 秒容易被判成没看满（同一类坑踩过）；</li>
+     *   <li><b>撤回最后一条要回滚群摘要</b>：否则群列表一直显示已撤回的内容。</li>
+     * </ol>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void recall(Long groupId, Long userId, Long messageId) {
+        if (messageId == null) {
+            throw BizException.of("消息 id 无效");
+        }
+        requireActiveMember(groupId, userId);
+
+        GroupMessage msg = messageMapper.selectOne(Wrappers.<GroupMessage>lambdaQuery()
+                .eq(GroupMessage::getId, messageId)
+                .eq(GroupMessage::getGroupId, groupId)
+                .last("limit 1"));
+        if (msg == null) {
+            throw BizException.notFound("消息不存在");
+        }
+        if (!Objects.equals(msg.getSenderId(), userId)) {
+            throw BizException.forbidden("只能撤回自己发送的消息");
+        }
+        if (Integer.valueOf(1).equals(msg.getDeleted())) {
+            throw BizException.of("该消息已撤回");
+        }
+        // 客户端时钟不可信，一律以服务端落库时间算窗口
+        long elapsed = msg.getCreatedAt() == null
+                ? Long.MAX_VALUE
+                : Duration.between(msg.getCreatedAt(), LocalDateTime.now()).toMillis();
+        if (elapsed < 0 || elapsed > RECALL_WINDOW_MS) {
+            throw BizException.of("超过 2 分钟的消息无法撤回");
+        }
+        if (messageMapper.softDeleteOwn(messageId, groupId, userId) == 0) {
+            throw BizException.of("该消息已撤回");
+        }
+
+        // 撤回的正是群里最后一条 → 摘要回退到上一条未撤回的
+        Group g = groupMapper.selectById(groupId);
+        if (g != null && Objects.equals(g.getLastMsgId(), messageId)) {
+            GroupMessage last = messageMapper.selectLastAlive(groupId);
+            if (last == null) {
+                groupMapper.forceLastMessage(groupId, 0L, "", LocalDateTime.now());
+            } else {
+                groupMapper.forceLastMessage(groupId, last.getId(),
+                        brief(last.getContent(), last.getType()), last.getCreatedAt());
+            }
+        }
+
+        // 用 recall 而不是 delete：前端要显示「XX 撤回了一条消息」而不是「该消息已被删除」
+        broadcaster.broadcast(groupId, WsBroadcaster.frame("recall", "messageId", String.valueOf(messageId)));
+        log.info("[group] 撤回 group={} user={} msg={}", groupId, userId, messageId);
     }
 
     // ==========================================================
@@ -486,8 +595,12 @@ public class GroupService {
         vo.setAtType(msg.getAtType());
         vo.setAtAll(Integer.valueOf(2).equals(msg.getAtType()));
         vo.setAtUserIds(parseAtJson(msg.getAtUserIds()));
+        vo.setReplyToId(msg.getReplyToId() == null ? null : String.valueOf(msg.getReplyToId()));
+        vo.setReplyToName(msg.getReplyToName());
+        vo.setReplyToText(msg.getReplyToText());
         vo.setSelf(viewerId != null && Objects.equals(viewerId, msg.getSenderId()));
         vo.setDeleted(msg.getDeleted());
+        vo.setDeletedBy(msg.getDeletedBy());
         vo.setClientMsgId(msg.getClientMsgId());
         vo.setCreatedAt(GroupTime.msg(msg.getCreatedAt()));
         return vo;
@@ -534,6 +647,19 @@ public class GroupService {
         }
         String s = content.replaceAll("\\s+", " ").trim();
         return s.length() <= BRIEF_LEN ? s : s.substring(0, BRIEF_LEN) + "…";
+    }
+
+    /** 字符串 id → Long（雪花 id 只能是字符串传输，前端不能 Number() 转换） */
+    private Long parseId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            long v = Long.parseLong(raw.trim());
+            return v > 0 ? v : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private List<Long> parseAtIds(List<String> raw) {

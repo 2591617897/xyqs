@@ -44,6 +44,16 @@
     </view>
   </view>
 
+  <!-- 群接口失败：留可重试入口，绝不静默消失 -->
+  <view class="group-empty ge-error" wx:if="{{!needLogin && groupError}}" bindtap="retryGroup">
+    <view class="ge-icon">🏫</view>
+    <view class="ge-main">
+      <text class="ge-title">校友群加载失败</text>
+      <text class="ge-sub">网络或服务暂时不可用，点这里重试</text>
+    </view>
+    <text class="ge-act">重试</text>
+  </view>
+
   <!-- 已登录但没绑定学校：给引导，不给空群 -->
   <view class="group-empty" wx:if="{{!needLogin && groupNeedSchool}}" bindtap="openOnboard">
     <view class="ge-icon">🏫</view>

@@ -203,8 +203,11 @@ Page({
       self.loadMe()
       self.loadOrders()
       toast('登录成功')
-    }).catch(function () {
-      toast('登录失败，请重试')
+    }).catch(function (err) {
+      // 别再吞成「登录失败，请重试」：后端 500 的具体原因（如缺字段、配置缺失）
+      // 必须能看见，否则每次只能靠翻服务端日志定位
+      console.error('[login] 失败', err)
+      toast(auth.loginErrorText(err))
     })
   },
 

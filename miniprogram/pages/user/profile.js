@@ -68,8 +68,9 @@ Page({
     toast('正在登录…')
     auth.ensureLogin(true).then(function () {
       self.loadMe()
-    }).catch(function () {
-      toast('登录失败，请重试')
+    }).catch(function (err) {
+      console.error('[login] 失败', err)
+      toast(auth.loginErrorText(err))
     })
   },
 

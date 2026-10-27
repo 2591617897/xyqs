@@ -449,3 +449,106 @@
   color: #a3b0aa;
   margin-top: 14rpx;
 }
+
+/* ==================== 引用回复块（气泡内） ==================== */
+.quote {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  margin-bottom: 12rpx;
+  padding: 10rpx 14rpx;
+  border-radius: 10rpx;
+  background: rgba(15, 26, 22, 0.05);
+  border-left: 4rpx solid #9bb3a8;
+}
+/* 自己的绿色气泡里用半透明白，不能用深色底 */
+.bubble-mine .quote {
+  background: rgba(255, 255, 255, 0.18);
+  border-left-color: rgba(255, 255, 255, 0.75);
+}
+.quote-name {
+  font-size: 21rpx;
+  color: #62786e;
+}
+.quote-text {
+  font-size: 23rpx;
+  color: #6b7c74;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+.bubble-mine .quote-name,
+.bubble-mine .quote-text {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+/* ==================== 回复栏（输入框上方） ==================== */
+.reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin: 0 20rpx 8rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 14rpx;
+  background: #f1f5f2;
+}
+.rb-line {
+  width: 4rpx;
+  height: 34rpx;
+  flex: none;
+  border-radius: 2rpx;
+  background: #0e9a60;
+}
+.rb-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+.rb-name {
+  font-size: 21rpx;
+  color: #0e9a60;
+}
+.rb-text {
+  font-size: 23rpx;
+  color: #6b7c74;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rb-close {
+  width: 44rpx;
+  height: 44rpx;
+  flex: none;
+  text-align: center;
+  line-height: 44rpx;
+  font-size: 24rpx;
+  color: #8a9a90;
+}
+
+/* ==================== 底部固定区（回复栏 + 输入栏） ====================
+   原来 .input-bar 自己 position:fixed / bottom:0，回复栏没法跟着键盘走。
+   现在由 .bottom-dock 统一承担固定定位与键盘偏移，.input-bar 回到普通流。 */
+.bottom-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  box-shadow: 0 -2rpx 16rpx rgba(15, 26, 22, 0.05);
+  z-index: 20;
+  box-sizing: border-box;
+}
+.bottom-dock .input-bar {
+  position: static;
+  box-shadow: none;
+  background: transparent;
+  z-index: auto;
+}
+/* 回复栏在固定区内：左右内缩，靠一条竖线表明「引用」 */
+.bottom-dock .reply-bar {
+  margin: 12rpx 20rpx 0;
+  border-radius: 12rpx;
+}

@@ -68,7 +68,11 @@ public class GroupArchiveService {
             a.setContent(m.getContent());
             a.setAtType(m.getAtType());
             a.setAtUserIds(m.getAtUserIds());
+            a.setReplyToId(m.getReplyToId());
+            a.setReplyToName(m.getReplyToName());
+            a.setReplyToText(m.getReplyToText());
             a.setDeleted(m.getDeleted());
+            a.setDeletedBy(m.getDeletedBy());
             a.setCreatedAt(m.getCreatedAt());
             rows.add(a);
             ids.add(m.getId());

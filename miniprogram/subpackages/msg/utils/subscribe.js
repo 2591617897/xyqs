@@ -17,7 +17,7 @@
  *    由后端配置下发（campus.wx.subscribe-templates）。没配就返回空数组，
  *    此时前端应「只展示入口、不发起授权」—— 拿空数组调接口只会失败。
  */
-const { mp } = require('./util')
+const { mp } = require('../../../utils/util')
 
 /** 一次最多能请求的模板数（官方上限以文档为准，这里按 3 兜底，超了接口会直接报错） */
 const MAX_TMPL = 3

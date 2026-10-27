@@ -40,6 +40,19 @@ public interface GroupMapper extends BaseMapper<Group> {
                           @Param("text") String text, @Param("time") LocalDateTime time);
 
     /**
+     * 强制覆盖群摘要。
+     *
+     * <p>撤回最后一条消息时必须用它：{@link #updateLastMessage} 带
+     * {@code last_msg_id < msgId} 的单调保护（防乱序回退），
+     * 而撤回恰恰要「往回退」，用那条 SQL 会一行都更新不到，
+     * 结果群列表一直显示已经撤回的内容。
+     */
+    @Update("update t_group set last_msg_id = #{msgId}, last_msg_text = #{text}, "
+            + "last_msg_time = #{time} where id = #{id}")
+    int forceLastMessage(@Param("id") Long id, @Param("msgId") Long msgId,
+                         @Param("text") String text, @Param("time") LocalDateTime time);
+
+    /**
      * 刷新「最近一次 @所有人」游标。<b>这是零写放大的关键</b>：
      * 一万人的群发一次 @全体，这里只更新 1 行，而不是给一万个成员各 +1。
      */

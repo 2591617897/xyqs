@@ -35,11 +35,23 @@ public class GroupMsgVO {
     /** 是否 @所有人（前端据此显示「@全体」标签） */
     private Boolean atAll;
 
+    /** 被回复的消息 id（前端点击引用块跳转到原消息） */
+    private String replyToId;
+
+    /** 被回复者昵称（快照，不随对方改昵称变化） */
+    private String replyToName;
+
+    /** 被回复内容摘要（快照） */
+    private String replyToText;
+
     /** 是否我发的（前端据此决定左右气泡，不用再比 id） */
     private Boolean self;
 
     /** 1 已撤回/被删 */
     private Integer deleted;
+
+    /** 0 未删除 1 本人撤回 2 管理员删除（前端据此显示不同文案） */
+    private Integer deletedBy;
 
     /** 客户端幂等 id：前端按它把本地乐观气泡替换成服务端真消息 */
     private String clientMsgId;
