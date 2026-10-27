@@ -9,12 +9,46 @@ const { resolveList } = require('./img')
  * 避免两个页面各写一份、以后改一处漏一处。
  */
 
-/** 分类 → 话题标签（发布时选的 category 字段） */
+/**
+ * 分类 → 话题标签（发布时选的 category 字段）。
+ * 注意 findp 只用于兼容存量数据：前端已把「寻物」「寻人」合并成一个「求助」tab，
+ * 新发布的内容统一落到 find。
+ */
 const CAT_TAG = {
   love: '#校园心情',
   tree: '#树洞吐槽',
-  find: '#寻物启事',
+  find: '#求助',
   findp: '#寻人互助'
+}
+
+/**
+ * 树洞分类的唯一定义源（分类 chips / 发布选择 / 滑动切换都读这一份）。
+ *
+ * 整理原则：树洞只回答「我现在什么心情 / 需要什么帮忙」，
+ * 所以分类按情绪与诉求切，不按物品切（物品归闲置）、不按公共话题切（话题归频道）。
+ *
+ * - key 为空 = 不过滤，对应「全部」
+ * - query 非空 = 实际发给后端 category 参数的值（「求助」= 寻物 + 寻人）
+ * - 后端发布接口只收单值，「求助」发布时统一写 find（见后端 normalizeCategory）
+ */
+const CATS = [
+  { key: '', name: '全部', tag: '', query: '' },
+  { key: 'love', name: '💗 心情', tag: CAT_TAG.love, query: 'love' },
+  { key: 'tree', name: '🕳️ 吐槽', tag: CAT_TAG.tree, query: 'tree' },
+  { key: 'find', name: '🔎 求助', tag: CAT_TAG.find, query: 'find,findp' }
+]
+
+/** 发布弹层可选的分类：去掉「全部」（发布必须落到一个具体分类） */
+const COMPOSE_CATS = CATS.filter(function (c) {
+  return !!c.key
+})
+
+/** 按 key 找分类，找不到返回第一个 */
+function findCat(key) {
+  for (let i = 0; i < CATS.length; i++) {
+    if (CATS[i].key === key) return CATS[i]
+  }
+  return CATS[0]
 }
 
 /** 匿名头像 emoji（anonAvatar 1~8 对应） */
@@ -41,6 +75,9 @@ function decorateWall(item) {
 
 module.exports = {
   CAT_TAG,
+  CATS,
+  COMPOSE_CATS,
+  findCat,
   AVATAR_EMOJI,
   FLAIRS,
   decorateWall

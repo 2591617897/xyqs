@@ -151,13 +151,14 @@
         focus
       />
 
-      <!-- 分类选择：点 chip 直接选，或输入 # 唤起面板 -->
+      <!-- 分类选择：点 chip 直接选，或输入 # 唤起面板。
+           这里用 composeCats（不含「全部」），发布必须落到具体分类 -->
       <view class="cat-select">
         <text class="cat-select-label">分类</text>
         <view class="cat-chips">
           <view
             class="cat-chip {{composeCat === item.key ? 'on' : ''}}"
-            wx:for="{{cats}}"
+            wx:for="{{composeCats}}"
             wx:key="key"
             bindtap="chooseCat"
             data-key="{{item.key}}"
@@ -171,7 +172,7 @@
           <view class="cat-picker-title">选择一个分类</view>
           <view
             class="cat-option"
-            wx:for="{{cats}}"
+            wx:for="{{composeCats}}"
             wx:key="key"
             hover-class="opt-hover"
             bindtap="pickCatTag"

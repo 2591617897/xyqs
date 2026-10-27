@@ -146,12 +146,15 @@ function seed() {
       { id: 1020, name: '兰州大学', province: '甘肃', city: '兰州', district: '城关区', sort: 81 }
     ],
 
+    // status: 1 上线 / 0 下线，与后端 t_channel.status 一致。
+    // 2004 树洞吐槽、2005 二手交易 已下线（抢了树洞/闲置模块的主场），
+    // 但保留在数组里，好让历史帖子的 channelName 还能解析出来。
     channels: [
-      { id: 2001, name: '校园公告', icon: '📢', description: '失物招领、校园通知、社团招新', sort: 100 },
-      { id: 2003, name: '吃喝玩乐', icon: '🍜', description: '食堂测评、周边探店、周末去哪儿', sort: 80 },
-      { id: 2004, name: '树洞吐槽', icon: '🕳️', description: '今天也想碎碎念一下', sort: 70 },
-      { id: 2005, name: '二手交易', icon: '♻️', description: '闲置好物流转，低碳又省钱', sort: 60 },
-      { id: 2006, name: '运动搭子', icon: '🏀', description: '篮球、羽毛球、夜跑约起来', sort: 50 }
+      { id: 2001, name: '校园公告', icon: '📢', description: '失物招领 · 校园通知 · 社团招新', sort: 100, status: 1 },
+      { id: 2003, name: '吃喝玩乐', icon: '🍜', description: '食堂测评、周边探店、周末去哪儿', sort: 80, status: 1 },
+      { id: 2004, name: '树洞吐槽', icon: '🕳️', description: '今天也想碎碎念一下', sort: 70, status: 0 },
+      { id: 2005, name: '二手交易', icon: '♻️', description: '闲置好物流转，低碳又省钱', sort: 60, status: 0 },
+      { id: 2006, name: '运动搭子', icon: '🏀', description: '篮球、羽毛球、夜跑约起来', sort: 50, status: 1 }
     ],
 
     goods: [
@@ -1790,6 +1793,10 @@ function channels() {
   load()
   return db.channels
     .slice()
+    // 只返回上线频道，与后端 PostService#channels 的 status=1 过滤一致
+    .filter(function (c) {
+      return c.status !== 0
+    })
     .sort(function (a, b) {
       return b.sort - a.sort
     })

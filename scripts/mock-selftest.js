@@ -133,7 +133,10 @@ check('删除他人表白被拒', call('DELETE', '/wall/posts/7001').code === 40
 
 console.log('\n[8] 频道 / 帖子')
 const chs = call('GET', '/channels')
-check('5 个频道', chs.data.length === 5)
+// 分类整理后只保留 3 个上线频道（2004 树洞吐槽 / 2005 二手交易 已软下线，
+// 详见 sql/migration-20261027-category-tidy.sql）
+check('3 个上线频道', chs.data.length === 3, chs.data.length)
+check('下线频道不出现在 /channels', !chs.data.some((c) => c.id === 2004 || c.id === 2005))
 check('频道带 postCount', typeof chs.data[0].postCount === 'number')
 const posts = call('GET', '/posts', { page: 1, size: 3 })
 check('帖子 3 条', posts.data.records.length === 3)
@@ -300,7 +303,7 @@ console.log('\n[14] 首页功能区（utils/zones.js）')
 const zones = require(require('path').join(__dirname, '../miniprogram/utils/zones.js'))
 const chList = call('GET', '/channels').data
 const entries = zones.buildEntries(chList)
-check('金刚区 = 3 固定入口 + 5 频道', entries.length === 8, entries.length)
+check('金刚区 = 3 固定入口 + 3 频道', entries.length === 6, entries.length)
 check('金刚区首项是「树洞闲谈」', entries[0].title === '树洞闲谈' && entries[0].url === '/pages/wall/index')
 check('金刚区含闲置交换', entries.some((e) => e.title === '闲置交换' && e.url === '/pages/goods/list'))
 check('频道入口带 channelId 参数', entries.some((e) => e.url === '/pages/post/list?channelId=2001'))

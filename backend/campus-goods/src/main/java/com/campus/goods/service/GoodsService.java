@@ -49,12 +49,25 @@ public class GoodsService {
     public record CategoryVO(Integer id, String name, String icon) {
     }
 
+    /**
+     * 闲置品类白名单（同时是展示顺序的唯一数据源，前端不再自己维护一份）。
+     * <p>
+     * id 与 t_goods.category_id 一一对应，只能往后追加、不能重排：
+     * 存量商品已经落库了 category_id，改 id 会让老数据串类。
+     * 所以「代步」追加成 7，但数组里排在「运动」之后、「其他」之前 ——
+     * 展示顺序看数组顺序，与 id 大小无关。
+     * <p>
+     * 品类颗粒度取舍：只按「物品是什么」分，不按「卖给谁」或「在哪用」分。
+     * 校园二手的高频品是自行车/电动车/滑板，原来只能塞「运动」或「其他」，
+     * 所以单独拆出「代步」。
+     */
     private static final List<CategoryVO> CATEGORIES = List.of(
             new CategoryVO(1, "数码", "📱"),
             new CategoryVO(2, "图书", "📚"),
             new CategoryVO(3, "生活", "🧺"),
             new CategoryVO(4, "服饰", "👕"),
             new CategoryVO(5, "运动", "🏀"),
+            new CategoryVO(7, "代步", "🚲"),
             new CategoryVO(6, "其他", "✨"));
 
     private final GoodsMapper goodsMapper;

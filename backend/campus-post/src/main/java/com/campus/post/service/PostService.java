@@ -57,8 +57,14 @@ public class PostService {
     private final NotificationClient notificationClient;
     private final SecurityGuard securityGuard;
 
+    /**
+     * 可发布的频道列表。
+     * 只返回 status=1（上线）的频道：下线的频道保留在库里是为了让历史帖子
+     * 还能解析出频道名，但不能再作为入口出现（否则分类又会出现重复项）。
+     */
     public List<Channel> channels(Long schoolId) {
         LambdaQueryWrapper<Channel> w = Wrappers.lambdaQuery();
+        w.eq(Channel::getStatus, 1);
         if (schoolId != null) {
             w.and(q -> q.isNull(Channel::getSchoolId).or().eq(Channel::getSchoolId, schoolId));
         }

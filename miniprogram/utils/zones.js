@@ -152,13 +152,31 @@ function buildZones(src, channels) {
       type: 'post',
       title: '校园生活',
       icon: '🎪',
-      desc: '吃喝玩乐 · 树洞吐槽 · 运动搭子',
+      // desc 用真实频道名拼，不在代码里写死话题名 ——
+      // 否则频道改名或下线后，首页文案会和实际频道对不上
+      desc: lifeDesc(channels) || '校园话题交流',
       more: '/pages/post/list',
       items: take(life).map(postItem)
     })
   }
 
   return out
+}
+
+/**
+ * 「校园生活」区的副标题：取公告之外的前 3 个在线频道名。
+ * @param {Array} channels 后端 GET /channels 返回的频道列表（已过滤下线频道）
+ */
+function lifeDesc(channels) {
+  return (channels || [])
+    .filter(function (c) {
+      return String(c.id) !== String(NOTICE_CHANNEL_ID) && !!c.name
+    })
+    .slice(0, 3)
+    .map(function (c) {
+      return c.name
+    })
+    .join(' · ')
 }
 
 function records(res) {

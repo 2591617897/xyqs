@@ -4,7 +4,7 @@ const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
 const upload = require('../../utils/upload')
 const swipe = require('../../utils/swipe')
-const { CAT_TAG, decorateWall } = require('../../utils/wall')
+const { CATS, COMPOSE_CATS, findCat, decorateWall } = require('../../utils/wall')
 
 Page({
   data: {
@@ -23,14 +23,12 @@ Page({
     // 发布弹层里的分类选择
     composeCat: 'love',
     showCatPicker: false,
-    // 顶部分类 chips（对齐设计稿）
-    cats: [
-      { key: 'love', name: '💗 校园心情', tag: CAT_TAG.love },
-      { key: 'tree', name: '🌳 树洞吐槽', tag: CAT_TAG.tree },
-      { key: 'find', name: '🔎 寻物启事', tag: CAT_TAG.find },
-      { key: 'findp', name: '🙋 寻人互助', tag: CAT_TAG.findp }
-    ],
-    cat: 'love',
+    // 顶部分类 chips：定义在 utils/wall.js 的 CATS（唯一数据源）
+    // 「全部」的 key 是空串，其余 key 对应后端 category 字段
+    cats: CATS,
+    // 发布弹层去掉「全部」——发布必须落到一个具体分类
+    composeCats: COMPOSE_CATS,
+    cat: '',
     // 分类 chips 的 scroll-into-view 目标：滑动切换后把选中分类滚进可视区
     catInto: ''
   },
@@ -87,9 +85,12 @@ Page({
       size: this.data.size,
       sort: this.data.sort
     }
-    // 「精选表白」是综合流不过滤；其余分类按 category 精确过滤
-    if (this.data.cat && this.data.cat !== 'love') {
-      query.category = this.data.cat
+    // 「全部」不过滤；其余分类按 category 过滤。
+    // 「求助」实际发 find,findp 两个值（后端支持逗号分隔多值），
+    // 因为「寻物」「寻人」在数据层是两条历史分类，展示层已经合并。
+    const catQuery = findCat(this.data.cat).query
+    if (catQuery) {
+      query.category = catQuery
     }
     // 浏览范围：本校（默认）/ 本市，与首页共用同一份存储
     const scopeParams = scopeMod.postParams()
@@ -124,7 +125,7 @@ Page({
     this.load(true)
   },
 
-  /** 分类 chips：精选表白为综合流，其余走后端 category 过滤 */
+  /** 分类 chips：全部不过滤，其余走后端 category 过滤（求助走多值） */
   switchCat: function (e) {
     const key = e.currentTarget.dataset.key
     if (key === this.data.cat) return
@@ -268,7 +269,7 @@ Page({
 
   /** # 号唤起的面板：选中后把 # 替换成分类标签写回输入框 */
   pickCatTag: function (e) {
-    const cat = this.data.cats.find(function (c) { return c.key === e.currentTarget.dataset.key })
+    const cat = this.data.composeCats.find(function (c) { return c.key === e.currentTarget.dataset.key })
     if (!cat) return
     const content = this.data.content.replace(/#$/, '') + cat.tag + ' '
     this.setData({ content: content, composeCat: cat.key, showCatPicker: false })

@@ -40,6 +40,14 @@ public class WallService {
 
     private static final String TARGET = "WALL";
     private static final String[] ANON_PREFIX = {"匿名同学", "路过的同学", "一位同学", "神秘同学"};
+    /**
+     * 分类白名单。
+     * <p>
+     * 语义：love 心情 / tree 吐槽 / find 寻物 / findp 寻人。
+     * 前端把 find + findp 合并成一个「求助」tab（见 miniprogram/utils/wall.js），
+     * 所以查询参数允许逗号分隔多值：category=find,findp。
+     * 存量数据里的 findp 不迁移，靠多值查询兼容。
+     */
     private static final Set<String> CATEGORIES = Set.of("love", "tree", "find", "findp");
 
     private final WallPostMapper postMapper;
@@ -81,12 +89,13 @@ public class WallService {
                 .eq(WallPost::getId, id));
     }
 
-    /** 该作者表白墙帖子数（category 可空 = 全部；仅计 status=1 已发布） */
+    /** 该作者表白墙帖子数（category 可空 = 全部，支持逗号多值；仅计 status=1 已发布） */
     public long countByUser(Long userId, String category) {
+        List<String> cats = parseCategories(category);
         Long cnt = postMapper.selectCount(Wrappers.<WallPost>lambdaQuery()
                 .eq(WallPost::getUserId, userId)
                 .eq(WallPost::getStatus, 1)
-                .eq(StringUtils.hasText(category), WallPost::getCategory, category));
+                .in(!cats.isEmpty(), WallPost::getCategory, cats));
         return cnt == null ? 0 : cnt;
     }
 
@@ -122,11 +131,12 @@ public class WallService {
                 return R.Page.of(java.util.List.of(), 0, page, size);
             }
         }
+        List<String> cats = parseCategories(category);
         LambdaQueryWrapper<WallPost> q = Wrappers.<WallPost>lambdaQuery()
                 .eq(WallPost::getStatus, 1)
                 .eq(schoolId != null, WallPost::getSchoolId, schoolId)
                 .in(citySchoolIds != null, WallPost::getSchoolId, citySchoolIds)
-                .eq(StringUtils.hasText(category), WallPost::getCategory, normalizeCategory(category));
+                .in(!cats.isEmpty(), WallPost::getCategory, cats);
         if ("hot".equalsIgnoreCase(sort)) {
             q.orderByDesc(WallPost::getLikeCount).orderByDesc(WallPost::getCreatedAt);
         } else {
@@ -447,9 +457,24 @@ public class WallService {
 
     // ---------------- 内部方法 ----------------
 
-    /** 分类白名单校验，非法或空值回落到 love（精选表白） */
+    /** 发布用：分类白名单校验，非法或空值回落到 love（心情） */
     private String normalizeCategory(String category) {
         return StringUtils.hasText(category) && CATEGORIES.contains(category) ? category : "love";
+    }
+
+    /**
+     * 查询用：把 category=find,findp 拆成白名单内的列表。
+     * 空值 / 全部非法 → 返回空列表，调用方跳过过滤（等于「全部」）。
+     */
+    private List<String> parseCategories(String category) {
+        if (!StringUtils.hasText(category)) {
+            return List.of();
+        }
+        return Arrays.stream(category.split(","))
+                .map(String::trim)
+                .filter(CATEGORIES::contains)
+                .distinct()
+                .toList();
     }
 
     private void decorate(WallPost post, Long userId) {

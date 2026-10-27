@@ -50,7 +50,13 @@ function toast(title, icon) {
   mp.showToast({ title: title, icon: icon || 'none' })
 }
 
-const CATEGORY_EMOJI = { 1: '📱', 2: '📚', 3: '🧺', 4: '👕', 5: '🏀', 6: '✨' }
+/**
+ * 闲置品类 emoji 兜底表。
+ * id 必须与后端 GoodsService.CATEGORIES 保持一致（新增品类两边都要加）。
+ * 列表/详情接口只返回 categoryId，不带 icon，所以这里留一份；
+ * 分类 chips 走 /goods/categories 接口，用接口返回的 icon，不读这张表。
+ */
+const CATEGORY_EMOJI = { 1: '📱', 2: '📚', 3: '🧺', 4: '👕', 5: '🏀', 6: '✨', 7: '🚲' }
 
 function categoryEmoji(id) {
   return CATEGORY_EMOJI[id] || '✨'

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS t_goods (
   description    VARCHAR(2000) DEFAULT NULL,
   price          DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   original_price DECIMAL(10,2) DEFAULT NULL,
-  category_id    INT           NOT NULL DEFAULT 0 COMMENT '1数码 2图书 3生活 4服饰 5运动 6其他',
+  category_id    INT           NOT NULL DEFAULT 0 COMMENT '1数码 2图书 3生活 4服饰 5运动 6其他 7代步',
   condition_level TINYINT      DEFAULT NULL COMMENT '成色: 1全新 2几乎全新 3轻微使用痕迹 4明显使用痕迹',
   purchase_time  VARCHAR(20)   DEFAULT NULL COMMENT '入手时间, 如: 2023年9月',
   usage_frequency VARCHAR(20)  DEFAULT NULL COMMENT '使用频率: 每天使用/经常使用/偶尔使用/几乎没用过',
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS t_wall_post (
   anon_avatar   TINYINT      NOT NULL DEFAULT 1 COMMENT '匿名头像序号 1-8',
   content       VARCHAR(1000) NOT NULL,
   images        VARCHAR(1000) DEFAULT NULL,
-  category      VARCHAR(16)  NOT NULL DEFAULT 'love' COMMENT '分类：love精选表白/tree树洞吐槽/find寻物启事/findp捞人',
+  category      VARCHAR(16)  NOT NULL DEFAULT 'love' COMMENT '分类：love心情/tree吐槽/find寻物/findp寻人(前端合并为一个「求助」tab)',
   like_count    INT          NOT NULL DEFAULT 0,
   comment_count INT          NOT NULL DEFAULT 0,
   status        TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0被隐藏',
@@ -201,6 +201,7 @@ CREATE TABLE IF NOT EXISTS t_channel (
   school_id   BIGINT       DEFAULT NULL COMMENT 'NULL 表示全平台频道',
   sort        INT          NOT NULL DEFAULT 0,
   post_count  INT          NOT NULL DEFAULT 0,
+  status      TINYINT      NOT NULL DEFAULT 1 COMMENT '1上线 0下线(不返回给小程序，存量帖子仍可解析频道名)',
   created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '频道';
 
