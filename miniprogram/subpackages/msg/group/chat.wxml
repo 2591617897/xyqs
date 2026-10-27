@@ -82,7 +82,16 @@
               <text class="quote-name">{{item.replyToName}}</text>
               <text class="quote-text">{{item.replyToText || '[消息]'}}</text>
             </view>
-            <text class="msg-text" wx:if="{{!item.deleted}}">{{item.content}}</text>
+            <!-- 正文：有 @ 片段时按片段渲染（@昵称 高亮可点开资料卡），
+                 segments 为空（普通消息）走兜底直接显示 content -->
+            <text class="msg-text" wx:if="{{!item.deleted && item.segments}}">
+              <block wx:for="{{item.segments}}" wx:key="k" wx:for-item="seg" wx:for-index="si">
+                <text wx:if="{{seg.t === 'text'}}">{{seg.v}}</text>
+                <text wx:elif="{{seg.t === 'at'}}" class="at-link" catchtap="onTapAt" data-uid="{{seg.uid}}">{{seg.v}}</text>
+                <text wx:elif="{{seg.t === 'atall'}}" class="at-all-link">{{seg.v}}</text>
+              </block>
+            </text>
+            <text class="msg-text" wx:elif="{{!item.deleted}}">{{item.content}}</text>
             <text class="msg-text" wx:elif="{{item.recalled}}">{{item.mine ? '你撤回了一条消息' : '对方撤回了一条消息'}}</text>
             <text class="msg-text" wx:else>该消息已被删除</text>
           </view>

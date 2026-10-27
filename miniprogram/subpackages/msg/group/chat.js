@@ -364,6 +364,8 @@ Page({
         senderAvatar: m.senderAvatar || (mine ? myAvatar : ''),
         content: m.content,
         type: m.type || 'text',
+        // 文本消息且带 @：解析成可点片段（@昵称→资料卡，@所有人→只高亮）
+        segments: (m.type || 'text') === 'text' ? parseAt(m.content, m.atUserIds, m.atAll) : null,
         atAll: !!m.atAll,
         atText: m.atAll ? '所有人' : '',
         // 引用回复：服务端存快照，跳转用 replyToId（原消息不在列表里就只显示文字）
@@ -503,6 +505,10 @@ Page({
     }
     const clientMsgId = genId()
     const reply = this.data.replyTo
+    // ★ 必须先把 atUserIds 取出来再清 atUsers：
+    //   之前是先 setData({atUsers: []}) 再 map，取到的永远是空数组，
+    //   表现就是「@ 了人但对方收不到提醒」（t_group_mention 也不落库）。
+    const atUserIds = (this.data.atUsers || []).map(function (u) { return String(u.id) })
     const local = {
       id: 'local-' + clientMsgId,
       clientMsgId: clientMsgId,
@@ -511,6 +517,7 @@ Page({
       senderAvatar: this.data.myAvatar || '',
       content: text,
       type: 'text',
+      segments: parseAt(text, atUserIds, this.data.atAll),
       atAll: this.data.atAll,
       atText: this.data.atAll ? '所有人' : '',
       replyToId: reply ? reply.id : '',
@@ -525,10 +532,6 @@ Page({
       pending: true,
       failed: false
     }
-    // ★ 必须先把 atUserIds 取出来再清 atUsers：
-    //   之前是先 setData({atUsers: []}) 再 map，取到的永远是空数组，
-    //   表现就是「@ 了人但对方收不到提醒」（t_group_mention 也不落库）。
-    const atUserIds = (this.data.atUsers || []).map(function (u) { return String(u.id) })
 
     this.setData({
       msgs: this.data.msgs.concat([local]),
@@ -973,6 +976,13 @@ Page({
     mp.navigateTo({ url: '/pages/user/space/space?id=' + uid })
   },
 
+  /** 点气泡里高亮的 @昵称 → 对方资料卡（和点头像去的是同一页） */
+  onTapAt: function (e) {
+    const uid = e.currentTarget.dataset.uid
+    if (!uid) return
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + uid })
+  },
+
   /**
    * 长按头像 → 直接 @ 这个人。
    *
@@ -1022,6 +1032,52 @@ function clipText(s, n) {
 /** 客户端幂等 id（不依赖 crypto，低版本基础库也能跑） */
 function genId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+}
+
+/**
+ * 把消息正文里的 @昵称 解析成「可点片段」。
+ *
+ * <p>后端存的是两段信息：content（纯文本，形如「xx @张三 @李四 收到」）
+ * 和 atUserIds（被 @ 的成员 id，与 content 里 @ 的出现顺序一一对应）。
+ * 这里按下标对应：第 i 个 @昵称 映射到 atUserIds[i]，所以不用把昵称回传做匹配，
+ * 对方改昵称也不影响跳转。
+ *
+ * <p>@所有人 单独处理：atAll=true 时任意位置的「@所有人」都只高亮不跳转
+ * （它不是某个人，点了没地方去）。其余 @昵称 按 atUserIds 顺序分配 uid。
+ * 若 @ 数量多于 atUserIds（用户自己手打了一个 @xxx），多出来的按普通文本渲染。
+ */
+function parseAt(content, atUserIds, atAll) {
+  if (!content) return null
+  if (content.indexOf('@') === -1) return null
+  const ids = (atUserIds && atUserIds.length)
+    ? atUserIds.map(function (x) { return String(x) })
+    : []
+  const segs = []
+  let atIdx = 0
+  const parts = content.split('@')
+  // parts[0] 是第一个 @ 之前的正文
+  if (parts[0]) segs.push({ t: 'text', v: parts[0], k: segs.length })
+  for (let i = 1; i < parts.length; i++) {
+    const p = parts[i]
+    if (!p) { // 结尾的 @ 或连续的 @@
+      segs.push({ t: 'text', v: '@', k: segs.length })
+      continue
+    }
+    const m = p.match(/^(\S+)([\s\S]*)$/)
+    const name = m ? m[1] : p
+    const rest = m ? m[2] : ''
+    if (atAll && name === '所有人') {
+      segs.push({ t: 'atall', v: '@' + name, k: segs.length })
+    } else if (atIdx < ids.length) {
+      segs.push({ t: 'at', v: '@' + name, uid: ids[atIdx], k: segs.length })
+      atIdx++
+    } else {
+      // @ 数量多于 atUserIds（用户自己手打 @xxx）：当普通文本，不误点
+      segs.push({ t: 'text', v: '@' + name, k: segs.length })
+    }
+    if (rest) segs.push({ t: 'text', v: rest, k: segs.length })
+  }
+  return segs
 }
 
 /**

@@ -213,6 +213,23 @@
 .bubble-mine .msg-text {
   color: #ffffff;
 }
+/* 正文里高亮的 @昵称：像微信一样成蓝色可点 */
+.at-link {
+  color: #1a6fe0;
+  font-weight: 500;
+}
+/* 自己发的消息（绿底白字）里，蓝色链接看不清，换成浅蓝 */
+.bubble-mine .at-link {
+  color: #bfe3ff;
+}
+/* @所有人：只高亮不可点，用橙色和「@全群」角标呼应 */
+.at-all-link {
+  color: #c2410c;
+  font-weight: 600;
+}
+.bubble-mine .at-all-link {
+  color: #ffd2a8;
+}
 .bubble-deleted .msg-text {
   color: #9aa8a2;
   font-size: 26rpx;
