@@ -231,8 +231,7 @@
            @ 没有按钮入口了（只剩「手打 @ 自动弹面板」和「长按头像」两条），
            表情留在右侧做唯一的面板开关。 -->
       <view class="input-bar">
-        <!-- 左侧麦克风（QQ 习惯入口；本项目无语音，给个占位提示） -->
-        <view class="ib-mic" catchtap="onMicTap">🎙</view>
+        
         <input
           class="ib-input {{canSend ? '' : 'disabled'}}"
           value="{{inputText}}"
