@@ -1,0 +1,87 @@
+server:
+  port: 8109
+
+spring:
+  application:
+    name: campus-mail
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123456}
+    hikari:
+      pool-name: ${spring.application.name}HikariPool
+      maximum-pool-size: 6
+      minimum-idle: 2
+      connection-timeout: 5000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 300000
+      connection-test-query: SELECT 1
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 5000
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 4
+        concurrency: 1
+        max-concurrency: 4
+        # 重试耗尽后不要重新入队，直接 reject —— 队列挂了 DLX，会落到死信队列，
+        # 否则一条坏消息会在队列里无限循环，把后面的邮件全堵住。
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000
+          multiplier: 2
+  # 阿里云邮件推送 SMTP。发信配置只留在这一个服务里，业务服务不碰 SMTP 凭据。
+  mail:
+    host: ${MAIL_HOST:smtpdm.aliyun.com}
+    port: ${MAIL_PORT:80}
+    username: ${MAIL_USERNAME:email@szjsxy.trkcwl.com}
+    password: ${MAIL_PASSWORD:asd123ZXCV}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          # 80 是阿里云 DM 的明文端口，EHLO 不广播 STARTTLS 能力；
+          # required=true 时 JavaMail 会直接抛「STARTTLS is required but not supported」。
+          # enable 打开、required 关掉：服务器支持就升级加密，不支持就明文（仅限可信网络出口）。
+          starttls:
+            enable: ${MAIL_STARTTLS:true}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
+          ssl:
+            enable: ${MAIL_SSL:false}
+          # 超时不能省：SMTP 不可达时默认会一直挂着，把消费线程占死
+          connectiontimeout: ${MAIL_CONN_TIMEOUT:8000}
+          timeout: ${MAIL_READ_TIMEOUT:8000}
+          writetimeout: ${MAIL_WRITE_TIMEOUT:8000}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_id
+
+campus:
+  jwt:
+    # 【安全】密钥来自环境变量 JWT_SECRET 或 ~/.campus-secrets/jwt.key
+    secret: ${JWT_SECRET:}
+  mail:
+    # 发件人；留空则用 spring.mail.username（阿里云 DM 要求发件地址属于已验证域名）
+    from: ${MAIL_FROM:}
+    # /internal/** 的共享口令。留空表示不校验（仅限本机/内网）；
+    # 生产建议配上，避免同网段任意进程都能用你们的域名发垃圾邮件。
+    internal-token: ${MAIL_INTERNAL_TOKEN:}

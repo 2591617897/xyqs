@@ -116,8 +116,11 @@
           帖子 {{ stats.posts }} · 表白墙 {{ stats.wall }} · 商品 {{ stats.goods }} · 意向单 {{ stats.orders }}
         </el-descriptions-item>
         <el-descriptions-item label="认证材料" :span="2">
-          <el-image v-if="detail.verifyImg" :src="detail.verifyImg" :preview-src-list="[detail.verifyImg]"
+          <el-image v-if="isRenderable(detail.verifyImg)" :src="detail.verifyImg" :preview-src-list="[detail.verifyImg]"
                     preview-teleported :z-index="3000" fit="cover" class="verify-img" />
+          <span v-else-if="detail.verifyImg" class="warn-text">
+            材料地址无效，未提供可查看的图片（{{ detail.verifyImg }}）——请驳回并让用户重新提交
+          </span>
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item v-if="detail.verifyRemark" label="认证备注" :span="2">
@@ -163,6 +166,7 @@ import SearchForm from '@/components/SearchForm.vue'
 import PageTable from '@/components/PageTable.vue'
 import { userApi } from '@/api/user'
 import { VERIFY_STATUS, USER_STATUS, MUTE_SCOPE, tagOf } from '@/utils/dict'
+import { isRenderable } from '@/utils/img'
 
 const rows = ref([])
 const total = ref(0)

@@ -1,4 +1,5 @@
 const http = require('../../utils/request')
+const upload = require('../../utils/upload')
 const { mp, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const schoolMod = require('../../utils/school')
@@ -36,6 +37,8 @@ Page({
     realName: '',
     verifyImg: '',
     submitting: false,
+    /** 照片上传中：锁住重复选择，也告诉用户「点了是有反应的」 */
+    uploading: false,
     showPicker: false,
     /**
      * 结果态开关。
@@ -214,14 +217,67 @@ Page({
     this.setData(patch)
   },
 
+  /**
+   * 选择认证材料，**选完立刻上传**。
+   *
+   * ⚠️ 这里必须先上传、把服务端返回的 URL 存进 verifyImg：wx.chooseImage 给的是
+   * `wxfile://tmp_xxx.jpg` 这种**本机临时文件路径**，只在当前小程序生命周期内有效。
+   * 直接拿它当材料提交，写进 t_user.verify_img 的就是一串本机 path ——
+   * 后台「用户详情 → 认证材料」拿它在浏览器里渲染，永远只会显示「加载失败」，
+   * 而且审核员连材料长什么样都看不到。历史上已经有 2 个账号是这样脏进去的。
+   *
+   * 失败要回滚预览：不能留一张本地预览图在那里骗人 —— 预览有图、提交无图。
+   */
   chooseImage: function () {
     const self = this
+    if (this.data.uploading) return
     mp.chooseImage({
       count: 1,
       sizeType: ['compressed'],
       success: function (res) {
-        self.setData({ verifyImg: res.tempFilePaths[0] })
+        const path = res.tempFilePaths && res.tempFilePaths[0]
+        if (!path) return
+        const prev = self.data.verifyImg
+        // 先拿本地路径顶上预览（秒回），后台自动压到 5MB 以内
+        self.setData({ verifyImg: path, uploading: true })
+        mp.showLoading({ title: '上传中', mask: true })
+        upload.uploadImage(path).then(function (url) {
+          mp.hideLoading()
+          self.setData({ verifyImg: url, uploading: false })
+        }).catch(function () {
+          mp.hideLoading()
+          self.setData({ verifyImg: prev, uploading: false })
+          toast('照片上传失败，请重试')
+        })
       }
+    })
+  },
+
+  /**
+   * 提交前兜底：确认 verifyImg 已经是服务端 URL。
+   *
+   * 正常流程下 chooseImage 已经上传过了，这里是防两条漏网之鱼：
+   * ① 上传失败但页面没回滚干净的极端情况；② 以后有人改了 chooseImage 忘了同步。
+   * 拦在前端比让脏数据落库再清理便宜得多（后端 VerifyReq 另有一道 Pattern 校验兜同样的底）。
+   */
+  ensureImgUploaded: function () {
+    const img = this.data.verifyImg
+    if (!img) {
+      return Promise.reject({ code: 400, msg: '请上传学生证或校园卡照片' })
+    }
+    if (upload.isServerUrl(img)) {
+      return Promise.resolve(img)
+    }
+    const self = this
+    mp.showLoading({ title: '上传中', mask: true })
+    return upload.uploadImage(img).then(function (url) {
+      mp.hideLoading()
+      self.setData({ verifyImg: url })
+      return url
+    }).catch(function (e) {
+      mp.hideLoading()
+      toast('照片上传失败，请重试')
+      return Promise.reject(e)
     })
   },
 
@@ -352,12 +408,14 @@ Page({
     }
     if (this.data.submitting) return
     this.setData({ submitting: true })
-
-    http.post('/user/verify', {
-      schoolId: d.schoolId,
-      studentNo: d.studentNo.trim(),
-      realName: d.realName.trim(),
-      verifyImg: d.verifyImg
+    // 材料必须先落到服务端：本地 wxfile:// 路径提交上去，后台看到的就是一张破图
+    this.ensureImgUploaded().then(function (url) {
+      return http.post('/user/verify', {
+        schoolId: d.schoolId,
+        studentNo: d.studentNo.trim(),
+        realName: d.realName.trim(),
+        verifyImg: url
+      })
     }).then(function (res) {
       return self.applyVerified(res)
     }).catch(function () {

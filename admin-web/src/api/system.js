@@ -10,7 +10,13 @@ export const authApi = {
   logout: () => request.post(BASE + '/auth/logout'),
   info: () => request.get(BASE + '/auth/info'),
   menus: () => request.get(BASE + '/auth/menus'),
-  changePassword: (data) => request.post(BASE + '/auth/password', data)
+  changePassword: (data) => request.post(BASE + '/auth/password', data),
+  /**
+   * 找回密码：给账号绑定的邮箱发验证码。
+   * 收件地址由服务端从 t_admin_user 里取，这里只传账号——传了邮箱也不认。
+   */
+  sendResetCode: (username) => request.post(BASE + '/auth/find-password/code', { username }),
+  resetPassword: (data) => request.post(BASE + '/auth/find-password/reset', data)
 }
 
 export const adminApi = {

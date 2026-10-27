@@ -26,8 +26,13 @@
       </el-table-column>
       <el-table-column label="证明材料" width="120" align="center">
         <template #default="{ row }">
-          <el-image v-if="row.verifyImg" :src="row.verifyImg" :preview-src-list="[row.verifyImg]"
+          <el-image v-if="isRenderable(row.verifyImg)" :src="row.verifyImg" :preview-src-list="[row.verifyImg]"
                     preview-teleported :z-index="3000" fit="cover" class="thumb" />
+          <!-- 地址不可渲染时不丢给 img 标签：那样只会得到一个「加载失败」灰块，
+               看一眼分不清是数据脏了还是网挂了。直接说明「材料缺失」以便驳回。 -->
+          <el-tooltip v-else-if="row.verifyImg" :content="row.verifyImg" placement="top">
+            <el-tag type="danger" size="small">材料缺失</el-tag>
+          </el-tooltip>
           <span v-else>-</span>
         </template>
       </el-table-column>
@@ -65,6 +70,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Clock } from '@element-plus/icons-vue'
 import PageTable from '@/components/PageTable.vue'
 import { userApi } from '@/api/user'
+import { isRenderable } from '@/utils/img'
 
 const rows = ref([])
 const total = ref(0)

@@ -25,6 +25,7 @@
 - 不在启动时登录；`ensureLogin()` 无 token 先 `confirmLogin()`，拒绝绝不建号
 - **schoolId=null 会让「本校」筛选退化**（＝看全站）→ 有选学校引导；「学籍认证」=verifyStatus==2
 - **JWT 的 schoolId/vs 是登录快照** → 改库必须重签（`ensureLogin(true)` + `markTokenFresh()`）
+- **学籍认证 `verifyImg` 必须是服务端 URL**（历史 bug：小程序把 `wxfile://tmp_xxx` 本机临时路径直接入库，后台详情显示「加载失败」）；小程序选图一律先 `upload.uploadImage()` 再存返回值，`VerifyReq` 有 `@Pattern("https?://.+")` 兜底，`scripts/check-miniprogram.js` 有 `checkImageUploaded()` 自动拦
 - 学籍认证 `verifyStatus=2` 可重认证（`t_user.verify_submit_at` + 7 天冷却 + **强制转人工**，不走 `auto-approve`）；`verifyRemark` 在 `status=1` 是后台备注、`status=3` 才是驳回原因，前端只在 3 时展示
 - **账号注销**：**不复用 `status`**（那是封禁），用 `cancelled_at`；昵称落「已注销用户」→ 三个内容服务直查 `t_user` 快照，作者名自动变，**不用改内容服务**；必须清 `verify_status`（否则注销-恢复会重置重认证冷却）；学号留到保留期结束（防换号绕学号唯一）；满期清理把 `openid` 换 `purged:<id>`；恢复必须弹窗让用户确认；`requireUser` 对注销号抛 **403 而非 401**（401 会被前端当掉线清登录态）
 

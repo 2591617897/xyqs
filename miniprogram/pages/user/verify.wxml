@@ -119,7 +119,9 @@
         <view class="upload-area mt16">
           <view class="upload-preview" wx:if="{{verifyImg}}">
             <image class="upload-img" src="{{verifyImg}}" mode="aspectFill" bindtap="chooseImage" />
-            <view class="upload-del" bindtap="removeImage">重新上传</view>
+            <!-- 上传中把「重新上传」换成不可点的状态文案：让用户知道在忙，也避免连点 -->
+            <view class="upload-del muted" wx:if="{{uploading}}">上传中…</view>
+            <view class="upload-del" wx:else bindtap="removeImage">重新上传</view>
           </view>
           <view class="upload-btn" wx:else bindtap="chooseImage">
             <text class="upload-plus">＋</text>

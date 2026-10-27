@@ -16,6 +16,14 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 20MB
+  # 找回密码走 MQ：本服务只投递消息，SMTP 凭据和邮件正文都归 campus-mail。
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 5000
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
@@ -55,6 +63,18 @@ campus:
     login:
       max-fail: 5
       lock-minutes: 15
+    # 邮箱找回密码
+    reset-pwd:
+      # 验证码有效期（分钟）
+      code-minutes: ${ADMIN_RESET_CODE_MINUTES:10}
+      # 单个验证码最多可试错次数，超了必须重新获取
+      max-attempt: 5
+      # 同一账号两次发码的最短间隔（秒）
+      resend-seconds: 60
+      # 同一账号 24 小时内最多发码次数
+      daily-limit: 5
+      # 同一 IP 1 小时内最多发码次数（防枚举账号 + 邮件轰炸）
+      ip-hourly-limit: 20
     upload:
       # 广告素材上传：必须与 campus-user 的 campus.upload.dir 指向同一物理目录，
       # 否则后台上传成功、图片访问 404（网关 /uploads/** 由 campus-user 提供）。

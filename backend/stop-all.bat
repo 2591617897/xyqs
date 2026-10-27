@@ -4,11 +4,11 @@ setlocal enabledelayedexpansion
 
 REM ============================================================
 REM  campus backend - stop all services by port
-REM  Only kills PIDs that are actually LISTENING on the 9 ports,
+REM  Only kills PIDs that are actually LISTENING on the 10 ports,
 REM  so it will not touch Nacos / MySQL / Redis.
 REM ============================================================
 
-set "PORTS=8101 8102 8103 8104 8105 8106 8107 8108 8888"
+set "PORTS=8101 8102 8103 8104 8105 8106 8107 8108 8109 8888"
 
 echo.
 for %%p in (%PORTS%) do (
@@ -22,7 +22,7 @@ for %%p in (%PORTS%) do (
 )
 
 echo.
-echo done. ports 8848/3306/6379 untouched.
+echo done. ports 8848/3306/6379/5672 untouched.
 echo.
 pause
 endlocal

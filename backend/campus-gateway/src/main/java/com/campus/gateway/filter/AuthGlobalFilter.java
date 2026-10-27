@@ -24,6 +24,7 @@ import javax.crypto.SecretKey;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -113,7 +114,18 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      * 后台唯一不需要令牌的接口只有登录，且必须「方法 + 路径」双精确匹配。
      */
     private static final String ADMIN_PREFIX = "/api/admin";
-    private static final String ADMIN_LOGIN_EXACT = ADMIN_PREFIX + "/auth/login";
+
+    /**
+     * 后台免登录接口白名单：<b>必须「POST + 完整路径」双精确匹配</b>，不做任何前缀放行。
+     *
+     * <p>目前只有登录 + 找回密码两步。找回密码的收件邮箱由服务端从
+     * {@code t_admin_user.email} 读取、不接受前端传值，所以这两条放开不会变成
+     * 「任意邮箱收码 → 任意账号改密」；再加新条目时请先确认这一点。
+     */
+    private static final Set<String> ADMIN_PUBLIC_POST = Set.of(
+            ADMIN_PREFIX + "/auth/login",
+            ADMIN_PREFIX + "/auth/find-password/code",
+            ADMIN_PREFIX + "/auth/find-password/reset");
     /** 后台令牌里的身份类型标记，用于防止小程序用户令牌串用进后台。 */
     private static final String ADMIN_TOKEN_TYPE = "admin";
 
@@ -176,7 +188,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
         // 后台管理：独立令牌体系（campus.admin.jwt.secret），除登录外全部要求管理员令牌
         if (path.startsWith(ADMIN_PREFIX)) {
-            if ("POST".equals(method) && ADMIN_LOGIN_EXACT.equals(path)) {
+            if ("POST".equals(method) && ADMIN_PUBLIC_POST.contains(path)) {
                 return chain.filter(exchange.mutate().request(stripAdminHeaders(request).build()).build());
             }
             Claims adminClaims = parse(resolveToken(request), adminKey);

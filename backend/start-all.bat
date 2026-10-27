@@ -50,7 +50,7 @@ if not defined PROMOTE_AD_UNIT_ID set "PROMOTE_AD_UNIT_ID="
 
 echo.
 echo === 2. start services one by one ===
-set "MODULES=auth user goods wall post message admin gateway promote"
+set "MODULES=auth user goods wall post message admin gateway promote mail"
 set /a N=0
 for %%m in (%MODULES%) do (
   set /a N+=1
@@ -62,7 +62,7 @@ for %%m in (%MODULES%) do (
 
 echo.
 echo === 3. waiting for ports ===
-set "PORTS=8101 8102 8103 8104 8105 8106 8107 8108 8888"
+set "PORTS=8101 8102 8103 8104 8105 8106 8107 8108 8109 8888"
 set /a WAIT=0
 set /a UP=0
 :wait
@@ -71,18 +71,18 @@ set /a UP=0
 for %%p in (%PORTS%) do (
   netstat -ano | findstr /r /c:":%%p .*LISTENING" >nul && set /a UP+=1
 )
-echo     round !WAIT! : !UP!/9 up
-if !UP! geq 9 goto ready
+echo     round !WAIT! : !UP!/10 up
+if !UP! geq 10 goto ready
 if !WAIT! geq 30 goto ready
 timeout /t 10 /nobreak >nul
 goto wait
 :ready
 
 echo.
-if !UP! geq 9 (
-  echo [OK] all 9 services are listening.
+if !UP! geq 10 (
+  echo [OK] all 10 services are listening.
 ) else (
-  echo [WARN] only !UP!/9 up - check the individual windows for stack traces.
+  echo [WARN] only !UP!/10 up - check the individual windows for stack traces.
 )
 echo.
 echo   gateway  http://127.0.0.1:8888/api

@@ -6,6 +6,10 @@ import com.campus.admin.dto.ChangePasswordReq;
 import com.campus.admin.dto.LoginReq;
 import com.campus.admin.dto.LoginResp;
 import com.campus.admin.dto.MenuNode;
+import com.campus.admin.dto.ResetPasswordByEmailReq;
+import com.campus.admin.dto.SendResetCodeReq;
+import com.campus.admin.dto.SendResetCodeResp;
+import com.campus.admin.service.AdminPasswordResetService;
 import com.campus.admin.service.AuthAdminService;
 import com.campus.admin.service.MenuService;
 import com.campus.common.api.R;
@@ -22,7 +26,7 @@ import java.util.List;
 /**
  * 后台认证与个人信息。
  *
- * <p>登录接口由网关按「方法 + 路径」精确放行（详见 AuthGlobalFilter 的 ADMIN_LOGIN_EXACT），
+ * <p>登录与找回密码由网关按「方法 + 路径」精确放行（详见 AuthGlobalFilter 的 ADMIN_PUBLIC_POST），
  * 其余接口都要带管理员令牌。
  */
 @RestController
@@ -31,7 +35,30 @@ import java.util.List;
 public class AdminAuthController {
 
     private final AuthAdminService authAdminService;
+    private final AdminPasswordResetService passwordResetService;
     private final MenuService menuService;
+
+    /**
+     * 找回密码第一步：向该账号绑定的邮箱发送 6 位验证码。
+     *
+     * <p><b>未登录接口</b>，网关按「POST + 精确路径」放行，见 AuthGlobalFilter#ADMIN_PUBLIC_POST。
+     * 收件邮箱不接受前端传值——只发库里绑定的那个，否则就成了任意邮箱收码 + 任意账号改密。
+     */
+    @AuditLog(value = "邮箱找回密码-发送验证码", module = "AUTH", saveParams = false)
+    @PostMapping("/find-password/code")
+    public R<SendResetCodeResp> sendResetCode(@RequestBody @Valid SendResetCodeReq req) {
+        return R.ok(passwordResetService.sendCode(req));
+    }
+
+    /**
+     * 找回密码第二步：用验证码换新密码。成功后该账号所有旧令牌立即失效。
+     */
+    @AuditLog(value = "邮箱找回密码-重置密码", module = "AUTH", saveParams = false)
+    @PostMapping("/find-password/reset")
+    public R<Void> resetPassword(@RequestBody @Valid ResetPasswordByEmailReq req) {
+        passwordResetService.resetPassword(req);
+        return R.ok();
+    }
 
     @AuditLog(value = "管理员登录", module = "AUTH", saveParams = false)
     @PostMapping("/login")

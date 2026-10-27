@@ -229,6 +229,7 @@ function main() {
   checkRequestUsage()
   checkComponentPaths(app, pages)
   checkWxmlExpressions()
+  checkImageUploaded()
 
   // tabBar 校验
   const tabBar = app.tabBar
@@ -340,6 +341,40 @@ function checkRequestUsage() {
     if (bad.test(code)) {
       errors.push('utils/request 导出的是对象，不能用 ' + alias + '({...}) 调用 → '
         + rel(file) + '（应改为 ' + alias + '.get/post/put/del(...)）')
+    }
+  })
+}
+
+/**
+ * 选图必须真上传。
+ *
+ * <p>起因：pages/user/verify.js 把 wx.chooseImage 返回的 `wxfile://tmp_xxx.jpg`
+ * （本机临时文件路径）原样提交给 /user/verify，写进 t_user.verify_img 之后，
+ * 后台「用户详情 → 认证材料」在浏览器里渲染这串地址，显示「加载失败」——
+ * 材料从来没上过服务器，审核员不知道这数据是坏的不是网挂的。
+ *
+ * <p>规则很简单：**页面里出现 chooseImage 就必须 require utils/upload**，
+ * 且 chooseImage 的回调里必须调用 uploadImage/uploadImages/uploadVideo。
+ * 这条能挡住「新增上传点时忘了往服务端传」这个最容易复发的错误。
+ */
+function checkImageUploaded() {
+  const files = []
+  walk(ROOT, files)
+  files.forEach(function (file) {
+    let code
+    try { code = fs.readFileSync(file, 'utf8') } catch (e) { return }
+    if (!/chooseImage|chooseMedia|chooseVideo|chooseMessageFile/.test(code)) return
+    const r = rel(file)
+    if (!/require\(\s*['"][^'"]*utils\/upload['"]\s*\)/.test(code)) {
+      errors.push('选图后没 require utils/upload（本地 wxfile:// 路径不能直接提交）→ ' + r)
+      return
+    }
+    const body = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    // 只验证「引用到了 upload 的上传方法」：有的页面先把方法取成别名变量
+    // （如 const uploader = type === 'video' ? upload.uploadVideo : upload.uploadImage），
+    // 调的是 uploader(path)，强行要求 upload.xxx( 会误报。
+    if (!/upload\.(uploadImage|uploadImages|uploadVideo)\b/.test(body)) {
+      errors.push('选图后没调用 upload.uploadImage/Images/Video（会拿到 wxfile:// 临时路径）→ ' + r)
     }
   })
 }
