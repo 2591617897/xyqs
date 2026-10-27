@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "studentVerify": "/components/student-verify-stub/index"
+  },
   "navigationBarTitleText": "校园身份认证"
 }

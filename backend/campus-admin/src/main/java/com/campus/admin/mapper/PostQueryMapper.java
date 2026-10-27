@@ -26,8 +26,10 @@ public interface PostQueryMapper {
             + "LEFT JOIN t_channel c ON c.id = p.channel_id "
             + "LEFT JOIN t_school s ON s.id = p.school_id "
             + "WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%')) "
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>"
+            + "    AND (p.title LIKE CONCAT('%', #{kw}, '%') OR p.content LIKE CONCAT('%', #{kw}, '%')) "
+            + "  </foreach>"
             + "</if>"
             + "<if test='status != null'>AND p.status = #{status} </if>"
             + "<if test='authorId != null'>AND p.user_id = #{authorId} </if>"
@@ -37,7 +39,7 @@ public interface PostQueryMapper {
             + "ORDER BY p.id DESC"
             + "</script>")
     IPage<PostRow> selectPosts(IPage<PostRow> page,
-                               @Param("keyword") String keyword,
+                               @Param("keywords") List<String> keywords,
                                @Param("status") Integer status,
                                @Param("authorId") Long authorId,
                                @Param("schoolIds") List<Long> schoolIds);

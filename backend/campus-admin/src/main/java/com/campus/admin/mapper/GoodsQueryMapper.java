@@ -23,8 +23,10 @@ public interface GoodsQueryMapper {
             + "FROM t_goods g "
             + "LEFT JOIN t_school s ON s.id = g.school_id "
             + "WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (g.title LIKE CONCAT('%', #{keyword}, '%') OR g.description LIKE CONCAT('%', #{keyword}, '%')) "
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>"
+            + "    AND (g.title LIKE CONCAT('%', #{kw}, '%') OR g.description LIKE CONCAT('%', #{kw}, '%')) "
+            + "  </foreach>"
             + "</if>"
             + "<if test='status != null'>AND g.status = #{status} </if>"
             + "<if test='sellerId != null'>AND g.user_id = #{sellerId} </if>"
@@ -34,7 +36,7 @@ public interface GoodsQueryMapper {
             + "ORDER BY g.id DESC"
             + "</script>")
     IPage<GoodsRow> selectGoods(IPage<GoodsRow> page,
-                                @Param("keyword") String keyword,
+                                @Param("keywords") List<String> keywords,
                                 @Param("status") Integer status,
                                 @Param("sellerId") Long sellerId,
                                 @Param("schoolIds") List<Long> schoolIds);

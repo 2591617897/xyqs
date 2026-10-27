@@ -1,0 +1,2 @@
+/* 我的动态：卡片 / 分段 / 空态全部来自 common/list.wxss（同级 ../common） */
+@import "../common/list.wxss";

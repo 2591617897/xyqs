@@ -8,6 +8,7 @@ import com.campus.admin.dto.MessageRow;
 import com.campus.admin.entity.ContentAudit;
 import com.campus.admin.mapper.ChatQueryMapper;
 import com.campus.admin.mapper.ContentAuditMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +32,12 @@ public class ChatService {
     private final AdminWriteGateway gateway;
 
     public R.Page<ConversationRow> pageConversations(String keyword, Long userId, long page, long size) {
-        IPage<ConversationRow> p = chatQueryMapper.selectConversations(new Page<>(page, size), keyword, userId);
+        IPage<ConversationRow> p = chatQueryMapper.selectConversations(new Page<>(page, size), SearchKit.words(keyword), userId);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 
     public R.Page<MessageRow> pageMessages(Long conversationId, Long senderId, String keyword, long page, long size) {
-        IPage<MessageRow> p = chatQueryMapper.selectMessages(new Page<>(page, size), conversationId, senderId, keyword);
+        IPage<MessageRow> p = chatQueryMapper.selectMessages(new Page<>(page, size), conversationId, senderId, SearchKit.words(keyword));
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 

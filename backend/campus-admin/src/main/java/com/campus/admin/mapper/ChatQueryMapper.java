@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * 私信跨表只读查询。
  *
@@ -25,14 +27,16 @@ public interface ChatQueryMapper {
             + "LEFT JOIN t_user ua ON ua.id = c.user_a "
             + "LEFT JOIN t_user ub ON ub.id = c.user_b "
             + "WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (ua.nickname LIKE CONCAT('%', #{keyword}, '%') OR ub.nickname LIKE CONCAT('%', #{keyword}, '%')) "
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>"
+            + "    AND (ua.nickname LIKE CONCAT('%', #{kw}, '%') OR ub.nickname LIKE CONCAT('%', #{kw}, '%')) "
+            + "  </foreach>"
             + "</if>"
             + "<if test='userId != null'>AND (c.user_a = #{userId} OR c.user_b = #{userId}) </if>"
             + "ORDER BY c.last_time DESC, c.id DESC"
             + "</script>")
     IPage<ConversationRow> selectConversations(IPage<ConversationRow> page,
-                                               @Param("keyword") String keyword,
+                                               @Param("keywords") List<String> keywords,
                                                @Param("userId") Long userId);
 
     @Select("SELECT m.id, m.conversation_id conversationId, m.sender_id senderId, su.nickname senderName, "
@@ -54,11 +58,13 @@ public interface ChatQueryMapper {
             + "WHERE 1 = 1 "
             + "<if test='conversationId != null'>AND m.conversation_id = #{conversationId} </if>"
             + "<if test='senderId != null'>AND m.sender_id = #{senderId} </if>"
-            + "<if test='keyword != null and keyword != &apos;&apos;'>AND m.content LIKE CONCAT('%', #{keyword}, '%') </if>"
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>AND m.content LIKE CONCAT('%', #{kw}, '%') </foreach>"
+            + "</if>"
             + "ORDER BY m.id DESC"
             + "</script>")
     IPage<MessageRow> selectMessages(IPage<MessageRow> page,
                                      @Param("conversationId") Long conversationId,
                                      @Param("senderId") Long senderId,
-                                     @Param("keyword") String keyword);
+                                     @Param("keywords") List<String> keywords);
 }

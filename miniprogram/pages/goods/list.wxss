@@ -177,24 +177,172 @@
   bottom: calc(150rpx + env(safe-area-inset-bottom));
 }
 
-/* 合规提示条：仅信息展示，不做线上交易 */
-.list-tip {
+/* ============================================================
+   搜索：输入即搜 + 历史/热词面板 + 命中高亮
+   ============================================================ */
+
+/* 外层撑起层叠上下文：面板、遮罩都要盖住下面的广告位/列表 */
+.search-area {
+  position: relative;
+  z-index: 60;
+}
+/* 搜索栏本身要压在遮罩之上，否则点输入框会被遮罩吃掉 */
+.search-bar {
+  position: relative;
+  z-index: 62;
+}
+.s-btn.busy {
+  color: #c2c7d0;
+}
+
+/* 遮罩：点空白处收面板。不加深色背景，避免整页闪黑 */
+.s-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 58;
+  background: transparent;
+}
+
+/* 建议面板：贴在搜索栏正下方，圆角只做下方，视觉上是搜索栏的延伸 */
+.s-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 60;
+  background: #ffffff;
+  padding: 4rpx 24rpx 26rpx;
+  border-radius: 0 0 26rpx 26rpx;
+  box-shadow: 0 16rpx 28rpx rgba(15, 23, 42, .07);
+}
+
+.sp-sec {
+  padding-top: 18rpx;
+}
+.sp-head {
   display: flex;
-  align-items: flex-start;
-  gap: 10rpx;
-  margin: 20rpx 32rpx 0;
-  padding: 18rpx 22rpx;
-  border-radius: 16rpx;
-  background: #F2F8F5;
-  border: 1rpx solid #D7EADF;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rpx 4rpx 14rpx;
 }
-.list-tip-icon {
+.sp-title {
   font-size: 24rpx;
-  line-height: 1.6;
+  color: #8b8f99;
 }
-.list-tip-text {
-  flex: 1;
+.sp-act {
+  font-size: 23rpx;
+  color: #b6bbc6;
+  padding: 4rpx 8rpx;
+}
+.sp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.sp-tag {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 22rpx;
+  background: #f4f5f9;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  color: #4b5058;
+  max-width: 460rpx;
+}
+.sp-tag.hot {
+  background: #fff5ec;
+  color: #E8925E;
+}
+.sp-word {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sp-del {
+  font-size: 20rpx;
+  color: #c2c7d0;
+  padding-left: 4rpx;
+}
+
+/* 搜索态提示条 */
+.ss-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 0 24rpx 6rpx;
+  padding: 14rpx 20rpx;
+  background: #fff5ec;
+  border-radius: 16rpx;
+}
+.ss-kw {
+  font-size: 25rpx;
+  color: #E8925E;
+  font-weight: 600;
+  max-width: 360rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-total {
+  font-size: 23rpx;
+  color: #b6bbc6;
+}
+.ss-clear {
+  font-size: 23rpx;
+  color: #E8925E;
+  padding: 4rpx 8rpx;
+}
+
+/* 标题命中高亮 */
+.kw-hit {
+  color: #E8925E;
+  font-weight: 600;
+}
+
+/* 空结果里的换词引导 */
+.hs {
+  margin-top: 30rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+.hs-title {
+  font-size: 24rpx;
+  color: #8b8f99;
+}
+.hs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+  padding: 0 40rpx;
+}
+.hs-tag {
+  padding: 12rpx 24rpx;
+  background: #ffffff;
+  border: 1rpx solid #eceef2;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: #4b5058;
+}
+.hs-clear {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #E8925E;
+  padding: 8rpx 12rpx;
+}
+
+/* 搜索面板底部：多词搜索的规则说明。字号压到最小，不抢内容焦点 */
+.sp-hint {
+  margin-top: 18rpx;
+  padding: 14rpx 4rpx 0;
+  border-top: 1rpx solid #f2f3f7;
   font-size: 22rpx;
-  line-height: 1.6;
-  color: #4A6B5A;
+  line-height: 1.5;
+  color: #b6bbc6;
 }

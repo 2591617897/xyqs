@@ -1,0 +1,82 @@
+<!-- 通知列表页公共模板（四个子页面 <include src="../common/notice.wxml" /> 共用）
+     注意：include 只复制模板，不复制 <wxs>/<template>，所以这里只用普通节点 -->
+
+<view class="page">
+  <!-- 顶部信息条：标题 + 未读数 + 全部已读 -->
+  <view class="hd">
+    <view class="hd-left">
+      <text class="hd-title">{{title}}</text>
+      <text class="hd-sub" wx:if="{{unreadCount > 0}}">{{unreadCount}} 条未读</text>
+      <text class="hd-sub done" wx:else>全部已读</text>
+    </view>
+    <view class="hd-mark {{unreadCount > 0 ? '' : 'off'}}" bindtap="onMarkAllRead">全部标为已读</view>
+  </view>
+
+  <!-- 骨架屏：首屏加载，避免闪空态 -->
+  <view class="sk-wrap" wx:if="{{loading}}">
+    <view class="sk-item" wx:for="{{[1,2,3,4]}}" wx:key="*this">
+      <view class="sk-avatar"></view>
+      <view class="sk-main">
+        <view class="sk-line w60"></view>
+        <view class="sk-line w90"></view>
+        <view class="sk-line w40"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 游客态：先登录再看 -->
+  <view class="state" wx:elif="{{needLogin}}">
+    <text class="state-icon">🔒</text>
+    <text class="state-title">登录后查看{{title}}</text>
+    <text class="state-sub">通知只对本人可见，登录不会自动发内容</text>
+    <view class="state-btn" bindtap="goLogin">一键登录</view>
+  </view>
+
+  <!-- 列表 -->
+  <block wx:else>
+    <view
+      class="n-item {{item.unread ? 'unread' : ''}}"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-index="{{index}}"
+      bindtap="onTapItem"
+      hover-class="n-item-hover"
+      hover-stay-time="60"
+    >
+      <view class="n-avatar-wrap">
+        <image wx:if="{{item.actorAvatar}}" class="n-avatar" src="{{item.actorAvatar}}" mode="aspectFill" />
+        <view wx:else class="n-avatar default">
+          <text wx:if="{{item.type === 'SYSTEM'}}">🏫</text>
+          <text wx:else>👤</text>
+        </view>
+        <view class="n-dot" wx:if="{{item.unread}}"></view>
+      </view>
+
+      <view class="n-main">
+        <view class="n-top">
+          <text class="n-name">{{item.actorName}}</text>
+          <text class="n-action">{{item.actionText}}</text>
+        </view>
+        <view class="n-snippet" wx:if="{{item.contentSnapshot}}">{{item.contentSnapshot}}</view>
+        <view class="n-bottom">
+          <text class="n-time">{{item.timeText}}</text>
+          <text class="n-go" wx:if="{{item.targetType}}">查看 ›</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空态 -->
+    <view class="state" wx:if="{{!items.length}}">
+      <text class="state-icon">{{emptyIcon}}</text>
+      <text class="state-title">暂时没有{{title}}</text>
+      <text class="state-sub">{{emptyText}}</text>
+    </view>
+
+    <!-- 上拉加载 -->
+    <view class="more" wx:if="{{items.length}}">
+      <text wx:if="{{loadingMore}}">正在加载…</text>
+      <text wx:elif="{{noMore}}">没有更多了</text>
+      <text wx:else>上拉加载更多</text>
+    </view>
+  </block>
+</view>

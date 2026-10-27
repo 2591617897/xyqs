@@ -1,0 +1,430 @@
+/* ==========================================================================
+ * 我的 · 子页面通用样式（我发布的 / 已卖出 / 我的动态 / 赞与收藏 共用）
+ * --------------------------------------------------------------------------
+ * 引入方式：在各页面 wxss 顶部
+ *   @import "../common/list.wxss";   ← goods/ 下
+ *   @import "../common/list.wxss";   ← dynamic/ favorite/ 下（同级 ../ 也指 common）
+ *
+ * 规矩：
+ *   1) 只用 styles/tokens.wxss 的变量，且每个 var() 都带 fallback
+ *   2) 尺寸一律 rpx，布局一律 flex
+ *   3) 不写 page 选择器背景色 —— app.wxss 的 page{} 已经给了 --bg-page
+ * ========================================================================== */
+
+.page {
+  min-height: 100vh;
+  padding: 24rpx var(--page-x, 32rpx) calc(40rpx + env(safe-area-inset-bottom));
+  background: var(--bg-page, #F5F7F6);
+}
+
+/* 有底部固定 CTA 的页面（我发布的「去发布」）多留出高度，别让最后一张卡被压住 */
+.page.has-cta {
+  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
+}
+
+/* ---------- 顶部说明卡 ---------- */
+.me-head {
+  position: relative;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  padding: 28rpx 28rpx 24rpx;
+  overflow: hidden;
+}
+
+/* 左侧品牌色竖条：沿用「我的」页 section-head 的语言，不新造色块 */
+.me-head::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 28rpx;
+  bottom: 28rpx;
+  width: 6rpx;
+  border-radius: 0 6rpx 6rpx 0;
+  background: var(--brand-500, #006C49);
+}
+
+.me-head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+
+.me-title {
+  font-size: var(--fs-7, 36rpx);
+  font-weight: 700;
+  color: var(--text-1, #0F1A16);
+  letter-spacing: -0.5rpx;
+}
+
+.me-sub {
+  font-size: var(--fs-3, 24rpx);
+  color: var(--text-3, #6B7A74);
+}
+
+.me-hint {
+  margin-top: 12rpx;
+  font-size: var(--fs-2, 22rpx);
+  line-height: var(--lh-loose, 1.65);
+  color: var(--text-4, #9AA8A3);
+}
+
+/* 关键数字（已卖出页的成交总额等） */
+.me-amount {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+.me-amount-num {
+  font-size: var(--fs-8, 44rpx);
+  font-weight: 700;
+  color: var(--price, #D97706);
+}
+.me-amount-num::before {
+  content: '¥';
+  font-size: var(--fs-5, 28rpx);
+  margin-right: 2rpx;
+}
+.me-amount-label {
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-3, #6B7A74);
+}
+
+/* ---------- 分段 tab（全部 / 在售 / 已售出…） ---------- */
+.seg {
+  display: flex;
+  align-items: center;
+  margin: 20rpx 0;
+  padding: 6rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-pill, 999rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+}
+
+.seg-item {
+  flex: 1;
+  min-width: 0;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  font-size: var(--fs-4, 26rpx);
+  color: var(--text-2, #4B5A54);
+  transition: background var(--dur-fast, 120ms) var(--ease-out), color var(--dur-fast, 120ms) var(--ease-out);
+}
+
+.seg-item.active {
+  background: var(--brand-500, #006C49);
+  color: var(--text-inverse, #FFFFFF);
+  font-weight: var(--fw-bold, 600);
+}
+
+.seg-num {
+  font-size: var(--fs-1, 20rpx);
+  opacity: 0.75;
+}
+
+/* ---------- 闲置卡片：左图右文整行 ---------- */
+.g-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.gcard {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  transition: transform var(--dur-fast, 120ms) var(--ease-out);
+}
+
+.gcard-hover {
+  transform: scale(0.985);
+}
+
+.gcard-cover {
+  position: relative;
+  flex: 0 0 auto;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: var(--radius-md, 16rpx);
+  overflow: hidden;
+  background: var(--surface-2, #F0F3F2);
+}
+
+.gcard-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gcard-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+  color: var(--text-4, #9AA8A3);
+}
+
+/* 状态角标：在售=品牌绿 / 已售出=中性 / 已下架=警示橙 */
+.gcard-badge {
+  position: absolute;
+  left: 8rpx;
+  top: 8rpx;
+  padding: 2rpx 12rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  font-size: var(--fs-1, 20rpx);
+  line-height: 1.6;
+  color: #FFFFFF;
+  background: rgba(15, 26, 22, 0.62);
+}
+.gcard-badge.on { background: var(--brand-500, #006C49); }
+.gcard-badge.sold { background: var(--text-3, #6B7A74); }
+.gcard-badge.off { background: var(--warning-500, #D97706); }
+
+.gcard-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gcard-title {
+  font-size: var(--fs-5, 28rpx);
+  font-weight: var(--fw-bold, 600);
+  line-height: var(--lh-normal, 1.45);
+  color: var(--text-1, #0F1A16);
+}
+
+.gcard-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 10rpx;
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-3, #6B7A74);
+}
+
+.gcard-price {
+  margin-top: auto;
+  padding-top: 10rpx;
+  font-size: var(--fs-6, 32rpx);
+  font-weight: 700;
+  color: var(--price, #D97706);
+}
+.gcard-price .sym {
+  font-size: var(--fs-3, 24rpx);
+  margin-right: 2rpx;
+}
+
+/* 卡片右下角的小动作（取消收藏） */
+.gcard-act {
+  align-self: flex-start;
+  margin-top: 10rpx;
+  padding: 8rpx 20rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  border: 2rpx solid var(--border-strong, #CBD5D1);
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-2, #4B5A54);
+  background: var(--surface, #FFFFFF);
+}
+.gcard-act:active {
+  background: var(--surface-2, #F0F3F2);
+}
+.gcard-act.danger {
+  border-color: var(--like-100, #FFD9E3);
+  color: var(--like-600, #E11D48);
+}
+
+/* ---------- 动态卡片（帖子 / 树洞） ---------- */
+.d-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.dcard {
+  padding: 24rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+}
+.dcard-hover {
+  transform: scale(0.99);
+}
+
+.dcard-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.dbadge {
+  padding: 2rpx 14rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  font-size: var(--fs-1, 20rpx);
+  line-height: 1.7;
+}
+.dbadge.post {
+  background: var(--brand-50, #E8F5EF);
+  color: var(--brand-500, #006C49);
+}
+.dbadge.wall {
+  background: var(--like-50, #FFF0F4);
+  color: var(--like-600, #E11D48);
+}
+
+.dcard-channel {
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-3, #6B7A74);
+}
+.dcard-time {
+  margin-left: auto;
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-4, #9AA8A3);
+}
+
+.dcard-title {
+  margin-top: 14rpx;
+  font-size: var(--fs-5, 28rpx);
+  font-weight: var(--fw-bold, 600);
+  line-height: var(--lh-normal, 1.45);
+  color: var(--text-1, #0F1A16);
+}
+
+.dcard-content {
+  margin-top: 10rpx;
+  font-size: var(--fs-4, 26rpx);
+  line-height: var(--lh-loose, 1.65);
+  color: var(--text-2, #4B5A54);
+  word-break: break-word;
+}
+
+.dcard-imgs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+.dcard-img {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: var(--radius-sm, 8rpx);
+  background: var(--surface-2, #F0F3F2);
+}
+
+.dcard-foot {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  margin-top: 18rpx;
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-3, #6B7A74);
+}
+
+/* ---------- 状态：骨架 / 空 / 错误 / 加载更多 ---------- */
+.sk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.sk-card {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+}
+.sk-thumb {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--surface-3, #E8ECEA);
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+.sk-lines {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6rpx;
+}
+.sk-line {
+  height: 24rpx;
+  border-radius: 12rpx;
+  background: var(--surface-3, #E8ECEA);
+  margin-bottom: 16rpx;
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+.sk-line.w60 { width: 60%; }
+.sk-line.w40 { width: 40%; }
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.empty-box {
+  padding: 140rpx 40rpx 60rpx;
+  text-align: center;
+}
+.empty-ico {
+  display: block;
+  font-size: 76rpx;
+  margin-bottom: 16rpx;
+  opacity: 0.6;
+}
+.empty-txt {
+  font-size: var(--fs-4, 26rpx);
+  color: var(--text-3, #6B7A74);
+}
+.empty-tip {
+  margin-top: 8rpx;
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-4, #9AA8A3);
+}
+.empty-btn {
+  display: inline-block;
+  margin-top: 28rpx;
+  padding: 16rpx 44rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  background: var(--brand-500, #006C49);
+  color: var(--text-inverse, #FFFFFF);
+  font-size: var(--fs-4, 26rpx);
+}
+
+.foot-tip {
+  padding: 32rpx 0 12rpx;
+  text-align: center;
+  font-size: var(--fs-2, 22rpx);
+  color: var(--text-4, #9AA8A3);
+}
+
+/* ---------- 底部固定 CTA（去发布） ---------- */
+.cta-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx var(--page-x, 32rpx) calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1rpx solid var(--border, #E3E8E6);
+  backdrop-filter: blur(10px);
+}
+.cta-btn {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill, 999rpx);
+  background: var(--brand-500, #006C49);
+  color: var(--text-inverse, #FFFFFF);
+  font-size: var(--fs-5, 28rpx);
+  font-weight: var(--fw-bold, 600);
+  box-shadow: var(--shadow-2, 0 8rpx 24rpx rgba(15, 26, 22, 0.06));
+}
+.cta-btn:active {
+  background: var(--brand-600, #005A3D);
+}

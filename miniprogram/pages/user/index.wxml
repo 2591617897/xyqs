@@ -34,13 +34,14 @@
       <button class="login-btn" wx:if="{{!logged}}" catchtap="login">一键登录</button>
     </view>
 
-    <!-- 统计条 -->
+    <!-- 统计条：四个按钮全部指向分包 subpackages/me 下的独立子页面
+         （我发布的 / 已卖出 / 我的动态 / 赞与收藏），页面内容多了也压不垮主包 -->
     <view class="stat-bar fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-2">
       <view class="stat" hover-class="tap-scale" bindtap="goMyGoods">
         <view class="stat-num">{{user.goodsCount || 0}}</view>
         <view class="stat-label">我发布的</view>
       </view>
-      <view class="stat" hover-class="tap-scale" bindtap="demoEntry" data-name="已卖出">
+      <view class="stat" hover-class="tap-scale" bindtap="goSold">
         <view class="stat-num">{{user.soldCount || 0}}</view>
         <view class="stat-label">已卖出</view>
       </view>

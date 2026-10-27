@@ -1,31 +1,73 @@
 <view class="page">
-  <!-- 搜索 -->
-  <view class="search-bar">
-    <view class="s-wrap">
-      <text class="s-icon">🔍</text>
-      <input
-        class="s-input"
-        value="{{keyword}}"
-        placeholder="搜闲置：自行车 / 显示器 / 考研书"
-        placeholder-class="s-ph"
-        confirm-type="search"
-        bindinput="onSearchInput"
-        bindconfirm="onSearch"
-      />
-      <text wx:if="{{keyword}}" class="s-clear" bindtap="clearKeyword">✕</text>
+  <!-- ===== 搜索区 =====
+       面板要盖住下方内容：外层相对定位 + 高 z-index，遮罩用 fixed 全屏 -->
+  <!-- 「我的闲置 / 我的收藏」不支持关键词（后端 /goods/mine 无 keyword 参数），
+       与其留个搜了没反应的框，不如直接不显示 -->
+  <view class="search-area" wx:if="{{!mineMode && !favMode}}">
+    <view class="search-bar">
+      <view class="s-wrap">
+        <text class="s-icon">🔍</text>
+        <input
+          class="s-input"
+          value="{{keyword}}"
+          placeholder="搜闲置：自行车 考研书（空格分词）"
+          placeholder-class="s-ph"
+          confirm-type="search"
+          bindinput="onSearchInput"
+          bindconfirm="onSearch"
+          bindfocus="onSearchFocus"
+        />
+        <text wx:if="{{keyword}}" class="s-clear" catchtap="clearKeyword">✕</text>
+      </view>
+      <view class="s-btn {{loading ? 'busy' : ''}}" bindtap="onSearch">搜索</view>
     </view>
-    <view class="s-btn" bindtap="onSearch">搜索</view>
+
+    <!-- 搜索建议面板：只在输入框为空且聚焦时出现，选词/搜索后自动收起 -->
+    <block wx:if="{{showPanel}}">
+      <view class="s-mask" bindtap="closePanel"></view>
+      <view class="s-panel">
+        <view class="sp-sec" wx:if="{{history.length}}">
+          <view class="sp-head">
+            <text class="sp-title">搜索历史</text>
+            <text class="sp-act" bindtap="onClearHistory">清空</text>
+          </view>
+          <view class="sp-tags">
+            <view
+              class="sp-tag"
+              wx:for="{{history}}"
+              wx:key="*this"
+              bindtap="onPickWord"
+              data-word="{{item}}"
+            >
+              <text class="sp-word">{{item}}</text>
+              <!-- catchtap：删历史不能冒泡成「搜索这个词」 -->
+              <text class="sp-del" catchtap="onDelHistory" data-word="{{item}}">✕</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="sp-sec">
+          <view class="sp-head">
+            <text class="sp-title">大家都在搜</text>
+          </view>
+          <view class="sp-tags">
+            <view
+              class="sp-tag hot"
+              wx:for="{{hots}}"
+              wx:key="*this"
+              bindtap="onPickWord"
+              data-word="{{item}}"
+            >{{item}}</view>
+          </view>
+          <view class="sp-hint">空格分隔多个关键词，结果需同时命中（例：苹果 手机）</view>
+        </view>
+      </view>
+    </block>
   </view>
 
   <!-- 运营投放位（后台广告位 code=goods_top）：只在浏览全部闲置时出现，
        「我的闲置 / 我的收藏」是个人列表，插广告既打扰也不符合投放口径 -->
   <ad-banner wx:if="{{!mineMode && !favMode}}" code="goods_top" height="{{240}}" />
-
-  <!-- 合规提示条：闲置只做信息展示，不做线上交易 -->
-  <view class="list-tip">
-    <text class="list-tip-icon">ℹ️</text>
-    <text class="list-tip-text">本站仅展示闲置信息，不支持线上交易与支付，请校内当面验货、当面结清</text>
-  </view>
 
   <block wx:if="{{!mineMode && !favMode}}">
     <!-- 分类 -->
@@ -57,6 +99,14 @@
       <view class="flex1"></view>
       <text class="total-text">共 {{total}} 件</text>
     </view>
+
+    <!-- 搜索态提示：让用户清楚「现在看到的是筛选后的结果」，并且有明确的退出按钮 -->
+    <view class="ss-row" wx:if="{{activeKeyword}}">
+      <text class="ss-kw">🔍 「{{activeKeyword}}」</text>
+      <text class="ss-total">{{kwWords.length > 1 ? kwWords.length + ' 个词 · ' : ''}}{{loadError ? '加载失败' : '共 ' + total + ' 件'}}</text>
+      <view class="flex1"></view>
+      <text class="ss-clear" bindtap="clearKeyword">清除搜索</text>
+    </view>
   </block>
 
   <!-- 列表 -->
@@ -84,7 +134,14 @@
         <view class="cover-promote" wx:if="{{item.promoteScore > 0}}">🚀 推广</view>
       </view>
       <view class="goods-body">
-        <view class="goods-title clamp2">{{item.title}}</view>
+        <!-- 命中关键词的片段高亮（titleParts 在 js 里按关键词切好） -->
+        <view class="goods-title clamp2">
+          <text
+            wx:for="{{item.titleParts}}"
+            wx:for-item="seg"
+            class="{{seg.hit ? 'kw-hit' : ''}}"
+          >{{seg.t}}</text>
+        </view>
         <view class="between mt8">
           <view class="price"><text class="price-symbol">¥</text>{{item.priceText}}</view>
           <text class="muted">{{item.timeText}}</text>
@@ -98,8 +155,30 @@
   </view>
 
   <view class="empty" wx:if="{{!loading && !list.length}}">
-    <text class="empty-icon">{{loadError ? '📡' : '🧺'}}</text>
-    <text>{{loadError ? '加载失败，请检查网络或后端服务' : (mineMode ? '你还没有发布过闲置' : (favMode ? '还没有收藏的宝贝' : '没有找到相关闲置，换个关键词试试'))}}</text>
+    <text class="empty-icon">{{loadError ? '📡' : (activeKeyword ? '🔍' : '🧺')}}</text>
+    <!-- 空态文案：用 if/elif 链而不是嵌套三目——嵌套三目在 WXML 里多一个括号就整页编译失败 -->
+    <text wx:if="{{loadError}}">加载失败，请检查网络或后端服务</text>
+    <text wx:elif="{{mineMode}}">你还没有发布过闲置</text>
+    <text wx:elif="{{favMode}}">还没有收藏的宝贝</text>
+    <text wx:elif="{{activeKeyword}}">没有找到「{{activeKeyword}}」相关的闲置</text>
+    <text wx:else>还没有闲置，来发第一个吧</text>
+
+    <!-- 搜不到时的兜底：给几个热词，别让用户卡在死路上 -->
+    <view class="hs" wx:if="{{activeKeyword && !loadError}}">
+      <text class="hs-title" wx:if="{{kwWords.length > 1}}">多个关键词要同时命中，删掉一个试试</text>
+      <text class="hs-title" wx:else>换个词试试</text>
+      <view class="hs-tags">
+        <view
+          class="hs-tag"
+          wx:for="{{hots}}"
+          wx:key="*this"
+          bindtap="onPickWord"
+          data-word="{{item}}"
+        >{{item}}</view>
+      </view>
+      <text class="hs-clear" bindtap="clearKeyword">清除搜索，看全部闲置</text>
+    </view>
+
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>
   </view>
 

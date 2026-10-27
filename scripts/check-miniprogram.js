@@ -150,6 +150,12 @@ function checkComponentPaths(app, pages) {
 
   checkUnit(path.join(ROOT, 'app.json'), 'app.json')
   pages.forEach(function (p) { checkUnit(path.join(ROOT, p + '.json'), p + '.json') })
+  ;(app.subpackages || []).concat(app.subPackages || []).forEach(function (sp) {
+    ;(sp.pages || []).forEach(function (p) {
+      const full = sp.root + '/' + p
+      checkUnit(path.join(ROOT, full + '.json'), full + '.json')
+    })
+  })
 
   const compDir = path.join(ROOT, 'components')
   if (exists(compDir)) {
@@ -180,7 +186,16 @@ function main() {
   const pages = app.pages || []
   if (!pages.length) errors.push('app.json 的 pages 为空')
 
-  pages.forEach(function (p) {
+  // 分包页面（subPackages）同样要过一遍：缺 js/wxml/json、json 没写 usingComponents、
+  // js 里没有 Page() 都会白屏，主包分包一视同仁。
+  // root 里可能带 'subpackages/me' 这种多级路径，拼出来的 base 直接就是页面绝对基准。
+  const subPages = []
+  ;(app.subpackages || []).concat(app.subPackages || []).forEach(function (sp) {
+    ;(sp.pages || []).forEach(function (p) { subPages.push(sp.root + '/' + p) })
+  })
+  const pageList = pages.concat(subPages)
+
+  pageList.forEach(function (p) {
     const base = path.join(ROOT, p)
     const js = base + '.js'
     const wxml = base + '.wxml'
@@ -213,6 +228,7 @@ function main() {
 
   checkRequestUsage()
   checkComponentPaths(app, pages)
+  checkWxmlExpressions()
 
   // tabBar 校验
   const tabBar = app.tabBar
@@ -272,7 +288,25 @@ function main() {
     checkRequiredComponents(app, pages)
   }
 
-  report(pages.length)
+  // preloadRule（分包预下载）校验：键必须是主包页面，packages 必须是已注册分包的 root 或 name
+  const spList = (app.subpackages || []).concat(app.subPackages || [])
+  const spKeys = spList.map(function (sp) { return sp.root })
+    .concat(spList.map(function (sp) { return sp.name }).filter(Boolean))
+  if (app.preloadRule && !spKeys.length) {
+    warnings.push('app.json 配了 preloadRule 但没有任何分包')
+  }
+  Object.keys(app.preloadRule || {}).forEach(function (key) {
+    if (pages.indexOf(key) < 0) {
+      errors.push('preloadRule 的键必须是主包页面路径：' + key)
+    }
+    ;((app.preloadRule[key] || {}).packages || []).forEach(function (pk) {
+      if (spKeys.indexOf(pk) < 0) {
+        errors.push('preloadRule 指向未注册的分包：' + pk + '（应写分包 root 或 name）')
+      }
+    })
+  })
+
+  report(pages.length, subPages.length)
 }
 
 /**
@@ -286,7 +320,7 @@ function main() {
  */
 function checkRequestUsage() {
   const files = []
-  ;['pages', 'components', 'utils'].forEach(function (dir) {
+  ;['pages', 'components', 'utils', 'subpackages'].forEach(function (dir) {
     walk(path.join(ROOT, dir), files)
   })
 
@@ -322,9 +356,100 @@ function walk(dir, out) {
   })
 }
 
-function report(pageCount) {
+/**
+ * WXML 表达式语法校验（把白屏挡在开发者工具之外）。
+ *
+ * 起因：空态文案写成了四层嵌套三目，左括号 3 个、右括号 4 个，
+ * 编译期直接报 Bad value with message: error at token '}' → 整页白屏。
+ * 这类错误不会被任何「文件是否存在」的检查发现，只能真去解析表达式。
+ *
+ * 做法：先把 HTML 注释抹成空格（保住行号），再逐个 {{ }} 取出表达式，
+ * 剔除字符串字面量后核对圆括号 / 方括号是否配平。
+ */
+function checkWxmlExpressions() {
+  const files = []
+  const walk = function (dir, depth) {
+    if (depth > 4 || !exists(dir)) return
+    fs.readdirSync(dir).forEach(function (name) {
+      if (name === 'node_modules' || name === 'miniprogram_npm') return
+      const full = path.join(dir, name)
+      let st
+      try { st = fs.statSync(full) } catch (e) { return }
+      if (st.isDirectory()) return walk(full, depth + 1)
+      if (/\.wxml$/i.test(name)) files.push(full)
+    })
+  }
+  walk(ROOT, 0)
+
+  files.forEach(function (file) {
+    let src = fs.readFileSync(file, 'utf8')
+    // 注释抹成等长空格：行号不变，且注释里的 {{ }} 不会被误判
+    src = src.replace(/<!--[\s\S]*?-->/g, function (m) {
+      return m.replace(/[^\n]/g, ' ')
+    })
+
+    let i = 0
+    while (i < src.length) {
+      const open = src.indexOf('{{', i)
+      if (open < 0) break
+      const line = src.slice(0, open).split('\n').length
+      const end = matchExprEnd(src, open)
+      if (end < 0) {
+        errors.push('{{ 未闭合：' + rel(file) + ' 第 ' + line + ' 行')
+        return
+      }
+      const bad = balanceOf(src.slice(open + 2, end))
+      if (bad) {
+        errors.push('WXML 表达式括号不配平（会整页白屏）：' + rel(file) + ' 第 ' + line + ' 行 → ' + bad)
+      }
+      i = end + 2
+    }
+  })
+}
+
+/** 从 {{ 位置起找配对的 }}，跳过字符串字面量内部的 } */
+function matchExprEnd(src, open) {
+  let j = open + 2
+  let quote = null
+  while (j < src.length) {
+    const ch = src[j]
+    if (quote) {
+      if (ch === '\\') { j += 2; continue }
+      if (ch === quote) quote = null
+      j++
+      continue
+    }
+    if (ch === "'" || ch === '"') { quote = ch; j++; continue }
+    if (ch === '}' && src[j + 1] === '}') return j
+    j++
+  }
+  return -1
+}
+
+/** 剔除字符串字面量后核对括号；返回 null 表示正常，否则返回错误描述 */
+function balanceOf(expr) {
+  const plain = expr
+    .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+  const pairs = [['(', ')'], ['[', ']']]
+  for (let k = 0; k < pairs.length; k++) {
+    const l = pairs[k][0]
+    const r = pairs[k][1]
+    let depth = 0
+    let over = false
+    for (let i = 0; i < plain.length; i++) {
+      if (plain[i] === l) depth++
+      else if (plain[i] === r) { depth--; if (depth < 0) { over = true; break } }
+    }
+    if (over) return '出现多余的 ' + r
+    if (depth !== 0) return '左 ' + l + ' 比右 ' + r + ' 多 ' + depth + ' 个'
+  }
+  return null
+}
+
+function report(pageCount, subPageCount) {
   console.log('')
-  console.log('页面数：' + (pageCount || 0))
+  console.log('页面数：' + (pageCount || 0) + '（主包） + ' + (subPageCount || 0) + '（分包）')
   if (warnings.length) {
     console.log('\n警告（' + warnings.length + '）')
     warnings.forEach(function (w) {

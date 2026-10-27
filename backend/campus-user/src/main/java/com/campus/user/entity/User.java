@@ -69,6 +69,24 @@ public class User {
     /** 0未认证 1审核中 2已认证 3驳回 */
     private Integer verifyStatus;
 
+    /**
+     * 认证来源：0未认证 1学生证材料（人工审核）2微信学生认证（免材料）。
+     *
+     * <p>只用于展示与运营分析，是否认证仍以 {@link #verifyStatus} 为准。
+     * 注意微信通道不返回姓名与学号，所以 {@code verifyStatus == 2} 不代表
+     * {@link #realName} / {@link #studentNo} 有值。
+     */
+    private Integer verifySource;
+
+    /** 微信学生身份是否已核验通过（0否 1是），与 verifySource=2 同事务写入 */
+    private Integer wxStudentVerified;
+
+    /** 微信返回的 bind_status：1未绑定 2审核中 3已绑定。留档用于申诉复核 */
+    private Integer wxStudentStatus;
+
+    /** 微信学生认证通过时间。微信侧毕业到期会解绑，这里只是我方通过时间 */
+    private LocalDateTime wxStudentVerifyAt;
+
     /** 学生证 / 校园卡照片地址。认证材料，仅本人与后台可见 */
     private String verifyImg;
 

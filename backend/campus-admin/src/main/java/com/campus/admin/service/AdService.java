@@ -14,6 +14,7 @@ import com.campus.admin.entity.AdSlot;
 import com.campus.admin.mapper.AdMaterialMapper;
 import com.campus.admin.mapper.AdSlotMapper;
 import com.campus.admin.mapper.RegionDictMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -56,10 +57,10 @@ public class AdService {
         DataScope ds = dataScopeResolver.resolve();
         List<Long> scopeIds = ds.isAll() ? null : ds.getSchoolIds();
         LambdaQueryWrapper<AdSlot> qw = Wrappers.<AdSlot>lambdaQuery()
-                .like(keyword != null && !keyword.isBlank(), AdSlot::getName, keyword)
                 .eq(position != null, AdSlot::getPosition, position)
                 .eq(scopeType != null, AdSlot::getScopeType, scopeType)
                 .eq(status != null, AdSlot::getStatus, status);
+        SearchKit.andAllWords(qw, keyword, AdSlot::getName);
         // 必须写在外层 if 里：apply(condition, sql) 的第二个参数会被**提前求值**，
         // 写成 apply(scopeIds != null, scopeCondition(scopeIds)) 在超管（scopeIds=null）时
         // 直接空指针——条件虽然为 false，SQL 片段照样要先算出来。
@@ -226,14 +227,14 @@ public class AdService {
 
     public R.Page<AdMaterial> pageMaterials(Long slotId, String keyword, Integer status, Integer auditStatus,
                                             long page, long size) {
-        IPage<AdMaterial> p = materialMapper.selectPage(new Page<>(page, size),
-                Wrappers.<AdMaterial>lambdaQuery()
-                        .eq(slotId != null, AdMaterial::getSlotId, slotId)
-                        .like(keyword != null && !keyword.isBlank(), AdMaterial::getTitle, keyword)
-                        .eq(status != null, AdMaterial::getStatus, status)
-                        .eq(auditStatus != null, AdMaterial::getAuditStatus, auditStatus)
-                        .orderByDesc(AdMaterial::getSort)
-                        .orderByDesc(AdMaterial::getId));
+        LambdaQueryWrapper<AdMaterial> qw = Wrappers.<AdMaterial>lambdaQuery()
+                .eq(slotId != null, AdMaterial::getSlotId, slotId)
+                .eq(status != null, AdMaterial::getStatus, status)
+                .eq(auditStatus != null, AdMaterial::getAuditStatus, auditStatus)
+                .orderByDesc(AdMaterial::getSort)
+                .orderByDesc(AdMaterial::getId);
+        SearchKit.andAllWords(qw, keyword, AdMaterial::getTitle);
+        IPage<AdMaterial> p = materialMapper.selectPage(new Page<>(page, size), qw);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 

@@ -1,0 +1,2 @@
+/* 我发布的：列表 / 状态角标 / 骨架全部来自 common/list.wxss，这里只补本页特有部分 */
+@import "../common/list.wxss";

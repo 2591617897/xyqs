@@ -1,6 +1,8 @@
 package com.campus.admin.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.client.SecurityAdminClient;
@@ -8,6 +10,7 @@ import com.campus.admin.entity.ContentAudit;
 import com.campus.admin.entity.SensitiveWord;
 import com.campus.admin.mapper.ContentAuditMapper;
 import com.campus.admin.mapper.SensitiveWordMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import jakarta.annotation.PostConstruct;
@@ -79,13 +82,13 @@ public class SensitiveService {
     }
 
     public R.Page<SensitiveWord> pageWords(String keyword, Integer level, Integer status, long page, long size) {
-        IPage<SensitiveWord> p = wordMapper.selectPage(new Page<>(page, size),
-                Wrappers.<SensitiveWord>lambdaQuery()
-                        .like(keyword != null && !keyword.isBlank(), SensitiveWord::getWord, keyword)
-                        .eq(level != null, SensitiveWord::getLevel, level)
-                        .eq(status != null, SensitiveWord::getStatus, status)
-                        .orderByDesc(SensitiveWord::getLevel)
-                        .orderByDesc(SensitiveWord::getId));
+        LambdaQueryWrapper<SensitiveWord> qw = Wrappers.<SensitiveWord>lambdaQuery()
+                .eq(level != null, SensitiveWord::getLevel, level)
+                .eq(status != null, SensitiveWord::getStatus, status)
+                .orderByDesc(SensitiveWord::getLevel)
+                .orderByDesc(SensitiveWord::getId);
+        SearchKit.andAllWords(qw, keyword, SensitiveWord::getWord);
+        IPage<SensitiveWord> p = wordMapper.selectPage(new Page<>(page, size), qw);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 

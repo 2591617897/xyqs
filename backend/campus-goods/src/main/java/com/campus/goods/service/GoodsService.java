@@ -11,6 +11,7 @@ import com.campus.common.client.UserClient;
 import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
+import com.campus.common.search.SearchKit;
 import com.campus.common.security.UserContext;
 import com.campus.common.social.Like;
 import com.campus.common.social.mapper.LikeMapper;
@@ -57,6 +58,9 @@ public class GoodsService {
             new CategoryVO(6, "其他", "✨"));
 
     private final GoodsMapper goodsMapper;
+
+    /** 搜索热词统计：分页查询顺手记一笔，失败不影响搜索结果 */
+    private final HotWordsService hotWordsService;
     private final GoodsOrderMapper orderMapper;
     private final GoodsCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
@@ -99,9 +103,9 @@ public class GoodsService {
                 w.eq(Goods::getSchoolId, schoolId);
             }
         }
-        if (StringUtils.hasText(keyword)) {
-            w.and(q -> q.like(Goods::getTitle, keyword).or().like(Goods::getDescription, keyword));
-        }
+        // 多词搜索：「苹果 手机」= 苹果 AND 手机，各自命中标题或描述之一即可。
+        // 单串 LIKE 的老写法会把整串当一个词，搜「苹果 手机」永远为空。
+        SearchKit.andAllWords(w, keyword, Goods::getTitle, Goods::getDescription);
         if (categoryId != null && categoryId > 0) {
             w.eq(Goods::getCategoryId, categoryId);
         }
@@ -117,6 +121,11 @@ public class GoodsService {
         Page<Goods> p = goodsMapper.selectPage(new Page<>(page, size), w);
         p.getRecords().forEach(this::fillExtra);
         refreshSellers(p.getRecords());
+        // 热词统计：只算列表首屏（上拉加载是同一次搜索，不能重复计数），
+        // 个人主页（userId != null）复用本方法但那是浏览不是搜索，要排除。
+        if (userId == null && page <= 1) {
+            hotWordsService.record(keyword, p.getTotal(), schoolId, city);
+        }
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 

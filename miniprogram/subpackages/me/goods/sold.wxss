@@ -1,0 +1,2 @@
+/* 已卖出：与「我发布的」共用列表样式，额外只需要 .tag-mint（全局 app.wxss 已有） */
+@import "../common/list.wxss";

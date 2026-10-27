@@ -76,6 +76,23 @@ module.exports = {
    */
   CONTACT_EMAIL: 'privacy@trkcwl.com',
   /**
+   * 微信学生身份认证（官方「微信学生身份快速验证」插件）开关。
+   *
+   * false（默认）：认证页只显示「上传学生证」通道，app.json 里也不声明插件。
+   *   这样做是为了不在能力没开通时把整个项目卡在编译阶段 —— 插件未在
+   *   「小程序后台 → 设置 → 第三方设置 → 插件管理」添加过时，
+   *   只要 app.json 声明了它，开发者工具会直接编译失败。
+   *
+   * true：认证页多出「微信学生认证」通道。开启前必须先完成三件事：
+   *   ① 小程序后台「功能 → 学生验证」申请通过（3-5 个工作日，类目要在官方白名单）
+   *   ② 插件管理里添加「微信学生身份验证」
+   *   ③ 后端 WX_STUDENT_VERIFY=true
+   * 直接跑 `node scripts/wx-student-plugin.js on` 会自动改这个开关、
+   * 往 app.json 加 plugins、往 pages/user/verify.json 加插件组件；
+   * `off` 则原样回退。
+   */
+  WX_STUDENT_VERIFY: false,
+  /**
    * 本地单人演示开关（默认 false）。
    *
    * true：登录时把下面的固定 DEV_OPENID 发给后端，配合后端 AUTH_MOCK=true 使用，

@@ -1,6 +1,8 @@
 package com.campus.admin.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.config.AdminAuthInterceptor;
 import com.campus.admin.config.AdminContext;
@@ -13,6 +15,7 @@ import com.campus.admin.entity.AdminUserRole;
 import com.campus.admin.mapper.AdminMenuMapper;
 import com.campus.admin.mapper.AdminUserMapper;
 import com.campus.admin.mapper.AdminUserRoleMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -44,14 +47,12 @@ public class AdminUserService {
     private final AdminMenuMapper adminMenuMapper;
 
     public R.Page<AdminUserDTO> page(String keyword, Long roleId, Integer status, long page, long size) {
-        Page<AdminUser> p = adminUserMapper.selectPage(new Page<>(page, size),
-                Wrappers.<AdminUser>lambdaQuery()
-                        .and(StringUtils.hasText(keyword), w -> w
-                                .like(AdminUser::getUsername, keyword)
-                                .or().like(AdminUser::getRealName, keyword)
-                                .or().like(AdminUser::getPhone, keyword))
-                        .eq(status != null, AdminUser::getStatus, status)
-                        .orderByDesc(AdminUser::getCreatedAt));
+        LambdaQueryWrapper<AdminUser> qw = Wrappers.<AdminUser>lambdaQuery()
+                .eq(status != null, AdminUser::getStatus, status)
+                .orderByDesc(AdminUser::getCreatedAt);
+        // 账号 / 姓名 / 手机号三列各自参与多词匹配
+        SearchKit.andAllWords(qw, keyword, AdminUser::getUsername, AdminUser::getRealName, AdminUser::getPhone);
+        Page<AdminUser> p = adminUserMapper.selectPage(new Page<>(page, size), qw);
         List<AdminUserDTO> list = new ArrayList<>(p.getRecords().size());
         for (AdminUser u : p.getRecords()) {
             AdminUserDTO dto = toDto(u);

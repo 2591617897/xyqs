@@ -1,0 +1,2 @@
+/* 赞与收藏：与「我发布的」共用列表样式，取消收藏按钮用 .gcard-act.danger */
+@import "../common/list.wxss";

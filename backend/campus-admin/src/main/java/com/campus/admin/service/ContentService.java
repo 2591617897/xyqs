@@ -17,6 +17,7 @@ import com.campus.admin.mapper.ContentAuditMapper;
 import com.campus.admin.mapper.GoodsQueryMapper;
 import com.campus.admin.mapper.PostQueryMapper;
 import com.campus.admin.mapper.WallQueryMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +57,7 @@ public class ContentService {
         if (schoolIds != null && schoolIds.isEmpty()) {
             return R.Page.of(List.of(), 0, page, size);
         }
-        IPage<PostRow> p = postQueryMapper.selectPosts(new Page<>(page, size), keyword, status, authorId, schoolIds);
+        IPage<PostRow> p = postQueryMapper.selectPosts(new Page<>(page, size), SearchKit.words(keyword), status, authorId, schoolIds);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 
@@ -90,7 +91,7 @@ public class ContentService {
         if (schoolIds != null && schoolIds.isEmpty()) {
             return R.Page.of(List.of(), 0, page, size);
         }
-        IPage<WallRow> p = wallQueryMapper.selectWall(new Page<>(page, size), keyword, status, category, authorId, schoolIds);
+        IPage<WallRow> p = wallQueryMapper.selectWall(new Page<>(page, size), SearchKit.words(keyword), status, category, authorId, schoolIds);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 
@@ -124,7 +125,7 @@ public class ContentService {
         if (schoolIds != null && schoolIds.isEmpty()) {
             return R.Page.of(List.of(), 0, page, size);
         }
-        IPage<GoodsRow> p = goodsQueryMapper.selectGoods(new Page<>(page, size), keyword, status, sellerId, schoolIds);
+        IPage<GoodsRow> p = goodsQueryMapper.selectGoods(new Page<>(page, size), SearchKit.words(keyword), status, sellerId, schoolIds);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 
@@ -155,7 +156,7 @@ public class ContentService {
     // ---------------- 评论 ----------------
 
     public R.Page<CommentRow> pageComments(String keyword, String targetType, Long userId, long page, long size) {
-        IPage<CommentRow> p = commentQueryMapper.selectComments(new Page<>(page, size), keyword, targetType, userId);
+        IPage<CommentRow> p = commentQueryMapper.selectComments(new Page<>(page, size), SearchKit.words(keyword), targetType, userId);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 

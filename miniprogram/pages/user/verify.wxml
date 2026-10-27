@@ -10,63 +10,98 @@
   <block wx:else>
     <!-- 说明 -->
     <view class="intro">
-      <view class="intro-title">为什么需要认证？</view>
-      <view class="intro-item">· 只有同校同学才能发布和交易，减少陌生人骚扰</view>
-      <view class="intro-item">· 学号仅用于校验收，公开展示时会打码</view>
-      <view class="intro-item">· 认证信息加密存储，不会展示给其他用户</view>
+      <view class="intro-title">认证后可以做什么？</view>
+      <view class="intro-item">· 发布闲置、发帖、写树洞，只有同校同学才能发</view>
+      <view class="intro-item">· 认证只用于确认学生身份，不会展示给其他用户</view>
+      <view class="intro-item">· 学校用于同校内容分区，学号展示时会打码</view>
     </view>
 
+    <!-- 认证方式切换：插件未开通时不显示，直接落到学生证通道 -->
+    <view class="mode-tabs" wx:if="{{wxEnabled}}">
+      <view class="mode-tab {{mode === 'wx' ? 'on' : ''}}" bindtap="switchMode" data-mode="wx">
+        <text>微信学生认证</text>
+        <text class="mode-badge">推荐</text>
+      </view>
+      <view class="mode-tab {{mode === 'manual' ? 'on' : ''}}" bindtap="switchMode" data-mode="manual">上传学生证</view>
+    </view>
+
+    <!-- 学校：两条通道都要选（微信只核学生身份，不返回学校） -->
     <view class="card">
       <view class="field row" bindtap="openPicker">
         <text class="field-label">所在学校</text>
         <view class="flex1 school-value {{schoolName ? '' : 'placeholder'}}">{{schoolName || '请选择学校'}}</view>
         <text class="arrow">›</text>
       </view>
-
-      <view class="field row">
-        <text class="field-label">学号</text>
-        <input
-          class="field-input"
-          placeholder="请输入学号"
-          placeholder-class="placeholder"
-          maxlength="20"
-          value="{{studentNo}}"
-          data-field="studentNo"
-          bindinput="onInput"
-        />
-      </view>
-
-      <view class="field row">
-        <text class="field-label">真实姓名</text>
-        <input
-          class="field-input"
-          placeholder="与学生证一致"
-          placeholder-class="placeholder"
-          maxlength="20"
-          value="{{realName}}"
-          data-field="realName"
-          bindinput="onInput"
-        />
-      </view>
+      <view class="school-tip" wx:if="{{mode === 'wx'}}">微信只核验你是否在读，学校需要你自己选，用于同校内容分区</view>
     </view>
 
-    <view class="card">
-      <view class="h2">学生证 / 校园卡照片</view>
-      <view class="muted mt8">请确保姓名、学号清晰可见，仅用于人工审核</view>
-      <view class="upload-area mt16">
-        <view class="upload-preview" wx:if="{{verifyImg}}">
-          <image class="upload-img" src="{{verifyImg}}" mode="aspectFill" bindtap="chooseImage" />
-          <view class="upload-del" bindtap="removeImage">重新上传</view>
+    <!-- ===== 通道一：微信学生身份认证 ===== -->
+    <block wx:if="{{mode === 'wx'}}">
+      <view class="wx-card">
+        <view class="wx-head">
+          <view class="wx-logo">🎓</view>
+          <view class="flex1">
+            <view class="wx-title">微信学生身份认证</view>
+            <view class="wx-sub">由微信联合学信网核验，通常 1 分钟完成</view>
+          </view>
         </view>
-        <view class="upload-btn" wx:else bindtap="chooseImage">
-          <text class="upload-plus">＋</text>
-          <text class="upload-text">上传照片</text>
+        <view class="wx-line">· 不用上传学生证，也不用填学号</view>
+        <view class="wx-line">· 核验在你自己的微信里完成，我们只拿到「是否为学生」的结论</view>
+        <view class="wx-line">· 仅支持内地高校在读生（专科 / 本科 / 硕博），需本人二代身份证</view>
+        <button class="btn btn-primary wx-btn" loading="{{wxSubmitting}}" bindtap="startWxVerify">开始微信认证</button>
+        <view class="wx-note">认证由微信官方插件提供。若未通过，可改用下方学生证认证</view>
+      </view>
+      <view class="fallback" bindtap="switchMode" data-mode="manual">没有通过？改用学生证认证 ›</view>
+    </block>
+
+    <!-- ===== 通道二：学生证材料（人工审核）===== -->
+    <block wx:else>
+      <view class="card">
+        <view class="field row">
+          <text class="field-label">学号</text>
+          <input
+            class="field-input"
+            placeholder="请输入学号"
+            placeholder-class="placeholder"
+            maxlength="20"
+            value="{{studentNo}}"
+            data-field="studentNo"
+            bindinput="onInput"
+          />
+        </view>
+
+        <view class="field row">
+          <text class="field-label">真实姓名</text>
+          <input
+            class="field-input"
+            placeholder="与学生证一致"
+            placeholder-class="placeholder"
+            maxlength="20"
+            value="{{realName}}"
+            data-field="realName"
+            bindinput="onInput"
+          />
         </view>
       </view>
-    </view>
 
-    <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">提交认证</button>
-    <view class="agree">提交即表示同意《校聚一城社区规范》与《隐私政策》</view>
+      <view class="card">
+        <view class="h2">学生证 / 校园卡照片</view>
+        <view class="muted mt8">请确保姓名、学号清晰可见，仅用于人工审核</view>
+        <view class="upload-area mt16">
+          <view class="upload-preview" wx:if="{{verifyImg}}">
+            <image class="upload-img" src="{{verifyImg}}" mode="aspectFill" bindtap="chooseImage" />
+            <view class="upload-del" bindtap="removeImage">重新上传</view>
+          </view>
+          <view class="upload-btn" wx:else bindtap="chooseImage">
+            <text class="upload-plus">＋</text>
+            <text class="upload-text">上传照片</text>
+          </view>
+        </view>
+      </view>
+
+      <button class="btn btn-primary submit" loading="{{submitting}}" bindtap="submit">提交认证</button>
+      <view class="agree">提交即表示同意《校聚一城社区规范》与《隐私政策》</view>
+    </block>
   </block>
 
   <!-- 学校选择弹层 -->
@@ -103,4 +138,15 @@
       </scroll-view>
     </view>
   </view>
+
+  <!-- 微信学生身份验证插件（官方）：show 控制弹层，isQuick=true 走「快速验证」
+       auth 返回 wx_studentcheck_code，reject 是用户拒绝授权，close 是关闭弹层 -->
+  <studentVerify
+    wx:if="{{wxEnabled}}"
+    show="{{showWxVerify}}"
+    isQuick="{{true}}"
+    bind:auth="onStudentVerifyAuth"
+    bind:reject="onStudentVerifyReject"
+    bind:close="onStudentVerifyClose"
+  ></studentVerify>
 </view>

@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS t_user (
   student_no    VARCHAR(32)  DEFAULT NULL COMMENT '学号',
   real_name     VARCHAR(32)  DEFAULT NULL COMMENT '真实姓名',
   verify_status TINYINT      NOT NULL DEFAULT 0 COMMENT '0未认证 1审核中 2已认证 3驳回',
+  -- 认证来源：0未认证 1学生证材料（人工）2微信学生认证（免材料）。
+  -- 微信通道不返回姓名/学号，所以 verify_status=2 不等于 real_name/student_no 有值。
+  verify_source TINYINT      NOT NULL DEFAULT 0 COMMENT '认证来源 0未认证 1学生证材料 2微信学生认证',
+  wx_student_verified TINYINT NOT NULL DEFAULT 0 COMMENT '微信学生身份是否已核验通过',
+  wx_student_status  TINYINT DEFAULT NULL COMMENT '微信 bind_status 1未绑定 2审核中 3已绑定',
+  wx_student_verify_at DATETIME DEFAULT NULL COMMENT '微信学生认证通过时间',
   verify_img    VARCHAR(255) DEFAULT NULL COMMENT '学生证/校园卡照片',
   verify_remark VARCHAR(255) DEFAULT NULL COMMENT '驳回原因',
   bio           VARCHAR(255) DEFAULT NULL,
@@ -46,6 +52,7 @@ CREATE TABLE IF NOT EXISTS t_user (
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_platform_openid (platform, openid),
   KEY idx_school (school_id, verify_status),
+  KEY idx_verify_source (verify_source),
   KEY idx_mute_until (mute_until)
 ) COMMENT '用户';
 
@@ -109,6 +116,24 @@ CREATE TABLE IF NOT EXISTS t_goods_order (
   KEY idx_buyer (buyer_id),
   KEY idx_seller (seller_id)
 ) COMMENT '购买意向单';
+
+-- 搜索词日志（闲置「大家都在搜」热词榜的数据源）
+-- 唯一键 (search_day, user_id, norm_keyword) 让「同人同日同词」只算一票：
+-- 刷榜天然失效，日志量也可控；游客统一记 user_id = 0。
+CREATE TABLE IF NOT EXISTS t_goods_search_log (
+  id           BIGINT      NOT NULL PRIMARY KEY,
+  keyword      VARCHAR(64) NOT NULL COMMENT '用户输入原文（已截断）',
+  norm_keyword VARCHAR(64) NOT NULL COMMENT '归一化关键词：按空格拆词后重新拼接，聚合口径',
+  user_id      BIGINT      NOT NULL DEFAULT 0 COMMENT '搜索者；游客记 0',
+  school_id    BIGINT      DEFAULT NULL COMMENT '搜索时的学校范围，NULL=未限定',
+  city         VARCHAR(32) DEFAULT NULL COMMENT '同城搜索的城市名',
+  result_count INT         NOT NULL DEFAULT 0 COMMENT '该次搜索命中条数；0 的不进热词榜',
+  search_day   DATE        NOT NULL COMMENT '按天分桶，唯一键的一部分',
+  created_at   DATETIME    DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_day_user_word (search_day, user_id, norm_keyword),
+  KEY idx_day_result (search_day, result_count),
+  KEY idx_norm_day (norm_keyword, search_day)
+) COMMENT '闲置搜索词日志（热词榜数据源，保留 90 天）';
 
 -- 通用点赞表（target_type: GOODS / WALL / POST）
 CREATE TABLE IF NOT EXISTS t_like (

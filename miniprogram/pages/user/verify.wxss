@@ -172,3 +172,103 @@
   font-size: 30rpx;
   font-weight: 700;
 }
+
+/* ==================== 认证方式切换 ==================== */
+.mode-tabs {
+  display: flex;
+  gap: 12rpx;
+  padding: 8rpx;
+  margin-bottom: 20rpx;
+  border-radius: 20rpx;
+  background: #F2F4F7;
+}
+.mode-tab {
+  flex: 1;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  border-radius: 16rpx;
+  font-size: 27rpx;
+  color: #6B7280;
+}
+.mode-tab.on {
+  background: #FFFFFF;
+  color: #15803D;
+  font-weight: 600;
+  box-shadow: 0 2rpx 10rpx rgba(15, 23, 42, 0.08);
+}
+.mode-badge {
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #E7F6EC;
+  color: #15803D;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+/* 学校提示（微信通道不返回学校，要说明为什么还得选） */
+.school-tip {
+  padding: 16rpx 0 4rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #8A8F99;
+  border-top: 1rpx solid #F1F3F6;
+  margin-top: 4rpx;
+}
+
+/* ==================== 微信学生认证卡片 ==================== */
+.wx-card {
+  padding: 30rpx 28rpx;
+  border-radius: 24rpx;
+  background: #F4FBF6;
+  border: 1rpx solid #D5EFDD;
+}
+.wx-head {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 18rpx;
+}
+.wx-logo {
+  width: 76rpx;
+  height: 76rpx;
+  flex: none;
+  border-radius: 22rpx;
+  background: #FFFFFF;
+  font-size: 40rpx;
+  line-height: 76rpx;
+  text-align: center;
+}
+.wx-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #14532D;
+}
+.wx-sub {
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: #5B7A66;
+}
+.wx-line {
+  font-size: 23rpx;
+  line-height: 1.8;
+  color: #456B54;
+}
+.wx-btn {
+  margin-top: 24rpx;
+}
+.wx-note {
+  margin-top: 16rpx;
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: #8A9A90;
+  text-align: center;
+}
+.fallback {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 25rpx;
+  color: #0E9A60;
+}

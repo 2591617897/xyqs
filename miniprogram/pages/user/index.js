@@ -317,17 +317,22 @@ Page({
     this.toggleTabBar(false)
   },
 
+  /** 我发布的 → 分包子页面（subpackages/me），不再是「闲置列表 + mine 模式」 */
   goMyGoods: function () {
     if (!this.guard()) return
-    // 「闲置」已不是 tab 页（底栏换成「功能区」）→ navigateTo，模式仍靠 globalData 传递
-    getApp().globalData.goodsMode = 'mine'
-    mp.navigateTo({ url: '/pages/goods/list' })
+    mp.navigateTo({ url: '/subpackages/me/goods/mine' })
   },
 
+  /** 已卖出 → 分包子页面：/goods/mine?status=2 的成交记录 */
+  goSold: function () {
+    if (!this.guard()) return
+    mp.navigateTo({ url: '/subpackages/me/goods/sold' })
+  },
+
+  /** 赞与收藏 → 分包子页面（点过赞的闲置，可在此取消收藏） */
   goFavorites: function () {
     if (!this.guard()) return
-    getApp().globalData.goodsMode = 'fav'
-    mp.navigateTo({ url: '/pages/goods/list' })
+    mp.navigateTo({ url: '/subpackages/me/favorite/index' })
   },
 
   /**
@@ -339,11 +344,11 @@ Page({
   },
 
   /**
-   * 「我的动态」入口：帖子 + 表白墙合并时间线。
+   * 「我的动态」入口：帖子 + 树洞合并时间线（分包子页面）。
    */
   goMyDynamic: function () {
     if (!this.guard()) return
-    mp.navigateTo({ url: '/pages/user/dynamic/index' })
+    mp.navigateTo({ url: '/subpackages/me/dynamic/index' })
   },
 
   openOrders: function () {

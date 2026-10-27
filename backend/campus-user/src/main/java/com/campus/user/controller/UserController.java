@@ -7,6 +7,7 @@ import com.campus.user.dto.UpdateProfileReq;
 import com.campus.user.dto.UserVO;
 import com.campus.user.dto.VerifyReq;
 import com.campus.user.dto.VerifyResp;
+import com.campus.user.dto.WxVerifyReq;
 import com.campus.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,16 @@ public class UserController {
     @PostMapping("/verify")
     public R<VerifyResp> verify(@RequestBody @Valid VerifyReq req) {
         return R.ok(userService.submitVerify(UserContext.requireUserId(), req));
+    }
+
+    /**
+     * 微信学生身份认证（免材料通道）：用授权插件的 code 换微信结论。
+     *
+     * <p>与 /verify 并列而不是合并成一个接口：两者入参语义完全不同
+     * （一个要材料，一个要一次性 code），合并会让校验逻辑互相污染。
+     */
+    @PostMapping("/verify/wx-student")
+    public R<VerifyResp> verifyByWxStudent(@RequestBody @Valid WxVerifyReq req) {
+        return R.ok(userService.submitWxStudentVerify(UserContext.requireUserId(), req));
     }
 }

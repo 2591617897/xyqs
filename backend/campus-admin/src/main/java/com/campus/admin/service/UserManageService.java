@@ -1,6 +1,8 @@
 package com.campus.admin.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.client.AdminWriteGateway;
@@ -16,6 +18,7 @@ import com.campus.admin.mapper.UserBlacklistMapper;
 import com.campus.admin.mapper.UserMuteMapper;
 import com.campus.admin.mapper.UserQueryMapper;
 import com.campus.admin.mapper.UserVerifyLogMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.crypto.SearchHash;
 import com.campus.common.exception.BizException;
@@ -65,7 +68,7 @@ public class UserManageService {
         }
         // 手机号列是密文，LIKE 搜不到；用盲索引做精确匹配（走 phone_hash 索引）
         String phoneHash = looksLikePhone(keyword) ? SearchHash.of("phone", keyword) : null;
-        IPage<UserRow> p = userQueryMapper.selectUsers(new Page<>(page, size), keyword, phoneHash, schoolId,
+        IPage<UserRow> p = userQueryMapper.selectUsers(new Page<>(page, size), SearchKit.words(keyword), phoneHash, schoolId,
                 verifyStatus, status, muted, blacklisted, schoolIds);
         // 列表页只给脱敏手机号：能定位到人即可，完整号码留给详情（详情有操作日志留痕）
         p.getRecords().forEach(row -> row.setPhone(maskPhone(row.getPhone())));
@@ -147,11 +150,12 @@ public class UserManageService {
     }
 
     public R.Page<UserBlacklist> pageBlacklist(String keyword, long page, long size) {
-        IPage<UserBlacklist> p = userBlacklistMapper.selectPage(new Page<>(page, size),
-                Wrappers.<UserBlacklist>lambdaQuery()
-                        .eq(UserBlacklist::getStatus, 1)
-                        .like(keyword != null && !keyword.isBlank(), UserBlacklist::getUserName, keyword)
-                        .orderByDesc(UserBlacklist::getCreatedAt));
+        LambdaQueryWrapper<UserBlacklist> qw = Wrappers.<UserBlacklist>lambdaQuery()
+                .eq(UserBlacklist::getStatus, 1)
+                .orderByDesc(UserBlacklist::getCreatedAt);
+        // 拉黑名单按昵称多词搜索，「张三 恶意」= 两个词都要在昵称里
+        SearchKit.andAllWords(qw, keyword, UserBlacklist::getUserName);
+        IPage<UserBlacklist> p = userBlacklistMapper.selectPage(new Page<>(page, size), qw);
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }
 

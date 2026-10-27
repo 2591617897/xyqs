@@ -33,11 +33,11 @@ public interface RegionDictMapper {
             + "SELECT id, name, province, city FROM t_school WHERE 1 = 1"
             + "<if test=\"province != null and province != ''\"> AND province = #{province}</if>"
             + "<if test=\"city != null and city != ''\"> AND city = #{city}</if>"
-            + "<if test=\"keyword != null and keyword != ''\">"
-            + " AND name LIKE CONCAT('%', #{keyword}, '%')</if>"
+            + "<if test=\"keywords != null and keywords.size() &gt; 0\">"
+            + " <foreach collection=\"keywords\" item=\"kw\"> AND name LIKE CONCAT('%', #{kw}, '%')</foreach></if>"
             + " ORDER BY sort DESC, id ASC"
             + "</script>")
     List<SchoolOption> selectSchools(@Param("province") String province,
                                      @Param("city") String city,
-                                     @Param("keyword") String keyword);
+                                     @Param("keywords") List<String> keywords);
 }

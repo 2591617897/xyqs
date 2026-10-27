@@ -3,11 +3,14 @@ package com.campus.user.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.campus.common.api.R;
 import com.campus.common.client.SecurityGuard;
+import com.campus.common.client.dto.StudentCheckReq;
+import com.campus.common.client.dto.StudentCheckVO;
 import com.campus.common.crypto.SearchHash;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.JwtService;
 import com.campus.user.client.GoodsCountClient;
 import com.campus.user.client.PostCountClient;
+import com.campus.user.client.StudentVerifyClient;
 import com.campus.user.client.WallCountClient;
 import com.campus.user.dto.LoginOrCreateReq;
 import com.campus.user.dto.ProfileVO;
@@ -17,6 +20,7 @@ import com.campus.user.dto.UserBrief;
 import com.campus.user.dto.UserVO;
 import com.campus.user.dto.VerifyReq;
 import com.campus.user.dto.VerifyResp;
+import com.campus.user.dto.WxVerifyReq;
 import com.campus.user.entity.User;
 import com.campus.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
@@ -43,6 +48,7 @@ public class UserService {
     private final PostCountClient postCountClient;
     private final WallCountClient wallCountClient;
     private final SecurityGuard securityGuard;
+    private final StudentVerifyClient studentVerifyClient;
 
     @Value("${campus.verify.auto-approve:true}")
     private boolean autoApprove;
@@ -125,6 +131,8 @@ public class UserService {
         vo.setStudentNo(maskStudentNo(user.getStudentNo()));
         vo.setRealName(maskName(user.getRealName()));
         vo.setVerifyStatus(user.getVerifyStatus());
+        vo.setVerifySource(user.getVerifySource());
+        vo.setWxStudentVerified(user.getWxStudentVerified());
         vo.setVerifyRemark(user.getVerifyRemark());
         vo.setVerifyImg(user.getVerifyImg());
         vo.setFansCount(nz(user.getFansCount()));
@@ -251,12 +259,80 @@ public class UserService {
         user.setRealName(req.getRealName().trim());
         user.setVerifyImg(req.getVerifyImg());
         user.setVerifyStatus(autoApprove ? 2 : 1);
+        user.setVerifySource(1);
         user.setVerifyRemark("");
         userMapper.updateById(user);
 
         String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
-        String msg = autoApprove ? "认证成功，欢迎来到校园聚" : "已提交认证，预计 1 个工作日内完成审核";
+        String msg = autoApprove ? "认证成功，欢迎来到校聚一城" : "已提交认证，预计 1 个工作日内完成审核";
         return new VerifyResp(user.getVerifyStatus(), token, msg);
+    }
+
+    /**
+     * 微信学生身份认证（免材料通道）。
+     *
+     * <p>与 {@link #submitVerify} 的区别：
+     * <ul>
+     *   <li>不要求学号 / 姓名 / 学生证照片——微信侧已经核过学籍，再要材料是重复收集个人信息；</li>
+     *   <li>不落 code（一次性凭据，且含学籍查询能力）；</li>
+     *   <li>通过即认证成功（verifyStatus=2），不走 auto-approve 那个开关——
+     *       人工开关是给「自己看照片」用的，微信结论不需要二次审核。</li>
+     * </ul>
+     *
+     * <p>仍然要求学校：微信不返回学校，而本站的内容分区（同校/同城）依赖 school_id，
+     * 不选学校就会让「本校」筛选退化成全站。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public VerifyResp submitWxStudentVerify(Long userId, WxVerifyReq req) {
+        User user = requireUser(userId);
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new BizException("账号已被封禁，无法认证");
+        }
+        if (user.getVerifyStatus() != null && user.getVerifyStatus() == 2) {
+            throw new BizException("你已完成身份认证");
+        }
+        if (req.getSchoolId() == null || userMapper.countSchool(req.getSchoolId()) == 0) {
+            throw new BizException("所选学校不存在，请重新选择");
+        }
+
+        R<StudentCheckVO> res;
+        try {
+            res = studentVerifyClient.check(new StudentCheckReq(userId, req.getCode()));
+        } catch (Exception e) {
+            // 网络 / 服务未起 / 超时：不能把「调用挂了」说成「你不是学生」
+            log.warn("微信学生认证调用失败 userId={}: {}: {}", userId, e.getClass().getSimpleName(), e.getMessage());
+            throw new BizException("微信学生认证服务暂时不可用，请稍后再试或改用学生证认证");
+        }
+        if (res == null) {
+            throw new BizException("微信学生认证服务暂时不可用，请稍后再试或改用学生证认证");
+        }
+        if (res.getCode() != 0) {
+            // auth 侧已经把微信错误码翻译成用户话术，这里原样透传
+            throw new BizException(res.getMsg() == null ? "微信学生认证未通过" : res.getMsg());
+        }
+        StudentCheckVO check = res.getData();
+        if (check == null) {
+            throw new BizException("微信学生认证未返回结果，请稍后再试");
+        }
+        if (!check.passed()) {
+            if (check.bindStatus() != null && check.bindStatus() == 2) {
+                throw new BizException("微信正在核验你的学籍，请稍后再查看");
+            }
+            throw new BizException("微信未确认你的学生身份，可改用学生证认证");
+        }
+
+        user.setSchoolId(req.getSchoolId());
+        user.setVerifyStatus(2);
+        user.setVerifySource(2);
+        user.setWxStudentVerified(1);
+        user.setWxStudentStatus(check.bindStatus());
+        user.setWxStudentVerifyAt(LocalDateTime.now());
+        user.setVerifyRemark("");
+        userMapper.updateById(user);
+
+        // JWT 里的 schoolId / vs 是登录快照，认证后必须重签，否则前端仍是「未认证」
+        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
+        return new VerifyResp(2, token, "微信学生认证通过，欢迎来到校聚一城");
     }
 
     public UserBrief brief(Long userId) {

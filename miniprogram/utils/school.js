@@ -16,6 +16,7 @@
  *      此时**不能**退化成一条 80 多条铺到底的长列表 —— 按城市分组，用户至少能自己找。
  */
 var http = require('./request')
+var kwUtil = require('./kw')
 var mp = require('./util').mp
 
 /** 推荐区最多展示多少所（其余仍留在「全部学校」里，不会丢） */
@@ -230,13 +231,12 @@ function buildList(schools, city, limit) {
   return out
 }
 
-/** 关键词过滤：学校名或城市命中 */
+/**
+ * 关键词过滤：学校名或城市命中。
+ * 支持多词：「贵州 师范」= 名字里同时含这两个词 —— 和 /schools 接口的搜索口径一致。
+ */
 function search(schools, keyword) {
-  var kw = String(keyword || '').trim()
-  if (!kw) return schools || []
-  return (schools || []).filter(function (s) {
-    return (s.name && s.name.indexOf(kw) >= 0) || (s.city && s.city.indexOf(kw) >= 0)
-  })
+  return kwUtil.filterList(schools || [], ['name', 'city'], keyword)
 }
 
 module.exports = {

@@ -75,6 +75,20 @@ campus:
     # 未配置时回调一律拒绝——宁可丢审核结果，也不能让任意人往台账写数据。
     # 配置位置：公众平台 → 开发管理 → 开发设置 → 消息推送 → Token
     callback-token: ${WX_CALLBACK_TOKEN:}
+    student-verify:
+      # 微信学生身份快速验证（quickcheckstudentidentity）总开关。
+      # 开通前置条件（缺一不可，都在小程序后台做）：
+      #   ① 主体为境内非个人 + 已微信认证 + 近 3 个月无严重违规
+      #   ② 服务类目在官方白名单（教育/生活服务/工具/电商/餐饮/旅游/文娱等；
+      #      「社交-社区/论坛」不在白名单，社区类目需要先确认能否申请）
+      #   ③ 后台「功能 → 学生验证」提交申请并通过（3-5 个工作日）
+      #   ④ 后台「设置 → 第三方设置 → 插件管理」添加「微信学生身份验证」插件
+      # 未开通时保持 false：小程序会走学生证通道，不会出现「点了没反应」。
+      enabled: ${WX_STUDENT_VERIFY:false}
+      # 本地 mock：跳过微信调用，直接返回「已认证」。
+      # 只用于还没拿到能力授权时联调页面与落库，**生产必须 false**
+      # （scripts/security-baseline-check.js 会扫这个开关）。
+      mock: ${WX_STUDENT_VERIFY_MOCK:false}
   qq:
     # QQ 小程序（保留兼容，需要时填上即可）
     appid: ${QQ_APPID:}

@@ -13,6 +13,7 @@
  */
 
 const { mp } = require('./util')
+const kwUtil = require('./kw')
 
 const DB_KEY = 'mock_db_v1'
 const SCHOOL_ID = 1005
@@ -1158,6 +1159,15 @@ const CATEGORIES = Object.keys(CATEGORY).map(function (k) {
   return { id: Number(k), name: CATEGORY[k].name, icon: CATEGORY[k].icon }
 })
 
+/**
+ * 搜索热词（mock）。
+ *
+ * 真接口 GET /goods/hot-words 是「近 7 天真实搜索」聚合，本地没有日志可聚合，
+ * 所以这里直接返回和后端 FALLBACK、前端 FALLBACK_HOTS 一致的那批词 ——
+ * 三处保持同一份，mock 环境下看到的词和线上冷启动时完全一样。
+ */
+const MOCK_HOT_WORDS = ['自行车', '考研书', '显示器', '电动车', '台灯', '耳机', '球拍', '被子']
+
 function splitImages(images) {
   if (!images) return []
   return String(images)
@@ -1340,9 +1350,9 @@ function queryGoods(q) {
     })
   }
   if (q.keyword) {
-    const kw = String(q.keyword).toLowerCase()
+    // 多词 AND：与后端 GoodsService 的搜索语义一致，mock 下才能验证「苹果 手机」这类组合
     list = list.filter(function (g) {
-      return (g.title + ' ' + (g.description || '') + ' ' + (g.location || '')).toLowerCase().indexOf(kw) >= 0
+      return kwUtil.matchText([g.title, g.description || '', g.location || ''].join(' '), q.keyword)
     })
   }
   const sort = q.sort || 'latest'
@@ -2180,10 +2190,8 @@ function route(method, url, data) {
     return ok({ province: '浙江省', city: '杭州市', district: '西湖区', available: true })
   }
   if (s[0] === 'schools' && M === 'GET') {
-    const kw = q.keyword ? String(q.keyword) : ''
-    const list = db.schools.filter(function (x) {
-      return !kw || x.name.indexOf(kw) >= 0 || x.city.indexOf(kw) >= 0
-    })
+    // 多词 AND，口径同 /schools
+    const list = kwUtil.filterList(db.schools, ['name', 'city'], q.keyword)
     return ok(list)
   }
 
@@ -2278,6 +2286,8 @@ function route(method, url, data) {
     if (s.length === 1 && M === 'GET') return ok(queryGoods(q))
     if (s.length === 1 && M === 'POST') return ok(createGoods(q))
     if (s[1] === 'categories' && M === 'GET') return ok(CATEGORIES)
+    // 必须排在下面的「两位路径 GET → 商品详情」之前，否则 hot-words 会被当成商品 id
+    if (s[1] === 'hot-words' && M === 'GET') return ok(MOCK_HOT_WORDS)
     if (s[1] === 'mine' && M === 'GET') return ok(myGoods(q))
     if (s[1] === 'favorites' && M === 'GET') return ok(myFavorites())
     if (s[1] === 'orders' && s[2] === 'mine' && M === 'GET') return ok(myOrders(q.role))

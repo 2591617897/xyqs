@@ -11,6 +11,7 @@ import com.campus.admin.mapper.AdminRegionLeaderMapper;
 import com.campus.admin.mapper.AdminRegionMapper;
 import com.campus.admin.mapper.AdminUserMapper;
 import com.campus.admin.mapper.RegionDictMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -242,6 +243,6 @@ public class RegionService {
 
     /** 校区下拉（可按省 / 市过滤，按名称搜索），供「关联校区」选择器使用 */
     public List<SchoolOption> schoolOptions(String province, String city, String keyword) {
-        return dictMapper.selectSchools(province, city, keyword);
+        return dictMapper.selectSchools(province, city, SearchKit.words(keyword));
     }
 }

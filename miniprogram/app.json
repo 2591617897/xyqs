@@ -15,7 +15,6 @@
     "pages/post/publish",
     "pages/user/verify",
     "pages/user/follow/index",
-    "pages/user/dynamic/index",
     "pages/messages/index",
     "pages/chat/index",
     "pages/legal/agreement",
@@ -25,6 +24,38 @@
     "pages/report/report",
     "pages/notice/index"
   ],
+  "subPackages": [
+    {
+      "root": "subpackages/me",
+      "name": "me",
+      "pages": [
+        "goods/mine",
+        "goods/sold",
+        "dynamic/index",
+        "favorite/index"
+      ]
+    },
+    {
+      "root": "subpackages/msg",
+      "name": "msg",
+      "pages": [
+        "notice/like",
+        "notice/fans",
+        "notice/comment",
+        "notice/system"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/user/index": {
+      "network": "all",
+      "packages": ["subpackages/me"]
+    },
+    "pages/messages/index": {
+      "network": "all",
+      "packages": ["subpackages/msg"]
+    }
+  },
   "window": {
     "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#FFFFFF",
@@ -45,7 +76,7 @@
       },
       {
         "pagePath": "pages/zone/index",
-        "text": "功能"
+        "text": "功能区"
       },
       {
         "pagePath": "pages/messages/index",

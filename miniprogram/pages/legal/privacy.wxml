@@ -34,6 +34,11 @@
         <view class="doc-td">是（发帖 / 评论 / 私信前）</view>
       </view>
       <view class="doc-tr">
+        <view class="doc-td">微信学生身份认证结果（是否为在读学生）</view>
+        <view class="doc-td">替代上传学生证，快速完成校园身份认证</view>
+        <view class="doc-td">是（你主动授权后，由微信返回结论）</view>
+      </view>
+      <view class="doc-tr">
         <view class="doc-td">你发布的文字、图片、联系方式</view>
         <view class="doc-td">在本平台展示、供同校同学联系你</view>
         <view class="doc-td">按需填写（你决定发什么）</view>
@@ -113,7 +118,7 @@
     <view class="doc-p">5.1 你的数据存储在安全等级符合国家标准的云服务器上，传输采用 HTTPS，敏感字段（如学号、手机号）在存储时加密或脱敏处理。</view>
     <view class="doc-p">5.2 我们采用常规技术手段保障数据安全，但互联网环境并非绝对安全，如发生信息泄露，我们将第一时间通知你并采取补救措施。</view>
     <view class="doc-p">5.3 我们仅为你本人授权的用途留存数据，不再需要的信息会及时删除。账号注销后，个人数据在 30 天内彻底清除。</view>
-    <view class="doc-p">5.4 学生证等认证照片仅用于人工核验，核验完成后不在公开区域展示，也不会用于其他用途。</view>
+    <view class="doc-p">5.4 学生证等认证照片仅用于人工核验，核验完成后不在公开区域展示，也不会用于其他用途。若你选择「微信学生认证」，我们不会接收你的学生证照片、学号或身份信息原文，仅接收微信返回的「是否为学生」的结论与绑定状态，该结论仅用于开通本平台的发布权限。</view>
   </view>
 
   <view class="doc-section">

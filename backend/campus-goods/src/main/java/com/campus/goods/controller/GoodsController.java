@@ -8,6 +8,7 @@ import com.campus.goods.entity.Goods;
 import com.campus.goods.entity.GoodsComment;
 import com.campus.goods.entity.GoodsOrder;
 import com.campus.goods.service.GoodsService;
+import com.campus.goods.service.HotWordsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -30,6 +31,8 @@ import java.util.List;
 public class GoodsController {
 
     private final GoodsService goodsService;
+
+    private final HotWordsService hotWordsService;
 
     /**
      * 商品列表（未登录也可浏览）。
@@ -62,6 +65,21 @@ public class GoodsController {
     @GetMapping("/categories")
     public R<List<GoodsService.CategoryVO>> categories() {
         return R.ok(goodsService.categories());
+    }
+
+    /**
+     * 搜索热词「大家都在搜」。
+     *
+     * <p>数据来自近 N 天真实的搜索日志聚合（同人同日同词只算一次，刷不上去），
+     * 只统计「搜出过结果」的关键词；日志还没攒够时自动用默认词补齐，
+     * 所以这个接口<b>永远返回一屏可点的词</b>，前端不必再兜空态。
+     *
+     * <p>游客也能访问：路径落在 /api/goods 前缀下，网关对该前缀只放行 GET。
+     */
+    @GetMapping("/hot-words")
+    public R<List<String>> hotWords(@RequestParam(required = false, name = "days") Integer days,
+                                    @RequestParam(required = false, name = "limit") Integer limit) {
+        return R.ok(hotWordsService.top(days, limit));
     }
 
     /** 我发布的商品 */

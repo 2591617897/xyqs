@@ -1,6 +1,15 @@
 const http = require('../../utils/request')
-const { mp, timeAgo } = require('../../utils/util')
+const kwUtil = require('../../utils/kw')
+const { mp, timeAgo, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
+
+/** 四宫格 → 分包页面（与 subpackages/msg/notice 下四个页面一一对应） */
+const NOTICE_PAGE = {
+  '赞与收藏': '/subpackages/msg/notice/like',
+  '新增粉丝': '/subpackages/msg/notice/fans',
+  '评论与@': '/subpackages/msg/notice/comment',
+  '官方通知': '/subpackages/msg/notice/system'
+}
 
 Page({
   data: {
@@ -25,12 +34,7 @@ Page({
     filter: 'all',
     /** 当前处于左滑展开状态的会话 id（受控，保证同时只有一个展开） */
     openSwipeId: '',
-    /** 通知抽屉 */
-    notifyDrawerOpen: false,
-    notifyDrawerTitle: '',
-    notifyDrawerItems: [],
-    notifyDrawerLoading: false,
-    notifyDrawerTypes: []
+    /** 四宫格不再弹抽屉：每类通知都是一个分包页面（subpackages/msg） */
   },
 
   onLoad: function () {
@@ -60,13 +64,6 @@ Page({
       this.getTabBar().setData({ selected: 3, hidden: false })
     }
     this.load()
-  },
-
-  onHide: function () {
-    // 带着通知抽屉切走时兜底收起，否则底栏会停在隐藏态
-    if (this.data.notifyDrawerOpen) {
-      this.setData({ notifyDrawerOpen: false })
-    }
   },
 
   load: function () {
@@ -130,11 +127,8 @@ Page({
     const kw = (this.data.keyword || '').trim()
     const f = this.data.filter
     let list = this.data.allConvos.slice()
-    if (kw) {
-      list = list.filter(function (c) {
-        return (c.peerName || '').indexOf(kw) >= 0 || (c.lastText || '').indexOf(kw) >= 0
-      })
-    }
+    // 多词搜索：空格分隔的词都要命中（昵称 / 最后一条消息，任一处命中该词即可）
+    list = kwUtil.filterList(list, ['peerName', 'lastText'], kw)
     if (f === 'trade') {
       list = list.filter(function (c) { return !!c.goodsCard })
     } else if (f === 'echo') {
@@ -149,76 +143,24 @@ Page({
     this.setData({ showTip: false })
   },
 
-  /** 快捷入口：点分类 badge → 打开 bottom-sheet 通知列表 */
+  /**
+   * 快捷入口：四宫格 → 各自的**独立子页面**（分包 subpackages/msg）。
+   *
+   * 以前这里是同页 bottom-sheet 抽屉：通知一多只能在抽屉里滚，抽屉还会压住自定义
+   * tabBar（得手动 toggleTabBar），也没法下拉刷新。现在每类一个页面，支持
+   * 下拉刷新 / 上拉分页 / 单页标已读，主包也不再背这堆模板和样式。
+   */
   onQuick: function (e) {
-    const self = this
     const name = e.currentTarget.dataset.name
-    const typeMap = {
-      '赞与收藏': ['LIKE_GOODS', 'LIKE_POST', 'LIKE_WALL'],
-      '新增粉丝': ['NEW_FOLLOWER'],
-      '评论与@': ['COMMENT_POST', 'COMMENT_WALL', 'COMMENT_GOODS', 'MENTION'],
-      '官方通知': ['SYSTEM']
+    const url = NOTICE_PAGE[name]
+    if (!url) return
+    // 通知接口都需要登录，游客点进来只会在子页面里撞 401 → 这里先拦住
+    if (!http.getToken()) {
+      toast('登录后查看' + name)
+      this.setData({ needLogin: true })
+      return
     }
-    const types = typeMap[name] || []
-    this.setData({ notifyDrawerTitle: name, notifyDrawerTypes: types, notifyDrawerItems: [], notifyDrawerOpen: true, notifyDrawerLoading: true })
-    this.toggleTabBar(true)
-    // 拉全部类型，前端过滤（后端无多 type OR 查询，先拉全量）
-    http.get('/messages/notifications?size=30', null, { silent: true }).then(function (res) {
-      const items = (res.records || [])
-        .filter(function (n) { return types.indexOf(n.type) >= 0 })
-        .map(function (n) {
-          n.timeText = shortTime(n.createdAt)
-          n.unread = Number(n.isRead) === 0
-          return n
-        })
-      self.setData({ notifyDrawerItems: items, notifyDrawerLoading: false })
-    }).catch(function () {
-      self.setData({ notifyDrawerLoading: false })
-      mp.showToast({ title: '加载失败', icon: 'none' })
-    })
-  },
-
-  closeNotifyDrawer: function () {
-    this.setData({ notifyDrawerOpen: false })
-    this.toggleTabBar(false)
-  },
-
-  /** 抽屉内「全部标为已读」 */
-  onMarkCurrentRead: function () {
-    const self = this
-    const types = this.data.notifyDrawerTypes
-    Promise.all(types.map(function (t) {
-      return http.post('/messages/notifications/read/' + t, null, { silent: true })
-    })).then(function () {
-      const items = self.data.notifyDrawerItems.map(function (n) { n.unread = false; return n })
-      self.setData({ notifyDrawerItems: items })
-      self.load()
-      mp.showToast({ title: '已全部标为已读', icon: 'none' })
-    })
-  },
-
-  /** 点通知卡片跳关联详情 */
-  goNotifyDetail: function (e) {
-    const item = this.data.notifyDrawerItems[e.currentTarget.dataset.index]
-    if (!item) return
-    // 自动标记已读（乐观更新）
-    const items = this.data.notifyDrawerItems
-    items[e.currentTarget.dataset.index].unread = false
-    this.setData({ notifyDrawerItems: items })
-    // 后端标记单条
-    http.post('/messages/notifications/read/' + item.type, null, { silent: true })
-    // 路由跳转
-    let url = ''
-    const targetId = item.targetId
-    const actorId = item.actorId
-    switch (item.targetType) {
-      case 'GOODS': url = '/pages/goods/detail?id=' + targetId; break
-      case 'POST': url = '/pages/post/detail?id=' + targetId; break
-      case 'WALL': url = '/pages/wall/detail?id=' + targetId; break
-      case 'FOCUS': url = '/pages/user/space/space?id=' + actorId; break
-      default: break
-    }
-    if (url) mp.navigateTo({ url: url })
+    mp.navigateTo({ url: url })
   },
 
   markAllRead: function () {
@@ -299,18 +241,6 @@ Page({
   syncTabUnread: function (n) {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ unread: Number(n) || 0 })
-    }
-  },
-
-  /**
-   * 弹层需要盖住自定义 tabBar。
-   *
-   * 自定义 tabBar 由框架层渲染（`custom-tab-bar/`），页面里的 z-index 再高也压不住它，
-   * 官方给定的做法是由页面把它隐藏掉（`.tabbar-hidden`），否则抽屉底部会被底栏切掉。
-   */
-  toggleTabBar: function (hide) {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ hidden: !!hide })
     }
   },
 

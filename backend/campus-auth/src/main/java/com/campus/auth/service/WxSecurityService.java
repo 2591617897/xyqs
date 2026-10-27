@@ -484,9 +484,14 @@ public class WxSecurityService {
     /**
      * 取 access_token（进程内缓存）。
      *
+     * <p><b>为什么是 public</b>：微信学生身份核验（{@code WxStudentService}）用的是同一个
+     * appid/secret、同一份 token 配额。如果各写一套缓存，两个服务各自刷 token 会互相把对方的
+     * 令牌顶掉（微信同一 appid 刷新会失效旧 token），线上表现为随机 40001。
+     * 所以这里把方法开放出来复用，<b>不要</b>在别处再写一份 fetchToken。
+     *
      * @param forceRefresh true 时忽略缓存强制刷新
      */
-    private synchronized String accessToken(boolean forceRefresh) {
+    public synchronized String accessToken(boolean forceRefresh) {
         long now = System.currentTimeMillis();
         if (!forceRefresh && cachedToken != null && now < tokenExpireAt) {
             return cachedToken;

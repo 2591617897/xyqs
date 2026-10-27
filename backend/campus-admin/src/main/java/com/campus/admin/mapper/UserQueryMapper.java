@@ -41,9 +41,12 @@ public interface UserQueryMapper {
             + "FROM t_user u "
             + "LEFT JOIN t_school s ON s.id = u.school_id "
             + "WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (u.nickname LIKE CONCAT('%', #{keyword}, '%') "
-            + "       <if test='phoneHash != null'>OR u.phone_hash = #{phoneHash}</if>) "
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            // 昵称走多词 AND（括号包住），手机号盲索引是精确命中，只能整体 OR 在括号外：
+            // ((昵称含甲 AND 昵称含乙) OR phone_hash = 甲) —— 不会把 AND 语义破坏掉。
+            + "  AND (("
+            + "    <foreach collection='keywords' item='kw' separator=' AND '>u.nickname LIKE CONCAT('%', #{kw}, '%')</foreach>"
+            + "  )<if test='phoneHash != null'> OR u.phone_hash = #{phoneHash}</if>) "
             + "</if>"
             + "<if test='schoolId != null'>AND u.school_id = #{schoolId} </if>"
             + "<if test='verifyStatus != null'>AND u.verify_status = #{verifyStatus} </if>"
@@ -56,7 +59,7 @@ public interface UserQueryMapper {
             + "ORDER BY u.id DESC"
             + "</script>")
     IPage<UserRow> selectUsers(IPage<UserRow> page,
-                               @Param("keyword") String keyword,
+                               @Param("keywords") List<String> keywords,
                                @Param("phoneHash") String phoneHash,
                                @Param("schoolId") Long schoolId,
                                @Param("verifyStatus") Integer verifyStatus,

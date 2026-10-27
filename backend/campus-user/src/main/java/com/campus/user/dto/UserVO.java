@@ -43,6 +43,12 @@ public class UserVO {
 
     private Integer verifyStatus;
 
+    /** 认证来源 0未认证 1学生证材料 2微信学生认证（前端展示「微信认证」徽标用） */
+    private Integer verifySource;
+
+    /** 微信学生身份是否已核验通过 */
+    private Integer wxStudentVerified;
+
     private String verifyRemark;
 
     private String verifyImg;

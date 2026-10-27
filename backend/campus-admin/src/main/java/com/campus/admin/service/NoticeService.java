@@ -1,12 +1,15 @@
 package com.campus.admin.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.config.AdminContext;
 import com.campus.admin.dto.NoticeStatVO;
 import com.campus.admin.entity.AdminNotice;
 import com.campus.admin.mapper.AdminNoticeMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -42,15 +45,15 @@ public class NoticeService {
 
     public R.Page<AdminNotice> pageNotices(String keyword, Integer status, Integer popupMode,
                                            Integer targetType, long page, long size) {
-        IPage<AdminNotice> p = noticeMapper.selectPage(new Page<>(page, size),
-                Wrappers.<AdminNotice>lambdaQuery()
-                        .like(keyword != null && !keyword.isBlank(), AdminNotice::getTitle, keyword)
-                        .eq(status != null, AdminNotice::getStatus, status)
-                        // popupMode=0 是有效筛选值（筛「不弹窗」），所以只能用 null 判断
-                        .eq(popupMode != null, AdminNotice::getPopupMode, popupMode)
-                        .eq(targetType != null, AdminNotice::getTargetType, targetType)
-                        .orderByDesc(AdminNotice::getLevel)
-                        .orderByDesc(AdminNotice::getId));
+        LambdaQueryWrapper<AdminNotice> qw = Wrappers.<AdminNotice>lambdaQuery()
+                .eq(status != null, AdminNotice::getStatus, status)
+                // popupMode=0 是有效筛选值（筛「不弹窗」），所以只能用 null 判断
+                .eq(popupMode != null, AdminNotice::getPopupMode, popupMode)
+                .eq(targetType != null, AdminNotice::getTargetType, targetType)
+                .orderByDesc(AdminNotice::getLevel)
+                .orderByDesc(AdminNotice::getId);
+        SearchKit.andAllWords(qw, keyword, AdminNotice::getTitle);
+        IPage<AdminNotice> p = noticeMapper.selectPage(new Page<>(page, size), qw);
         fillStats(p.getRecords());
         return R.Page.of(p.getRecords(), p.getTotal(), page, size);
     }

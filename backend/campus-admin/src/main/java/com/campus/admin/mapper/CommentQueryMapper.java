@@ -31,13 +31,15 @@ public interface CommentQueryMapper {
             + "         c.user_id userId, c.user_name userName, c.content, c.images, c.created_at createdAt "
             + "  FROM t_goods_comment c LEFT JOIN t_goods g ON g.id = c.goods_id "
             + ") t WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>AND t.content LIKE CONCAT('%', #{keyword}, '%') </if>"
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>AND t.content LIKE CONCAT('%', #{kw}, '%') </foreach>"
+            + "</if>"
             + "<if test='targetType != null and targetType != &apos;&apos;'>AND t.targetType = #{targetType} </if>"
             + "<if test='userId != null'>AND t.userId = #{userId} </if>"
             + "ORDER BY t.createdAt DESC"
             + "</script>")
     IPage<CommentRow> selectComments(IPage<CommentRow> page,
-                                     @Param("keyword") String keyword,
+                                     @Param("keywords") List<String> keywords,
                                      @Param("targetType") String targetType,
                                      @Param("userId") Long userId);
 }

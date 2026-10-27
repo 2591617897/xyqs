@@ -263,6 +263,29 @@ if (!exists('deploy/env.example')) warn('配置管理', '缺少 deploy/env.examp
 const BACKUP = read('scripts/backup-db.sh') || ''
 if (!/openssl enc|gpg/.test(BACKUP)) warn('备份', '备份脚本未加密')
 
+// ---------------------------------------------------------------- 9. 微信学生认证
+// mock 一旦在默认配置里是 true，任何人都能一键变成「已认证学生」，
+// 属于最容易被临时改完忘记改回来的开关，所以把它钉成会失败的断言。
+const AUTH_YML = read('backend/campus-auth/src/main/resources/application.yml') || ''
+const studentMock = AUTH_YML.match(/WX_STUDENT_VERIFY_MOCK:([^}\s]*)/)
+if (studentMock && studentMock[1].trim() === 'true') {
+  fail('学生认证', 'WX_STUDENT_VERIFY_MOCK 默认值不能是 true（生产会人人认证通过）')
+} else if (!studentMock) {
+  warn('学生认证', 'application.yml 缺少 student-verify 配置段')
+}
+
+// 前端开关与插件声明必须同步：只开开关不声明插件，用户点了「开始微信认证」不会有任何反应
+const MP_CFG = read('miniprogram/utils/config.js') || ''
+const APP_JSON_TXT = read('miniprogram/app.json') || ''
+const wxStudentOn = /WX_STUDENT_VERIFY:\s*true/.test(MP_CFG)
+const pluginDeclared = /"studentVerify"\s*:/.test(APP_JSON_TXT) && /wxa16657d57059e0f0/.test(APP_JSON_TXT)
+if (wxStudentOn && !pluginDeclared) {
+  warn('学生认证', '已开启 WX_STUDENT_VERIFY 但 app.json 未声明 studentVerify 插件，按钮会无响应')
+}
+if (!wxStudentOn && pluginDeclared) {
+  warn('学生认证', 'app.json 声明了插件但前端开关是 false，多了一处无效声明')
+}
+
 // ---------------------------------------------------------------- 输出
 const okCount = failures.length === 0
 console.log('')

@@ -1,6 +1,8 @@
 package com.campus.admin.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.config.AdminAuthInterceptor;
 import com.campus.admin.dto.AdminRoleReq;
@@ -10,6 +12,7 @@ import com.campus.admin.entity.AdminUserRole;
 import com.campus.admin.mapper.AdminRoleMapper;
 import com.campus.admin.mapper.AdminRoleMenuMapper;
 import com.campus.admin.mapper.AdminUserRoleMapper;
+import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -41,13 +44,11 @@ public class RoleService {
     private final AdminUserRoleMapper adminUserRoleMapper;
 
     public R.Page<AdminRole> page(String keyword, Integer status, long page, long size) {
-        Page<AdminRole> p = adminRoleMapper.selectPage(new Page<>(page, size),
-                Wrappers.<AdminRole>lambdaQuery()
-                        .and(StringUtils.hasText(keyword), w -> w
-                                .like(AdminRole::getName, keyword)
-                                .or().like(AdminRole::getCode, keyword))
-                        .eq(status != null, AdminRole::getStatus, status)
-                        .orderByDesc(AdminRole::getSort));
+        LambdaQueryWrapper<AdminRole> qw = Wrappers.<AdminRole>lambdaQuery()
+                .eq(status != null, AdminRole::getStatus, status)
+                .orderByDesc(AdminRole::getSort);
+        SearchKit.andAllWords(qw, keyword, AdminRole::getName, AdminRole::getCode);
+        Page<AdminRole> p = adminRoleMapper.selectPage(new Page<>(page, size), qw);
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 

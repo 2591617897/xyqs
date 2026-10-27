@@ -26,8 +26,10 @@ public interface WallQueryMapper {
             + "LEFT JOIN t_school s ON s.id = w.school_id "
             + "LEFT JOIN t_user u ON u.id = w.user_id "
             + "WHERE 1 = 1 "
-            + "<if test='keyword != null and keyword != &apos;&apos;'>"
-            + "  AND (w.content LIKE CONCAT('%', #{keyword}, '%') OR w.anon_name LIKE CONCAT('%', #{keyword}, '%')) "
+            + "<if test='keywords != null and keywords.size() &gt; 0'>"
+            + "  <foreach collection='keywords' item='kw'>"
+            + "    AND (w.content LIKE CONCAT('%', #{kw}, '%') OR w.anon_name LIKE CONCAT('%', #{kw}, '%')) "
+            + "  </foreach>"
             + "</if>"
             + "<if test='status != null'>AND w.status = #{status} </if>"
             + "<if test='category != null and category != &apos;&apos;'>AND w.category = #{category} </if>"
@@ -38,7 +40,7 @@ public interface WallQueryMapper {
             + "ORDER BY w.id DESC"
             + "</script>")
     IPage<WallRow> selectWall(IPage<WallRow> page,
-                              @Param("keyword") String keyword,
+                              @Param("keywords") List<String> keywords,
                               @Param("status") Integer status,
                               @Param("category") String category,
                               @Param("authorId") Long authorId,
