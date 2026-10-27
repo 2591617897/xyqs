@@ -1,0 +1,144 @@
+.page {
+  padding: 0 24rpx;
+}
+
+/* ===== 分段 ===== */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: 999rpx;
+  padding: 8rpx;
+  margin: 20rpx 0;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: var(--fs-3);
+  color: var(--text-2);
+  border-radius: 999rpx;
+}
+.tab.on {
+  background: var(--brand-500);
+  color: #fff;
+}
+
+/* ===== 卡片 ===== */
+.dcard {
+  background: var(--surface);
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+.dcard-body {
+  padding: 24rpx;
+}
+.dcard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dcard-type {
+  font-size: var(--fs-2);
+  color: var(--brand-700);
+  background: var(--brand-50);
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+}
+.dcard-status {
+  font-size: var(--fs-2);
+  color: var(--text-3);
+  background: var(--surface-2);
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+}
+.dcard-status.s1 {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+.dcard-title {
+  margin-top: 16rpx;
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: var(--lh-tight);
+}
+.dcard-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+}
+.dcard-budget {
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--warning-500);
+  margin-right: 16rpx;
+}
+.dcard-chip {
+  font-size: var(--fs-2);
+  color: var(--text-3);
+  background: var(--surface-2);
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+}
+.dcard-foot {
+  display: flex;
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid var(--border);
+}
+.dcard-reply {
+  font-size: var(--fs-2);
+  color: var(--text-3);
+  margin-right: 24rpx;
+}
+
+.dcard-act {
+  border-top: 1rpx solid var(--border);
+  padding: 18rpx 24rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+.act-btn {
+  font-size: var(--fs-3);
+  color: var(--brand-500);
+  background: var(--brand-50);
+  padding: 10rpx 26rpx;
+  border-radius: 999rpx;
+}
+
+/* ===== 状态 ===== */
+.state {
+  text-align: center;
+  padding: 80rpx 0;
+  font-size: var(--fs-3);
+  color: var(--text-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.state-btn {
+  color: var(--brand-500);
+  margin-top: 12rpx;
+}
+
+/* ===== 发布按钮 ===== */
+.fab-hold {
+  position: fixed;
+  right: 32rpx;
+  bottom: 32rpx;
+  bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+.fab {
+  background: var(--brand-500);
+  color: #fff;
+  font-size: var(--fs-4);
+  padding: 20rpx 36rpx;
+  border-radius: 999rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.12);
+}
+
+.pad {
+  height: 180rpx;
+}

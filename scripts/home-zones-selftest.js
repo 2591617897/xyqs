@@ -132,9 +132,13 @@ async function main() {
   check('没有加载错误', d.loadError === false, d.errorMsg)
   // 金刚区已独立成「功能区」页，首页不再持有 entries：入口生成改由 zones.js 直接断言
   const entryList = zoneMod.buildEntries(mock.handle('GET', '/channels', {}).data)
-  // 分类整理后只保留 3 个上线频道（2004/2005 已软下线），入口 3+3=6
-  check('功能入口 6 个（3 固定 + 3 频道）', entryList.length === 6, entryList.length)
+  // 分类整理后只保留 3 个上线频道（2004/2005 已软下线）；
+  // 2026-10-28 起固定入口增加「需求广场」（求物/求帮忙），入口 4+3=7
+  check('功能入口 7 个（4 固定 + 3 频道）', entryList.length === 7, entryList.length)
   check('功能入口首项是「树洞闲谈」', entryList[0] && entryList[0].title === '树洞闲谈')
+  check('功能入口含「需求广场」', entryList.some((e) => e.key === 'demand'))
+  check('需求广场落点指向 demand 分包',
+    entryList.some((e) => e.key === 'demand' && e.url === '/subpackages/demand/list'))
   check('功能入口没有「学习交流」', !entryList.some((e) => e.title === '学习交流'))
   check('首页不再渲染金刚区', d.entries === undefined)
   check('生成内容功能区', d.zones.length === 5, d.zones.map((z) => z.key))
@@ -215,7 +219,7 @@ async function main() {
   zpage.getTabBar = () => null
   zpage.onShow()
   await new Promise((r) => setTimeout(r, 200))
-  check('功能区页构建 6 个入口', zpage.data.entries.length === 6, zpage.data.entries.length)
+  check('功能区页构建 7 个入口', zpage.data.entries.length === 7, zpage.data.entries.length)
   check('功能区页 loading 归零', zpage.data.loading === false)
   check('功能区页没有 partial 警告', zpage.data.partial === false)
   const zj = []

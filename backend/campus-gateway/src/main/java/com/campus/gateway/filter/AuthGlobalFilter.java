@@ -70,7 +70,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      */
     private static final String WS_PREFIX = "/api/ws";
     private static final List<String> PUBLIC_READ_PREFIX =
-            List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels",
+            List.of("/api/goods", "/api/wall", "/api/posts", "/api/channels", "/api/demands",
                     // 首页运营位：广告素材与后台公告要在游客首屏就可见，
                     // 否则图片和公告永远只在后台存在、C 端看不到。两者都是只读。
                     "/api/ads", "/api/notices");
@@ -83,7 +83,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      * 游客请求直接 401 —— 表现为「后台配了广告，个人中心永远不显示」，
      * 而且两边都不报错，极难定位。
      */
-    private static final List<String> PRIVATE_SEGMENTS = List.of("mine", "orders", "favorite", "favorites");
+    private static final List<String> PRIVATE_SEGMENTS =
+            List.of("mine", "orders", "favorite", "favorites", "replies");
     /**
      * 公开个人主页：GET /api/user/{userId}/profile（userId 为纯数字）。
      * 只放行精确匹配，不放宽 /api/user 前缀——否则 /user/me 等私域接口会被误开。

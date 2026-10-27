@@ -49,16 +49,30 @@
         "group/members",
         "group/setting"
       ]
+    },
+    {
+      "root": "subpackages/demand",
+      "name": "demand",
+      "pages": [
+        "list",
+        "detail",
+        "publish",
+        "mine"
+      ]
     }
   ],
   "preloadRule": {
     "pages/user/index": {
       "network": "all",
-      "packages": ["subpackages/me", "subpackages/msg"]
+      "packages": ["subpackages/me", "subpackages/msg", "subpackages/demand"]
     },
     "pages/messages/index": {
       "network": "all",
       "packages": ["subpackages/msg"]
+    },
+    "pages/zone/index": {
+      "network": "all",
+      "packages": ["subpackages/demand"]
     }
   },
   "window": {

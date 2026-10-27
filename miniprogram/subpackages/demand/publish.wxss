@@ -1,0 +1,233 @@
+.page {
+  padding: 24rpx 24rpx 0;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+.card-h {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 16rpx;
+}
+
+/* ===== 类型 ===== */
+.types {
+  display: flex;
+}
+.type {
+  flex: 1;
+  background: var(--surface-2);
+  border-radius: 16rpx;
+  padding: 20rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.type:first-child {
+  margin-right: 20rpx;
+}
+.type.on {
+  background: var(--brand-50);
+}
+.type-icon {
+  font-size: 44rpx;
+}
+.type-name {
+  margin-top: 8rpx;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.type.on .type-name {
+  color: var(--brand-700);
+}
+.type-desc {
+  margin-top: 4rpx;
+  font-size: var(--fs-2);
+  color: var(--text-3);
+}
+
+/* ===== 输入 ===== */
+.input {
+  width: 100%;
+  height: 88rpx;
+  background: var(--surface-2);
+  border-radius: 14rpx;
+  padding: 0 20rpx;
+  font-size: var(--fs-4);
+  color: var(--text-1);
+}
+.area {
+  width: 100%;
+  height: 220rpx;
+  background: var(--surface-2);
+  border-radius: 14rpx;
+  padding: 20rpx;
+  font-size: var(--fs-4);
+  color: var(--text-1);
+  line-height: var(--lh-normal);
+}
+.ph {
+  color: var(--text-4);
+}
+.counter {
+  margin-top: 10rpx;
+  text-align: right;
+  font-size: var(--fs-2);
+  color: var(--text-4);
+}
+.hint {
+  margin-top: 14rpx;
+  font-size: var(--fs-2);
+  color: var(--text-3);
+  line-height: var(--lh-normal);
+}
+
+/* ===== 预算 ===== */
+.budget-row {
+  display: flex;
+  align-items: center;
+}
+.budget-input {
+  flex: 1;
+  min-width: 0;
+}
+.nego {
+  display: flex;
+  align-items: center;
+  margin-left: 20rpx;
+  font-size: var(--fs-3);
+  color: var(--text-2);
+}
+.nego-box {
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border: 2rpx solid var(--border-strong);
+  border-radius: 8rpx;
+  margin-right: 10rpx;
+  color: var(--brand-500);
+}
+.nego.on .nego-box {
+  border-color: var(--brand-500);
+}
+
+/* ===== chips ===== */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+.chip {
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background: var(--surface-2);
+  font-size: var(--fs-3);
+  color: var(--text-2);
+  margin-right: 14rpx;
+  margin-bottom: 14rpx;
+}
+.chip.on {
+  background: var(--brand-50);
+  color: var(--brand-700);
+}
+
+/* ===== 图片 ===== */
+.imgs {
+  display: flex;
+  flex-wrap: wrap;
+}
+.img-item {
+  position: relative;
+  margin-right: 16rpx;
+  margin-bottom: 16rpx;
+}
+.img {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 14rpx;
+  background: var(--surface-3);
+}
+.img-del {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 44rpx;
+  height: 44rpx;
+  line-height: 40rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 30rpx;
+}
+.img-add {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 14rpx;
+  border: 2rpx dashed var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  color: var(--text-4);
+}
+
+/* ===== 可见范围 ===== */
+.vis {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-top: 1rpx solid var(--border);
+}
+.vis-icon {
+  font-size: 36rpx;
+  margin-right: 16rpx;
+}
+.vis-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.vis-title {
+  font-size: var(--fs-4);
+  color: var(--text-1);
+}
+.vis.on .vis-title {
+  color: var(--brand-700);
+}
+.vis-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-2);
+  color: var(--text-3);
+}
+.vis-check {
+  color: var(--brand-500);
+  font-size: var(--fs-5);
+}
+
+/* ===== 提交 ===== */
+.submit {
+  height: 92rpx;
+  line-height: 92rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: var(--brand-500);
+  color: #fff;
+  font-size: var(--fs-5);
+}
+.submit.disabled {
+  background: var(--surface-3);
+  color: var(--text-4);
+}
+
+.pad {
+  height: 60rpx;
+}

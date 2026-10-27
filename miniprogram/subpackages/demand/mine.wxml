@@ -1,0 +1,53 @@
+<view class="page">
+
+  <view class="tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab {{tab === item.key ? 'on' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="switchTab"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="state" wx:if="{{loading}}">加载中…</view>
+
+  <view class="state err" wx:elif="{{loadError}}">
+    <text>加载失败了</text>
+    <text class="state-btn" bindtap="load">点这里重试</text>
+  </view>
+
+  <block wx:elif="{{shown.length}}">
+    <view class="dcard" wx:for="{{shown}}" wx:key="id">
+      <view class="dcard-body" data-id="{{item.id}}" bindtap="goDetail">
+        <view class="dcard-head">
+          <text class="dcard-type">{{item.typeIcon}} {{item.typeLabel}}</text>
+          <text class="dcard-status s{{item.status}}">{{item.statusText}}</text>
+        </view>
+        <view class="dcard-title clamp2">{{item.title}}</view>
+        <view class="dcard-meta">
+          <text class="dcard-budget">{{item.budgetText}}</text>
+          <text class="dcard-chip" wx:if="{{item.expectTime}}">{{item.expectTime}}</text>
+        </view>
+        <view class="dcard-foot">
+          <text class="dcard-reply">{{item.timeText}}</text>
+          <text class="dcard-reply" wx:if="{{item.replyCount > 0}}">{{item.replyCount}} 条回应</text>
+        </view>
+      </view>
+      <view class="dcard-act" wx:if="{{item.status === 1}}">
+        <text class="act-btn" data-id="{{item.id}}" catchtap="quickDone">标记为已找到</text>
+      </view>
+    </view>
+  </block>
+
+  <view class="state" wx:elif="{{!loading}}">
+    <text>你还没有发布过需求</text>
+    <text class="state-btn" bindtap="goPublish">去发一个</text>
+  </view>
+
+  <view class="fab-hold">
+    <view class="fab" bindtap="goPublish">＋ 发需求</view>
+  </view>
+
+  <view class="pad"></view>
+</view>

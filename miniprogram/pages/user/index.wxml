@@ -113,6 +113,23 @@
         <view class="grid-sub">{{user.intentCount || 0}} 单</view>
       </view>
     </view>
+    <!-- 需求广场：与闲置并列的另一条流（我想要的，而不是我要出的） -->
+    <view class="grid2">
+      <view class="g2-item" hover-class="tap-scale" bindtap="goMyDemands">
+        <view class="g2-icon gi-teal">🙋</view>
+        <view class="g2-main">
+          <view class="g2-title">我的需求</view>
+          <view class="g2-sub">我发布的求物 / 求帮忙</view>
+        </view>
+      </view>
+      <view class="g2-item" hover-class="tap-scale" bindtap="goDemandSquare">
+        <view class="g2-icon gi-amber">🎁</view>
+        <view class="g2-main">
+          <view class="g2-title">需求广场</view>
+          <view class="g2-sub">看看同学想要什么</view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- ===== 社交互动 ===== -->

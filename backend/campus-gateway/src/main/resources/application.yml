@@ -25,7 +25,7 @@ spring:
         - id: campus-goods
           uri: lb://campus-goods
           predicates:
-            - Path=/api/goods/**
+            - Path=/api/goods/**,/api/demands/**
           filters:
             - StripPrefix=1
         - id: campus-wall

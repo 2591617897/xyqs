@@ -71,6 +71,11 @@ public class SecurityGuard {
      */
     public static final String BIZ_GROUP_MSG = "GROUP_MSG";
 
+    /** 校园需求正文（标题 + 要求） */
+    public static final String BIZ_DEMAND = "DEMAND";
+    /** 需求回应留言：只在两个人之间可见，但会带联系方式，所以同样送审 */
+    public static final String BIZ_DEMAND_REPLY = "DEMAND_REPLY";
+
     private final SecurityClient securityClient;
 
     /**

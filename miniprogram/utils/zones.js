@@ -40,6 +40,7 @@ const ZONE_LIMIT = 3
 const ENTRIES = [
   { key: 'wall', icon: '🌳', title: '树洞闲谈', url: '/pages/wall/index', tone: 'like' },
   { key: 'goods', icon: '♻️', title: '闲置交换', url: '/pages/goods/list', tone: 'brand' },
+  { key: 'demand', icon: '🙋', title: '需求广场', url: '/subpackages/demand/list', tone: 'warn' },
   { key: 'posts', icon: '🗂', title: '校园频道', url: '/pages/post/list', tone: 'info' }
 ]
 

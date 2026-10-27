@@ -1,0 +1,162 @@
+<view class="page">
+
+  <!-- 大类 -->
+  <view class="card">
+    <view class="card-h">需求类型</view>
+    <view class="types">
+      <view
+        wx:for="{{types}}"
+        wx:key="key"
+        class="type {{type === item.key ? 'on' : ''}}"
+        data-type="{{item.key}}"
+        bindtap="switchType"
+      >
+        <text class="type-icon">{{item.icon}}</text>
+        <text class="type-name">{{item.label}}</text>
+        <text class="type-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标题 -->
+  <view class="card">
+    <view class="card-h">
+      <text>{{type === 2 ? '想做什么' : '想要什么'}}</text>
+    </view>
+    <input
+      class="input"
+      value="{{title}}"
+      placeholder="{{type === 2 ? '如：帮忙取一下快递' : '如：收一辆二手自行车'}}"
+      placeholder-class="ph"
+      maxlength="60"
+      bindinput="onTitle"
+    />
+    <view class="counter">{{title.length}}/60</view>
+  </view>
+
+  <!-- 分类 -->
+  <view class="card" wx:if="{{categories.length}}">
+    <view class="card-h">分类</view>
+    <view class="chips">
+      <view class="chip {{categoryId === 0 ? 'on' : ''}}" data-id="0" bindtap="switchCategory">不分类</view>
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="chip {{categoryId === item.id ? 'on' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchCategory"
+      >{{item.icon}} {{item.name}}</view>
+    </view>
+  </view>
+
+  <!-- 要求 -->
+  <view class="card">
+    <view class="card-h">具体要求</view>
+    <textarea
+      class="area"
+      value="{{description}}"
+      placeholder="{{type === 2 ? '说清楚时间、地点和要做什么' : '说清楚成色、型号、能接受的范围'}}"
+      placeholder-class="ph"
+      maxlength="2000"
+      bindinput="onDesc"
+    ></textarea>
+    <view class="counter">{{description.length}}/2000</view>
+  </view>
+
+  <!-- 预算 -->
+  <view class="card">
+    <view class="card-h">
+      <text>{{type === 2 ? '答谢' : '预算'}}</text>
+    </view>
+    <view class="budget-row">
+      <input
+        class="input budget-input"
+        value="{{budget}}"
+        type="digit"
+        placeholder="0.00"
+        placeholder-class="ph"
+        disabled="{{negotiable}}"
+        bindinput="onBudget"
+      />
+      <view class="nego {{negotiable ? 'on' : ''}}" bindtap="toggleNegotiable">
+        <text class="nego-box">{{negotiable ? '✓' : ''}}</text>
+        <text>面议</text>
+      </view>
+    </view>
+    <view class="hint">不填金额请勾选「面议」。平台不参与付款，金额只是意向参考。</view>
+  </view>
+
+  <!-- 期望时间 -->
+  <view class="card">
+    <view class="card-h">期望时间</view>
+    <input
+      class="input"
+      value="{{expectTime}}"
+      placeholder="如：本周内"
+      placeholder-class="ph"
+      maxlength="32"
+      bindinput="onExpect"
+    />
+    <view class="chips">
+      <view
+        wx:for="{{quickTimes}}"
+        wx:key="*this"
+        class="chip {{expectTime === item ? 'on' : ''}}"
+        data-value="{{item}}"
+        bindtap="pickQuickTime"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 地点 -->
+  <view class="card">
+    <view class="card-h">交接地点</view>
+    <input
+      class="input"
+      value="{{location}}"
+      placeholder="如：南苑食堂门口（选填）"
+      placeholder-class="ph"
+      maxlength="64"
+      bindinput="onLocation"
+    />
+  </view>
+
+  <!-- 参考图 -->
+  <view class="card">
+    <view class="card-h">参考图（选填，最多 3 张）</view>
+    <view class="imgs">
+      <view class="img-item" wx:for="{{images}}" wx:key="*this">
+        <image class="img" src="{{item}}" mode="aspectFill" data-url="{{item}}" bindtap="previewImage"></image>
+        <text class="img-del" data-index="{{index}}" catchtap="removeImage">×</text>
+      </view>
+      <view class="img-add" wx:if="{{images.length < 3}}" bindtap="chooseImage">＋</view>
+    </view>
+  </view>
+
+  <!-- 可见范围 -->
+  <view class="card">
+    <view class="card-h">可见范围</view>
+    <view
+      wx:for="{{visibilityOptions}}"
+      wx:key="value"
+      class="vis {{visibility === item.value ? 'on' : ''}}"
+      data-value="{{item.value}}"
+      bindtap="switchVisibility"
+    >
+      <text class="vis-icon">{{item.icon}}</text>
+      <view class="vis-main">
+        <text class="vis-title">{{item.title}}</text>
+        <text class="vis-sub">{{item.sub}}</text>
+      </view>
+      <text class="vis-check">{{visibility === item.value ? '✓' : ''}}</text>
+    </view>
+  </view>
+
+  <view class="submit {{submitting ? 'disabled' : ''}}" bindtap="submit">
+    <text wx:if="{{submitting}}">提交中…</text>
+    <text wx:elif="{{isEdit}}">保存修改</text>
+    <text wx:else>发布需求</text>
+  </view>
+
+  <view class="pad"></view>
+</view>

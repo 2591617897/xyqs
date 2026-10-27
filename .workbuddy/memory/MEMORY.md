@@ -113,3 +113,14 @@
 - `check-miniprogram`（23+12 页）/ `mock` / `home-zones` / `content-security` / `message-notify`（**跑完清演示数据**）
 - `db-schema-check.js`：实体↔库直连比对，唯一能拦住「迁移写了没执行」
 - ⚠️ **「留空表示不修改」的字段禁止用 `@Size`**：`@Size` 只放过 `null`，空串 `""` 会被判长度不足 → 400「密码长度需在 8-64 之间」，请求在 Service 之前就被拦掉（`AdminUserReq.password` 已改 `@Pattern(regexp="^$|^[\\s\\S]{8,64}$")`）。前端配套：提交前 `delete payload.password`，编辑态 validator 留空直接放行
+
+## 需求广场 demand（2026-10-28 立模块；细节见 daily log）
+- 两类 `1求物 / 2求帮忙`；**红线**：只做信息展示 —— 不接支付、不做担保、**不做评价打分**（有评分=服务平台，类目资质不同级）；`budget` null = 面议
+- **独立表 `t_demand` + `t_demand_reply`**，不给 `t_goods` 加 flow（字段/状态机全反的，混存后漏一处过滤需求就混进卖货列表）
+- 状态：1 进行中（列表只查它）/ 2 已完成（已找到）/ 0 已下架，三者可互转
+- ⚠️ **两套分类 id 各自从 1 开始**（求物 7 / 求帮忙 6）→ 按 `category_id` 查询**必须带 type**；前端换大类清 categoryId
+- 回应方向与 `t_goods_order` 相反（有货的人 → 发布者）；**一人一需求只能一条**；只有发布者能看回应
+- 接口路径 `/demands/replies/mine` 刻意带 `mine` 段（网关按段判私域，自定义段名会被 PUBLIC_READ 放行）；`PRIVATE_SEGMENTS` 已加 `replies`
+- 分包 `subpackages/demand/{list,detail,publish,mine}` + `utils/demand.js`；preloadRule 挂 zone + user
+- ⚠️ 上线**必须重启网关**（`/api/demands/**` 新路由），否则整模块 404
+- 自检 `scripts/demand-selftest.js`（59）

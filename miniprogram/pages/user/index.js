@@ -332,6 +332,19 @@ Page({
     mp.navigateTo({ url: '/subpackages/me/goods/sold' })
   },
 
+  /**
+   * 我的需求 / 需求广场 → 分包 subpackages/demand。
+   * preloadRule 已在 pages/user/index 上挂了这个分包，跳转不白屏。
+   */
+  goMyDemands: function () {
+    if (!this.guard()) return
+    mp.navigateTo({ url: '/subpackages/demand/mine' })
+  },
+
+  goDemandSquare: function () {
+    mp.navigateTo({ url: '/subpackages/demand/list' })
+  },
+
   /** 赞与收藏 → 分包子页面（点过赞的闲置，可在此取消收藏） */
   goFavorites: function () {
     if (!this.guard()) return

@@ -1,0 +1,135 @@
+<view class="page">
+
+  <view class="state" wx:if="{{loading}}">加载中…</view>
+
+  <view class="state err" wx:elif="{{loadError}}">
+    <text>需求加载失败了</text>
+    <text class="state-btn" bindtap="retry">点这里重试</text>
+  </view>
+
+  <block wx:elif="{{info}}">
+    <!-- 作者 -->
+    <view class="author" bindtap="goProfile">
+      <image class="avatar" src="{{info.authorAvatar}}" mode="aspectFill"></image>
+      <view class="author-main">
+        <text class="author-name">{{info.authorName}}</text>
+        <text class="author-sub">{{info.timeText}}</text>
+      </view>
+      <text class="badge {{info.status === 1 ? 'badge-on' : ''}}">{{info.statusText}}</text>
+    </view>
+
+    <!-- 主体 -->
+    <view class="card">
+      <view class="title-row">
+        <text class="type-tag">{{info.typeIcon}} {{info.typeLabel}}</text>
+        <text class="title">{{info.title}}</text>
+      </view>
+
+      <view class="facts">
+        <view class="fact">
+          <text class="fact-k">预算</text>
+          <text class="fact-v budget">{{info.budgetText}}</text>
+        </view>
+        <view class="fact" wx:if="{{info.expectTime}}">
+          <text class="fact-k">期望</text>
+          <text class="fact-v">{{info.expectTime}}</text>
+        </view>
+        <view class="fact" wx:if="{{info.location}}">
+          <text class="fact-k">地点</text>
+          <text class="fact-v">{{info.location}}</text>
+        </view>
+        <view class="fact" wx:if="{{info.categoryName}}">
+          <text class="fact-k">分类</text>
+          <text class="fact-v">{{info.categoryName}}</text>
+        </view>
+      </view>
+
+      <view class="req-title">具体要求</view>
+      <view class="req">{{info.description || '（发布者没有填写额外要求）'}}</view>
+
+      <view class="imgs {{info.imgGrid}}" wx:if="{{info.imageList.length}}">
+        <image
+          wx:for="{{info.imageList}}"
+          wx:key="*this"
+          class="img"
+          src="{{item}}"
+          mode="{{info.imgMode}}"
+          data-src="{{item}}"
+          catchtap="previewImage"
+        ></image>
+      </view>
+
+      <view class="stat">
+        <text>{{info.viewCount}} 次浏览</text>
+        <text>{{info.replyCount}} 条回应</text>
+      </view>
+    </view>
+
+    <!-- 回应列表：只有发布者看得到 -->
+    <view class="card" wx:if="{{info.mine}}">
+      <view class="card-h">收到的回应（{{replies.length}}）</view>
+      <view class="reply" wx:for="{{replies}}" wx:key="id">
+        <view class="reply-head">
+          <text class="reply-name">{{item.replierName}}</text>
+          <text class="reply-time">{{item.timeText}}</text>
+        </view>
+        <view class="reply-msg">{{item.message}}</view>
+        <view class="reply-contact" wx:if="{{item.contact}}">联系方式：{{item.contact}}</view>
+        <view class="reply-none" wx:else>对方没有留联系方式，可以在私信里聊</view>
+      </view>
+      <view class="reply-empty" wx:if="{{!replies.length}}">
+        还没有人回应，需求已发布在广场上
+      </view>
+    </view>
+
+    <!-- 发布者管理区 -->
+    <view class="manage" wx:if="{{info.mine}}">
+      <text class="manage-btn" bindtap="edit">编辑需求</text>
+      <text class="manage-btn danger" bindtap="remove">删除需求</text>
+    </view>
+
+    <view class="pad"></view>
+  </block>
+
+  <!-- 底部操作栏 -->
+  <view class="dock" wx:if="{{info}}">
+    <block wx:if="{{info.mine}}">
+      <view class="dock-btn ghost" wx:if="{{info.status === 1}}" bindtap="takeOff">下架</view>
+      <view class="dock-btn ghost" wx:else bindtap="reopen">重新开放</view>
+      <view class="dock-btn main" wx:if="{{info.status === 1}}" bindtap="markDone">标记为已找到</view>
+      <view class="dock-btn main disabled" wx:else>已完成</view>
+    </block>
+    <block wx:else>
+      <view class="dock-btn ghost" bindtap="goChat">私信 TA</view>
+      <view class="dock-btn main" bindtap="onTapReply">{{ctaText}}</view>
+    </block>
+  </view>
+
+  <!-- 回应弹层 -->
+  <view class="mask" wx:if="{{showReply}}" bindtap="closeReply"></view>
+  <view class="sheet {{showReply ? 'on' : ''}}">
+    <view class="sheet-h">
+      <text class="sheet-title">{{ctaText}}</text>
+      <text class="sheet-close" bindtap="closeReply">关闭</text>
+    </view>
+    <textarea
+      class="sheet-area"
+      value="{{replyMessage}}"
+      placeholder="说点什么，让对方知道你能提供什么"
+      placeholder-class="sheet-ph"
+      maxlength="500"
+      bindinput="onReplyInput"
+    ></textarea>
+    <input
+      class="sheet-input"
+      value="{{replyContact}}"
+      placeholder="联系方式（选填，如微信号）"
+      placeholder-class="sheet-ph"
+      bindinput="onContactInput"
+    />
+    <view class="sheet-tip">平台不参与撮合，请自行核实对方身份后再线下对接</view>
+    <view class="sheet-btn {{submitting ? 'disabled' : ''}}" bindtap="submitReply">
+      {{submitting ? '发送中…' : '发送'}}
+    </view>
+  </view>
+</view>

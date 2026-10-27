@@ -1,0 +1,99 @@
+<view class="page">
+
+  <!-- 大类切换：求物 / 求帮忙 -->
+  <view class="typebar">
+    <view
+      wx:for="{{types}}"
+      wx:key="key"
+      class="type-item {{type === item.key ? 'on' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="switchType"
+    >
+      <text class="type-icon">{{item.icon}}</text>
+      <text class="type-label">{{item.label}}</text>
+    </view>
+    <view class="type-mine" bindtap="goMine">我的需求</view>
+  </view>
+
+  <!-- 搜索 -->
+  <view class="searchbar">
+    <view class="search-box">
+      <text class="ico ico-search"></text>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜需求，如：自行车、代取快递"
+        placeholder-class="search-ph"
+        bindinput="onSearchInput"
+        confirm-type="search"
+      />
+      <text wx:if="{{keyword}}" class="search-clear" bindtap="clearKeyword">×</text>
+    </view>
+  </view>
+
+  <!-- 二级分类（后端下发，换大类时重新拉） -->
+  <scroll-view wx:if="{{categories.length}}" class="cats" scroll-x enable-flex>
+    <view class="cats-inner">
+      <view class="cat {{categoryId === 0 ? 'on' : ''}}" data-id="0" bindtap="switchCategory">全部</view>
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="cat {{categoryId === item.id ? 'on' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchCategory"
+      >{{item.icon}} {{item.name}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 列表 -->
+  <view class="list">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      class="dcard"
+      data-id="{{item.id}}"
+      bindtap="goDetail"
+    >
+      <view class="dcard-head">
+        <text class="dcard-type">{{item.typeIcon}} {{item.typeLabel}}</text>
+        <text class="dcard-time">{{item.timeText}}</text>
+      </view>
+      <view class="dcard-title clamp2">
+        <text
+          wx:for="{{item.titleParts}}"
+          wx:for-item="seg"
+          class="{{seg.hit ? 'kw-hit' : ''}}"
+        >{{seg.t}}</text>
+      </view>
+      <view class="dcard-desc clamp2" wx:if="{{item.descText}}">{{item.descText}}</view>
+      <view class="dcard-meta">
+        <text class="dcard-budget">{{item.budgetText}}</text>
+        <text class="dcard-chip" wx:if="{{item.expectTime}}">{{item.expectTime}}</text>
+        <text class="dcard-chip" wx:if="{{item.location}}">{{item.location}}</text>
+      </view>
+      <view class="dcard-foot">
+        <text class="dcard-reply">{{item.replyText}}</text>
+        <text class="dcard-cat" wx:if="{{item.categoryName}}">#{{item.categoryName}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态：加载中 / 出错 / 空 / 没有更多 -->
+  <view class="state" wx:if="{{loading}}">加载中…</view>
+  <view class="state err" wx:elif="{{loadError}}">
+    <text>需求加载失败了</text>
+    <text class="state-btn" bindtap="retry">点这里重试</text>
+  </view>
+  <view class="state" wx:elif="{{!list.length}}">
+    <text wx:if="{{activeKeyword}}">没有找到「{{activeKeyword}}」相关的需求</text>
+    <text wx:elif="{{categoryId}}">这个分类下还没有需求</text>
+    <text wx:elif="{{type === 2}}">还没有人求帮忙，你可以发一个</text>
+    <text wx:else>还没有人求物，你可以发一个</text>
+  </view>
+  <view class="state" wx:elif="{{!hasMore}}">没有更多了</view>
+
+  <!-- 发布入口：右下悬浮，避开全面屏底部安全区 -->
+  <view class="fab-hold">
+    <view class="fab" bindtap="goPublish">＋ 发需求</view>
+  </view>
+</view>
