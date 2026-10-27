@@ -40,6 +40,12 @@ public class Post {
     private Integer status;
 
     /**
+     * 可见范围：school 仅本校 / city 同市可见（默认 school）。
+     * 见 {@link com.campus.common.content.Visibility}。
+     */
+    private String visibility;
+
+    /**
      * 当前有效推广分。由 campus-promote 看广告后回写，并按 7 天线性衰减重算。
      * 列表第一排序键，必须落库。
      */

@@ -22,4 +22,11 @@ public class PostReq {
     private String content;
 
     private List<String> images;
+
+    /**
+     * 可见范围：school 仅本校（默认）/ city 同市可见。
+     * 不校验枚举直接归一化 —— 老客户端不带这个字段时按 school 处理，不该报 400。
+     */
+    @Size(max = 16, message = "可见范围参数不合法")
+    private String visibility;
 }

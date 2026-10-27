@@ -227,3 +227,50 @@
   line-height: 1.7;
   color: #5B6470;
 }
+
+/* 可见范围：两个选项卡片，选中的描边 + 浅绿底
+   ⚠️ 别给 .vis-opt 写内联 style：WXML 内联样式会静默覆盖 wxss（2026-10-27 已踩过） */
+.vis-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+.vis-opt {
+  border: 2rpx solid #ECEEF3;
+  border-radius: 18rpx;
+  padding: 20rpx 24rpx;
+  background: #FBFBFD;
+}
+.vis-opt.active {
+  border-color: #006C49;
+  background: rgba(0, 108, 73, 0.06);
+}
+/* 用透明度做按压反馈，避免 hover 背景把选中态的浅绿底盖掉 */
+.vis-opt-hover {
+  opacity: 0.85;
+}
+.vis-opt-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.vis-opt-icon {
+  font-size: 28rpx;
+}
+.vis-opt-title {
+  flex: 1;
+  font-size: 27rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+.vis-opt-check {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #006C49;
+}
+.vis-opt-sub {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: #8A8F99;
+}

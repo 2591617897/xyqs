@@ -44,6 +44,8 @@
 - 自定义 tabBar 压不住弹层 → 页面 `getTabBar().setData({hidden:true})`
 
 ## 布局 / 图片坑
+- ⚠️ **`<video>` 开了 `controls` 就收不到 `bindtap`**（点击落在原生控件层）→ 想让「点视频全屏」必须把 `controls/show-center-play-btn/show-play-btn/show-fullscreen-btn/show-progress/enable-progress-gesture` 全关，只留首帧当封面，上面盖透明热区 + 自绘播放键/时长；时长用 `bindloadedmetadata` 的 `detail.duration` 自己算
+- ⚠️ **关闭键不能压在 video 上**（原生组件会盖住普通 view）→ 全屏层用「顶部条固定高度 + video 从其下方开始」，别用 flex 叠放
 - `scroll-view` 在 flex 列里必须 `min-height:0`；弹层 `height:Xvh` 加 `box-sizing`
 - 底部弹层避键盘：`adjust-position="{{false}}"` + `bottom:{{keyboardHeight}}px`
 - **全面屏底部安全区**：`fixed;bottom:0` 的可点条（输入栏/工具条/操作栏）必须 `padding-bottom: env(safe-area-inset-bottom)`（先写 `0` 兜底），键盘弹起时用 `kb-up` 类归零（键盘已盖住安全区，留着是一截灰缝）；配套占位单独一层 `.input-safe{height:env(...)}`，**不能塞进 rpx 表达式**（env 是环境 px，混 rpx 没法换算）；浮层按钮 bottom 用 `calc(Xrpx + env(...))` 同步抬
@@ -61,6 +63,14 @@
 - ⚠️ `msg_sec_check`/`media_check_async` 对 chunked POST 回 **412 无 body** → 必须 JDK `HttpClient`+`ofString`，否则被 fail-open 吞成「放行」
 - `purify()` **返回 String，必须拿返回值落库**；fail-open 先查 IP 白名单(40164)
 - ⚠️ `t_admin_notice.target_type`：1=后台内部通知，绝不能推小程序
+
+## 内容可见范围 visibility（2026-10-28）
+- **`visibility`（内容可见范围）≠ `scope`（浏览范围）**：scope 是浏览者视角（我以本校/本市身份在逛），visibility 是内容自己的属性（school 仅本校 / city 同市可见）。**禁止把内容字段也叫 scope** —— 那段 OR 嵌套查询会因同名写得极易出错。公共常量 `campus-common/.../content/Visibility`（`normalize` 兜底为 school，不抛 400）
+- 过滤规则：浏览本校 `school_id=我的学校`（本校内容无条件可见）；浏览本市 `school_id IN 同城 AND (visibility='city' OR school_id=我的学校)`；无学校身份只看 `visibility='city'`
+- ⚠️ **本市流必须透传 `schoolScope`/`viewerSchoolId`**：原 city 分支传 null → 用户连本校同学发的仅本校内容都刷不到
+- ⚠️ **只过滤列表不够**：详情接口是独立入口（分享链接可直达），必须单独 `assertVisible()`，抛 **404 而非 403**（不暴露「内容存在但你没权限」）
+- ⚠️ **MyBatis Plus 悬空 OR**：`q.eq(A).or().eq(cond, B)` 在 cond 为 false 时留下悬空 `OR` → 整条 SQL 语法错误。必须拆成 if/else 两个分支。`visibility-selftest` 有专项检查
+- 历史数据按 `DEFAULT 'school'` 自动回填（收紧），对本校用户零影响
 
 ## 推广 / 广告（2026-10-27 广告规格改造）
 - **广告尺寸＝规格枚举，禁止自由文本**：唯一清单 `campus-common/.../ad/AdSizeCatalog`（`banner_300/240/200/160`），后台只能选、`t_ad_slot.size_code` 落库，`size_desc` 由它派生（前端传了也不采纳）

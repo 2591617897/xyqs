@@ -20,7 +20,10 @@ Page({
     messages: [],
     draft: '',
     sending: false,
-    scrollInto: ''
+    scrollInto: '',
+    /** 视频全屏播放层（点消息里的视频卡打开） */
+    vpShow: false,
+    vpUrl: ''
   },
 
   onLoad: function (options) {
@@ -60,10 +63,13 @@ Page({
 
   onHide: function () {
     this.stopPoll()
+    // 切后台/被覆盖时收掉播放层：video 节点还活着就会继续出声
+    this.closeVideo()
   },
 
   onUnload: function () {
     this.stopPoll()
+    this.closeVideo()
   },
 
   stopPoll: function () {
@@ -343,6 +349,48 @@ Page({
     if (url) mp.previewImage({ current: url, urls: [url] })
   },
 
+  /**
+   * 点视频消息 → 直接全屏播放。
+   *
+   * 为什么不留在气泡里内联播放：内联 `<video controls>` 的原生控件会吃掉点击，
+   * 用户点中央播放键得到的是「卡片里一个小窗口」，视频消息本来就是要看全屏的。
+   * 现在列表里只留首帧当封面（原生控件全关），点一下进全屏层并 autoplay。
+   */
+  onTapVideo: function (e) {
+    const url = e.currentTarget.dataset.url
+    if (!url || this.data.vpShow) return
+    if (typeof mp.hideKeyboard === 'function') mp.hideKeyboard()
+    this.setData({ vpShow: true, vpUrl: url })
+  },
+
+  /** 关闭全屏播放层：wx:if 销毁 video 节点，声音不会在后台继续播 */
+  closeVideo: function () {
+    if (!this.data.vpShow) return
+    this.setData({ vpShow: false, vpUrl: '' })
+  },
+
+  /**
+   * 拿视频时长画在封面右下角。
+   * 原生控件关掉后没人再显示 00:02，只能靠 loadedmetadata 自己取。
+   */
+  onVideoMeta: function (e) {
+    const id = e.currentTarget.dataset.id
+    const dur = e.detail && e.detail.duration
+    if (!id || !dur || !isFinite(dur)) return
+    const msgs = this.data.messages
+    for (let i = 0; i < msgs.length; i++) {
+      if (String(msgs[i].id) !== String(id)) continue
+      if (msgs[i].durationText) return
+      const patch = {}
+      patch['messages[' + i + '].durationText'] = fmtDuration(dur)
+      this.setData(patch)
+      return
+    }
+  },
+
+  /** 播放层内拦掉 touchmove，避免背景消息列表跟着滚 */
+  noop: function () {},
+
   /** 约面交：直接发一条约见消息（本平台无支付功能，只约校内当面看货） */
   onBargain: function () {
     const goods = this.data.goodsCard
@@ -418,6 +466,16 @@ function nowTime() {
   const d = new Date()
   const p = function (n) { return n < 10 ? '0' + n : '' + n }
   return '今天 ' + p(d.getHours()) + ':' + p(d.getMinutes())
+}
+
+/** 视频时长 → mm:ss（超过 1 小时给 h:mm:ss） */
+function fmtDuration(sec) {
+  const total = Math.max(0, Math.round(sec || 0))
+  const p = function (n) { return n < 10 ? '0' + n : '' + n }
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  return h > 0 ? h + ':' + p(m) + ':' + p(s) : m + ':' + p(s)
 }
 
 function shortTime(t) {

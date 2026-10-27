@@ -39,8 +39,29 @@
           <view class="msg-body">
             <!-- 图片消息 -->
             <image wx:if="{{item.type === 'image'}}" class="msg-image" src="{{item.content}}" mode="aspectFill" bindtap="previewMedia" data-url="{{item.content}}" />
-            <!-- 视频消息 -->
-            <video wx:elif="{{item.type === 'video'}}" class="msg-video" src="{{item.content}}" object-fit="contain" controls />
+            <!-- 视频消息：只渲染首帧当封面（关掉全部原生控件），点一下进全屏播放层 -->
+            <view wx:elif="{{item.type === 'video'}}" class="msg-video">
+              <video
+                class="mv-body"
+                id="v-{{item.id}}"
+                src="{{item.content}}"
+                object-fit="contain"
+                controls="{{false}}"
+                show-center-play-btn="{{false}}"
+                show-play-btn="{{false}}"
+                show-fullscreen-btn="{{false}}"
+                show-progress="{{false}}"
+                enable-progress-gesture="{{false}}"
+                bindtap="onTapVideo"
+                data-url="{{item.content}}"
+                bindloadedmetadata="onVideoMeta"
+                data-id="{{item.id}}"
+              />
+              <view class="mv-hit" catchtap="onTapVideo" data-url="{{item.content}}">
+                <view class="mv-play"><view class="ico ico-play"></view></view>
+              </view>
+              <text class="mv-dur" wx:if="{{item.durationText}}" catchtap="onTapVideo" data-url="{{item.content}}">{{item.durationText}}</text>
+            </view>
             <!-- 地址卡片消息 -->
             <view class="loc-card" wx:elif="{{item.type === 'location'}}">
               <view class="loc-pin">📍 {{item.content}}</view>
@@ -70,8 +91,29 @@
           <view class="msg-body">
             <!-- 图片消息 -->
             <image wx:if="{{item.type === 'image'}}" class="msg-image" src="{{item.content}}" mode="aspectFill" bindtap="previewMedia" data-url="{{item.content}}" />
-            <!-- 视频消息 -->
-            <video wx:elif="{{item.type === 'video'}}" class="msg-video" src="{{item.content}}" object-fit="contain" controls />
+            <!-- 视频消息：只渲染首帧当封面（关掉全部原生控件），点一下进全屏播放层 -->
+            <view wx:elif="{{item.type === 'video'}}" class="msg-video">
+              <video
+                class="mv-body"
+                id="v-{{item.id}}"
+                src="{{item.content}}"
+                object-fit="contain"
+                controls="{{false}}"
+                show-center-play-btn="{{false}}"
+                show-play-btn="{{false}}"
+                show-fullscreen-btn="{{false}}"
+                show-progress="{{false}}"
+                enable-progress-gesture="{{false}}"
+                bindtap="onTapVideo"
+                data-url="{{item.content}}"
+                bindloadedmetadata="onVideoMeta"
+                data-id="{{item.id}}"
+              />
+              <view class="mv-hit" catchtap="onTapVideo" data-url="{{item.content}}">
+                <view class="mv-play"><view class="ico ico-play"></view></view>
+              </view>
+              <text class="mv-dur" wx:if="{{item.durationText}}" catchtap="onTapVideo" data-url="{{item.content}}">{{item.durationText}}</text>
+            </view>
             <view class="loc-card" wx:elif="{{item.type === 'location'}}">
               <view class="loc-pin">📍 {{item.content}}</view>
             </view>
@@ -89,5 +131,25 @@
     <input class="ib-input" placeholder="发消息给{{peerName}}..." placeholder-class="ph" value="{{draft}}" bindinput="onDraft" bindconfirm="onSend" confirm-type="send" />
     <view class="ib-icon" bindtap="onPlus">⊕</view>
     <view class="ib-send" bindtap="onSend">发送</view>
+  </view>
+
+  <!-- 视频全屏播放层：点消息里的视频卡进入，autoplay 直接开播（2026-10-28） -->
+  <view class="vplayer" wx:if="{{vpShow}}" catchtouchmove="noop">
+    <view class="vp-bar">
+      <view class="vp-close" hover-class="vp-close-hover" bindtap="closeVideo">
+        <view class="ico ico-close"></view>
+      </view>
+      <text class="vp-tip">全屏播放中</text>
+    </view>
+    <video
+      class="vp-body"
+      id="vp-video"
+      src="{{vpUrl}}"
+      autoplay="{{true}}"
+      controls="{{true}}"
+      object-fit="contain"
+      show-center-play-btn="{{true}}"
+      bindended="closeVideo"
+    />
   </view>
 </view>

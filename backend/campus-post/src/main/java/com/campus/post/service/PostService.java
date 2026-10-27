@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
 import com.campus.common.client.FollowClient;
+import com.campus.common.content.Visibility;
 import com.campus.common.client.NotificationClient;
 import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.UserClient;
@@ -90,17 +91,23 @@ public class PostService {
 
     /** 本校范围：只看自己学校的帖子 */
     public R.Page<Post> page(Long channelId, Long schoolId, long page, long size, Long userId) {
-        return pageInternal(channelId, schoolId, null, page, size, userId, null);
+        return pageInternal(channelId, schoolId, null, page, size, userId, null, null);
     }
 
     /** 本校范围 + 排序（sort=hot 按点赞倒序，用于首页最热帖子） */
     public R.Page<Post> page(Long channelId, Long schoolId, long page, long size, Long userId, String sort) {
-        return pageInternal(channelId, schoolId, null, page, size, userId, sort);
+        return pageInternal(channelId, schoolId, null, page, size, userId, sort, null);
     }
 
-    /** 市域范围：同一城市所有高校的帖子 */
-    public R.Page<Post> pageByCity(Long channelId, String city, long page, long size, Long userId) {
-        return pageInternal(channelId, null, city, page, size, userId, null);
+    /**
+     * 市域范围：同一城市所有高校的帖子。
+     *
+     * @param viewerSchoolId 浏览者所在学校，用于判定「本校内容无条件可见」。
+     *                       不能省 —— 省了用户会连本校同学发的仅本校帖子都刷不到。
+     */
+    public R.Page<Post> pageByCity(Long channelId, String city, long page, long size,
+                                   Long userId, Long viewerSchoolId) {
+        return pageInternal(channelId, null, city, page, size, userId, null, viewerSchoolId);
     }
 
     /**
@@ -145,7 +152,8 @@ public class PostService {
     }
 
     private R.Page<Post> pageInternal(Long channelId, Long schoolId, String city,
-                                      long page, long size, Long userId, String sort) {
+                                      long page, long size, Long userId, String sort,
+                                      Long viewerSchoolId) {
         List<Long> citySchoolIds = null;
         if (StringUtils.hasText(city)) {
             citySchoolIds = schoolRegionMapper.selectSchoolIdsByCity(city.trim());
@@ -153,11 +161,25 @@ public class PostService {
                 return R.Page.of(List.of(), 0, page, size);
             }
         }
-        Page<Post> p = postMapper.selectPage(new Page<>(page, size), Wrappers.<Post>lambdaQuery()
+        LambdaQueryWrapper<Post> w = Wrappers.<Post>lambdaQuery()
                 .eq(Post::getStatus, 1)
                 .eq(channelId != null && channelId > 0, Post::getChannelId, channelId)
                 .eq(schoolId != null, Post::getSchoolId, schoolId)
-                .in(citySchoolIds != null, Post::getSchoolId, citySchoolIds)
+                .in(citySchoolIds != null, Post::getSchoolId, citySchoolIds);
+        if (citySchoolIds != null) {
+            // 可见范围：同城他校的帖子，只有对方主动放开到「同市」才进流；
+            // 本校帖子永远可见（本校 ⊂ 本市），所以是 OR school_id = 我的学校。
+            // 拆成两个分支而不是 eq(boolean, ...)：MP 的 or() 会先追加关键字，
+            // 后面条件不成立时会留下悬空的 OR，直接把整条 SQL 打成语法错误。
+            if (viewerSchoolId != null && viewerSchoolId > 0) {
+                w.and(q -> q.eq(Post::getVisibility, Visibility.CITY)
+                        .or().eq(Post::getSchoolId, viewerSchoolId));
+            } else {
+                // 游客 / 未选学校：只对明确放开到同市的内容可见
+                w.eq(Post::getVisibility, Visibility.CITY);
+            }
+        }
+        Page<Post> p = postMapper.selectPage(new Page<>(page, size), w
                 .orderByDesc("hot".equalsIgnoreCase(sort), Post::getLikeCount)
                 // 默认（最新）排序里推广优先；sort=hot 是用户显式选的热度维度，不再插入推广
                 .orderByDesc(sort == null || !"hot".equalsIgnoreCase(sort), Post::getPromoteScore)
@@ -173,11 +195,38 @@ public class PostService {
         return R.Page.of(p.getRecords(), p.getTotal(), p.getCurrent(), p.getSize());
     }
 
+    /**
+     * 可见范围校验：仅本校的帖子，外校用户看不到。
+     *
+     * 光在列表里过滤不够 —— 详情接口是独立入口，分享链接可以直达，
+     * 不加这道校验「仅本校」就形同虚设。
+     *
+     * 放行三类：内容本身同市可见 / 作者本人 / 浏览者没有学校身份（游客，沿用既有行为）。
+     * 用 404 而不是 403：不暴露「这条内容存在但你没权限」。
+     */
+    private void assertVisible(Post post, Long userId) {
+        if (Visibility.isCity(post.getVisibility())) {
+            return;
+        }
+        if (post.getSchoolId() == null) {
+            return;
+        }
+        if (userId != null && userId.equals(post.getUserId())) {
+            return;
+        }
+        Long viewerSchool = UserContext.schoolId();
+        if (viewerSchool == null || viewerSchool.equals(post.getSchoolId())) {
+            return;
+        }
+        throw BizException.notFound("帖子不存在或已删除");
+    }
+
     public Post detail(Long id, Long userId) {
         Post post = postMapper.selectById(id);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
             throw BizException.notFound("帖子不存在或已删除");
         }
+        assertVisible(post, userId);
         decorate(post, channelMap(List.of(post)), userId);
         post.setLiked(!likedIds(List.of(id), userId).isEmpty());
         refreshAuthors(List.of(post));
@@ -207,6 +256,8 @@ public class PostService {
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setStatus(1);
+        // 可见范围：老客户端不带该字段时按 school（仅本校）处理，是最安全的默认
+        post.setVisibility(Visibility.normalize(req.getVisibility()));
         // 内容安全：标题与正文一起送审，命中违规直接 400，不落库
         securityGuard.checkText(userId, title + "\n" + content,
                 SecurityGuard.SCENE_FORUM, SecurityGuard.BIZ_POST);
@@ -247,7 +298,9 @@ public class PostService {
                 .set(Post::getContent, content)
                 .set(Post::getImages, req.getImages() == null ? null
                         : req.getImages().stream().filter(StringUtils::hasText)
-                        .limit(9).collect(Collectors.joining(","))));
+                        .limit(9).collect(Collectors.joining(",")))
+                // 可见范围可以在编辑时改（比如想把一条仅本校的帖子放开到同市）
+                .set(Post::getVisibility, Visibility.normalize(req.getVisibility())));
     }
 
     public void delete(Long id) {        Long userId = UserContext.requireUserId();

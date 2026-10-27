@@ -58,6 +58,29 @@
     </view>
   </view>
 
+  <!-- 可见范围：默认仅本校，切到「同市可见」后同城高校的同学都能刷到 -->
+  <view class="card">
+    <view class="h2">可见范围</view>
+    <view class="muted mt16">决定哪些同学能刷到这条帖子，发布后可以在编辑里改</view>
+    <view class="vis-opts mt16">
+      <view
+        class="vis-opt {{visibility === item.value ? 'active' : ''}}"
+        wx:for="{{visibilityOptions}}"
+        wx:key="value"
+        bindtap="chooseVisibility"
+        data-value="{{item.value}}"
+        hover-class="vis-opt-hover"
+      >
+        <view class="vis-opt-head">
+          <text class="vis-opt-icon">{{item.icon}}</text>
+          <text class="vis-opt-title">{{item.title}}</text>
+          <text class="vis-opt-check" wx:if="{{visibility === item.value}}">✓</text>
+        </view>
+        <view class="vis-opt-sub">{{item.sub}}</view>
+      </view>
+    </view>
+  </view>
+
   <view class="card">
     <view class="promise" bindtap="toggleAgree">
       <view class="promise-box {{agreed ? 'on' : ''}}">{{agreed ? '✓' : ''}}</view>

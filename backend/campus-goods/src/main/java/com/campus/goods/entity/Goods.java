@@ -64,6 +64,12 @@ public class Goods {
 
     private String location;
 
+    /**
+     * 可见范围：school 仅本校 / city 同市可见（默认 school）。
+     * 见 {@link com.campus.common.content.Visibility}。
+     */
+    private String visibility;
+
     /** 0已下架 1在售 2已售出 */
     private Integer status;
 

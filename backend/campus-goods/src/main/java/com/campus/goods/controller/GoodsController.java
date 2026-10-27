@@ -57,7 +57,9 @@ public class GoodsController {
         Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
         if ("city".equalsIgnoreCase(scope)) {
             String targetCity = city != null && !city.isBlank() ? city : goodsService.cityOfSchool(schoolScope);
-            return R.ok(goodsService.page(keyword, categoryId, sort, page, size, null, targetCity, null));
+            // schoolScope 必须透传：本市流里「本校内容无条件可见」要靠它判定，
+            // 传 null 会让用户连自己学校发布的仅本校闲置都看不到。
+            return R.ok(goodsService.page(keyword, categoryId, sort, page, size, schoolScope, targetCity, null));
         }
         return R.ok(goodsService.page(keyword, categoryId, sort, page, size, schoolScope, null, null));
     }

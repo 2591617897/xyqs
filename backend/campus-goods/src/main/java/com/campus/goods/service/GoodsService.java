@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.common.api.R;
 import com.campus.common.client.FollowClient;
+import com.campus.common.content.Visibility;
 import com.campus.common.client.NotificationClient;
 import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.UserClient;
@@ -112,7 +113,19 @@ public class GoodsService {
                     return R.Page.of(List.of(), 0, page, size);
                 }
                 w.in(Goods::getSchoolId, citySchoolIds);
+                // 可见范围：同城他校的闲置，只有对方主动放开到「同市」才进流；
+                // 本校闲置永远可见（本校 ⊂ 本市），所以是 OR school_id = 我的学校。
+                // 分成两个分支写而不是用 eq(boolean, ...)：MP 的 or() 会先追加关键字，
+                // 后面条件不成立时会留下悬空的 OR，直接把整条 SQL 打成语法错误。
+                if (schoolId != null && schoolId > 0) {
+                    w.and(q -> q.eq(Goods::getVisibility, Visibility.CITY)
+                            .or().eq(Goods::getSchoolId, schoolId));
+                } else {
+                    // 游客 / 未选学校：只对明确放开到同市的内容可见
+                    w.eq(Goods::getVisibility, Visibility.CITY);
+                }
             } else if (schoolId != null && schoolId > 0) {
+                // 浏览本校：本校内容无论可见范围如何都可见，无需额外条件
                 w.eq(Goods::getSchoolId, schoolId);
             }
         }
@@ -190,11 +203,43 @@ public class GoodsService {
         return cnt == null ? 0 : cnt;
     }
 
+    /**
+     * 可见范围校验：仅本校的闲置，外校用户看不到。
+     *
+     * 光在列表里过滤不够 —— 详情接口是独立入口，分享链接可以直达，
+     * 不加这道校验「仅本校」就形同虚设。
+     *
+     * 放行三类：
+     *  - 内容本身是同市可见
+     *  - 作者本人（换设备、清缓存后仍能打开自己发布的）
+     *  - 浏览者没有学校身份（游客 / 未选学校）：沿用既有「schoolId=null 看全站」的行为，
+     *    不在这一次改动里顺手收紧游客可见性，避免误伤已有的游客浏览设计。
+     *
+     * 用 404 而不是 403：不暴露「这条内容存在但你没权限」。
+     */
+    private void assertVisible(Goods goods, Long userId) {
+        if (Visibility.isCity(goods.getVisibility())) {
+            return;
+        }
+        if (goods.getSchoolId() == null) {
+            return;
+        }
+        if (userId != null && userId.equals(goods.getUserId())) {
+            return;
+        }
+        Long viewerSchool = UserContext.schoolId();
+        if (viewerSchool == null || viewerSchool.equals(goods.getSchoolId())) {
+            return;
+        }
+        throw BizException.notFound("商品不存在或已被删除");
+    }
+
     public Goods detail(Long id, Long userId) {
         Goods goods = goodsMapper.selectById(id);
         if (goods == null) {
             throw BizException.notFound("商品不存在或已被删除");
         }
+        assertVisible(goods, userId);
         goodsMapper.incrView(id);
         int views = goods.getViewCount() == null ? 0 : goods.getViewCount();
         goods.setViewCount(views + 1);
@@ -601,6 +646,8 @@ public class GoodsService {
         goods.setSupportTrial(req.getSupportTrial() == null ? 1 : req.getSupportTrial());
         goods.setTradeType(req.getTradeType() == null ? 1 : req.getTradeType());
         goods.setLocation(req.getLocation());
+        // 可见范围：老客户端不带该字段时按 school（仅本校）处理，是最安全的默认
+        goods.setVisibility(Visibility.normalize(req.getVisibility()));
         if (req.getImages() != null) {
             goods.setImages(req.getImages().stream()
                     .filter(StringUtils::hasText).limit(9).collect(Collectors.joining(",")));

@@ -57,7 +57,10 @@ public class PostController {
         Long schoolScope = schoolId != null ? schoolId : UserContext.schoolId();
         if ("city".equalsIgnoreCase(scope)) {
             String targetCity = city != null && !city.isBlank() ? city : postService.cityOfSchool(schoolScope);
-            return R.ok(postService.pageByCity(channelId, targetCity, page, size, UserContext.userId()));
+            // schoolScope 必须透传：本市流里「本校内容无条件可见」要靠它判定，
+            // 传 null 会让用户连本校同学发的仅本校帖子都刷不到。
+            return R.ok(postService.pageByCity(channelId, targetCity, page, size,
+                    UserContext.userId(), schoolScope));
         }
         return R.ok(postService.page(channelId, schoolScope, page, size, UserContext.userId(), sort));
     }
