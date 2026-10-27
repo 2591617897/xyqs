@@ -9,6 +9,7 @@ import com.campus.common.client.dto.UserBrief;
 import com.campus.message.dto.NotifyReq;
 import com.campus.message.entity.Notification;
 import com.campus.message.mapper.NotificationMapper;
+import com.campus.message.service.MessageSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -31,6 +32,8 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
+    /** 提醒开关：关掉的类目不计入角标（消息仍保留在列表里） */
+    private final MessageSettingService settingService;
     private final UserClient userClient;
 
     private static final int SNAPSHOT_LEN = 300;
@@ -138,17 +141,28 @@ public class NotificationService {
 
     /** 各 tab 未读数 */
     public UnreadStats unreadStats(Long userId) {
+        MessageSettingService.EffectiveFlags f = settingService.effectiveFlags(userId);
         UnreadStats s = new UnreadStats();
-        s.all = notificationMapper.countAllUnread(userId);
-        s.like = notificationMapper.countUnreadByType(userId, "LIKE_GOODS");
-        // LIKE_POST / LIKE_WALL 也算赞类
-        s.like += notificationMapper.countUnreadByType(userId, "LIKE_POST");
-        s.like += notificationMapper.countUnreadByType(userId, "LIKE_WALL");
-        s.follow = notificationMapper.countUnreadByType(userId, "NEW_FOLLOWER");
-        s.mention = notificationMapper.countUnreadByType(userId, "MENTION");
-        s.commentPost = notificationMapper.countUnreadByType(userId, "COMMENT_POST");
-        s.commentWall = notificationMapper.countUnreadByType(userId, "COMMENT_WALL");
-        s.system = notificationMapper.countUnreadByType(userId, "SYSTEM");
+        if (f.notifyLike) {
+            s.like = notificationMapper.countUnreadByType(userId, "LIKE_GOODS");
+            // LIKE_POST / LIKE_WALL 也算赞类
+            s.like += notificationMapper.countUnreadByType(userId, "LIKE_POST");
+            s.like += notificationMapper.countUnreadByType(userId, "LIKE_WALL");
+        }
+        if (f.notifyFollow) {
+            s.follow = notificationMapper.countUnreadByType(userId, "NEW_FOLLOWER");
+        }
+        if (f.notifyComment) {
+            s.mention = notificationMapper.countUnreadByType(userId, "MENTION");
+            s.commentPost = notificationMapper.countUnreadByType(userId, "COMMENT_POST");
+            s.commentWall = notificationMapper.countUnreadByType(userId, "COMMENT_WALL");
+        }
+        if (f.notifySystem) {
+            s.system = notificationMapper.countUnreadByType(userId, "SYSTEM");
+        }
+        // all 必须由各分项相加，不能再用 countAllUnread：
+        // 否则关掉「赞与收藏」后分项为 0、总数却还在，四宫格没红点而总角标有，对不上
+        s.all = s.like + s.follow + s.mention + s.commentPost + s.commentWall + s.system;
         return s;
     }
 

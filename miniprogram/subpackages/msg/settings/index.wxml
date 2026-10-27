@@ -1,0 +1,70 @@
+<view class="page">
+  <view class="hd">
+    <text class="hd-title">消息提醒</text>
+    <text class="hd-sub">站内消息始终保留，开关只决定「要不要提醒你」</text>
+  </view>
+
+  <!-- 站内提醒 -->
+  <view class="sec-title">站内提醒</view>
+  <view class="card">
+    <view class="row" wx:for="{{switches}}" wx:key="key">
+      <view class="row-main">
+        <view class="row-title">{{item.title}}</view>
+        <view class="row-sub">{{item.sub}}</view>
+      </view>
+      <switch
+        class="sw"
+        checked="{{item.on}}"
+        color="#006C49"
+        data-key="{{item.key}}"
+        bindchange="onToggle"
+      />
+    </view>
+  </view>
+  <view class="hint">关掉的类目不再计入底部「消息」红点，但历史消息仍完整保留在对应列表里。</view>
+
+  <!-- 免打扰 -->
+  <view class="sec-title">夜间免打扰</view>
+  <view class="card">
+    <view class="row">
+      <view class="row-main">
+        <view class="row-title">免打扰时段</view>
+        <view class="row-sub">该时段内不推送提醒，消息照常送达</view>
+      </view>
+      <switch class="sw" checked="{{dndEnabled}}" color="#006C49" bindchange="onDndToggle" />
+    </view>
+
+    <view class="dnd" wx:if="{{dndEnabled}}">
+      <picker mode="time" value="{{dndStart}}" bindchange="onDndStart">
+        <view class="pick">{{dndStart}}</view>
+      </picker>
+      <text class="dnd-sep">至</text>
+      <picker mode="time" value="{{dndEnd}}" bindchange="onDndEnd">
+        <view class="pick">{{dndEnd}}</view>
+      </picker>
+      <text class="dnd-note">跨天也支持（如 22:00 至次日 07:00）</text>
+    </view>
+  </view>
+
+  <!-- 微信服务通知 -->
+  <view class="sec-title">微信服务通知</view>
+  <view class="card">
+    <view class="row">
+      <view class="row-main">
+        <view class="row-title">推送到微信</view>
+        <view class="row-sub">{{wxTip}}</view>
+      </view>
+      <view class="act" wx:if="{{wxPushAvailable && !wxPushOn}}" bindtap="onSubscribe">开启</view>
+      <view class="act act-on" wx:elif="{{wxPushOn}}" bindtap="onSubscribe">已开启</view>
+      <view class="act act-off" wx:else bindtap="onSubscribe">待开通</view>
+    </view>
+  </view>
+  <view class="hint" wx:if="{{!wxPushAvailable}}">
+    当前只有站内提醒。绑定服务号并配置订阅消息模板后，这里会自动出现「开启」按钮，无需更新小程序。
+  </view>
+  <view class="hint" wx:else>
+    微信订阅消息为「一次性授权」：每授权一次可接收一条对应模板的消息，如需持续接收需再次授权。
+  </view>
+
+  <view class="foot">设置只影响提醒方式，不会删除任何消息</view>
+</view>

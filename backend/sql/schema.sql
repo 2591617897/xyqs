@@ -135,6 +135,23 @@ CREATE TABLE IF NOT EXISTS t_goods_search_log (
   KEY idx_norm_day (norm_keyword, search_day)
 ) COMMENT '闲置搜索词日志（热词榜数据源，保留 90 天）';
 
+-- 消息提醒设置（站内开关 + 免打扰 + 订阅消息授权状态）
+CREATE TABLE IF NOT EXISTS t_message_setting (
+  user_id          BIGINT      NOT NULL COMMENT '用户 id，一人一行',
+  notify_message   TINYINT     NOT NULL DEFAULT 1 COMMENT '私信提醒 1开 0关',
+  notify_like      TINYINT     NOT NULL DEFAULT 1 COMMENT '赞与收藏',
+  notify_follow    TINYINT     NOT NULL DEFAULT 1 COMMENT '新增粉丝',
+  notify_comment   TINYINT     NOT NULL DEFAULT 1 COMMENT '评论与@',
+  notify_system    TINYINT     NOT NULL DEFAULT 1 COMMENT '官方通知',
+  dnd_enabled      TINYINT     NOT NULL DEFAULT 0 COMMENT '免打扰开关',
+  dnd_start        VARCHAR(5)  NOT NULL DEFAULT '22:00' COMMENT '免打扰开始 HH:mm',
+  dnd_end          VARCHAR(5)  NOT NULL DEFAULT '07:00' COMMENT '免打扰结束 HH:mm（可跨天）',
+  subscribe_status TINYINT     NOT NULL DEFAULT 0 COMMENT '微信订阅消息 0未授权 1已授权 2已拒绝',
+  subscribe_at     DATETIME    DEFAULT NULL COMMENT '最近一次订阅授权时间',
+  updated_at       DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id)
+) COMMENT '消息提醒设置（站内开关 + 免打扰 + 订阅消息授权状态）';
+
 -- 通用点赞表（target_type: GOODS / WALL / POST）
 CREATE TABLE IF NOT EXISTS t_like (
   id          BIGINT      NOT NULL PRIMARY KEY,

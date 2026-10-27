@@ -3,6 +3,9 @@ const kwUtil = require('../../utils/kw')
 const { mp, timeAgo, toast } = require('../../utils/util')
 const auth = require('../../utils/auth')
 
+/** 防骗贴士「关掉后不再出现」的本地标记：只存本机，不占后端字段 */
+const TIP_CLOSED_KEY = 'msg_tip_closed'
+
 /** 四宫格 → 分包页面（与 subpackages/msg/notice 下四个页面一一对应） */
 const NOTICE_PAGE = {
   '赞与收藏': '/subpackages/msg/notice/like',
@@ -50,7 +53,9 @@ Page({
     } catch (e) { /* 低版本兜底 96px */ }
     this.setData({
       statusBarHeight: info.statusBarHeight || 20,
-      capsuleGap: capsuleGap + 8
+      capsuleGap: capsuleGap + 8,
+      // 关过就不要再出现：以前只 setData(false)，下次进页面又弹回来
+      showTip: !mp.getStorageSync(TIP_CLOSED_KEY)
     })
   },
 
@@ -141,6 +146,7 @@ Page({
 
   closeTip: function () {
     this.setData({ showTip: false })
+    mp.setStorageSync(TIP_CLOSED_KEY, 1)
   },
 
   /**
@@ -176,11 +182,21 @@ Page({
     unread.forEach(function (c) {
       http.post('/messages/' + c.id + '/read', null, { silent: true }).catch(function () {})
     })
+    // 通知也要一起标：只清会话的话，四宫格（赞 / 粉丝 / 评论@ / 官方）红点还在，
+    // 用户刚点「全部已读」却又看到红点，会以为没生效
+    http.post('/messages/notifications/read-all', {}, { silent: true }).catch(function () {})
+    const cleared = Object.assign({}, this.data.summary, {
+      likes: 0, followers: 0, mentions: 0, notice: 0, system: 0,
+      unreadNotice: 0, unreadTotal: 0
+    })
+    this.setData({ summary: cleared })
+    this.syncTabUnread(0)
     mp.showToast({ title: '已全部标为已读', icon: 'none' })
   },
 
+  /** 消息设置：跳分包页面（提醒开关 / 免打扰 / 微信服务通知授权） */
   onSettings: function () {
-    mp.showToast({ title: '消息设置即将上线', icon: 'none' })
+    mp.navigateTo({ url: '/subpackages/msg/settings/index' })
   },
 
   /** 左滑卡片展开/收起：受控，保证同时只有一个展开 */

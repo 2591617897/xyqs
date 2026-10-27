@@ -1,43 +1,62 @@
-# 移除闲置列表头部合规提示条
+# 消息提醒功能完善
 
-## 改了什么
+## 一句话结论
 
-`pages/goods/list` 头部那条「本站仅展示闲置信息，不支持线上交易与支付，请校内当面验货、当面结清」已删除：
+「消息设置」从 toast 占位变成能用的设置页；底栏角标从「只统计私信」改成「私信 + 通知」；订阅消息的授权链路已备好，后期绑服务号只需配模板 id，前端无需改动。
 
-- `pages/goods/list.wxml` — 删掉 `.list-tip` 提示条整块（ℹ️ 图标 + 文案）
-- `pages/goods/list.wxss` — 删掉对应的 20 行合规条样式
+## 修掉的三个真问题
 
-删除后列表结构：搜索栏 → 广告位 → 分类横滑 → 排序栏 → 卡片列表 → 列表尾提示。
-
-## 顺带修掉一个真问题
-
-改的时候发现 `.list-tip` 这个类名**被定义了两次**：
-
-| 位置 | 样式 | 用途 |
+| 问题 | 原来 | 现在 |
 |---|---|---|
-| 第 164 行 | `text-align:center` + 灰字 + `padding:32rpx 0` | 列表尾「没有更多啦」 |
-| 第 181 行 | `display:flex` + 浅绿底 + 圆角边框 | 合规提示条 |
+| 消息设置 | `showToast('即将上线')` | 独立分包页面，5 类开关 + 免打扰 + 微信推送入口 |
+| 防骗贴士 | 关闭只改内存，下次进页面又回来 | 写本地标记 `msg_tip_closed`，关了就真不再出现 |
+| 底栏角标 | 只算私信未读，被赞/被关注毫无反应 | 私信 + 通知合计，并返回 `unreadMessage` / `unreadNotice` 分项 |
+| 全部已读 | 只标记会话，四宫格红点还挂着 | 同时调 `/messages/notifications/read-all`，角标归零 |
 
-CSS 后者覆盖前者，所以列表底部那条「没有更多啦」一直被套着绿底框（你截图里也能看到）。删掉合规条样式后，`.list-tip` 只剩第一个定义，列表尾恢复成灰色居中文字。
+## 后端新增
 
-**教训**：同一个类名在文件不同段落定义两次，不会报错，只表现为「别的地方样式莫名变了」。以后改样式前先 `grep -n "^\.类名"` 确认只有一处定义。
+- 表 `t_message_setting`（migration 脚本 + schema.sql 同步）：5 类开关 / 免打扰起止 / 订阅授权状态
+- 接口 `GET` `PUT` `/messages/settings`、`POST` `/messages/settings/subscribe?status=`
+- **开关真的生效**：`NotificationService.unreadStats` 按类目过滤，且 `all` 由分项相加
+- 免打扰时间走 `HH:mm` 白名单校验，非法值回退默认；`inDnd()` 支持跨天
 
-## 没动的地方
+## 前端新增
 
-`subpackages/me/goods/mine.wxml` 里还有一条同类提示（`.me-hint`，在「我发布的」页顶部说明卡里）。这次按截图范围只改了闲置列表，要不要一起删你说一声。
+- `subpackages/msg/settings/index`：开关乐观更新 + 300ms 合并保存 + 失败回滚
+- `utils/subscribe.js`：订阅消息封装，三条关键约束写在注释里
 
-## 合规视角的提醒
+## 订阅消息为什么现在只做授权
 
-这条提示原本是提审时的缓冲——表明「只做信息展示、无线上交易」。移除它不影响功能，也不违反规则，小程序本身确实没有支付能力。如果真的被审核追问交易属性，建议把这句话放到「发布闲置」页做一次性告知，而不是占列表首屏。
+| 环节 | 现在 | 绑服务号后 |
+|---|---|---|
+| 拿模板 id | 后端 `campus.wx.subscribe-templates`，未配则为空 | 配环境变量 `WX_SUBSCRIBE_TEMPLATES` |
+| 请求用户授权 | ✅ 已实现（`wx.requestSubscribeMessage`） | 不用改 |
+| 服务端发送 | ❌ 未实现 | 在 campus-auth 加发送服务，按开关 + 免打扰过滤 |
+
+> 接口名 `subscribeMessage.send` 与参数以微信官方文档为准。access_token 获取能力已在 `WxSecurityService` 里有进程内缓存，可直接复用。
+
+## 实测结果（走网关，真 token + 真数据）
+
+| 操作 | 结果 |
+|---|---|
+| 造 3 条未读通知 | `all=3, like=1, follow=1, system=1` |
+| 消息中心 summary | `unreadNotice=3, unreadTotal=3`（改前是 0） |
+| 关闭「赞与收藏」 | like 立刻 0，all 变 2 |
+| 传非法时间 `abc` / `99:99` | 回退 22:00 / 07:00 |
+| 上报授权 status=1 | `subscribeStatus=1`，但 `wxPushOn` 仍 false（没模板不谎报） |
+| 全部已读 | 清 3 条，随后角标全 0 |
+
+测试数据已清理，8106 运行新代码。
 
 ## 回归
 
-| 脚本 | 结果 |
-|---|---|
-| check-miniprogram | 23 主包 + 8 分包，通过 |
-| mock-selftest | 154 / 154 |
-| home-zones-selftest | 35 / 35 |
-| msg-subpackage-check | 通过 |
-| goods-search-selftest | 54 / 54 |
-| search-multiword-selftest | 102 / 102 |
-| hot-words-selftest | 76 / 76 |
+新增 `scripts/message-notify-selftest.js` **64 断言**（含 `subscribe.js` 六条真实分支：空模板不调接口 / 允许 / 拒绝 / 失败 / 超 3 个截断 / 脏数据过滤 / 同步调用）。
+
+`check-miniprogram` 23+9 ｜ `mock-selftest` 154 ｜ `home-zones` 35 ｜ `msg-subpackage` ｜ `goods-search` 54 ｜ `search-multiword` 102 ｜ `hot-words` 76 ｜ `message-notify` 64 —— 全绿。
+
+## 下一步（绑服务号时按这个顺序做）
+
+1. 小程序后台「订阅消息」选模板，拿到模板 id
+2. 配环境变量 `WX_SUBSCRIBE_TEMPLATES=tpl1,tpl2`（最多 3 个，上限以官方文档为准），重启 8106
+3. 设置页会自动从「待开通」变成「开启」，用户点一下即走授权
+4. 需要真推送时再在 campus-auth 加发送服务，按 5 个开关 + 免打扰过滤

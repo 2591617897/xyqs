@@ -1,0 +1,136 @@
+/* 消息提醒设置页
+   沿用通知分包的整体风格：浅灰底 + 白卡片 + 品牌绿主色 */
+
+.page {
+  min-height: 100vh;
+  background: var(--surface-1, #F5F7F6);
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+/* ===== 顶部 ===== */
+.hd {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 32rpx 32rpx 8rpx;
+}
+.hd-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #1e293b;
+}
+.hd-sub {
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* ===== 分组标题 ===== */
+.sec-title {
+  padding: 28rpx 34rpx 12rpx;
+  font-size: 25rpx;
+  color: #94a3b8;
+}
+
+/* ===== 卡片与行 ===== */
+.card {
+  margin: 0 24rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(15, 23, 42, .04);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 26rpx 28rpx;
+  /* 行之间用极淡的分隔线，不用 border-bottom 避免最后一行多一条 */
+  border-bottom: 1rpx solid #f2f4f3;
+}
+.row:last-child {
+  border-bottom: none;
+}
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.row-title {
+  font-size: 30rpx;
+  color: #1e293b;
+}
+.row-sub {
+  font-size: 23rpx;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* switch 不能被 flex 拉伸，否则真机上会变形 */
+.sw {
+  flex-shrink: 0;
+  transform: scale(.86);
+  transform-origin: right center;
+}
+
+/* ===== 免打扰时段 ===== */
+.dnd {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-wrap: wrap;
+  padding: 8rpx 28rpx 26rpx;
+}
+.pick {
+  padding: 14rpx 30rpx;
+  background: var(--brand-50, #E8F5EF);
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--brand-700, #00452F);
+  font-variant-numeric: tabular-nums;
+}
+.dnd-sep {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+.dnd-note {
+  flex-basis: 100%;
+  font-size: 22rpx;
+  color: #b6bbc6;
+}
+
+/* ===== 右侧操作按钮 ===== */
+.act {
+  flex-shrink: 0;
+  padding: 12rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  color: #ffffff;
+  background: var(--brand-500, #006C49);
+}
+.act-on {
+  color: var(--brand-700, #00452F);
+  background: var(--brand-50, #E8F5EF);
+}
+.act-off {
+  color: #a8b0bd;
+  background: #eef1f0;
+}
+
+/* ===== 说明与页脚 ===== */
+.hint {
+  padding: 16rpx 34rpx 0;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #b6bbc6;
+}
+.foot {
+  margin-top: 40rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #c2c7d0;
+}

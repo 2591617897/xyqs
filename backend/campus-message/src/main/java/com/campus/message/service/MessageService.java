@@ -54,6 +54,10 @@ public class MessageService {
     private final ConversationMapper conversationMapper;
     private final ConversationHideMapper conversationHideMapper;
     private final MessageMapper messageMapper;
+    /** 角标要把「赞 / 粉丝 / 评论@ / 官方」也算进去，否则用户只看到私信红点 */
+    private final NotificationService notificationService;
+    /** 提醒开关：关掉的类目不计入角标 */
+    private final MessageSettingService settingService;
     private final UserClient userClient;
     /** 内容安全：私信与其他 UGC 同一套标准，不能因为是「私聊」就免审 */
     private final SecurityGuard securityGuard;
@@ -113,10 +117,23 @@ public class MessageService {
         }
     }
 
-    /** 消息中心顶部统计（未读 / 收到的赞 / 评论与回复） */
+    /**
+     * 消息中心顶部统计（未读 / 收到的赞 / 评论与回复）。
+     *
+     * <p>unreadTotal 语义 = <b>私信未读 + 站内通知未读</b>。
+     * 早先只统计私信，导致底栏角标永远漏掉「赞 / 粉丝 / 评论@ / 官方」——
+     * 用户在首页刷到一半被点赞，底栏毫无反应，只有主动点进消息中心才发现。
+     * 现在两个分项也一并返回，前端需要分开展示时不必再算。
+     */
     public Map<String, Object> summary(Long userId) {
         Map<String, Object> m = new HashMap<>();
-        m.put("unreadTotal", conversationMapper.countUnread(userId));
+        MessageSettingService.EffectiveFlags f = settingService.effectiveFlags(userId);
+        // 私信开关关掉 → 私信未读不进角标；通知各分项由 NotificationService 按类目开关过滤
+        int unreadMessage = f.notifyMessage ? conversationMapper.countUnread(userId) : 0;
+        int unreadNotice = safeCount(() -> notificationService.unreadStats(userId).all);
+        m.put("unreadMessage", unreadMessage);
+        m.put("unreadNotice", unreadNotice);
+        m.put("unreadTotal", unreadMessage + unreadNotice);
         m.put("likes", safeCount(() -> messageMapper.countReceivedLikes(userId)));
         m.put("mentions", safeCount(() -> messageMapper.countReceivedComments(userId)));
         // 本版本未实现关注关系，先返回 0，前端角标不展示
@@ -224,9 +241,16 @@ public class MessageService {
         resetUnread(c, userId);
     }
 
-    /** 未读消息总数 */
+    /**
+     * 未读消息总数（底栏角标，GET /messages/unread）。
+     *
+     * <p>与 {@link #summary} 保持同一口径：私信 + 站内通知。
+     * 两个入口口径不一致会出现「消息页显示 3、底栏显示 1」这种最让人困惑的状态。
+     */
     public int unreadTotal(Long userId) {
-        return conversationMapper.countUnread(userId);
+        MessageSettingService.EffectiveFlags f = settingService.effectiveFlags(userId);
+        int msg = f.notifyMessage ? conversationMapper.countUnread(userId) : 0;
+        return msg + safeCount(() -> notificationService.unreadStats(userId).all);
     }
 
     // ---------------- 左滑删除 ----------------

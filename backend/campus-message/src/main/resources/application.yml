@@ -41,3 +41,9 @@ campus:
   jwt:
     # 【安全】密钥来自环境变量 JWT_SECRET 或 ~/.campus-secrets/jwt.key
     secret: ${JWT_SECRET:}
+  wx:
+    # 订阅消息模板 id（逗号分隔，最多 3 个 —— 具体上限以微信官方文档为准）。
+    # 留空 = 微信提醒未开通：前端只展示入口、不发起授权请求（拿空数组调接口只会失败）。
+    # 后期绑定服务号 / 在小程序后台「订阅消息 → 我的模板」拿到 id 后，
+    # 配环境变量 WX_SUBSCRIBE_TEMPLATES 即可生效，前端一行都不用改。
+    subscribe-templates: ${WX_SUBSCRIBE_TEMPLATES:}

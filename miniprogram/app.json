@@ -42,7 +42,8 @@
         "notice/like",
         "notice/fans",
         "notice/comment",
-        "notice/system"
+        "notice/system",
+        "settings/index"
       ]
     }
   ],

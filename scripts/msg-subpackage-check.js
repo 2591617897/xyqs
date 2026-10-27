@@ -56,7 +56,9 @@ ok('四个页面四件套 / include / @import / Page() 注册全部就位')
 const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'))
 const sp = (app.subPackages || []).find(function (x) { return x.root === 'subpackages/msg' })
 if (!sp) fail('app.json 没注册 subpackages/msg')
-else if (sp.pages.length !== PAGES.length) fail('分包页面数不符')
+// 四个通知页必须都在；分包里还允许有别的页（如 settings/index 提醒设置），
+// 所以判定「包含」而不是「数量相等」——否则每加一页就要改一次校验脚本
+else if (PAGES.some(function (p) { return sp.pages.indexOf(p) < 0 })) fail('分包缺少通知页面：' + PAGES.filter(function (p) { return sp.pages.indexOf(p) < 0 }).join(', '))
 else ok('app.json 已注册 msg 分包（' + sp.pages.join(', ') + '）')
 const pre = app.preloadRule && app.preloadRule['pages/messages/index']
 if (!pre || (pre.packages || []).indexOf('subpackages/msg') < 0) fail('缺 pages/messages/index 的 preloadRule')

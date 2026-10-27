@@ -2344,6 +2344,18 @@ function route(method, url, data) {
 
   // 私信与消息中心（前端演示层）
   if (s[0] === 'messages') {
+    // 提醒设置：必须排在最前面。下面有「两位路径 GET → 会话详情」的通吃规则，
+    // 顺序反了会把 /messages/settings 当成会话 id 去查。
+    if (s[1] === 'settings') {
+      if (s.length === 2 && M === 'GET') return ok(msgSettings())
+      if (s.length === 2 && M === 'PUT') return ok(saveMsgSettings(q))
+      if (s.length === 3 && M === 'POST' && s[2] === 'subscribe') return ok(subscribeMsgSettings(q))
+    }
+    // 站内通知：四宫格角标与「全部已读」都要用，同理不能落到会话路由里
+    if (s[1] === 'notifications') {
+      if (s.length === 3 && M === 'GET' && s[2] === 'unread') return ok(notifyUnread())
+      if (s.length === 3 && M === 'POST' && s[2] === 'read-all') return ok(clearNotifyUnread())
+    }
     if (s.length === 2 && M === 'GET' && s[1] === 'unread') return ok({ unread: unreadTotal() })
     if (s.length === 2 && M === 'POST' && s[1] === 'start') return ok(startConvo(q))
     if (s.length === 3 && M === 'POST' && s[2] === 'read') return ok(convoRead(s[1]))
@@ -2390,7 +2402,15 @@ function messageList() {
   }).sort(function (a, b) {
     return a.lastTime < b.lastTime ? 1 : -1
   })
-  return { summary: d.msgSummary || { likes: 0, followers: 0, mentions: 0, notice: '' }, convos: list }
+  // 与后端 MessageService#summary 保持同一口径：unreadTotal = 私信 + 通知
+  const unreadMessage = list.reduce(function (n, c) { return n + (c.unread || 0) }, 0)
+  const unreadNotice = notifyTotal()
+  const summary = Object.assign(
+    { likes: 0, followers: 0, mentions: 0, notice: '' },
+    d.msgSummary || {},
+    { unreadMessage: unreadMessage, unreadNotice: unreadNotice, unreadTotal: unreadMessage + unreadNotice }
+  )
+  return { summary: summary, convos: list }
 }
 
 /**
@@ -2451,9 +2471,91 @@ function convoRaw(id) {
 /** 未读总数 */
 function unreadTotal() {
   const d = load()
-  return (d.convos || []).reduce(function (n, c) {
+  const msg = (d.convos || []).reduce(function (n, c) {
     return n + (c.unread || 0)
   }, 0)
+  // 与后端一致：底栏角标 = 私信 + 站内通知
+  return msg + notifyTotal()
+}
+
+/* ---------------- 消息提醒设置（mock） ---------------- */
+
+const MSG_SETTING_DEFAULT = {
+  notifyMessage: true,
+  notifyLike: true,
+  notifyFollow: true,
+  notifyComment: true,
+  notifySystem: true,
+  dndEnabled: false,
+  dndStart: '22:00',
+  dndEnd: '07:00',
+  subscribeStatus: 0
+}
+
+/**
+ * 提醒设置。
+ *
+ * templateIds 固定返回空数组：本地不可能拿到真实的订阅消息模板 id，
+ * 伪造一个只会让 wx.requestSubscribeMessage 必然失败，反而误导。
+ * 空数组时设置页展示「待开通」，和线上「还没绑服务号」的状态完全一致。
+ */
+function msgSettings() {
+  const d = load()
+  const base = Object.assign({}, MSG_SETTING_DEFAULT, d.msgSetting || {})
+  return Object.assign({}, base, {
+    templateIds: [],
+    wxPushAvailable: false,
+    wxPushOn: false
+  })
+}
+
+function saveMsgSettings(q) {
+  requireLogin()
+  const d = load()
+  d.msgSetting = Object.assign({}, MSG_SETTING_DEFAULT, d.msgSetting || {}, q || {})
+  save()
+  return msgSettings()
+}
+
+function subscribeMsgSettings(q) {
+  requireLogin()
+  const d = load()
+  const status = Number(q.status) || 0
+  d.msgSetting = Object.assign({}, MSG_SETTING_DEFAULT, d.msgSetting || {}, {
+    subscribeStatus: status === 1 ? 1 : (status === 2 ? 2 : 0)
+  })
+  save()
+  return msgSettings()
+}
+
+/** 站内通知各类未读（mock 只在「标记已读」时清零，够用来验证交互） */
+function notifyUnread() {
+  const d = load()
+  const n = d.notifyUnread || {}
+  const like = (n.like || 0)
+  const follow = (n.follow || 0)
+  const comment = (n.commentPost || 0) + (n.commentWall || 0) + (n.mention || 0)
+  const system = (n.system || 0)
+  return {
+    all: like + follow + comment + system,
+    like: like,
+    follow: follow,
+    mention: n.mention || 0,
+    commentPost: n.commentPost || 0,
+    commentWall: n.commentWall || 0,
+    system: system
+  }
+}
+
+function notifyTotal() {
+  return notifyUnread().all
+}
+
+function clearNotifyUnread() {
+  const d = load()
+  d.notifyUnread = { like: 0, follow: 0, mention: 0, commentPost: 0, commentWall: 0, system: 0 }
+  save()
+  return 0
 }
 
 /** 标记单个会话已读 */
