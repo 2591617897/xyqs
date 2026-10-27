@@ -299,25 +299,31 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  gap: 14rpx;
-  padding: 14rpx 20rpx;
+  gap: 12rpx;
+  padding: 14rpx 18rpx;
   background: #ffffff;
   box-shadow: 0 -2rpx 16rpx rgba(15, 26, 22, 0.05);
   box-sizing: border-box;
   z-index: 20;
 }
-.ib-at {
-  width: 60rpx;
-  height: 60rpx;
+/* @ 与表情：两个对称的圆钮，选中态用品牌绿填充（明确告诉用户面板是谁打开的） */
+.ib-tool {
+  width: 58rpx;
+  height: 58rpx;
   border-radius: 50%;
   background: #f2f5f4;
   color: #4a5a54;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: background 0.15s;
+}
+.ib-tool.on {
+  background: #006c49;
+  color: #ffffff;
 }
 .ib-input {
   flex: 1;
@@ -335,26 +341,12 @@
 .ph {
   color: #a3b0aa;
 }
-.ib-all {
-  padding: 0 16rpx;
-  height: 60rpx;
-  line-height: 60rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
-  color: #c2410c;
-  background: #fff1e6;
-  flex-shrink: 0;
-}
-.ib-all.on {
-  background: #c2410c;
-  color: #ffffff;
-}
 .ib-send {
-  padding: 0 24rpx;
-  height: 60rpx;
-  line-height: 60rpx;
+  padding: 0 22rpx;
+  height: 58rpx;
+  line-height: 58rpx;
   border-radius: 999rpx;
-  font-size: 26rpx;
+  font-size: 25rpx;
   color: #ffffff;
   background: #cfd9d5;
   flex-shrink: 0;
@@ -551,4 +543,181 @@
 .bottom-dock .reply-bar {
   margin: 12rpx 20rpx 0;
   border-radius: 12rpx;
+}
+
+/* ==================== 底部面板（@ / 表情） ====================
+   高度固定成 rpx 常量：chat.wxml 的 .input-hold 占位高度按同样的数字算，
+   改这里的高度必须同步改 wxml 里那个表达式，否则最后几条消息会被盖住。 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  border-top: 1rpx solid #eef1f0;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.panel-at {
+  height: 520rpx;
+}
+.panel-emoji {
+  height: 430rpx;
+}
+
+/* ---------- @ 面板 ---------- */
+.at-search {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 20rpx 10rpx;
+  flex-shrink: 0;
+}
+.at-search-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  height: 64rpx;
+  padding: 0 18rpx;
+  background: #f2f5f4;
+  border-radius: 999rpx;
+  box-sizing: border-box;
+}
+.at-search-ico {
+  font-size: 22rpx;
+  opacity: 0.5;
+}
+.at-kw {
+  flex: 1;
+  min-width: 0;
+  font-size: 25rpx;
+  color: #0f1a16;
+}
+.at-cancel {
+  flex-shrink: 0;
+  font-size: 25rpx;
+  color: #006c49;
+  padding: 0 6rpx;
+}
+.at-list {
+  flex: 1;
+  /* scroll-view 在 flex 列里必须 min-height:0，否则撑成内容高度、滚不动 */
+  min-height: 0;
+  padding: 0 12rpx 12rpx;
+  box-sizing: border-box;
+}
+.at-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  height: 92rpx;
+  padding: 0 10rpx;
+  border-radius: 14rpx;
+}
+.at-item:active {
+  background: #f2f5f4;
+}
+.at-av {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #e8eeeb;
+  overflow: hidden;
+}
+.at-av-default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.at-av-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff1e6;
+  color: #c2410c;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.at-nick {
+  flex: 1;
+  min-width: 0;
+  font-size: 27rpx;
+  color: #0f1a16;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.at-flag {
+  flex-shrink: 0;
+  font-size: 21rpx;
+  color: #a3b0aa;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+.at-flag.on {
+  color: #c2410c;
+  background: #fff1e6;
+}
+.at-empty {
+  padding: 60rpx 0;
+  text-align: center;
+  font-size: 24rpx;
+  color: #a3b0aa;
+}
+
+/* ---------- 表情面板 ---------- */
+.emoji-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 12rpx 18rpx 8rpx;
+  flex-shrink: 0;
+}
+.emoji-tab {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  color: #7b8a84;
+  background: #f2f5f4;
+}
+.emoji-tab.on {
+  color: #ffffff;
+  background: #006c49;
+}
+.emoji-del {
+  margin-left: auto;
+  width: 64rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+  background: #f2f5f4;
+  font-size: 26rpx;
+  color: #4a5a54;
+}
+.emoji-body {
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+/* 7 列：12.5%（8 列）在部分机型上会因为小数累加溢出换行，留 0.3% 余量 */
+.emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 4rpx 10rpx 16rpx;
+}
+.emoji-cell {
+  width: 14.2%;
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42rpx;
+  line-height: 1;
+  border-radius: 12rpx;
+}
+.emoji-cell:active {
+  background: #eef3f1;
 }

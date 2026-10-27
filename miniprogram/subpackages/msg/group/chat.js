@@ -6,6 +6,56 @@ const { mp, toast } = require('../../../utils/util')
 const POLL_MS = 8000
 /** 撤回窗口（毫秒）：与后端 RECALL_WINDOW_MS 保持一致，2 分钟 */
 const RECALL_MS = 2 * 60 * 1000
+/** 单条消息最多 @ 的人数：与后端 GroupService.MAX_AT_USER 对齐 */
+const MAX_AT = 10
+
+/**
+ * 表情面板数据。
+ *
+ * <p>只用 Unicode 表情（不引图片包）：iOS / Android 都能渲染，
+ * 不占分包体积，也不会出现「图片 404 = 一片空白格子」。
+ * 每个数组内不得有重复项 —— wxml 用 *this 做 key，重复会告警。
+ */
+const EMOJI_GROUPS = [
+  {
+    name: '笑脸',
+    list: [
+      '😀', '😄', '😁', '😆', '😅', '😂', '🤣', '😊',
+      '😇', '🙂', '😉', '😍', '🥰', '😘', '😜', '🤪',
+      '🤨', '🧐', '🤓', '😎', '🥳', '😏', '😒', '😞',
+      '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩',
+      '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '😱',
+      '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫',
+      '😴', '🤤', '😪', '😵', '🤯', '🥱', '😷', '🤒'
+    ]
+  },
+  {
+    name: '手势',
+    list: [
+      '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+      '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️',
+      '🖖', '👋', '🤝', '🙏', '💪', '👏', '🙌', '🤲'
+    ]
+  },
+  {
+    name: '心情',
+    list: [
+      '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
+      '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘',
+      '💝', '💟', '✨', '⭐', '🌟', '💫', '🔥', '💯',
+      '🎉', '🎊', '🎁', '🎈', '🎂', '🌸', '🌹', '🌻'
+    ]
+  },
+  {
+    name: '生活',
+    list: [
+      '🍚', '🍜', '🍲', '🍱', '🍔', '🍟', '🍕', '🍗',
+      '🍖', '🍰', '🍦', '🍎', '🍊', '🍉', '🍓', '🥤',
+      '☕', '🍺', '🥛', '🍞', '🌙', '☀️', '🌈', '⚡',
+      '❄️', '🌊', '🌿', '🍀', '🐱', '🐶', '🐼', '🐰'
+    ]
+  }
+]
 
 Page({
   data: {
@@ -27,6 +77,20 @@ Page({
     atUsers: [],
     atAll: false,
     atAllAllowed: false,
+    /** 底部浮层：'' 无 / 'at' 成员选择 / 'emoji' 表情。两者互斥（高度固定，叠着会顶飞消息区） */
+    panel: '',
+    atKeyword: '',
+    atList: [],
+    atLoading: false,
+    /** 成员接口失败：不能显示成「没有找到这位校友」，那会让用户以为搜错了 */
+    atError: false,
+    /** 光标位置：插入表情/@ 时要插到光标处而不是末尾 */
+    inputCursor: 0,
+    /** 从面板选完人需要把焦点还给输入框；下次 blur 置回 false，否则属性值不变不再触发 */
+    focusInput: false,
+    emojiGroups: EMOJI_GROUPS,
+    emojiIndex: 0,
+    emojiList: EMOJI_GROUPS[0].list,
     /** 正在回复的消息 { id, name, text }；null = 普通发言 */
     replyTo: null,
     scrollInto: '',
@@ -99,6 +163,12 @@ Page({
 
   onUnload: function () {
     this.stopPolling()
+    this._unloaded = true
+    // 搜索 @ 成员的防抖定时器也要清，否则页面销毁后还会 setData（会告警）
+    if (this._atTimer) {
+      clearTimeout(this._atTimer)
+      this._atTimer = null
+    }
     // 先注销回调再断连：不注销的话页面销毁后闭包还挂在 ws 模块上，
     // 下次进群会收到两份回调（同一条消息渲染两次），并且内存不释放（E-09）
     this.unbindWs()
@@ -372,12 +442,52 @@ Page({
     }).catch(function () {})
   },
 
+  /**
+   * 输入框内容变化。
+   *
+   * <p>除了存文本，还要做两件事：
+   * 1. 记住光标位置 —— 表情/@ 要插在光标处，插在末尾会被用户骂「我明明点在中间」。
+   *    位置只用来算「文本从哪切」，<b>不要</b>绑到 input 的 cursor 属性上：
+   *    那个属性会在聚焦时强行把光标挪走，用户点输入框想接着打字却跳到开头。
+   * 2. 用户手打「@」就地把成员面板调出来（而不是只能去点左边的 @ 按钮）。
+   *    只在「本次刚好新增 1 个字符且是 @」时触发，粘贴一整段带 @ 的文本不会误弹。
+   */
   onInput: function (e) {
-    this.setData({ inputText: e.detail.value })
+    const v = e.detail.value || ''
+    const cursor = typeof e.detail.cursor === 'number' ? e.detail.cursor : v.length
+    const prev = this.data.inputText || ''
+    const patch = { inputText: v, inputCursor: cursor }
+
+    const typedAt = v.length === prev.length + 1 && cursor > 0 && v.charAt(cursor - 1) === '@'
+    if (typedAt && this.data.panel !== 'at') {
+      // 必须先把「@」落到 data 再开面板：openAtPanel 会 setData，
+      // data 里没有这个 @ 的话 input 的 value 会被回写成旧值，@ 白打了
+      this.setData(patch)
+      // 记住这个 @ 的位置，选完人要把 @ 替换成「@昵称 」
+      this._atAnchor = cursor - 1
+      this.openAtPanel(true)
+      return
+    }
+    this.setData(patch)
+  },
+
+  /** 聚焦输入框 = 用户要打字，表情/@ 面板必须让位（否则键盘和面板互相顶） */
+  onFocus: function () {
+    if (this.data.panel) this.setData({ panel: '' })
+  },
+
+  /** blur 后把 focus 标记归位，下次 pickAt 才能再次把焦点推回输入框 */
+  onBlur: function () {
+    if (this.data.focusInput) this.setData({ focusInput: false })
   },
 
   onKeyboard: function (e) {
-    this.setData({ keyboardHeight: (e.detail && e.detail.height) || 0 })
+    const h = (e.detail && e.detail.height) || 0
+    const patch = { keyboardHeight: h }
+    // 键盘起来了要打字：表情面板必须收（它没有输入需求，叠着只会把消息区压没）。
+    // @ 面板反而允许键盘共存 —— 面板顶部就是成员搜索框，点它必然弹键盘。
+    if (h > 0 && this.data.panel === 'emoji') patch.panel = ''
+    this.setData(patch)
   },
 
   onSend: function () {
@@ -415,12 +525,19 @@ Page({
       pending: true,
       failed: false
     }
+    // ★ 必须先把 atUserIds 取出来再清 atUsers：
+    //   之前是先 setData({atUsers: []}) 再 map，取到的永远是空数组，
+    //   表现就是「@ 了人但对方收不到提醒」（t_group_mention 也不落库）。
+    const atUserIds = (this.data.atUsers || []).map(function (u) { return String(u.id) })
+
     this.setData({
       msgs: this.data.msgs.concat([local]),
       inputText: '',
+      inputCursor: 0,
       atUsers: [],
       atAll: false,
       replyTo: null,
+      panel: '',
       scrollInto: 'm-last'
     })
 
@@ -428,7 +545,7 @@ Page({
       msgType: 'text',
       content: text,
       clientMsgId: clientMsgId,
-      atUserIds: (this.data.atUsers || []).map(function (u) { return String(u.id) }),
+      atUserIds: atUserIds,
       atAll: local.atAll,
       replyToId: reply ? reply.id : ''
     }
@@ -634,44 +751,144 @@ Page({
     setTimeout(function () { self.setData({ scrollInto: 'm-' + id }) }, 30)
   },
 
-  /** 打开成员选择器（@ 用），选中结果通过 eventChannel 回来 */
-  openAtPicker: function () {
-    const self = this
-    mp.navigateTo({
-      url: '/subpackages/msg/group/members?id=' + this.data.groupId + '&select=1',
-      success: function (res) {
-        res.eventChannel.on('pickMember', function (user) {
-          if (!user) return
-          self.addAt(user)
-        })
-      }
-    })
+  // ============ @ 面板（底部浮层，不跳页） ============
+
+  /** 点输入栏的 @ 按钮 */
+  toggleAtPanel: function () {
+    if (this.data.panel === 'at') {
+      this.closePanel()
+      return
+    }
+    // 点按钮打开时没有「现成的 @」可以替换，插入位置交给输入框光标
+    this._atAnchor = -1
+    this.openAtPanel()
   },
 
   /**
-   * 把一个成员加入 @ 列表并写进输入框。
+   * 打开成员面板。
    *
-   * <p>两条入口共用：成员选择器 + 长按头像（长按头像是最快的方式，
+   * <p>面板和键盘互斥：同时存在会把消息区压成一条缝，
+   * 所以打开前先收键盘，键盘高度归零后 .bottom-dock 自然落到底部。
+   */
+  openAtPanel: function () {
+    const self = this
+    hideKeyboard()
+    this.setData({
+      panel: 'at',
+      atKeyword: '',
+      atList: [],
+      atLoading: true,
+      atError: false,
+      keyboardHeight: 0,
+      focusInput: false
+    })
+    http.get('/groups/' + this.data.groupId + '/members',
+      { page: 1, size: 50 }, { silent: true }
+    ).then(function (res) {
+      self.setData({ atList: (res && res.records) || [], atLoading: false })
+    }).catch(function () {
+      self.setData({ atLoading: false, atError: true })
+    })
+  },
+
+  /** 面板内搜索成员（防抖 300ms，一万人群里每敲一个字就请求太浪费） */
+  onAtKeyword: function (e) {
+    const kw = e.detail.value || ''
+    this.setData({ atKeyword: kw })
+    if (this._atTimer) clearTimeout(this._atTimer)
+    const self = this
+    this._atTimer = setTimeout(function () { self.searchAt(kw) }, 300)
+  },
+
+  searchAt: function (kw) {
+    const self = this
+    this.setData({ atLoading: true, atError: false })
+    http.get('/groups/' + this.data.groupId + '/members',
+      { keyword: kw, page: 1, size: 50 }, { silent: true }
+    ).then(function (res) {
+      // 回来时关键词可能已经被改掉了：只认最后一次请求的结果
+      if (self.data.atKeyword !== kw) return
+      self.setData({ atList: (res && res.records) || [], atLoading: false })
+    }).catch(function () {
+      if (self.data.atKeyword !== kw) return
+      self.setData({ atLoading: false, atError: true })
+    })
+  },
+
+  /** 点消息区空白处收起面板（和微信一致，不用非得去点「取消」） */
+  onTapMsgs: function () {
+    if (this.data.panel) this.closePanel()
+  },
+
+  closePanel: function () {
+    if (this._atTimer) {
+      clearTimeout(this._atTimer)
+      this._atTimer = null
+    }
+    if (!this.data.panel) return
+    const self = this
+    this.setData({ panel: '', scrollInto: '' })
+    // 面板收掉后消息区变高，最后一条会被压在底部之外，重新滚一次
+    setTimeout(function () {
+      // 60ms 内用户可能已经退出群聊页，此时 setData 会告警
+      if (self._unloaded) return
+      self.setData({ scrollInto: 'm-last' })
+    }, 60)
+  },
+
+  /** 面板里选人 */
+  pickAt: function (e) {
+    const idx = Number(e.currentTarget.dataset.idx)
+    const u = (this.data.atList || [])[idx]
+    if (!u) return
+    if (String(u.userId) === this.data.myId) {
+      toast('不能 @ 自己')
+      return
+    }
+    const ok = this.insertAt({ id: u.userId, nickname: u.nickname || '校友' })
+    if (!ok) return
+    this.closePanel()
+    // 焦点还给输入框：用户选完人接着打字是常态
+    this.setData({ focusInput: true })
+  },
+
+  /**
+   * 把一个成员插入 @ 列表与输入框。
+   *
+   * <p>两条入口共用：面板选人 / 长按头像（长按头像是最快的方式，
    * 不用先去列表里找人）。
    */
-  addAt: function (user) {
-    if (!user || !user.id) return
+  insertAt: function (user) {
+    if (!user || !user.id) return false
     const name = user.nickname || '校友'
     const list = (this.data.atUsers || []).slice()
     if (list.some(function (u) { return String(u.id) === String(user.id) })) {
       toast('已经 @ 过 ' + name + ' 了')
-      return
+      return false
     }
-    if (list.length >= 10) {
-      toast('单条消息最多 @ 10 人')
-      return
+    if (list.length >= MAX_AT) {
+      toast('单条消息最多 @ ' + MAX_AT + ' 人')
+      return false
     }
     list.push({ id: String(user.id), nickname: name })
-    this.setData({
-      atUsers: list,
-      inputText: (this.data.inputText || '') + '@' + name + ' '
-    })
-    toast('已 @ ' + name)
+
+    const text = this.data.inputText || ''
+    const anchor = typeof this._atAnchor === 'number' ? this._atAnchor : -1
+    let next
+    let caret
+    if (anchor >= 0 && anchor < text.length && text.charAt(anchor) === '@') {
+      // 手打 @ 触发：把这个 @ 换成「@昵称 」，否则文本里会留下两个 @
+      next = text.slice(0, anchor) + '@' + name + ' ' + text.slice(anchor + 1)
+      caret = anchor + name.length + 2
+    } else {
+      const pos = this.data.inputCursor
+      const at = (typeof pos === 'number' && pos >= 0 && pos <= text.length) ? pos : text.length
+      next = text.slice(0, at) + '@' + name + ' ' + text.slice(at)
+      caret = at + name.length + 2
+    }
+    this._atAnchor = -1
+    this.setData({ atUsers: list, inputText: next, inputCursor: caret })
+    return true
   },
 
   removeAt: function (e) {
@@ -687,6 +904,74 @@ Page({
       return
     }
     this.setData({ atAll: !this.data.atAll })
+  },
+
+  // ============ 表情面板 ============
+
+  toggleEmojiPanel: function () {
+    if (this.data.panel === 'emoji') {
+      this.closePanel()
+      return
+    }
+    hideKeyboard()
+    const self = this
+    this.setData({
+      panel: 'emoji',
+      keyboardHeight: 0,
+      focusInput: false,
+      scrollInto: ''
+    })
+    setTimeout(function () {
+      if (self._unloaded) return
+      self.setData({ scrollInto: 'm-last' })
+    }, 60)
+  },
+
+  switchEmoji: function (e) {
+    const i = Number(e.currentTarget.dataset.idx) || 0
+    const g = this.data.emojiGroups[i] || this.data.emojiGroups[0]
+    this.setData({ emojiIndex: i, emojiList: g.list })
+  },
+
+  /** 插入表情到光标处（不是末尾：用户把光标点到句中就是要插在句中） */
+  addEmoji: function (e) {
+    const emoji = e.currentTarget.dataset.emoji
+    if (!emoji) return
+    const text = this.data.inputText || ''
+    let pos = this.data.inputCursor
+    if (typeof pos !== 'number' || pos < 0 || pos > text.length) pos = text.length
+    const next = text.slice(0, pos) + emoji + text.slice(pos)
+    this.setData({ inputText: next, inputCursor: pos + emoji.length })
+  },
+
+  /**
+   * 面板里的退格。
+   *
+   * <p>表情面板打开时键盘是收起的，没有系统删除键，
+   * 必须自己给一个，否则用户打错字只能先切回键盘。
+   */
+  emojiBackspace: function () {
+    const text = this.data.inputText || ''
+    if (!text) return
+    const pos = this.data.inputCursor
+    if (typeof pos !== 'number' || pos <= 0 || pos > text.length) return
+    // emoji 是代理对（2 个 code unit）：只删 1 个会留下半截乱码
+    const code = text.charCodeAt(pos - 1)
+    const lastLen = (code >= 0xDC00 && code <= 0xDFFF && pos >= 2) ? 2 : 1
+    const next = text.slice(0, pos - lastLen) + text.slice(pos)
+    this.setData({ inputText: next, inputCursor: pos - lastLen })
+  },
+
+  /**
+   * 加进 @ 列表（长按头像走这里）。
+   *
+   * <p>这条路径不经过输入框，data 里的光标位置不可信，
+   * 所以直接追加到文本末尾，避免插到句中把句子切开。
+   */
+  addAt: function (user) {
+    this._atAnchor = -1
+    this.setData({ inputCursor: (this.data.inputText || '').length })
+    if (this.insertAt(user)) toast('已 @ ' + ((user && user.nickname) || '校友'))
   },
 
   /** 点消息里的头像 → 资料卡 / 私聊 */
@@ -745,4 +1030,19 @@ function clipText(s, n) {
 /** 客户端幂等 id（不依赖 crypto，低版本基础库也能跑） */
 function genId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+}
+
+/**
+ * 收起键盘。
+ *
+ * <p>表情 / @ 面板和键盘是互斥的：不主动收键盘，面板会被顶到键盘上方，
+ * 只剩半截还能看见。低版本没有 hideKeyboard，靠 input 失焦兜底（不抛错即可）。
+ */
+function hideKeyboard() {
+  if (typeof mp.hideKeyboard !== 'function') return
+  try {
+    mp.hideKeyboard({ fail: function () {} })
+  } catch (e) {
+    /* 没键盘时部分机型直接抛错，忽略 */
+  }
 }

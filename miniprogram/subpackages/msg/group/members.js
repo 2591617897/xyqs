@@ -7,7 +7,11 @@ Page({
   data: {
     statusBarHeight: 20,
     groupId: '',
-    /** true = 从群聊页打开用于 @ 选人，false = 普通成员列表 */
+    /**
+     * true = 选人模式（点了通过 eventChannel 回传，不跳资料页）。
+     * 群聊页的 @ 已改成页内面板（不跳页，输入框焦点不丢），
+     * 这里保留该模式给其他需要「从成员列表挑一个人」的入口复用。
+     */
     selectMode: false,
     keyword: '',
     list: [],

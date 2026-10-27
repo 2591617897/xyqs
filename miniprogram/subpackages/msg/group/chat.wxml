@@ -36,6 +36,7 @@
       scroll-with-animation="true"
       enhanced="true"
       show-scrollbar="false"
+      bindtap="onTapMsgs"
     >
       <view class="msgs-pad"></view>
       <view wx:if="{{!msgs.length}}" class="empty">
@@ -113,7 +114,7 @@
       </view>
     </view>
 
-    <!-- 底部固定区：回复栏 + 输入栏必须一起抬，分开定位的话
+    <!-- 底部固定区：回复栏 + 面板 + 输入栏必须一起抬，分开定位的话
          键盘弹起时输入栏上移、回复栏留在原地被键盘盖住 -->
     <view class="bottom-dock" style="bottom: {{keyboardHeight}}px">
       <view class="reply-bar" wx:if="{{replyTo}}">
@@ -125,12 +126,94 @@
         <view class="rb-close" catchtap="cancelReply">✕</view>
       </view>
 
-      <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞 -->
+      <!-- ==================== @ 成员面板 ====================
+           不跳页：原来点 @ 要 navigateTo 到成员列表再回来，输入框焦点和
+           已打的字都容易丢，人多的群里还要翻好几页。就地展开最快。 -->
+      <view class="panel panel-at" wx:if="{{panel === 'at'}}">
+        <view class="at-search">
+          <view class="at-search-box">
+            <text class="at-search-ico">🔍</text>
+            <input
+              class="at-kw"
+              value="{{atKeyword}}"
+              placeholder="搜索群成员"
+              placeholder-class="ph"
+              confirm-type="search"
+              adjust-position="false"
+              bindinput="onAtKeyword"
+              bindkeyboardheightchange="onKeyboard"
+            />
+          </view>
+          <view class="at-cancel" catchtap="closePanel">取消</view>
+        </view>
+
+        <scroll-view class="at-list" scroll-y="true" show-scrollbar="false">
+          <!-- @所有人放最前面：管理员才显示，比在输入栏挤一个「全体」按钮好懂 -->
+          <view class="at-item at-item-all" wx:if="{{atAllAllowed}}" catchtap="toggleAtAll">
+            <view class="at-av at-av-all">@</view>
+            <text class="at-nick">所有人</text>
+            <text class="at-flag {{atAll ? 'on' : ''}}">{{atAll ? '已选择' : '全群'}}</text>
+          </view>
+
+          <view
+            class="at-item"
+            wx:for="{{atList}}"
+            wx:key="userId"
+            wx:for-index="i"
+            data-idx="{{i}}"
+            catchtap="pickAt"
+          >
+            <image wx:if="{{item.avatar}}" class="at-av" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="at-av at-av-default">
+              <view class="avatar-default"><view class="ad-head"></view><view class="ad-body"></view></view>
+            </view>
+            <text class="at-nick">{{item.nickname || '校友'}}</text>
+            <text class="at-flag" wx:if="{{item.role === 1}}">管理员</text>
+          </view>
+
+          <view class="at-empty" wx:if="{{atLoading}}">加载中…</view>
+          <view class="at-empty" wx:elif="{{atError}}">成员加载失败，请重新打开面板</view>
+          <view class="at-empty" wx:elif="{{!atList.length}}">没有找到这位校友</view>
+        </scroll-view>
+      </view>
+
+      <!-- ==================== 表情面板 ====================
+           只用 Unicode 表情，不引图片包：不占体积，也不会出现图片 404 的空格子。 -->
+      <view class="panel panel-emoji" wx:if="{{panel === 'emoji'}}">
+        <view class="emoji-tabs">
+          <view
+            class="emoji-tab {{emojiIndex === i ? 'on' : ''}}"
+            wx:for="{{emojiGroups}}"
+            wx:key="name"
+            wx:for-index="i"
+            data-idx="{{i}}"
+            catchtap="switchEmoji"
+          >{{item.name}}</view>
+          <!-- 面板打开时键盘是收起的，没有系统删除键，得自带一个 -->
+          <view class="emoji-del" catchtap="emojiBackspace">⌫</view>
+        </view>
+
+        <scroll-view class="emoji-body" scroll-y="true" show-scrollbar="false">
+          <view class="emoji-grid">
+            <view
+              class="emoji-cell"
+              wx:for="{{emojiList}}"
+              wx:key="*this"
+              data-emoji="{{item}}"
+              catchtap="addEmoji"
+            >{{item}}</view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 输入栏：adjust-position=false + keyboardheightchange，避免整页被顶飞。
+           @ 和表情都留在输入栏里做左右对称的入口，别把表情塞到「更多」里。 -->
       <view class="input-bar">
-        <view class="ib-at" bindtap="openAtPicker">@</view>
+        <view class="ib-tool {{panel === 'at' ? 'on' : ''}}" catchtap="toggleAtPanel">@</view>
         <input
           class="ib-input {{canSend ? '' : 'disabled'}}"
           value="{{inputText}}"
+          focus="{{focusInput}}"
           placeholder="{{replyTo ? '回复 ' + replyTo.name : (canSend ? '说点什么…' : (nightMute ? '夜间静默中' : '暂时不能发言'))}}"
           placeholder-class="ph"
           confirm-type="send"
@@ -138,13 +221,19 @@
           disabled="{{!canSend}}"
           bindinput="onInput"
           bindconfirm="onSend"
+          bindfocus="onFocus"
+          bindblur="onBlur"
           bindkeyboardheightchange="onKeyboard"
         />
-        <view class="ib-all {{atAll ? 'on' : ''}}" wx:if="{{atAllAllowed}}" bindtap="toggleAtAll">全体</view>
+        <view class="ib-tool {{panel === 'emoji' ? 'on' : ''}}" catchtap="toggleEmojiPanel">😊</view>
         <view class="ib-send {{(inputText && canSend) ? 'on' : ''}}" bindtap="onSend">发送</view>
       </view>
     </view>
-    <view class="input-hold" style="height: {{replyTo ? 200 : 100}}rpx"></view>
+    <!-- 占位高度必须跟 .bottom-dock 真实高度一致，否则最后几条消息会被面板盖住 -->
+    <view
+      class="input-hold"
+      style="height: {{100 + (replyTo ? 100 : 0) + ((atUsers.length || atAll) ? 70 : 0) + (panel === 'at' ? 520 : 0) + (panel === 'emoji' ? 430 : 0)}}rpx"
+    ></view>
   </block>
 
   <!-- 首次进群：全屏群规 + 安全提醒（不是 toast，也不是半屏弹窗——要用户真的看完） -->
