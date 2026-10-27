@@ -1,6 +1,7 @@
 package com.campus.admin.config;
 
 import com.campus.admin.dto.AdSlotOption;
+import com.campus.common.ad.AdSizeCatalog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,11 @@ import java.util.Optional;
  *
  * <p>新增一个投放位＝在 {@link #ALL} 里加一行 + 小程序页面接上 {@code <ad-banner code="..." />}，
  * 顺序不要动：position 值会写进历史数据。
+ *
+ * <p><b>尺寸也从这张表派生</b>：每个位绑定一个推荐规格（{@code defaultSize}），
+ * 规格本身来自 {@link AdSizeCatalog}（小程序能渲染的高度）。这里不再手写「750x300」这类
+ * 自由文本——历史事故是后台写 750x300、小程序容器写死 240rpx，素材被裁掉一大截，
+ * 两端都觉得自己是对的。
  */
 public final class AdSlotCatalog {
 
@@ -32,29 +38,31 @@ public final class AdSlotCatalog {
 
     private static List<AdSlotOption> build() {
         List<AdSlotOption> list = new ArrayList<>();
-        list.add(option("home_banner", "首页Banner", 1, true,
-                "750x300", "首页顶部，多条自动轮播"));
-        list.add(option("zone_top", "功能区顶部", 2, true,
-                "750x240", "底部「功能区」页最上方，单条展示"));
-        list.add(option("wall_top", "表白墙顶部", 3, true,
-                "750x240", "表白墙列表顶部，单条展示"));
-        list.add(option("goods_top", "闲置列表顶部", 4, true,
-                "750x240", "二手市场列表顶部（分类栏上方）"));
-        list.add(option("splash", "启动开屏", 5, false,
-                "750x1334", "小程序暂未接入：可创建，但不能上架"));
-        list.add(option("mine_banner", "个人中心", 6, true,
-                "750x200", "「我的」页用户卡下方，单条展示"));
+        list.add(option("home_banner", "首页Banner", 1, true, "banner_300",
+                "首页顶部，多条自动轮播"));
+        list.add(option("zone_top", "功能区顶部", 2, true, "banner_240",
+                "底部「功能区」页最上方，单条展示"));
+        list.add(option("wall_top", "表白墙顶部", 3, true, "banner_240",
+                "表白墙列表顶部，单条展示"));
+        list.add(option("goods_top", "闲置列表顶部", 4, true, "banner_240",
+                "二手市场列表顶部（分类栏上方）"));
+        list.add(option("splash", "启动开屏", 5, false, "banner_300",
+                "小程序暂未接入：可创建，但不能上架"));
+        list.add(option("mine_banner", "个人中心", 6, true, "banner_200",
+                "「我的」页用户卡下方，单条展示"));
         return List.copyOf(list);
     }
 
     private static AdSlotOption option(String code, String name, int position, boolean connected,
-                                       String sizeHint, String pageHint) {
+                                       String defaultSize, String pageHint) {
         AdSlotOption o = new AdSlotOption();
         o.setCode(code);
         o.setName(name);
         o.setPosition(position);
         o.setConnected(connected);
-        o.setSizeHint(sizeHint);
+        o.setDefaultSize(defaultSize);
+        // 尺寸说明由规格派生，不再单独维护，避免「表里写 240、这里写 300」的漂移
+        o.setSizeHint(AdSizeCatalog.descOf(defaultSize));
         o.setPageHint(pageHint);
         return o;
     }
@@ -80,5 +88,14 @@ public final class AdSlotCatalog {
     /** 小程序是否已接入该编码 */
     public static boolean connected(String code) {
         return find(code).map(AdSlotOption::getConnected).orElse(false);
+    }
+
+    /**
+     * 该位的推荐规格编码；编码不在注册表里时返回规格表的兜底规格。
+     *
+     * <p>用于「新建广告位时自动带出尺寸」和「老数据 size_code 为空时的展示兜底」。
+     */
+    public static String defaultSizeOf(String code) {
+        return find(code).map(AdSlotOption::getDefaultSize).orElse(AdSizeCatalog.DEFAULT_CODE);
     }
 }

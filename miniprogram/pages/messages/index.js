@@ -201,13 +201,15 @@ Page({
   /** 标记全部已读：弹确认框，用户确认后才执行 */
   confirmMarkAllRead: function () {
     const self = this
-    const unreadTotal = this.data.allConvos.reduce(function (sum, c) {
+    const unreadConvo = this.data.allConvos.reduce(function (sum, c) {
       return sum + (c.unread > 0 ? 1 : 0)
     }, 0)
     const notifyUnread = this.data.summary
       ? (this.data.summary.unreadTotal || 0)
       : 0
-    if (unreadTotal === 0 && notifyUnread === 0) {
+    // 群未读也算：群里 4 条、私信 0 条时，不把群算进来会误报「没有未读消息」
+    const groupUnread = (this.data.group && this.data.group.unread) || 0
+    if (unreadConvo === 0 && notifyUnread === 0 && groupUnread === 0) {
       toast('没有未读消息')
       return
     }
@@ -238,9 +240,15 @@ Page({
     // 通知也要一起标：只清会话的话，四宫格（赞 / 粉丝 / 评论@ / 官方）红点还在，
     // 用户刚点「全部已读」却又看到红点，会以为没生效
     http.post('/messages/notifications/read-all', {}, { silent: true }).catch(function () {})
+    // 群未读同理：不传 lastReadId = 服务端取最新消息 id，等价于「全群已读到最新」
+    const g = this.data.group
+    if (g && g.id) {
+      http.post('/groups/' + g.id + '/read', {}, { silent: true }).catch(function () {})
+      this.setData({ 'group.unread': 0, 'group.mentionUnread': 0 })
+    }
     const cleared = Object.assign({}, this.data.summary, {
       likes: 0, followers: 0, mentions: 0, notice: 0, system: 0,
-      unreadNotice: 0, unreadTotal: 0
+      unreadNotice: 0, unreadMessage: 0, unreadGroup: 0, unreadConvo: 0, unreadTotal: 0
     })
     this.setData({ summary: cleared })
     this.syncTabUnread(0)
@@ -398,7 +406,8 @@ Page({
       self.setData({ onboardShow: false, onboardSaving: false })
       // 绑定学校后后端已自动入群，重新拉一次就能看到群卡片
       self.load()
-      mp.showToast({ title: '已加入' + (school.name || '本校') + '校友群', icon: 'none' })
+      // 群名固定「校友群」（2026-10-27），这里只报结果，不拼学校名
+      mp.showToast({ title: '已加入校友群', icon: 'none' })
     }).catch(function () {
       self.setData({ onboardSaving: false })
       toast('设置失败，请重试')

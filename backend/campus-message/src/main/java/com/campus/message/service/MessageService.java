@@ -61,6 +61,8 @@ public class MessageService {
     private final UserClient userClient;
     /** 内容安全：私信与其他 UGC 同一套标准，不能因为是「私聊」就免审 */
     private final SecurityGuard securityGuard;
+    /** 校友群未读也要进底栏角标：漏了会出现「群卡片 4、底栏 0」这种自相矛盾的状态 */
+    private final GroupService groupService;
 
     // ---------------- 会话列表 ----------------
 
@@ -120,20 +122,29 @@ public class MessageService {
     /**
      * 消息中心顶部统计（未读 / 收到的赞 / 评论与回复）。
      *
-     * <p>unreadTotal 语义 = <b>私信未读 + 站内通知未读</b>。
-     * 早先只统计私信，导致底栏角标永远漏掉「赞 / 粉丝 / 评论@ / 官方」——
-     * 用户在首页刷到一半被点赞，底栏毫无反应，只有主动点进消息中心才发现。
-     * 现在两个分项也一并返回，前端需要分开展示时不必再算。
+     * <p>unreadTotal 语义 = <b>私信未读 + 校友群未读 + 站内通知未读</b>。
+     * 这段口径被两次补漏过，别再漏第三次：
+     * <ul>
+     *   <li>最早只统计私信 → 被点赞、被 @ 时底栏毫无反应；</li>
+     *   <li>后来又漏了校友群 → 消息页群卡片顶着 4，底栏却显示 2（本 Bug）。</li>
+     * </ul>
+     * 现在把三个分项都返回，前端要分开展示不必自己再算。
      */
-    public Map<String, Object> summary(Long userId) {
+    public Map<String, Object> summary(Long userId, Long schoolId) {
         Map<String, Object> m = new HashMap<>();
         MessageSettingService.EffectiveFlags f = settingService.effectiveFlags(userId);
         // 私信开关关掉 → 私信未读不进角标；通知各分项由 NotificationService 按类目开关过滤
         int unreadMessage = f.notifyMessage ? conversationMapper.countUnread(userId) : 0;
         int unreadNotice = safeCount(() -> notificationService.unreadStats(userId).all);
+        // 群未读不受「私信开关」管：群有自己的 notifyMode，卡片上的红点也不看这个开关，
+        // 两边必须一致，否则又回到「卡片有、角标没有」
+        int unreadGroup = safeCount(() -> groupService.myGroupUnread(userId, schoolId));
         m.put("unreadMessage", unreadMessage);
+        m.put("unreadGroup", unreadGroup);
         m.put("unreadNotice", unreadNotice);
-        m.put("unreadTotal", unreadMessage + unreadNotice);
+        m.put("unreadTotal", unreadMessage + unreadGroup + unreadNotice);
+        // 会话类未读：消息页「全部消息」角标用这个（通知不在会话列表里，混进去点开找不到）
+        m.put("unreadConvo", unreadMessage + unreadGroup);
         m.put("likes", safeCount(() -> messageMapper.countReceivedLikes(userId)));
         m.put("mentions", safeCount(() -> messageMapper.countReceivedComments(userId)));
         // 本版本未实现关注关系，先返回 0，前端角标不展示
@@ -244,13 +255,14 @@ public class MessageService {
     /**
      * 未读消息总数（底栏角标，GET /messages/unread）。
      *
-     * <p>与 {@link #summary} 保持同一口径：私信 + 站内通知。
-     * 两个入口口径不一致会出现「消息页显示 3、底栏显示 1」这种最让人困惑的状态。
+     * <p>与 {@link #summary} 保持同一口径：私信 + 校友群 + 站内通知。
+     * 两个入口口径不一致会出现「消息页显示 6、底栏显示 2」这种最让人困惑的状态。
      */
-    public int unreadTotal(Long userId) {
+    public int unreadTotal(Long userId, Long schoolId) {
         MessageSettingService.EffectiveFlags f = settingService.effectiveFlags(userId);
         int msg = f.notifyMessage ? conversationMapper.countUnread(userId) : 0;
-        return msg + safeCount(() -> notificationService.unreadStats(userId).all);
+        int group = safeCount(() -> groupService.myGroupUnread(userId, schoolId));
+        return msg + group + safeCount(() -> notificationService.unreadStats(userId).all);
     }
 
     // ---------------- 左滑删除 ----------------

@@ -26,6 +26,16 @@ public class GroupJoinService {
     /** 1 = 校友群。2（同城群）预留，本轮不产出数据 */
     public static final int TYPE_SCHOOL = 1;
 
+    /**
+     * 群名固定「校友群」，<b>不再拼学校名</b>（2026-10-27 定）。
+     *
+     * <p>原因：一个用户只可能看到自己学校那一个群，`{学校名}校友群` 把标题撑到
+     * 必须截断（群里顶栏是自绘单行，「贵州铜仁数据职业学院校友群」显示成
+     * 「贵州铜仁数据职业学院...」，学校名看了半截、群名"校友群"反而看不见）。
+     * 学校身份由群设置页副标题（`schoolName`）承载，顶栏只留「校友群」。
+     */
+    private static final String GROUP_NAME = "校友群";
+
     private static final String DEFAULT_NOTICE =
             "欢迎来到本校校友群！可以找同学、问课程、拼车回家、互通消息。\n"
             + "请友善发言，禁止广告与人身攻击；违规内容会被删除并可能被禁言。\n"
@@ -46,12 +56,12 @@ public class GroupJoinService {
         if (group != null) {
             return group;
         }
-        String schoolName = groupMapper.selectSchoolName(schoolId);
         Group g = new Group();
         g.setType(TYPE_SCHOOL);
         g.setBizKey(bizKey);
         g.setSchoolId(schoolId);
-        g.setName((schoolName == null || schoolName.isBlank() ? "本校" : schoolName.trim()) + "校友群");
+        // 群名固定「校友群」：学校名不进标题（见 GROUP_NAME 注释）
+        g.setName(GROUP_NAME);
         g.setAvatar("");
         g.setNotice(DEFAULT_NOTICE);
         g.setMemberCount(0);

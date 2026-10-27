@@ -5,6 +5,11 @@
 - 端口：auth8101 user8102 goods8103 wall8104 post8105 message8106 admin8107 promote8108
 - 线上 `https://campus-api.trkcwl.com`（`ACTIVE_ENV='prod'`）；上域名必须 `UPLOAD_BASE_URL`，上传目录必须绝对路径
 - 上传 404：`curl -D -` 见 `200+code:404` = 写 A 读 B（相对路径/多实例）
+- ⚠️ 上传大小三层会互相掩盖：**admin 的 `spring.servlet.multipart`（默认仅 1MB）→ 业务 `max-size`（5MB）→ 网关 codec 8MB**；报「图片太大」先查 multipart
+- admin 的 `campus.admin.upload.dir` 默认 **`../campus-user/uploads`**（与 campus-user 物理同目录），别改回 `./uploads`
+- 后台素材上传走 `admin-web/src/components/ImageCropper.vue`（纯 canvas 按规格裁剪 + 压到 1MB），GIF 跳过裁剪直传
+- 上传框用**原生 input 铺满**（`inset:0; opacity:0`），不用 `el-upload`：它的点击靠内部 `input.click()`，HMR 后会静默失效（点了没反应且无报错）
+- ⚠️ 前端 `catch { ElMessage.error('上传失败') }` 是反模式：请求层已弹后端 msg，会叠成双红条
 - `mvn -DskipTests clean install`，子模块只能 `mvn spring-boot:run`；改网关路由**必须重启网关**
 - ⚠️ IDE 污染 `target/classes` → 先 `rm -rf target`；「找不到符号 XxxClient」＝common jar 过期
 
@@ -56,6 +61,12 @@
 - `purify()` **返回 String，必须拿返回值落库**；fail-open 先查 IP 白名单(40164)
 - ⚠️ `t_admin_notice.target_type`：1=后台内部通知，绝不能推小程序
 
+## 推广 / 广告（2026-10-27 广告规格改造）
+- **广告尺寸＝规格枚举，禁止自由文本**：唯一清单 `campus-common/.../ad/AdSizeCatalog`（`banner_300/240/200/160`），后台只能选、`t_ad_slot.size_code` 落库，`size_desc` 由它派生（前端传了也不采纳）
+- 三端一致链路：后台下拉 `GET /ads/slots/sizes` → 存 `size_code` → `/ads/{code}` 下发 `sizeCode + displayHeight` → 小程序按 `displayHeight` 撑容器（`<ad-banner height>` 默认 0＝跟随规格，**页面不要再传 height**）
+- 新增投放位：`AdSlotCatalog#ALL` 加一行（含 defaultSize）+ 小程序接 `<ad-banner code="..." />` + `preloadRule` 视情况，三处缺一就会出现「上架了但不展示」
+- 后台素材页按规格校验素材比例（>12% 偏差提醒，不拦截）
+
 ## 推广（8108）
 - `/api/promote/**` 全部要登录；链路 quota→issue→播广告→complete→(cancel)，单次 100 分、7 天线性衰减
 - 防刷 nonce + 最短 15s + 日上限；`PROMOTE_MOCK_AD` 生产必须 false；时间窗口一律 `Duration.toMillis()`
@@ -68,6 +79,7 @@
 - 长按气泡＝回复/撤回/复制/举报；长按头像＝@；输入栏要包在 `.bottom-dock` 里才能随键盘抬
 - @ 面板页内展开（不跳页）：手打 `@` / 长按头像（输入栏 `@` 按钮已移除）；**input 不绑 `cursor` 属性**（会把光标强行挪走）
 - **展示名一律用 nickname（「我的」设置的昵称），绝不用 real_name**：UserVO 已移除 realName 字段（仅人工审核/VerifyReq 才碰真实姓名，且不过前端）
+- **群名固定「校友群」，不拼学校名**（`GroupJoinService.GROUP_NAME`；学校身份只走群设置页副标题 `GroupDetailVO.schoolName`）——长校名会把顶栏截成「贵州铜仁数据职业学院...」；建群名逻辑只在「新学校首个用户入群」时跑，改了必须**同时**执行 `migration-20261027-group-name.sql` 修历史数据，否则新旧群名并存
 
 ## 后台 / 自测
 > 后台见 **`NOTES-admin.md`**（网关分层、独立 JWT、el-pagination total 必须 Number）

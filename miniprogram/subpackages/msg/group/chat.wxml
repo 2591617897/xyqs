@@ -1,12 +1,14 @@
 <view class="page">
-  <!-- 自绘顶栏：左侧返回 + 群名 + 人数，右侧「⋯」进群设置 -->
+  <!-- 自绘顶栏：左侧返回 + 群名 + 人数，右侧「群设置」文字入口 -->
   <view class="topbar" style="padding-top: {{statusBarHeight + 6}}px; padding-right: {{capsuleGap}}px">
     <view class="tb-back" bindtap="goBack"><view class="ico ico-back"></view></view>
     <view class="tb-main">
       <text class="tb-title">{{group.name || '校友群'}}</text>
       <text class="tb-sub">{{group.memberCount || 0}} 位校友</text>
     </view>
-    <view class="tb-set" bindtap="goSetting"><view class="ico ico-more"></view></view>
+    <!-- 用文字而不是「⋯」：右上角紧挨着微信原生胶囊（也是一个「⋯」），
+         两个省略号并排，用户分不清哪个是自己的；文字入口还顺带说明了落点是群设置 -->
+    <view class="tb-set" hover-class="tb-set-hover" hover-stay-time="80" bindtap="goSetting">群设置</view>
   </view>
 
   <block wx:if="{{loading}}">
@@ -104,7 +106,17 @@
                   <text class="quote-time" wx:if="{{item.replyToTime}}">{{item.replyToTime}}</text>
                   <view class="quote-expand"><view class="qe-arrow"></view></view>
                 </view>
-                <text class="quote-text">{{item.replyToText || '[消息]'}}</text>
+                <!-- 引用的是一条图片：显示缩略图，否则只有「[图片]」四个字 -->
+                <view class="quote-body">
+                  <image
+                    wx:if="{{item.replyToImg}}"
+                    class="quote-img"
+                    src="{{item.replyToImg}}"
+                    mode="aspectFill"
+                    lazy-load
+                  />
+                  <text class="quote-text">{{item.replyToText || '[消息]'}}</text>
+                </view>
               </view>
               <!-- 图片消息：尺寸已按原图比例算好（fitImageBox），这里只渲染。
                    点开走 previewImage 能翻群里所有图；上传中/失败各有覆盖层。 -->

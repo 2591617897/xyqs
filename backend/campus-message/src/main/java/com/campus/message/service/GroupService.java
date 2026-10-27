@@ -141,6 +141,30 @@ public class GroupService {
         return vo;
     }
 
+    /**
+     * 我的学校群未读条数（消息页「全部消息」与底栏总角标用）。
+     *
+     * <p>和 {@link #buildCard} 同一口径（{@code id > lastReadId AND sender != me}，
+     * 封顶 100），但<b>只读</b>：不建群、不自动入群。这个方法是给角标接口用的，
+     * 每次切 tab 都会调，绝不能带写副作用 —— 否则游客/未绑校用户会被凭空建群。
+     */
+    public int myGroupUnread(Long userId, Long schoolId) {
+        if (schoolId == null) {
+            return 0;
+        }
+        Group g = groupMapper.selectByTypeAndKey(GroupJoinService.TYPE_SCHOOL, String.valueOf(schoolId));
+        if (g == null) {
+            return 0;
+        }
+        GroupMember m = memberMapper.selectOne(g.getId(), userId);
+        // 退群 / 被踢 / 没入过群：不算未读（卡片上显示的是「重新加入」，不是红点）
+        if (m == null || !Integer.valueOf(1).equals(m.getStatus())) {
+            return 0;
+        }
+        long lastRead = m.getLastReadId() == null ? 0L : m.getLastReadId();
+        return messageMapper.selectUnreadIds(g.getId(), lastRead, userId, UNREAD_CAP).size();
+    }
+
     // ==========================================================
     // 2. 群详情
     // ==========================================================
@@ -169,6 +193,8 @@ public class GroupService {
         GroupDetailVO vo = new GroupDetailVO();
         vo.setId(String.valueOf(g.getId()));
         vo.setName(g.getName());
+        // 群名固定「校友群」，学校名放这里（群设置页副标题用）
+        vo.setSchoolName(g.getSchoolId() == null ? null : groupMapper.selectSchoolName(g.getSchoolId()));
         vo.setAvatar(g.getAvatar());
         vo.setNotice(g.getNotice());
         vo.setMemberCount(g.getMemberCount());
@@ -254,6 +280,7 @@ public class GroupService {
             list.add(toVO(msg, userId));
         }
         refreshAuthors(list);
+        fillQuotedRefs(list);
         return list;
     }
 
@@ -396,7 +423,9 @@ public class GroupService {
                     .eq(GroupMessage::getClientMsgId, clientMsgId)
                     .last("limit 1"));
             if (exists != null) {
-                return toVO(exists, userId);
+                GroupMsgVO replay = toVO(exists, userId);
+                fillQuotedRefs(List.of(replay));
+                return replay;
             }
             throw BizException.of("发送失败，请重试");
         }
@@ -417,8 +446,12 @@ public class GroupService {
 
         // ⑧ 广播（自己发的也走这里，前端按 clientMsgId 替换本地气泡）
         GroupMsgVO vo = toVO(msg, null);   // self 由前端用 senderId 判断
+        // 引用的是图片：实时帧也要带缩略图，否则对方收到的瞬间只看到「[图片]」
+        fillQuotedRefs(List.of(vo));
         broadcaster.broadcast(groupId, WsBroadcaster.frame("msg", "message", vo));
-        return toVO(msg, userId);
+        GroupMsgVO mine = toVO(msg, userId);
+        fillQuotedRefs(List.of(mine));
+        return mine;
     }
 
     /**
@@ -647,6 +680,47 @@ public class GroupService {
             }
             if (avatar != null) {
                 vo.setSenderAvatar(String.valueOf(avatar));
+            }
+        }
+    }
+
+    /**
+     * 补全引用块里「被引用的那张图」。
+     *
+     * <p>落库时 reply_to_text 只存了「[图片]」这种文字快照，前端画不出缩略图，
+     * 引用一张图只能看到四个字。这里按 replyToId 一次 IN 查询补上类型与地址。
+     *
+     * <p>为什么不做成快照列再加一列 reply_to_img：那样每条引用都要多存一份 URL，
+     * 而且改昵称/删图后两份数据就会打架。按 id 回查永远是最新状态，且
+     * 一页最多 50 条、带引用的通常个位数，一次 IN 查询就够（不做 N+1）。
+     */
+    private void fillQuotedRefs(List<GroupMsgVO> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        List<Long> ids = list.stream()
+                .filter(v -> v.getReplyToId() != null && !v.getReplyToId().isBlank())
+                .map(v -> Long.valueOf(v.getReplyToId()))
+                .distinct().toList();
+        if (ids.isEmpty()) {
+            return;
+        }
+        Map<Long, GroupMessage> byId = new HashMap<>();
+        for (GroupMessage q : messageMapper.selectBatchIds(ids)) {
+            byId.put(q.getId(), q);
+        }
+        for (GroupMsgVO vo : list) {
+            if (vo.getReplyToId() == null || vo.getReplyToId().isBlank()) {
+                continue;
+            }
+            GroupMessage q = byId.get(Long.valueOf(vo.getReplyToId()));
+            if (q == null) {
+                continue;
+            }
+            vo.setReplyToType(q.getType());
+            // 已撤回 / 被删的图不回地址：撤回就该当没发过，缩略图也不能留
+            if ("image".equals(q.getType()) && !Integer.valueOf(1).equals(q.getDeleted())) {
+                vo.setReplyToImg(q.getContent());
             }
         }
     }

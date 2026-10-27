@@ -3,6 +3,11 @@ import request from '@/utils/request'
 /** 广告位与素材 */
 export const adApi = {
   slotCodes: () => request.get('/admin/ads/slots/codes'),
+  /**
+   * 可选展示规格（小程序支持的几种固定高度）。
+   * 尺寸不是自由文本：广告位只能从中选一种，小程序按同一编码撑容器。
+   */
+  slotSizes: () => request.get('/admin/ads/slots/sizes'),
   /** 投放范围候选值：城市 + 校区，供多选下拉使用 */
   targets: () => request.get('/admin/ads/slots/targets'),
   slots: (params) => request.get('/admin/ads/slots', { params }),

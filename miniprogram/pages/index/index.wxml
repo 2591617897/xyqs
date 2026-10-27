@@ -75,6 +75,7 @@
        <swiper
     wx:if="{{banners.length}}"
     class="banner"
+    style="height: {{bannerHeight}}rpx;"
     indicator-dots="{{banners.length > 1}}"
     indicator-color="rgba(255,255,255,0.5)"
     indicator-active-color="#ffffff"
@@ -87,6 +88,7 @@
       <!-- 宽度由 .banner-img（100%）统一控制，不要在行内写死 rpx -->
       <image
         class="banner-img"
+        style="height: {{bannerHeight}}rpx;"
         src="{{item.image}}"
         mode="aspectFill"
         lazy-load

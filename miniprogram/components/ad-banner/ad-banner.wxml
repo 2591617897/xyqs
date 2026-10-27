@@ -2,7 +2,7 @@
 <view wx:if="{{list.length}}" class="ad-wrap {{inset ? '' : 'ad-wrap-flush'}}">
   <swiper
     class="ad-banner"
-    style="height: {{height}}rpx;"
+    style="height: {{displayHeight}}rpx;"
     indicator-dots="{{list.length > 1}}"
     indicator-color="rgba(255,255,255,0.5)"
     indicator-active-color="#ffffff"
@@ -14,7 +14,7 @@
     <swiper-item wx:for="{{list}}" wx:key="id">
       <image
         class="ad-img"
-        style="height: {{height}}rpx;"
+        style="height: {{displayHeight}}rpx;"
         src="{{item.image}}"
         mode="aspectFill"
         lazy-load

@@ -31,4 +31,20 @@ public class AdMaterialVO {
 
     /** 所属广告位编码，便于埋点回溯 */
     private String slotCode;
+
+    /**
+     * 所属广告位的展示规格编码（{@code com.campus.common.ad.AdSizeCatalog}）。
+     *
+     * <p>规格是后台选的、小程序按它撑容器，所以这里原样下发，便于前端调试与埋点。
+     */
+    private String sizeCode;
+
+    /**
+     * 该广告在小程序里应占的高度（rpx）。
+     *
+     * <p><b>前端必须用它撑容器，不要再写死 240/200</b>：高度由后台「展示规格」决定，
+     * 写死会让后台改规格后真机毫无变化，素材又被 aspectFill 裁一刀。
+     * 老数据 size_code 为空时按兜底规格（240）下发，不会出现 0 高度。
+     */
+    private Integer displayHeight;
 }

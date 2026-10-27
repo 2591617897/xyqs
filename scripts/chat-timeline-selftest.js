@@ -33,7 +33,10 @@ function stub(relPath, exports) {
 stub('../../../utils/request', { get: () => Promise.resolve(), post: () => Promise.resolve() })
 stub('../utils/ws', {
   on() {}, off() {}, connect() {}, join() {}, leave() {},
-  shutdown() {}, isOpen: () => true, sendMsg: () => true
+  shutdown() {}, isOpen: () => true, sendMsg: () => true,
+  // chat.js 的 onShow / startPolling 用到这两个（页面生命周期不在本测试内，
+  // 但桩必须完整，否则以后有人在这里加用例会莫名其妙报「不是函数」）
+  isStale: () => false, ensureAlive() {}
 })
 stub('../../../utils/util', { mp: mp, toast() {} })
 
@@ -156,10 +159,42 @@ function msg(id, offsetMin, extra) {
   ok(out[0].uploading === false, '用例8: 服务端消息不是上传中状态')
 }
 
+/* ---------- 用例 9：引用的是图片 → 缩略图地址要补上 ---------- */
+{
+  const imgUrl = 'https://campus-api.trkcwl.com/uploads/2026/10/abc.jpg'
+  // 10 分钟前发了一张图，1 分钟前我引用了它（服务端老接口没给 replyToImg）
+  const out = page.relayoutAll([
+    msg(1, 10, { type: 'image', content: imgUrl }),
+    msg(2, 1, { replyToId: '1', replyToName: '校友1', replyToText: '[图片]' })
+  ])
+  ok(out[1].replyToImg === imgUrl, '用例9: 引用图片时缩略图地址由本地回查补上', String(out[1].replyToImg))
+  ok(out[1].replyToTime && out[1].replyToTime.length > 0, '用例9: 引用图片的时间同样要补')
+}
+
+/* ---------- 用例 10：被引用的图已撤回 → 不回显缩略图 ---------- */
+{
+  const imgUrl = 'https://campus-api.trkcwl.com/uploads/2026/10/recalled.jpg'
+  const out = page.relayoutAll([
+    msg(1, 10, { type: 'image', content: imgUrl, deleted: 1, deletedBy: 1 }),
+    msg(2, 1, { replyToId: '1', replyToName: '校友1', replyToText: '[图片]' })
+  ])
+  ok(!out[1].replyToImg, '用例10: 撤回的图不能回显缩略图', String(out[1].replyToImg))
+}
+
+/* ---------- 用例 11：服务端已给 replyToImg → 不覆盖 ---------- */
+{
+  const fromServer = 'https://campus-api.trkcwl.com/uploads/2026/10/server.jpg'
+  const out = page.relayoutAll([
+    msg(1, 10, { type: 'image', content: 'https://other/local.jpg' }),
+    msg(2, 1, { replyToId: '1', replyToName: '校友1', replyToText: '[图片]', replyToImg: fromServer })
+  ])
+  ok(out[1].replyToImg === fromServer, '用例11: 服务端下发的地址优先于本地回查', String(out[1].replyToImg))
+}
+
 /* ---------- 汇总 ---------- */
 if (fails.length) {
   console.error('✗ 群聊时间轴自测失败 ' + fails.length + ' 项：')
   fails.forEach((f) => console.error('   - ' + f))
   process.exit(1)
 }
-console.log('✓ 群聊消息自测通过（' + pass + ' 项断言）：时间分隔条聚合 / 本地消息不污染 / 昨天文案 / 引用时间回填 / 图片消息形状')
+console.log('✓ 群聊消息自测通过（' + pass + ' 项断言）：时间分隔条聚合 / 本地消息不污染 / 昨天文案 / 引用时间与引用图回填 / 图片消息形状')

@@ -2409,13 +2409,14 @@ function messageList() {
   }).sort(function (a, b) {
     return a.lastTime < b.lastTime ? 1 : -1
   })
-  // 与后端 MessageService#summary 保持同一口径：unreadTotal = 私信 + 通知
+  // 与后端 MessageService#summary 保持同一口径：unreadTotal = 私信 + 群 + 通知
+  // （mock 里没有校友群数据，unreadGroup 恒为 0，但字段要齐，否则前端读不到会显示 undefined）
   const unreadMessage = list.reduce(function (n, c) { return n + (c.unread || 0) }, 0)
   const unreadNotice = notifyTotal()
   const summary = Object.assign(
     { likes: 0, followers: 0, mentions: 0, notice: '' },
     d.msgSummary || {},
-    { unreadMessage: unreadMessage, unreadNotice: unreadNotice, unreadTotal: unreadMessage + unreadNotice }
+    { unreadMessage: unreadMessage, unreadGroup: 0, unreadNotice: unreadNotice, unreadConvo: unreadMessage, unreadTotal: unreadMessage + unreadNotice }
   )
   return { summary: summary, convos: list }
 }

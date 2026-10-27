@@ -1,6 +1,7 @@
 package com.campus.post.service;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.campus.common.ad.AdSizeCatalog;
 import com.campus.common.security.UserContext;
 import com.campus.post.dto.AdMaterialVO;
 import com.campus.post.dto.NoticeReceipt;
@@ -57,6 +58,11 @@ public class OperateService {
         }
         List<AdMaterialVO> list = operateMapper.selectMaterials(
                 code.trim(), city, UserContext.schoolId(), Math.min(max, 20));
+        // 展示高度由后台选的规格决定，随素材一起下发：前端拿到才敢撑容器。
+        // 不在这里算，小程序就得自己猜高度（历史上各页面各写死一个值，后台改规格永远不生效）。
+        for (AdMaterialVO m : list) {
+            m.setDisplayHeight(AdSizeCatalog.heightOf(m.getSizeCode()));
+        }
         if (!list.isEmpty()) {
             countView(list);
         }

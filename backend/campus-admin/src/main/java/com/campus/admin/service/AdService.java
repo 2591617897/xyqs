@@ -14,6 +14,8 @@ import com.campus.admin.entity.AdSlot;
 import com.campus.admin.mapper.AdMaterialMapper;
 import com.campus.admin.mapper.AdSlotMapper;
 import com.campus.admin.mapper.RegionDictMapper;
+import com.campus.common.ad.AdSize;
+import com.campus.common.ad.AdSizeCatalog;
 import com.campus.common.search.SearchKit;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
@@ -102,6 +104,37 @@ public class AdService {
     }
 
     /**
+     * 可选展示规格（小程序支持的几种固定高度）。
+     *
+     * <p>前端「展示规格」下拉用它，运营不能再手写「尺寸说明」。
+     */
+    public List<AdSize> slotSizes() {
+        return AdSizeCatalog.all();
+    }
+
+    /**
+     * 解析要落库的规格编码：显式传入则必须合法，未传则用该位的推荐规格。
+     *
+     * <p>「不传就用推荐值」是给老调用方（脚本 / 老前端）留的兼容路径，
+     * 但<b>绝不接受规格表以外的值</b>——否则小程序会按兜底高度渲染，
+     * 后台却显示成别的尺寸，又回到「两端各说一套」。
+     */
+    private String resolveSizeCode(String requested, String slotCode) {
+        if (requested == null || requested.isBlank()) {
+            return AdSlotCatalog.defaultSizeOf(slotCode);
+        }
+        return requireSizeCode(requested);
+    }
+
+    private String requireSizeCode(String code) {
+        String key = code.trim();
+        if (!AdSizeCatalog.supports(key)) {
+            throw BizException.of("展示规格「" + code + "」小程序不支持，请从下拉中选择");
+        }
+        return key;
+    }
+
+    /**
      * 「投放范围」多选的候选值：城市 + 校区。
      *
      * <p>与编码清单同一思路——把「能填什么」变成「只能选什么」。
@@ -136,9 +169,11 @@ public class AdService {
         if (slot.getName() == null || slot.getName().isBlank()) {
             slot.setName(option.getName());
         }
-        if (slot.getSizeDesc() == null || slot.getSizeDesc().isBlank()) {
-            slot.setSizeDesc(option.getSizeHint());
-        }
+        // 尺寸：允许运营选规格，但只能从规格表里选；不传则用该位的推荐规格。
+        // size_desc 一律由 size_code 派生，前端传什么都不采纳（手填文案＝第二套尺寸口径）。
+        String sizeCode = resolveSizeCode(slot.getSizeCode(), option.getCode());
+        slot.setSizeCode(sizeCode);
+        slot.setSizeDesc(AdSizeCatalog.descOf(sizeCode));
         normalizeTarget(slot);
         assertSlotInScope(slot.getSchoolIds());
         slot.setStatus(slot.getStatus() == null ? 0 : slot.getStatus());
@@ -160,6 +195,13 @@ public class AdService {
         normalizeTarget(patch);
         assertSlotInScope(patch.getSchoolIds());
 
+        // 规格：没传就不动；传了必须是规格表里的编码，且同步派生 size_desc。
+        // 老前端（还在传 sizeDesc 自由文本）不会有任何效果——那正是本次要堵掉的口子。
+        String sizeCode = null;
+        if (req.getSizeCode() != null && !req.getSizeCode().isBlank()) {
+            sizeCode = requireSizeCode(req.getSizeCode());
+        }
+
         // 必须用 lambdaUpdate 显式 set：updateById 会跳过 null 字段，
         // 「投放范围从校区改回全国」时 school_ids 清不掉，会永久残留在库里。
         slotMapper.update(null, Wrappers.<AdSlot>lambdaUpdate()
@@ -168,7 +210,9 @@ public class AdService {
                 .set(AdSlot::getScopeType, patch.getScopeType())
                 .set(AdSlot::getCity, patch.getCity())
                 .set(AdSlot::getSchoolIds, patch.getSchoolIds())
-                .set(req.getSizeDesc() != null, AdSlot::getSizeDesc, req.getSizeDesc())
+                .set(sizeCode != null, AdSlot::getSizeCode, sizeCode)
+                .set(sizeCode != null, AdSlot::getSizeDesc,
+                        sizeCode == null ? null : AdSizeCatalog.descOf(sizeCode))
                 .set(req.getMaxCount() != null, AdSlot::getMaxCount, req.getMaxCount())
                 .set(req.getSort() != null, AdSlot::getSort, req.getSort())
                 .set(req.getStartAt() != null, AdSlot::getStartAt, req.getStartAt())

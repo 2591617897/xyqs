@@ -44,6 +44,17 @@ public class GroupMsgVO {
     /** 被回复内容摘要（快照） */
     private String replyToText;
 
+    /**
+     * 被回复消息的类型（text / image），由服务端按 replyToId 回查补全。
+     *
+     * <p>快照里只存了「[图片]」这种文字摘要，前端拿不到原图地址；引用一张图时
+     * 卡片只能显示四个字，用户看不出引用了哪张。这个字段让前端能画缩略图。
+     */
+    private String replyToType;
+
+    /** 被回复的是图片时，原图地址（已撤回/被删的消息不回，避免显示违规图） */
+    private String replyToImg;
+
     /** 是否我发的（前端据此决定左右气泡，不用再比 id） */
     private Boolean self;
 

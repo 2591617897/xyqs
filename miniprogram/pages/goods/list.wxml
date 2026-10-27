@@ -67,7 +67,7 @@
 
   <!-- 运营投放位（后台广告位 code=goods_top）：只在浏览全部闲置时出现，
        「我的闲置 / 我的收藏」是个人列表，插广告既打扰也不符合投放口径 -->
-  <ad-banner wx:if="{{!mineMode && !favMode}}" code="goods_top" height="{{240}}" />
+  <ad-banner wx:if="{{!mineMode && !favMode}}" code="goods_top" />
 
   <block wx:if="{{!mineMode && !favMode}}">
     <!-- 分类 -->

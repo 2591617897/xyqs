@@ -36,7 +36,7 @@ public class MessageController {
     public R<MessageCenterVO> center() {
         Long userId = UserContext.requireUserId();
         MessageCenterVO vo = new MessageCenterVO();
-        vo.setSummary(messageService.summary(userId));
+        vo.setSummary(messageService.summary(userId, UserContext.schoolId()));
         vo.setConvos(messageService.conversations(userId));
         return R.ok(vo);
     }
@@ -44,7 +44,7 @@ public class MessageController {
     /** 未读消息总数（首页铃铛角标） */
     @GetMapping("/unread")
     public R<Map<String, Object>> unread() {
-        return R.ok(Map.of("unread", messageService.unreadTotal(UserContext.requireUserId())));
+        return R.ok(Map.of("unread", messageService.unreadTotal(UserContext.requireUserId(), UserContext.schoolId())));
     }
 
     /**

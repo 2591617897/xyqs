@@ -15,8 +15,17 @@ Component({
   properties: {
     /** 广告位编码，与后台注册表一一对应 */
     code: { type: String, value: '' },
-    /** 展示高度（rpx），默认 240；首页那种大图自己在页面里做，不用本组件 */
-    height: { type: Number, value: 240 },
+    /**
+     * 展示高度（rpx）。
+     *
+     * <p><b>0 = 跟随后台「展示规格」（推荐用法，页面不要再传）</b>：
+     * 高度由后台选的规格决定，随 {@code /ads/{code}} 返回的 {@code displayHeight} 下发，
+     * 组件拿到数据后自己撑容器。历史上各页面各写死一个值（240/200），
+     * 后台改尺寸永远不生效，素材还被 aspectFill 裁一刀。
+     *
+     * <p>传具体值会盖住规格，只给「同一广告位在特殊页面要压高」的个别场景用。
+     */
+    height: { type: Number, value: 0 },
     /**
      * 左右是否自带 24rpx 边距。
      * 页面自己没有横向 padding 时保持 true；像「功能区」这种 .page 已有内边距，
@@ -26,7 +35,9 @@ Component({
   },
 
   data: {
-    list: []
+    list: [],
+    /** 实际渲染高度（rpx）：优先页面指定，其次后台规格，最后 240 兜底 */
+    displayHeight: 240
   },
 
   attached: function () {
@@ -43,7 +54,12 @@ Component({
       const user = (app && app.globalData && app.globalData.user) || {}
       const city = user.schoolCity || ''
       http.get('/ads/' + code, { city: city }, { silent: true }).then(function (list) {
-        self.setData({ list: (list || []).slice(0, 5) })
+        const items = (list || []).slice(0, 5)
+        // 高度来源优先级：页面显式指定的 height > 后台规格下发 > 240 兜底。
+        // 后台没设规格（老数据）时后端也会按 240 下发，所以正常不会走最后的兜底。
+        const specH = (items[0] && items[0].displayHeight) || 240
+        const h = self.data.height > 0 ? self.data.height : specH
+        self.setData({ list: items, displayHeight: h })
       }).catch(function () {
         // 运营位是锦上添花，失败就当没配，不要影响页面主体
       })

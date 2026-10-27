@@ -43,6 +43,14 @@ Page({
      */
     banners: [],
     /**
+     * 首页 Banner 的渲染高度（rpx）。
+     *
+     * <p><b>不要写死 300</b>：高度由后台「展示规格」决定，随 /ads/home_banner 的
+     * displayHeight 下发。后台把规格从 750×300 换成 750×240，这里要跟着变，
+     * 否则素材被 aspectFill 上下裁掉一截，而运营在后台看的是完整图。
+     */
+    bannerHeight: 300,
+    /**
      * 后台公告（运营在「通知公告」发布）。
      * 有则替换掉默认的「跳蚤集市」运营位；为空时保留默认卡片，保证首屏不空缺。
      */
@@ -334,6 +342,8 @@ Page({
       self.setData({
         categories: res[5] || [],
         banners: banners,
+        // 高度取后台规格（第一条即可，同一广告位下所有素材规格相同）
+        bannerHeight: (banners[0] && banners[0].displayHeight) || 300,
         notices: notices,
         zones: built,
         loading: false,
@@ -509,7 +519,11 @@ Page({
     const list = (this.data.banners || []).slice()
     if (idx < 0 || idx >= list.length) return
     list.splice(idx, 1)
-    this.setData({ banners: list })
+    // 首条挂掉后高度跟着换：规格可能不同（不同档位的素材混投），不换会留一条空白
+    this.setData({
+      banners: list,
+      bannerHeight: (list[0] && list[0].displayHeight) || this.data.bannerHeight
+    })
   },
 
   /**

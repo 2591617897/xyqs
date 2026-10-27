@@ -195,6 +195,42 @@ P1 业务（`migration-20261025-admin-business.sql`）：
 - `connected=false` 的位可以建、可以审，但**上架会被 400 拒绝**，杜绝「上架成功但没人看到」
 - 新增投放位＝在 `AdSlotCatalog` 加一行 + 小程序页面加 `<ad-banner code="..." />`，顺序不要动（position 会进历史数据）
 
+### 展示规格（尺寸也只选不填）
+
+尺寸原来是一个自由文本框（`size_desc`），运营填「800x600」也能保存；而小程序广告容器的高度是写死的，
+素材用 `aspectFill` 填充 → 真机被裁掉一截，**后台和真机各说一套，谁都不报错**。
+现在尺寸收敛成规格枚举，唯一清单位于 `campus-common/ad/AdSizeCatalog`：
+
+| 规格 | 尺寸 | 比例 | 建议像素 | 适用 |
+| --- | --- | --- | --- | --- |
+| `banner_300` | 750×300 | 2.5:1 | 1080×432 | 首页大图 |
+| `banner_240` | 750×240 | 3.13:1 | 1080×346 | 列表顶部（最通用，兜底） |
+| `banner_200` | 750×200 | 3.75:1 | 1080×288 | 个人中心 |
+| `banner_160` | 750×160 | 4.69:1 | 1080×230 | 内容流细条 |
+
+- 后台「展示规格」只能从这几档里选，落库到 `t_ad_slot.size_code`；`size_desc` 改由它派生，前端传了也不采纳
+- 每个位有推荐档（`AdSlotOption.defaultSize`），选中广告位会自动带出；改成非推荐档可以保存但会提示（页面留白是按推荐档排的）
+- 高度是**真的生效**：`/ads/{code}` 每条素材带 `sizeCode` + `displayHeight`，小程序的 `<ad-banner>` 与首页 Banner 都按它撑容器，**页面里不要再传 `height`**
+- 素材页会显示该位规格与建议像素，上传后按实际图片比例校验，偏差 >12% 提醒（不拦截）
+
+### 素材上传：浏览器里先裁后传
+
+后台素材上传走过两个坑，都已修：
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 传图必报「图片太大，请换一张或截图后重试」 | `campus-admin` 没配 `spring.servlet.multipart`，吃 Spring 默认 **1MB** 上限，业务层的 5MB 校验根本执行不到 | yml 里放宽到 20MB，超业务上限时由 `UploadController` 回「图片不能超过 5MB」 |
+| 上传成功但列表缩略图全灰 | admin 的 `campus.admin.upload.dir` 默认 `./uploads`，写到 `campus-admin/uploads`；网关 `/uploads/**` 由 campus-user 提供、读的是 `campus-user/uploads` → **写 A 读 B** | 默认值改成 `../campus-user/uploads`，与 campus-user 对齐；生产仍用 `UPLOAD_DIR` 绝对路径统一 |
+
+选图后不直传，先弹 `components/ImageCropper.vue`（纯 canvas，无第三方依赖）：
+
+- 按该广告位的**规格比例**裁剪，可拖动、滚轮/滑块缩放，框外灰掉的部分会被裁掉
+- 导出宽度取 `min(建议像素, 裁剪框对应的原图像素)`，**小图不放大**，避免糊
+- JPEG 质量从 0.9 逐级降到 0.45，压到 **1MB** 以内再传（真机加载也快）；PNG 先试无损，压不下去才白底转 JPEG
+- GIF 不走裁剪（canvas 会把动图压成静态图），按原图传，体积自己卡 5MB
+
+> 排查口诀：`curl -D -` 看 `HTTP 200 + body {"code":404}` 就是「写 A 读 B」，别去查 Nginx。
+
 ## 七、前端页面
 
 `admin-web/src/views/`：

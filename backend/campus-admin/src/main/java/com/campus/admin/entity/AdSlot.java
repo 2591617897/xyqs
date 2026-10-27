@@ -50,6 +50,22 @@ public class AdSlot {
      */
     private String schoolIds;
 
+    /**
+     * 展示规格编码，决定小程序渲染高度（{@code com.campus.common.ad.AdSizeCatalog}）。
+     *
+     * <p>只能是规格表里已有的编码：小程序按它撑容器，后台按它校验素材比例。
+     * 为空时视为「按该广告位的推荐规格」（老数据 / 手工插库），读取时兜底成
+     * {@code AdSizeCatalog.DEFAULT_CODE}，不会渲染成 0 高度。
+     */
+    private String sizeCode;
+
+    /**
+     * 尺寸说明文案，如 {@code 750×240 · 3.13:1 · 建议 1080×346}。
+     *
+     * <p><b>由 size_code 派生，不接受手填</b>（服务端保存时覆盖）。保留这一列只为
+     * 列表展示与历史数据兼容——早期它是自由文本框，运营填过「800x600」这种
+     * 与实际渲染无关的值，是「后台说 A、真机渲染 B」的源头。
+     */
     private String sizeDesc;
 
     private Integer maxCount;

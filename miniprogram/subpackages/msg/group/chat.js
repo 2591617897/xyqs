@@ -169,7 +169,14 @@ Page({
       // 从成员页 / 设置页返回：刷新群状态（可能被设成管理员、被禁言）
       this.loadDetail()
       this.reportRead()
-      ws.connect()
+      // 回到前台必须先「体检」：小程序切后台会被系统静默掐断 WS，
+      // 但 onClose 常常不触发，state 还停在 open —— 不查的话页面永远收不到新消息
+      ws.ensureAlive()
+      // WS 没连上（或正在连）：立刻用轮询兜住，不能让用户干等
+      if (!ws.isOpen()) {
+        this.startPolling()
+        this.pullSince()
+      }
     }
     // 自定义 tabBar 兜底（本页非 tab，但保险）
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
@@ -230,6 +237,10 @@ Page({
       })
       self.bindWs()
       ws.connect()
+      // 双保险：进页面先把轮询挂上。WS 一旦 open 会自动 stopPolling，
+      // 所以正常情况下用户感知不到它；但握手卡住 / 网关没配 /api/ws 时，
+      // 这就是「还能收到消息」的唯一保证（以前只能等降级，要三十多秒）
+      self.startPolling()
       self.reportRead()
       // 历史消息里的图片没有宽高，进页面量一轮（同 URL 有缓存）
       self.resolveImageSizes()
@@ -359,10 +370,15 @@ Page({
     const self = this
     if (this._poll) return
     this._poll = setInterval(function () {
-      if (ws.isOpen()) {
+      // 只有「连接开着且没假死」才敢停轮询。
+      // 以前只判 isOpen()：切后台被静默断掉的连接 state 还是 open，
+      // 轮询一停就再也不会回来，成了「别人发消息我永远收不到」。
+      if (ws.isOpen() && !ws.isStale()) {
         self.stopPolling()
         return
       }
+      // 没连上 / 已假死：顺手把连接救一下，别让它一直躺平
+      ws.ensureAlive()
       self.pullSince()
     }, POLL_MS)
   },
@@ -402,6 +418,9 @@ Page({
         // 引用块里的时间：服务端快照只有 name/text，时间由 relayoutAll 按
         // replyToId 回查被引用消息补上（QQ 的引用卡片是「昵称 + 时间 + 展开箭头」）
         replyToTime: m.replyToTime || '',
+        // 被引用的是一条图片：replyToText 只有「[图片]」四个字，引用卡里看不出是哪张。
+        // replyToImg 由服务端按 replyToId 回查补全，拿不到时 relayoutAll 用本地列表兜底
+        replyToImg: m.replyToImg || '',
         deleted: m.deleted || 0,
         // 1 本人撤回 / 2 管理员删除：文案不同，所以不能只看 deleted
         deletedBy: m.deletedBy || 0,
@@ -426,9 +445,10 @@ Page({
    *    文案按「今天 HH:mm / 昨天 HH:mm / 前天 HH:mm / M月D日 HH:mm」分级。
    *    时间不再挂在每条气泡下面 —— QQ 就是这么做的，一屏里少十几个灰点，干净的。
    *
-   * <p>2. **引用块时间**：服务端快照只存 replyToName / replyToText，没有时间。
-   *    被引用的消息通常就在当前列表里，按 replyToId 回查一下就能补上，
-   *    不用为这个字段改表、改接口（聊天记录只留最近 200 条，回查命中率很高）。
+   * <p>2. **引用块时间 / 引用图**：服务端快照只存 replyToName / replyToText，没有时间，
+   *    图片也只存成「[图片]」四个字。被引用的消息通常就在当前列表里，按 replyToId
+   *    回查一下就能补齐（服务端已做同样的回查，这里只是兜底：老版本后端、
+   *    刚发出的本地消息都还没有 replyToImg）。
    *
    * <p>本地乐观消息 createdAt 为空，parseTime 返回 0：既不显示分隔条，
    * 也不能污染 lastTs（否则下一条真实消息会算错间隔）。
@@ -455,9 +475,16 @@ Page({
         showTime: showTime,
         timeLabel: showTime ? fullTime(m.createdAt) : ''
       }
-      if (m.replyToId && !m.replyToTime) {
+      if (m.replyToId) {
         const src = byId[m.replyToId]
-        if (src) patch.replyToTime = shortTime(src.createdAt)
+        if (src) {
+          if (!m.replyToTime) patch.replyToTime = shortTime(src.createdAt)
+          // 引用图兜底：服务端没给（老接口 / 本地乐观消息）就在本地列表里找原图。
+          // 撤回的图不回显 —— 撤回就该当没发过，缩略图也不能留
+          if (!m.replyToImg && src.type === 'image' && !src.deleted) {
+            patch.replyToImg = src.content
+          }
+        }
       }
       return Object.assign({}, m, patch)
     })

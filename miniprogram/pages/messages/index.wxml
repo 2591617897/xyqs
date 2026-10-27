@@ -124,7 +124,10 @@
         data-key="{{item.key}}"
       >
         <text>{{item.name}}</text>
-        <text class="fp-count" wx:if="{{item.key === 'all'}}">{{allConvos.length}}</text>
+        <!-- 数字是「未读条数」，不是「会话个数」——
+             以前这里绑的是 allConvos.length，用户看到「全部消息 1」以为有 1 条未读，
+             实际只是 1 个会话，跟旁边的群红点 4、底栏 2 全对不上 -->
+        <text class="fp-count" wx:if="{{item.key === 'all' && summary.unreadConvo}}">{{summary.unreadConvo > 99 ? '99+' : summary.unreadConvo}}</text>
       </view>
     </view>
   </scroll-view>

@@ -39,7 +39,8 @@ public interface OperateQueryMapper {
      * @param schoolId  用户学校 id（可为 null，此时不匹配「校区定向」的广告位）
      * @param limit     取多少条（传 slot.max_count）
      */
-    @Select("SELECT m.id, m.title, m.image, m.link_type, m.link_value, m.sort, s.code AS slot_code "
+    @Select("SELECT m.id, m.title, m.image, m.link_type, m.link_value, m.sort, "
+            + "       s.code AS slot_code, s.size_code AS size_code "
             + "FROM t_ad_material m JOIN t_ad_slot s ON s.id = m.slot_id "
             + "WHERE s.code = #{code} "
             + "  AND s.status = 1 AND s.audit_status = 1 "

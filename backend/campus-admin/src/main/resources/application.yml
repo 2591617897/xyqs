@@ -8,6 +8,14 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_ADDR:localhost:8848}
+  # Spring 默认 multipart 上限只有 1MB，后台传广告素材原图必然超限，
+  # 直接抛 MaxUploadSizeExceededException（GlobalExceptionHandler 兜成「图片太大」），
+  # 业务层的 5MB 校验（campus.admin.upload.max-size）反而永远执行不到。
+  # 这里放宽到 20MB，让超出业务上限的请求由 UploadController 给出带 MB 数的明确提示。
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/guizhou_campus_fun?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${MYSQL_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY_RETRIEVAL:true}
@@ -49,7 +57,10 @@ campus:
       lock-minutes: 15
     upload:
       # 广告素材上传：必须与 campus-user 的 campus.upload.dir 指向同一物理目录，
-      # 否则后台上传成功、图片访问 404。静态资源由网关 /uploads/** 路由到 campus-user 提供，本服务不需要映射。
-      dir: ${UPLOAD_DIR:./uploads}
+      # 否则后台上传成功、图片访问 404（网关 /uploads/** 由 campus-user 提供）。
+      # 默认值刻意写成 ../campus-user/uploads 而不是 ./uploads：两边都是相对各自的
+      # 启动目录解析，各写 ./uploads 就会变成「写 A 读 B」——本机实测就是这样，
+      # 后台传上去的素材在列表里全是灰块。生产仍用 UPLOAD_DIR 绝对路径把两边统一。
+      dir: ${UPLOAD_DIR:../campus-user/uploads}
       base-url: ${UPLOAD_BASE_URL:http://127.0.0.1:8888}
       max-size: ${ADMIN_UPLOAD_MAX_SIZE:5242880}

@@ -2,7 +2,7 @@
   <!-- 顶部栏已隐藏：顶部标题改为使用微信原生导航栏 -->
 
   <!-- 运营投放位（后台广告位 code=wall_top）：放在分类栏上方，切分类不重复加载（素材由组件自己缓存） -->
-  <ad-banner code="wall_top" height="{{240}}" />
+  <ad-banner code="wall_top" />
 
   <!-- 分类 chips：左右滑动内容区会切分类，选中项自动滚进可视区 -->
   <scroll-view class="cat-scroll" scroll-x="true" show-scrollbar="false" scroll-into-view="{{catInto}}" scroll-with-animation="true">

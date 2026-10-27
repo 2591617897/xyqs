@@ -44,6 +44,15 @@
       <el-table-column label="位置" width="130">
         <template #default="{ row }">{{ positionLabel(row) }}</template>
       </el-table-column>
+      <el-table-column label="展示规格" width="180">
+        <template #default="{ row }">
+          <span>{{ sizeTextOf(row) }}</span>
+          <el-tooltip v-if="isSizeOffDefault(row)" placement="top"
+                      :content="'该位页面按 ' + sizeOf(optionOf(row.code).defaultSize).sizeText + ' 排版，换成其它规格会让页面留白不统一'">
+            <el-tag type="warning" size="small" class="target-tag">非推荐</el-tag>
+          </el-tooltip>
+        </template>
+      </el-table-column>
       <el-table-column label="投放范围" width="120" align="center">
         <template #default="{ row }">
           <el-tag :type="tagOf(AD_SCOPE, row.scopeType).type" size="small">
@@ -115,7 +124,7 @@
             </el-option>
           </el-select>
           <div v-if="currentOption" class="form-hint">
-            {{ currentOption.pageHint }}　建议尺寸 {{ currentOption.sizeHint }}
+            {{ currentOption.pageHint }}　该位推荐 {{ sizeOf(currentOption.defaultSize).sizeText }}
           </div>
         </el-form-item>
         <el-form-item label="名称" prop="name">
@@ -170,8 +179,30 @@
         <el-form-item label="素材上限" prop="maxCount">
           <el-input-number v-model="form.maxCount" :min="1" :max="20" />
         </el-form-item>
-        <el-form-item label="尺寸说明">
-          <el-input v-model="form.sizeDesc" placeholder="如 750x300" />
+        <!-- 尺寸不是一个文本框，而是「小程序能渲染的几种高度」里选一种：
+             选了之后小程序真的按这个高度撑容器（高度由接口下发），
+             所以这里能选的值就是真实效果，不再出现「后台写 750x300、真机 240」。 -->
+        <el-form-item label="展示规格" prop="sizeCode">
+          <el-select v-model="form.sizeCode" placeholder="选择小程序支持的规格" style="width: 100%">
+            <el-option v-for="s in sizeOptions" :key="s.code" :value="s.code" :label="s.label">
+              <span>{{ s.label }}</span>
+              <span class="opt-code">建议 {{ s.pixelHint }}</span>
+            </el-option>
+          </el-select>
+          <div v-if="currentSize" class="size-row">
+            <div class="size-box">
+              <div class="size-rect" :style="{ aspectRatio: currentSize.widthRpx + ' / ' + currentSize.heightRpx }"></div>
+            </div>
+            <div class="form-hint">
+              小程序按 <b>{{ currentSize.heightRpx }}rpx</b> 高度渲染（{{ currentSize.sizeText }}，比例 {{ currentSize.ratio }}:1），
+              素材请按 <b>{{ currentSize.pixelHint }}</b> 制作。
+            </div>
+          </div>
+          <el-alert v-if="sizeOffDefault" type="warning" :closable="false" show-icon class="size-warn"
+                    :title="'该位页面是按 ' + sizeOf(cmDefaultSize).sizeText + ' 排的版，换档后请自己确认留白没问题'" />
+          <div v-if="!sizeOptions.length" class="form-hint">
+            规格清单加载失败，保存时会自动使用该位的推荐规格。
+          </div>
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" />
@@ -205,6 +236,13 @@ const query = reactive({ keyword: '', position: null, status: null, page: 1, siz
  */
 const slotOptions = ref([])
 
+/**
+ * 可选展示规格（AdSizeCatalog）。尺寸以前是自由文本框：
+ * 后台填「800x600」也能存，而小程序容器高度是写死的，素材被 aspectFill 裁掉一截，
+ * 两端谁也不报错。现在只能从这几种规格里选，小程序按同一份规格渲染。
+ */
+const sizeOptions = ref([])
+
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const editing = ref(null)
@@ -231,7 +269,7 @@ const schoolGroups = computed(() => {
 
 const form = reactive({
   name: '', code: '', scopeType: 1, cities: [], schoolIds: [],
-  maxCount: 3, sizeDesc: '', sort: 0
+  maxCount: 3, sizeCode: '', sort: 0
 })
 
 /** 城市 / 校区是否已选，取决于当前投放范围——两个字段互斥，不能都要求 */
@@ -251,16 +289,55 @@ function validateSchools (rule, value, cb) {
 const rules = {
   code: [{ required: true, message: '请选择广告位', trigger: 'change' }],
   name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
+  sizeCode: [{ required: true, message: '请选择展示规格', trigger: 'change' }],
   cities: [{ validator: validateCities, trigger: 'change' }],
   schoolIds: [{ validator: validateSchools, trigger: 'change' }]
 }
 
 const currentOption = computed(() => optionOf(form.code))
 
+/** 当前选中的规格对象（下拉刚打开还没选时按兜底规格展示，避免空白预览） */
+const currentSize = computed(() => sizeOf(form.sizeCode))
+
+/** 该位的推荐规格编码；用来判断「运营是不是改成了非推荐档」 */
+const cmDefaultSize = computed(() => (currentOption.value ? currentOption.value.defaultSize : ''))
+
+/** 选了非推荐规格：允许，但页面留白是按推荐值排的，必须提醒 */
+const sizeOffDefault = computed(
+  () => !!(form.sizeCode && cmDefaultSize.value && form.sizeCode !== cmDefaultSize.value)
+)
+
 /** 编码不在注册表里 = 小程序不会读取（历史脏数据 / 手工插库） */
 function optionOf (code) {
   if (!code) return null
   return slotOptions.value.find((o) => o.code === code) || null
+}
+
+/** 规格清单拿不到时的兜底（与后端 AdSizeCatalog.DEFAULT_CODE 一致），只为模板不炸 */
+const FALLBACK_SIZE = {
+  code: 'banner_240', label: '标准横版 750×240', widthRpx: 750, heightRpx: 240,
+  ratio: 3.13, pixelHint: '1080×346', sizeText: '750×240'
+}
+
+function sizeOf (code) {
+  const key = code || FALLBACK_SIZE.code
+  return sizeOptions.value.find((s) => s.code === key) || sizeOptions.value[0] || FALLBACK_SIZE
+}
+
+/**
+ * 列表里展示的规格：优先库里存的 size_code；
+ * 老数据为空时按该位的推荐规格显示——与小程序实际渲染高度一致（后端同样兜底）。
+ */
+function sizeTextOf (row) {
+  const code = row.sizeCode || (optionOf(row.code) ? optionOf(row.code).defaultSize : '')
+  return sizeOf(code).sizeText
+}
+
+/** 存了具体规格、且不是该位的推荐档 → 列表里打个「非推荐」提醒 */
+function isSizeOffDefault (row) {
+  const o = optionOf(row.code)
+  if (!o || !row.sizeCode) return false
+  return row.sizeCode !== o.defaultSize
 }
 
 function positionLabel (row) {
@@ -311,12 +388,13 @@ async function loadTargets () {
 }
 
 async function loadOptions () {
-  try {
-    slotOptions.value = (await adApi.slotCodes()) || []
-  } catch (e) {
-    // 拿不到清单时不做硬失败：列表照常显示，只是下拉为空
-    slotOptions.value = []
-  }
+  // 三个接口互不阻塞：任意一个挂了，其它下拉/列表照常可用
+  const [codes, sizes] = await Promise.all([
+    adApi.slotCodes().catch(() => []),
+    adApi.slotSizes().catch(() => [])
+  ])
+  slotOptions.value = codes || []
+  sizeOptions.value = sizes || []
 }
 
 async function load () {
@@ -338,14 +416,15 @@ function onCodeChange (code) {
   if (!o) return
   // 选中即带出默认值，运营不用再手打名称和尺寸
   if (!form.name || slotOptions.value.some((x) => x.name === form.name)) form.name = o.name
-  if (!form.sizeDesc) form.sizeDesc = o.sizeHint
+  // 规格跟着位走：换位就换成该位的推荐档（编辑时编码不可改，不会冲掉已选规格）
+  form.sizeCode = o.defaultSize || ''
 }
 
 function openCreate () {
   editing.value = null
   Object.assign(form, {
     name: '', code: '', scopeType: 1, cities: [], schoolIds: [],
-    maxCount: 3, sizeDesc: '', sort: 0
+    maxCount: 3, sizeCode: '', sort: 0
   })
   dialogVisible.value = true
   formRef.value && formRef.value.clearValidate()
@@ -353,10 +432,14 @@ function openCreate () {
 
 function openEdit (row) {
   editing.value = row
+  const o = optionOf(row.code)
   Object.assign(form, {
     name: row.name, code: row.code, scopeType: row.scopeType,
     cities: splitCsv(row.city), schoolIds: splitCsv(row.schoolIds),
-    maxCount: row.maxCount, sizeDesc: row.sizeDesc || '', sort: row.sort
+    maxCount: row.maxCount,
+    // 老数据 size_code 为空：表单显示该位的推荐值，保存后落成明确规格
+    sizeCode: row.sizeCode || (o ? o.defaultSize : ''),
+    sort: row.sort
   })
   dialogVisible.value = true
   formRef.value && formRef.value.clearValidate()
@@ -380,7 +463,8 @@ async function submit () {
       city: form.scopeType === 2 ? form.cities.join(',') : '',
       schoolIds: form.scopeType === 3 ? form.schoolIds.join(',') : '',
       maxCount: form.maxCount,
-      sizeDesc: form.sizeDesc,
+      // 尺寸只提交规格编码，size_desc 由后端派生（自由文本口径已经废弃）
+      sizeCode: form.sizeCode,
       sort: form.sort
     }
     if (editing.value) {
@@ -458,4 +542,17 @@ onMounted(async () => {
 }
 .target-tag { margin-right: 4px; }
 .muted { color: var(--text-3, #909399); font-size: 12px; }
+
+/* 规格预览：按真实宽高比画一个小色块，运营一眼能看出「这个档有多扁」 */
+.size-row { display: flex; gap: 10px; align-items: flex-start; width: 100%; margin-top: 8px; }
+.size-box {
+  flex: 0 0 76px; width: 76px; padding: 4px;
+  background: var(--fill-2, #f5f7fa); border-radius: 4px;
+}
+.size-rect {
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--brand-400, #a78bfa), var(--brand-600, #7c3aed));
+}
+.size-warn { margin-top: 8px; }
 </style>

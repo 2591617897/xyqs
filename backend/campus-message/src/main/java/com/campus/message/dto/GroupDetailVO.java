@@ -15,6 +15,12 @@ public class GroupDetailVO {
 
     private String name;
 
+    /**
+     * 所属学校名。群名固定「校友群」后（2026-10-27），学校身份只在这里体现 ——
+     * 群设置页副标题「N 位校友 · {学校名}」，顶栏标题不再拼学校名。
+     */
+    private String schoolName;
+
     private String avatar;
 
     private String notice;

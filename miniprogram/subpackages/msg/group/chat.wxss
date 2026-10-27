@@ -41,27 +41,62 @@
 }
 .tb-back,
 .tb-set {
-  width: 60rpx;
-  height: 60rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 50%;
   transition: background 0.15s;
 }
-.tb-back:active,
-.tb-set:active {
+/* 返回键：60×60 的圆形热区（图标本身只有 40rpx，靠外圈补足可点面积） */
+.tb-back {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+}
+.tb-back:active {
   background: #f0f0f0;
 }
-/* 返回 / 更多图标：一律走全局 styles/icons.wxss（mask + currentColor），
+/* 「群设置」文字入口：浅灰胶囊。
+   不要用描边胶囊 —— 右上角紧贴微信原生胶囊（白底 + 黑描边），
+   两个描边胶囊并排会更像同一组控件；浅灰底能一眼区分开。 */
+.tb-set {
+  position: relative;
+  height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1;
+  /* 不能用 --text-2（#9a9a9a）：放在 #f2f3f5 浅灰底上对比度只有 2.4:1，
+     12pt 的小字会糊成一团。这里用 #4a4a4a（约 7.7:1），
+     清晰但弱于标题的 #1a1a1a，不影响群名的主体地位。 */
+  color: #4a4a4a;
+  background: #f2f3f5;
+  letter-spacing: 0.5rpx;
+  /* topbar 的 padding-right 正好等于「胶囊左边缘到屏右」，
+     不留这一手的话文字胶囊会严丝合缝贴住微信胶囊，看着像连体控件 */
+  margin-right: 10rpx;
+}
+/* 视觉 52rpx（26pt），但点按热区扩到 72rpx（36pt）：
+   导航栏右侧的小胶囊很容易点空，尤其是单手拿手机时 */
+.tb-set::after {
+  content: '';
+  position: absolute;
+  top: -10rpx;
+  bottom: -10rpx;
+  left: -10rpx;
+  right: -10rpx;
+}
+.tb-set-hover {
+  background: #e6e7ea;
+}
+/* 返回图标：一律走全局 styles/icons.wxss（mask + currentColor），
    这里只负责尺寸和颜色。
    ⚠️ 千万不要在页面里再用 border / box-shadow / transform 自绘 .ico-back、
    .ico-more：全局 .ico 自带 mask-image 和 background-color:currentColor，
    自绘出来的边框会被 mask 裁掉大半，只剩标题左上角一小块残影（看着像图标
    显示异常 / 错位）。尺寸走 font-size（1em），颜色走 color。 */
-.tb-back .ico,
-.tb-set .ico {
+.tb-back .ico {
   font-size: 40rpx;
   color: var(--text-1);
 }
@@ -682,7 +717,24 @@
   border-top: 3rpx solid #a0a0a0;
   transform: rotate(45deg);
 }
+/* 引用正文行：左边可能有一张缩略图（引用了图片消息），右边是摘要文字。
+   缩略图固定 56rpx：引用卡本身很窄，再大就把文字挤成一两个字。 */
+.quote-body {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+.quote-img {
+  width: 56rpx;
+  height: 56rpx;
+  flex-shrink: 0;
+  border-radius: 6rpx;
+  background: rgba(0, 0, 0, 0.06);
+}
 .quote-text {
+  flex: 1;
+  min-width: 0;
   font-size: 25rpx;
   line-height: 1.45;
   color: #6b6b6b;

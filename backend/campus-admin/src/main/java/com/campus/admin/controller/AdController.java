@@ -8,6 +8,7 @@ import com.campus.admin.dto.AuditReq;
 import com.campus.admin.entity.AdMaterial;
 import com.campus.admin.entity.AdSlot;
 import com.campus.admin.service.AdService;
+import com.campus.common.ad.AdSize;
 import com.campus.common.api.R;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,6 +43,16 @@ public class AdController {
     @GetMapping("/slots/codes")
     public R<List<AdSlotOption>> slotCodes() {
         return R.ok(adService.slotOptions());
+    }
+
+    /**
+     * 可选展示规格。尺寸<b>不是自由文本</b>：小程序能渲染的高度就这几种，
+     * 后台只能从中选，选完小程序按同一编码撑容器（高度由 /ads/{code} 下发）。
+     */
+    @RequirePermission({"admin:ad:slot:list"})
+    @GetMapping("/slots/sizes")
+    public R<List<AdSize>> slotSizes() {
+        return R.ok(adService.slotSizes());
     }
 
     /**
