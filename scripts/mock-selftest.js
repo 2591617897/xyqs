@@ -303,9 +303,11 @@ console.log('\n[14] 首页功能区（utils/zones.js）')
 const zones = require(require('path').join(__dirname, '../miniprogram/utils/zones.js'))
 const chList = call('GET', '/channels').data
 const entries = zones.buildEntries(chList)
-check('金刚区 = 3 固定入口 + 3 频道', entries.length === 6, entries.length)
+// 4 固定入口（树洞 / 闲置 / 需求 / 校园频道）+ 3 在线频道
+check('金刚区 = 4 固定入口 + 3 频道', entries.length === 7, entries.length)
 check('金刚区首项是「树洞闲谈」', entries[0].title === '树洞闲谈' && entries[0].url === '/pages/wall/index')
 check('金刚区含闲置交换', entries.some((e) => e.title === '闲置交换' && e.url === '/pages/goods/list'))
+check('金刚区含需求广场', entries.some((e) => e.title === '需求广场' && e.url === '/subpackages/demand/list'))
 check('频道入口带 channelId 参数', entries.some((e) => e.url === '/pages/post/list?channelId=2001'))
 check('入口都有图标与底色', entries.every((e) => !!e.icon && !!e.tone))
 
@@ -326,6 +328,52 @@ check('生活区不含公告频道', zAll[4].items.every((it) => it.badge !== '�
 check('单列全宽：每区最多 3 条', zAll.every((z) => z.items.length <= 3), zAll.map((z) => z.items.length))
 check('每个区都有标题与图标', zAll.every((z) => !!z.title && !!z.icon))
 check('无数据的区不渲染', zones.buildZones({ posts: { records: [] }, hot: { records: [] }, wall: { records: [] }, goods: { records: [] } }, chList).length === 0)
+
+// ===== 校园广场（首页混合时间流，2026-10-28）=====
+const zDemands = call('GET', '/demands', { page: 1, size: 6 }).data
+const plaza = zones.buildPlaza(
+  { posts: zPosts, hot: zHot, wall: zWall, goods: zGoods, demands: zDemands }, chList, 'all')
+check('广场 tab = 4 固定 + 频道', plaza.tabs.length === 4 + chList.length, plaza.tabs.map((t) => t.name))
+check('广场首 tab 是「全部」', plaza.tabs[0].key === 'all' && plaza.tabs[0].name === '全部')
+check('广场固定 tab 顺序', plaza.tabs.slice(0, 4).map((t) => t.key).join(',') === 'all,wall,goods,demand')
+check('广场默认 tab 为 all', plaza.activeTab === 'all')
+check('广场卡片混排四类', new Set(plaza.items.map((i) => i.kind)).size === 4, plaza.items.map((i) => i.kind))
+check('广场卡片不超上限', plaza.items.length <= zones.PLAZA_LIMIT, plaza.items.length)
+
+// 配额：每类最多 PLAZA_KIND_QUOTA 条 —— 不做限制时闲置/树洞发得勤就能把首屏占满，
+// 需求永远进不了首页，等于这个功能白做
+const kindCount = {}
+plaza.items.forEach((i) => { kindCount[i.kind] = (kindCount[i.kind] || 0) + 1 })
+check('每类不超过配额', Object.keys(kindCount).every((k) => kindCount[k] <= 2), kindCount)
+
+const plazaNormal = plaza.items.filter((i) => !i.promoted)
+check('非推广卡按时间倒序', plazaNormal.every((it, i) => i === 0 || plazaNormal[i - 1].ts >= it.ts),
+  plazaNormal.map((it) => it.ts))
+
+// 推广置顶：拿一条 2020 年的老推广帖，验证它仍排在新内容前面
+const oldPromo = { id: 9999, title: '老推广帖', content: 'x', createdAt: '2020-01-01 00:00:00', promoteScore: 10, channelName: '校园公告' }
+const withPromo = zones.buildPlaza({
+  posts: { records: [oldPromo].concat((zPosts && zPosts.records) || []) },
+  wall: zWall, goods: zGoods, demands: zDemands
+}, chList, 'all')
+check('推广帖置顶（时间更早也排最前）', withPromo.items[0] && withPromo.items[0].id === 9999, withPromo.items[0] && withPromo.items[0].id)
+// 过期后残留的 promoteScore 不该再享优先位
+const expiredPromo = zones.buildPlaza({
+  posts: { records: [{ id: 9998, title: '过期推广', content: 'x', createdAt: '2020-01-01 00:00:00', promoteScore: 10, promoteExpireAt: '2020-01-02 00:00:00' }] },
+  wall: { records: [] }, goods: { records: [] }, demands: { records: [] }
+}, chList, 'all')
+check('过期推广不再置顶', expiredPromo.items.every((i) => !i.promoted))
+
+// 单类 tab：不做配额限制（本来就只有一类），按时间倒序给够 8 条
+const wallTab = zones.buildPlaza({ posts: zPosts, wall: zWall, goods: zGoods, demands: zDemands }, chList, 'wall')
+check('树洞 tab 只有树洞卡', wallTab.items.length > 0 && wallTab.items.every((i) => i.kind === 'wall'))
+check('树洞 tab 不受配额限制', wallTab.items.length === Math.min(zWall.records.length, zones.PLAZA_LIMIT),
+  wallTab.items.length)
+
+// 空数据不炸
+const emptyPlaza = zones.buildPlaza({}, chList, 'all')
+check('无数据时广场为空但不报错', emptyPlaza.empty === true && emptyPlaza.items.length === 0)
+check('无数据时 tab 依然完整', emptyPlaza.tabs.length === 4 + chList.length)
 
 console.log('\n========== 通过 ' + pass + ' / 失败 ' + fail + ' ==========')
 process.exit(fail ? 1 : 0)

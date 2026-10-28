@@ -35,6 +35,15 @@ Page({
     onboardSaving: false,
     /** 内容功能区（功能入口已独立成「功能区」tab 页，首页不再持有 entries） */
     zones: [],
+    /**
+     * 校园广场：一条混合时间流（帖子 / 树洞 / 闲置 / 需求）+ 顶部分类 tab。
+     * 结构见 utils/zones.js#buildPlaza：{ tabs, activeTab, items, more, empty }
+     */
+    plaza: { tabs: [], activeTab: 'all', items: [], more: '', empty: false },
+    /** 当前广场 tab：all / wall / goods / demand / ch-<频道id> */
+    plazaTab: 'all',
+    /** 切到频道 tab 时要拉数据，单独一个 loading，不要整页 loading */
+    plazaLoading: false,
     /** 闲置分类（校园闲置区的子筛选） */
     categories: [],
     /**
@@ -305,6 +314,8 @@ Page({
     // Banner 的「城市定向」需要当前城市；未登录/未选学校时留空（那种情况只拿得到全国投放的广告）
     const cityParam = (getApp().globalData.user || {}).schoolCity || ''
     const goodsParams = Object.assign({ page: 1, size: 6, sort: 'latest' }, scopeMod.goodsParams())
+    // 广场「全部」要把需求也混进来，单拉一份。挂在数组末尾，前面下标全不动
+    const demandParams = Object.assign({ page: 1, size: 6 }, scopeParams)
 
     Promise.all([
       http.get('/channels', null, { silent: true }).catch(fail('channels')),
@@ -316,23 +327,37 @@ Page({
       // 运营位：Banners 与公告。这两个是「锦上添花」，失败不影响功能区渲染，
       // 所以不进 contentOk 的判定（否则后台没配广告时首页会被误判成整页加载失败）
       http.get('/ads/home_banner', { city: cityParam }, { silent: true }).catch(fail('banners')),
-      http.get('/notices', null, { silent: true }).catch(fail('notices'))
+      http.get('/notices', null, { silent: true }).catch(fail('notices')),
+      http.get('/demands', demandParams, { silent: true }).catch(fail('demands'))
     ]).then(function (res) {
       if (seq !== self._loadSeq) return // 已有更新的请求，丢弃本次结果
       const channels = res[0] || []
       // 判定依据只看「内容源」：帖子 / 最热 / 表白墙 / 闲置
       // 任一成功就能渲染出部分功能区（优雅降级）；
       // 全挂了才算整页失败，否则用户只会看到一句「暂时还没有内容」而不知道是服务挂了
-      const contentOk = [res[1], res[2], res[3], res[4]].filter(function (x) {
+      const contentOk = [res[1], res[2], res[3], res[4], res[8]].filter(function (x) {
         return !!x
       }).length
 
-      const built = zoneMod.buildZones({
+      const src = {
         posts: res[1] || {},
         hot: res[2] || {},
         wall: res[3] || {},
-        goods: res[4] || {}
-      }, channels)
+        goods: res[4] || {},
+        demands: res[8] || {}
+      }
+
+      // 首页现在只剩「今日最热」一个独立区：树洞 / 闲置 / 公告 / 校园生活
+      // 全部并进下面的广场混合流，不再各占一块（每区 3 条摆成 4 段，首屏被切碎）
+      const built = zoneMod.buildZones(src, channels).filter(function (z) {
+        return z.key === 'hot'
+      })
+
+      // 广场按「当前选中的 tab」重建：刷新后不会莫名其妙跳回「全部」
+      const plaza = zoneMod.buildPlaza(src, channels, self.data.plazaTab)
+      // 存一份原始数据，切 tab 时不用重新请求（频道 tab 例外，见 switchPlazaTab）
+      self._plazaSrc = src
+      self._plazaChannels = channels
 
       const banners = res[6] || []
       // 统一过一遍 decorate：公告条只显示摘要（summary），长正文不能把首屏卡片撑高
@@ -346,10 +371,16 @@ Page({
         bannerHeight: (banners[0] && banners[0].displayHeight) || 300,
         notices: notices,
         zones: built,
+        plaza: plaza,
         loading: false,
         loadError: contentOk === 0,
         errorMsg: contentOk === 0 ? (firstError || '加载失败，请检查后端服务') : ''
       })
+
+      // 停在频道 tab 上刷新时，频道数据是另外拉的，这里补一次
+      if (String(self.data.plazaTab).indexOf('ch-') === 0) {
+        self.loadPlazaChannel(String(self.data.plazaTab).slice(3))
+      }
 
       // 热评预览：今日最热区的第一条评论
       const hotIdx = built.findIndex(function (z) {
@@ -436,6 +467,126 @@ Page({
     this.setData({ scopeShow: false })
     this.toggleTabBar(false)
     this.goStatus()
+  },
+
+  /* ---------- 校园广场 ---------- */
+
+  /**
+   * 切换广场分类。
+   *
+   * 固定 tab（全部 / 树洞 / 闲置 / 需求）用首页已经拉到的数据本地重建，零请求；
+   * 频道 tab 单独拉 —— 首屏那 16 条帖子不一定覆盖某个频道，
+   * 直接用本地数据过滤会得到一个「假空态」（明明有帖子却显示没有）。
+   */
+  switchPlazaTab: function (e) {
+    const key = e.currentTarget.dataset.key
+    if (!key || key === this.data.plazaTab) return
+    const tabs = (this.data.plaza || {}).tabs || []
+    const tab = tabs.filter(function (t) {
+      return t.key === key
+    })[0]
+    if (!tab) return
+
+    if (key.indexOf('ch-') === 0) {
+      this.setData({ plazaTab: key, plazaLoading: true })
+      this.loadPlazaChannel(key.slice(3))
+      return
+    }
+    this.setData({
+      plazaTab: key,
+      plaza: zoneMod.buildPlaza(this._plazaSrc || {}, this._plazaChannels || [], key)
+    })
+  },
+
+  /**
+   * 拉单个频道的帖子。
+   *
+   * 失败 / 切走后回来的结果都必须清空，不能留着上一个 tab 的内容 ——
+   * 否则用户会以为「这个频道里真的有这条帖子」。
+   */
+  loadPlazaChannel: function (channelId) {
+    const self = this
+    const seq = (this._plazaSeq = (this._plazaSeq || 0) + 1)
+    const params = Object.assign({ page: 1, size: zoneMod.PLAZA_LIMIT }, scopeMod.postParams())
+    params.channelId = channelId
+    const render = function (list) {
+      if (seq !== self._plazaSeq) return
+      if (String(self.data.plazaTab) !== 'ch-' + channelId) return
+      self.setData({
+        plazaLoading: false,
+        plaza: zoneMod.buildPlaza(
+          self._plazaSrc || {},
+          self._plazaChannels || [],
+          'ch-' + channelId,
+          list || []
+        )
+      })
+    }
+    http.get('/posts', params, { silent: true }).then(function (res) {
+      render((res || {}).records)
+    }).catch(function () {
+      render([])
+    })
+  },
+
+  /** 广场右上角「更多」：按当前 tab 落到对应列表页 */
+  goPlazaMore: function () {
+    navigate((this.data.plaza || {}).more || '/pages/post/list')
+  },
+
+  /** 广场卡片 → 详情（帖子 / 树洞 / 闲置 / 需求四种落点） */
+  goPlazaDetail: function (e) {
+    const ds = e.currentTarget.dataset
+    if (!ds.id) return
+    if (ds.kind === 'wall') {
+      mp.navigateTo({ url: '/pages/wall/detail?id=' + ds.id })
+      return
+    }
+    if (ds.kind === 'goods') {
+      mp.navigateTo({ url: '/pages/goods/detail?id=' + ds.id })
+      return
+    }
+    if (ds.kind === 'demand') {
+      mp.navigateTo({ url: '/subpackages/demand/detail?id=' + ds.id })
+      return
+    }
+    mp.navigateTo({ url: '/pages/post/detail?id=' + ds.id })
+  },
+
+  /**
+   * 广场卡片点赞。三种落点接口不同，按 kind 分流。
+   * 需求没有点赞（那边是「人回应」，不是社交互动），wxml 里根本不渲染这个按钮。
+   */
+  togglePlazaLike: function (e) {
+    const self = this
+    const ds = e.currentTarget.dataset
+    const idx = Number(ds.idx)
+    const items = (this.data.plaza || {}).items || []
+    const item = items[idx]
+    if (!item || !item.kind || item.kind === 'demand') return
+    auth.ensureLogin().then(function () {
+      let url = '/posts/' + item.id + '/like'
+      if (item.kind === 'wall') url = '/wall/posts/' + item.id + '/like'
+      else if (item.kind === 'goods') url = '/goods/' + item.id + '/like'
+      return http.post(url)
+    }).then(function (liked) {
+      const cnt = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
+      const patch = {}
+      patch['plaza.items[' + idx + '].liked'] = liked
+      patch['plaza.items[' + idx + '].likeCount'] = cnt
+      patch['plaza.items[' + idx + '].likeText'] = fmtCount(cnt)
+      self.setData(patch)
+    }).catch(function () {})
+  },
+
+  /** 广场卡片点图 → 大图预览（catchtap 阻止冒泡到卡片详情） */
+  previewPlazaImage: function (e) {
+    const ds = e.currentTarget.dataset
+    const items = (this.data.plaza || {}).items || []
+    const item = items[Number(ds.idx)]
+    const urls = (item && item.imageList) || []
+    if (!urls.length) return
+    mp.previewImage({ current: ds.url || urls[0], urls: urls })
   },
 
   /* ---------- 功能区交互 ---------- */
@@ -616,8 +767,11 @@ Page({
       var brief = ''
       var title = ''
       var zones = this.data.zones || []
-      for (var i = 0; i < zones.length && !brief; i++) {
-        var items = (zones[i] && zones[i].items) || []
+      var plazaItems = (this.data.plaza || {}).items || []
+      // 先搜功能区（只剩「今日最热」），再搜广场 —— 广场才是绝大多数卡片所在
+      var pools = [].concat(zones.map(function (z) { return (z && z.items) || [] }), [plazaItems])
+      for (var i = 0; i < pools.length && !brief; i++) {
+        var items = pools[i]
         for (var j = 0; j < items.length; j++) {
           if (String(items[j].id) === String(id) && items[j].kind === kind) {
             brief = String(items[j].content || items[j].excerpt || '').replace(/\s+/g, ' ').trim()
@@ -630,9 +784,10 @@ Page({
         // 有标题的帖子用「标题 · 摘要」，没有标题的树洞只取摘要
         var shareTitle = title ? (title + ' · ' + brief) : brief
         if (shareTitle.length > 30) shareTitle = shareTitle.slice(0, 30) + '…'
-        var path = kind === 'wall'
-          ? '/pages/wall/detail?id=' + id
-          : '/pages/post/detail?id=' + id
+        var path = '/pages/post/detail?id=' + id
+        if (kind === 'wall') path = '/pages/wall/detail?id=' + id
+        else if (kind === 'goods') path = '/pages/goods/detail?id=' + id
+        else if (kind === 'demand') path = '/subpackages/demand/detail?id=' + id
         return {
           title: shareTitle,
           path: path

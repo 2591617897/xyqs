@@ -141,61 +141,117 @@ async function main() {
     entryList.some((e) => e.key === 'demand' && e.url === '/subpackages/demand/list'))
   check('功能入口没有「学习交流」', !entryList.some((e) => e.title === '学习交流'))
   check('首页不再渲染金刚区', d.entries === undefined)
-  check('生成内容功能区', d.zones.length === 5, d.zones.map((z) => z.key))
-  check('区顺序正确', d.zones.map((z) => z.key).join(',') === 'hot,wall,goods,notice,campus')
+  // 2026-10-28：首页只留「今日最热」一个独立区，树洞/闲置/公告/生活全部并进广场混合流
+  check('内容区只剩「今日最热」', d.zones.length === 1 && d.zones[0].key === 'hot', d.zones.map((z) => z.key))
 
-  console.log('\n[2] 各区内容来自正确的接口（防止 res 下标串位）')
-  const byKey = {}
-  d.zones.forEach((z) => { byKey[z.key] = z })
-  check('热区 1 条帖子', byKey.hot.items.length === 1 && byKey.hot.items[0].kind === 'post')
-  check('热区有作者与频道名', !!byKey.hot.items[0].authorName && !!byKey.hot.items[0].badge)
-  // 单列全宽卡片，每区最多 3 条（ZONE_LIMIT）
-  check('我想说区是表白墙数据（≤3 条）', byKey.wall.items.length <= 3 && byKey.wall.items.length > 0 && byKey.wall.items[0].kind === 'wall', byKey.wall.items.length)
-  check('我想说区带匿名昵称', !!byKey.wall.items[0].anonName && !!byKey.wall.items[0].avatarClass)
-  check('闲置区是商品数据（≤3 条）', byKey.goods.items.length <= 3 && byKey.goods.items.length > 0 && byKey.goods.items[0].kind === 'goods', byKey.goods.items.length)
-  check('闲置区带价格', byKey.goods.items[0].priceText !== undefined && byKey.goods.items[0].priceText !== '')
-  check('公告区只含 2001 频道', byKey.notice.items.every((it) => it.badge === '校园公告'))
-  check('生活区不含公告频道', byKey.campus.items.every((it) => it.badge !== '校园公告'))
-  check('生活区有多个频道', new Set(byKey.campus.items.map((it) => it.badge)).size >= 1)
+  console.log('\n[2] 校园广场：分类 tab + 混合时间流')
+  check('默认停在「全部」', d.plaza.activeTab === 'all' && d.plazaTab === 'all', d.plaza.activeTab)
+  check('tab = 4 固定 + 3 频道', d.plaza.tabs.length === 7, d.plaza.tabs.map((t) => t.name))
+  check('第一个 tab 是「全部」', d.plaza.tabs[0].key === 'all' && d.plaza.tabs[0].name === '全部')
+  check('固定 tab 顺序 全部/树洞/闲置/需求',
+    d.plaza.tabs.slice(0, 4).map((t) => t.key).join(',') === 'all,wall,goods,demand',
+    d.plaza.tabs.slice(0, 4).map((t) => t.key))
+  check('频道 tab 用 ch- 前缀（避开固定 key）', d.plaza.tabs.slice(4).every((t) => t.key.indexOf('ch-') === 0))
+  check('广场有卡片', d.plaza.items.length > 0, d.plaza.items.length)
+  check('卡片数不超过上限', d.plaza.items.length <= zoneMod.PLAZA_LIMIT, d.plaza.items.length)
+
+  // 「全部」流混排四类：帖子 / 树洞 / 闲置 / 需求
+  const kinds = {}
+  d.plaza.items.forEach((it) => { kinds[it.kind] = (kinds[it.kind] || 0) + 1 })
+  check('广场含帖子卡', !!kinds.post, kinds)
+  check('广场含树洞卡', !!kinds.wall, kinds)
+  check('广场含闲置卡', !!kinds.goods, kinds)
+  check('广场含需求卡', !!kinds.demand, kinds)
+
+  // 排序：推广帖置顶，其余按发布时间倒序
+  const normal = d.plaza.items.filter((it) => !it.promoted)
+  const orderOk = normal.every((it, i) => i === 0 || normal[i - 1].ts >= it.ts)
+  check('非推广卡按时间倒序', orderOk, normal.map((it) => it.ts))
+  const firstNormal = d.plaza.items.findIndex((it) => !it.promoted)
+  check('推广卡全部置顶', firstNormal < 0 || d.plaza.items.slice(firstNormal).every((it) => !it.promoted),
+    d.plaza.items.map((it) => (it.promoted ? 1 : 0)))
+
+  console.log('\n[3] 广场卡片字段来自正确接口（防止 res 下标串位）')
+  const wallCard = d.plaza.items.filter((it) => it.kind === 'wall')[0]
+  check('树洞卡带匿名昵称', !!wallCard && !!wallCard.anonName && !!wallCard.avatarClass)
+  const goodsCard = d.plaza.items.filter((it) => it.kind === 'goods')[0]
+  check('闲置卡带价格', !!goodsCard && goodsCard.priceText !== undefined && goodsCard.priceText !== '')
+  const demandCard = d.plaza.items.filter((it) => it.kind === 'demand')[0]
+  check('需求卡带预算与回应数', !!demandCard && !!demandCard.budgetText && demandCard.replyText !== undefined)
+  check('需求卡没有点赞（需求不做社交互动）', !!demandCard && demandCard.likeText === '')
+  check('热区 1 条帖子', d.zones[0].items.length === 1 && d.zones[0].items[0].kind === 'post')
+  check('热区有作者与频道名', !!d.zones[0].items[0].authorName && !!d.zones[0].items[0].badge)
   check('拿到闲置分类', d.categories.length > 0, d.categories.length)
 
-  console.log('\n[3] 功能区点赞：按 kind 走不同接口')
-  const wallItem = byKey.wall.items[0]
-  // 种子数据里 7001 可能已经点过赞，先记初始态，按「取反」断言
-  const likedBefore = !!wallItem.liked
-  const countBefore = wallItem.likeCount || 0
-  page.toggleZoneLike({ currentTarget: { dataset: { zi: 1, ii: 0 } } })
+  console.log('\n[4] 广场分类切换')
+  const wallOnly = page.switchPlazaTab({ currentTarget: { dataset: { key: 'wall' } } })
+  await new Promise((r) => setTimeout(r, 100))
+  check('切到「树洞」只用树洞卡', page.data.plaza.items.every((it) => it.kind === 'wall'), page.data.plaza.items.length)
+  check('切换后 plazaTab 同步', page.data.plazaTab === 'wall')
+  page.switchPlazaTab({ currentTarget: { dataset: { key: 'demand' } } })
+  await new Promise((r) => setTimeout(r, 100))
+  check('切到「需求」只有需求卡', page.data.plaza.items.length > 0 && page.data.plaza.items.every((it) => it.kind === 'demand'))
+  page.switchPlazaTab({ currentTarget: { dataset: { key: 'all' } } })
+  await new Promise((r) => setTimeout(r, 100))
+  check('切回「全部」恢复混合流', page.data.plaza.items.length > 0 && page.data.plazaTab === 'all')
+
+  console.log('\n[5] 广场点赞：按 kind 走不同接口')
+  const wallIdx = page.data.plaza.items.findIndex((it) => it.kind === 'wall')
+  const wItem = page.data.plaza.items[wallIdx]
+  const likedBefore = !!wItem.liked
+  const countBefore = wItem.likeCount || 0
+  page.togglePlazaLike({ currentTarget: { dataset: { idx: wallIdx } } })
   await new Promise((r) => setTimeout(r, 200))
-  const after1 = d.zones[1].items[0]
+  const after1 = page.data.plaza.items[wallIdx]
   check('点赞状态取反', after1.liked === !likedBefore, after1.liked)
   check('点赞数 ' + (likedBefore ? '-1' : '+1'), after1.likeCount === countBefore + (likedBefore ? -1 : 1), after1.likeCount)
   check('点赞文案同步', after1.likeText === String(after1.likeCount), after1.likeText)
-  page.toggleZoneLike({ currentTarget: { dataset: { zi: 1, ii: 0 } } })
+  page.togglePlazaLike({ currentTarget: { dataset: { idx: wallIdx } } })
   await new Promise((r) => setTimeout(r, 200))
-  const after2 = d.zones[1].items[0]
+  const after2 = page.data.plaza.items[wallIdx]
   check('再点一次恢复原状', after2.liked === likedBefore && after2.likeCount === countBefore, after2)
+  // 需求卡不该被点赞改写
+  const dIdx = page.data.plaza.items.findIndex((it) => it.kind === 'demand')
+  if (dIdx >= 0) {
+    const dBefore = JSON.parse(JSON.stringify(page.data.plaza.items[dIdx]))
+    page.togglePlazaLike({ currentTarget: { dataset: { idx: dIdx } } })
+    await new Promise((r) => setTimeout(r, 150))
+    check('需求卡点赞被忽略', page.data.plaza.items[dIdx].likeCount === dBefore.likeCount)
+  }
 
-  console.log('\n[4] 跳转路由')
+  console.log('\n[6] 跳转路由')
   const jumps = []
   mp.switchTab = (o) => jumps.push(['switchTab', o.url])
   mp.navigateTo = (o) => jumps.push(['navigateTo', o.url])
-  // 金刚区的 goEntry 已随页面搬走，这里改测功能区右上角「更多」
+  // 金刚区的 goEntry 已随页面搬走，这里改测功能区右上角「更多」与广场落点
   page.goZoneMore({ currentTarget: { dataset: { url: '/pages/wall/index' } } })
   page.goZoneMore({ currentTarget: { dataset: { url: '/pages/post/list?channelId=2001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'wall', id: '7001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'goods', id: '8001' } } })
   page.goZoneDetail({ currentTarget: { dataset: { kind: 'post', id: '6001' } } })
+  // 广场卡片四种落点：需求必须落到 demand 分包（漏了会静默进帖子详情 → 404）
+  page.goPlazaDetail({ currentTarget: { dataset: { kind: 'demand', id: '9001' } } })
+  page.goPlazaDetail({ currentTarget: { dataset: { kind: 'wall', id: '7001' } } })
+  page.goPlazaDetail({ currentTarget: { dataset: { kind: 'goods', id: '8001' } } })
+  page.goPlazaDetail({ currentTarget: { dataset: { kind: 'post', id: '6001' } } })
   // 表白墙不再是 tab 页（底栏已换成 功能区/私信）→ navigateTo
   check('非 tab 页用 navigateTo', jumps[0] && jumps[0][0] === 'navigateTo' && jumps[0][1] === '/pages/wall/index', jumps[0])
   check('非 tab 页用 navigateTo 且带参', jumps[1] && jumps[1][0] === 'navigateTo' && jumps[1][1] === '/pages/post/list?channelId=2001', jumps[1])
   check('表白墙跳详情', jumps[2] && jumps[2][1] === '/pages/wall/detail?id=7001', jumps[2])
   check('闲置跳详情', jumps[3] && jumps[3][1] === '/pages/goods/detail?id=8001', jumps[3])
   check('帖子跳详情', jumps[4] && jumps[4][1] === '/pages/post/detail?id=6001', jumps[4])
+  check('广场·需求跳 demand 分包', jumps[5] && jumps[5][1] === '/subpackages/demand/detail?id=9001', jumps[5])
+  check('广场·树洞跳表白墙详情', jumps[6] && jumps[6][1] === '/pages/wall/detail?id=7001', jumps[6])
+  check('广场·闲置跳闲置详情', jumps[7] && jumps[7][1] === '/pages/goods/detail?id=8001', jumps[7])
+  check('广场·帖子跳帖子详情', jumps[8] && jumps[8][1] === '/pages/post/detail?id=6001', jumps[8])
 
-  console.log('\n[5] 无数据时首页不空白报错')
+  console.log('\n[7] 无数据时首页不空白报错')
   const origGet = fakeHttp.get
   fakeHttp.get = (url) => {
-    if (String(url).indexOf('/posts') === 0 || String(url).indexOf('/wall') === 0 || String(url).indexOf('/goods') === 0) {
+    const u = String(url)
+    // 四个内容源全挂（含 /demands：它也是 contentOk 的判定源，漏了这里测不出整页失败）
+    if (u.indexOf('/posts') === 0 || u.indexOf('/wall') === 0 ||
+        u.indexOf('/goods') === 0 || u.indexOf('/demands') === 0) {
       return Promise.reject({ code: 500, msg: '模拟故障' })
     }
     return origGet(url)
@@ -207,7 +263,7 @@ async function main() {
   check('功能区为空（不渲染空模块）', page.data.zones.length === 0)
   fakeHttp.get = origGet
 
-  console.log('\n[6] 功能区页（底栏第 2 项，新增页）')
+  console.log('\n[8] 功能区页（底栏第 2 项，新增页）')
   let zoneCfg = null
   global.Page = (cfg) => { zoneCfg = cfg }
   const zonePath = require.resolve(path.join(__dirname, '../miniprogram/pages/zone/index.js'))

@@ -1558,6 +1558,52 @@ function myOrders(role) {
 
 /* ---------- 表白墙 ---------- */
 
+/**
+ * 需求广场演示数据。
+ * 首页广场的「全部」流要把需求也混进来，自检和真机预览都需要这一路数据；
+ * 字段口径与 campus-goods 的 GET /demands 保持一致（type 1求物 / 2求帮忙）。
+ */
+function mockDemands() {
+  const now = Date.now()
+  const fmt = function (hoursAgo) {
+    const d = new Date(now - hoursAgo * 3600 * 1000)
+    const p = function (n) {
+      return String(n).padStart(2, '0')
+    }
+    return (
+      d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds())
+    )
+  }
+  return [
+    {
+      id: 9001, type: 1, title: '求购二手自行车一辆',
+      description: '九成新即可，能骑就行，预算 200 以内',
+      budget: 200, expectTime: '本周内', location: '东校区',
+      replyCount: 2, viewCount: 40, createdAt: fmt(3),
+      userId: 9002, authorName: '林小满', status: 1
+    },
+    {
+      id: 9002, type: 2, title: '找人帮忙搬宿舍',
+      description: '四楼搬二楼，两小时搞定，请喝奶茶',
+      budget: null, expectTime: '周六上午', location: '3 号宿舍楼',
+      replyCount: 0, viewCount: 12, createdAt: fmt(20),
+      userId: 9003, authorName: '陈屿', status: 1
+    }
+  ]
+}
+
+function queryDemands(q) {
+  let list = mockDemands()
+  if (q.type) {
+    list = list.filter(function (d) {
+      return String(d.type) === String(q.type)
+    })
+  }
+  list.sort(byTimeDesc)
+  return paginate(list, q)
+}
+
 function queryWall(q) {
   const list = filterByScope(db.wallPosts, q).filter(function (p) {
     return p.status === 1
@@ -2337,6 +2383,9 @@ function route(method, url, data) {
     if (s.length === 1 && M === 'GET') return ok(mockNotices())
     if (s.length === 2 && M === 'GET') return ok(mockNotice(s[1]))
   }
+  // 需求广场：首页广场「全部」流要把需求混进来
+  if (s[0] === 'demands' && s.length === 1 && M === 'GET') return ok(queryDemands(q))
+
   if (s[0] === 'posts') {
     if (s.length === 1 && M === 'GET') return ok(queryPosts(q))
     if (s.length === 1 && M === 'POST') return ok(createPost(q))

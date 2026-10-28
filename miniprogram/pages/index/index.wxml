@@ -207,208 +207,214 @@
         </view>
       </block>
 
-      <!-- 帖子型（校园公告 / 校园生活） -->
-      <block wx:if="{{zone.type === 'post'}}">
-        <view class="zone-list">
-          <view
-            class="zcard zcard-post"
-            wx:for="{{zone.items}}"
-            wx:for-item="it"
-            wx:for-index="ii"
-            wx:key="key"
-            bindtap="goZoneDetail"
-            data-kind="{{it.kind}}"
-            data-id="{{it.id}}"
-            hover-class="zcard-hover"
-            hover-stay-time="60"
-          >
-            <view class="zcard-top">
-              <text class="zcard-badge">{{it.badge}}</text>
-              <text class="zcard-time">{{it.timeText}}</text>
-            </view>
-            <view class="zcard-title clamp2">{{it.title}}</view>
-            <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
-            <!-- 图片网格：有照片才渲染 -->
-            <view
-              class="wall-imgs {{it.imgGrid}}"
-              wx:if="{{it.imageList.length}}"
-            >
-              <image
-                class="wall-img"
-                wx:for="{{it.imageList}}"
-                wx:for-item="img"
-                wx:key="*this"
-                src="{{img}}"
-                mode="{{it.imgMode}}"
-                lazy-load
-                catchtap="previewZoneImage"
-                data-zi="{{zi}}"
-                data-ii="{{ii}}"
-                data-url="{{img}}"
-              />
-            </view>
-            <view class="zcard-foot">
-              <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
-                <text>{{it.likeText}}</text>
-              </view>
-              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-                <text class="zcard-act-icon">💬</text>
-                <text>{{it.commentText}}</text>
-              </view>
-<button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
-                <text class="zcard-act-icon">↗</text>
-              </button>
-            </view>
-          </view>
-        </view>
-      </block>
-
-      <!-- 树洞闲谈：匿名心事卡片（排版与上方「今日最热 / 帖子」一致：头像行 + 正文 + 配图 + 底部操作条） -->
-      <block wx:if="{{zone.type === 'wall'}}">
-        <view class="zone-list">
-          <view
-            class="zcard zcard-wall"
-            wx:for="{{zone.items}}"
-            wx:for-item="it"
-            wx:for-index="ii"
-            wx:key="key"
-            bindtap="goZoneDetail"
-            data-kind="{{it.kind}}"
-            data-id="{{it.id}}"
-            hover-class="zcard-hover"
-            hover-stay-time="60"
-          >
-            <!-- 顶部：匿名身份行（头像 emoji / 昵称 / 徽标 / 时间） -->
-            <view class="zcard-user">
-              <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
-              <view class="zcard-user-info">
-                <view class="zcard-name-row">
-                  <text class="zcard-name">{{it.anonName}}</text>
-                  <text class="zcard-flair" wx:if="{{it.flair}}">{{it.flair}}</text>
-                </view>
-                <text class="zcard-meta">{{it.timeText}} · 匿名保护中</text>
-              </view>
-            </view>
-
-            <!-- 话题标签 -->
-            <view class="zcard-tags" wx:if="{{it.tags.length}}">
-              <text class="zcard-tag" wx:for="{{it.tags}}" wx:for-item="tg" wx:key="*this">{{tg}}</text>
-            </view>
-
-            <!-- 正文：浅底色块，即使只有一行也有视觉重量，不会显得空 -->
-            <view class="zcard-excerpt clamp3">{{it.content}}</view>
-
-            <!-- 配图：九宫格，无图不渲染；1 张放大、2/4 张两列、其余三列 -->
-            <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
-              <image
-                class="wall-img"
-                wx:for="{{it.imageList}}"
-                wx:for-item="img"
-                wx:key="*this"
-                src="{{img}}"
-                mode="{{it.imgMode}}"
-                lazy-load
-                catchtap="previewZoneImage"
-                data-zi="{{zi}}"
-                data-ii="{{ii}}"
-                data-url="{{img}}"
-              />
-            </view>
-
-            <!-- 底部操作条：与帖子卡完全同一套（赞 / 评 / 分享，各项等宽均分、内容居中） -->
-            <view class="zcard-foot">
-              <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-                <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
-                <text>{{it.likeText}}</text>
-              </view>
-              <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-                <text class="zcard-act-icon">💬</text>
-                <text>{{it.commentText}}</text>
-              </view>
-              <button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
-                <text class="zcard-act-icon">↗</text>
-              </button>
-            </view>
-          </view>
-        </view>
-      </block>
-
-      <!-- 校园闲置：带分类子筛选 -->
-      <block wx:if="{{zone.type === 'goods'}}">
-        <scroll-view class="zone-sub" scroll-x="true" show-scrollbar="false">
-          <view class="zone-sub-row">
-            <view class="zone-sub-pill" bindtap="goCategory" data-id="">🔥 全部</view>
-            <view
-              class="zone-sub-pill"
-              wx:for="{{categories}}"
-              wx:key="id"
-              bindtap="goCategory"
-              data-id="{{item.id}}"
-            >
-              <text class="zone-sub-icon">{{item.icon}}</text>
-              <text>{{item.name}}</text>
-            </view>
-          </view>
-        </scroll-view>
-        <view class="zone-list">
-          <view
-            class="zcard zcard-goods"
-            wx:for="{{zone.items}}"
-            wx:for-item="it"
-            wx:for-index="ii"
-            wx:key="key"
-            bindtap="goZoneDetail"
-            data-kind="{{it.kind}}"
-            data-id="{{it.id}}"
-            hover-class="zcard-hover"
-            hover-stay-time="60"
-          >
-            <!-- 图片容器：定宽不写死高，随右侧文字区一起拉高，图下方不留白边 -->
-            <view class="zcard-goods-thumb">
-              <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
-              <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
-            </view>
-            <view class="zcard-goods-body">
-              <!-- 标题 -->
-              <view class="zcard-goods-title clamp2">{{it.title}}</view>
-              <!-- 描述摘要：标题短时把卡片撑起来，长描述只留一行 -->
-              <view class="zcard-goods-desc clamp1" wx:if="{{it.excerpt}}">{{it.excerpt}}</view>
-
-              <!-- 卖点行（对齐参考图的红色卖点行）：位置 / 分类 / 成色 / 浏览量，全是真实属性 -->
-              <view class="zcard-goods-sell">
-                <text
-                  class="zcard-goods-sell-t {{sp.cls}}"
-                  wx:for="{{it.sellParts}}"
-                  wx:for-item="sp"
-                  wx:key="k"
-                >{{sp.v}}</text>
-              </view>
-
-              <!-- 特色条（对齐参考图的补贴条）：左「多少人想要」/ 右「什么时候发布」 -->
-              <view class="zcard-goods-feature">
-                <text class="zcard-goods-feature-main">{{it.featureMain}}</text>
-                <text class="zcard-goods-feature-sub">{{it.featureSub}}</text>
-              </view>
-
-              <!-- 价格行 + 看详情：价格是核心信息，吸底对齐；按钮只跳转，不含下单 / 支付 -->
-              <view class="zcard-goods-price">
-                <text class="zcard-price-symbol">¥</text>
-                <text class="zcard-price-num">{{it.priceText}}</text>
-                <!-- 划线原价：只有确实比现价高才显示，否则「原价 = 现价」是噪音 -->
-                <text class="zcard-price-origin" wx:if="{{it.showOrigin}}">原价 ¥{{it.originalPriceText}}</text>
-                <view class="flex1"></view>
-                <view class="zcard-goods-cta">看详情</view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </block>
-
     </view>
   </view>
 
-  <view class="empty" wx:if="{{!loading && !zones.length}}">
+  <!--
+    校园广场：一条混合时间流 + 顶部分类 tab。
+    「全部」里混排帖子 / 树洞 / 闲置 / 需求，按发布时间倒序，推广帖单独置顶。
+    固定 tab 对应四大内容模块，后面跟着后端在线频道（后台加频道这里自动多一个）。
+  -->
+  <view class="zone plaza">
+    <view class="zone-head">
+      <text class="zone-icon">🧭</text>
+      <view class="zone-head-main">
+        <text class="zone-title">校园广场</text>
+        <text class="zone-desc">最新发布在前</text>
+      </view>
+      <view class="zone-more" bindtap="goPlazaMore">更多 ›</view>
+    </view>
+
+    <!-- 分类 tab：横向滚动，选中态用品牌色 + 下划线（不是胶囊，胶囊一屏只能放 3 个） -->
+    <scroll-view class="ptabs" scroll-x="true" show-scrollbar="false" enhanced="{{true}}">
+      <view class="ptabs-row">
+        <view
+          class="ptab {{plazaTab === t.key ? 'is-on' : ''}}"
+          wx:for="{{plaza.tabs}}"
+          wx:for-item="t"
+          wx:key="key"
+          bindtap="switchPlazaTab"
+          data-key="{{t.key}}"
+        >{{t.name}}</view>
+      </view>
+    </scroll-view>
+
+    <!-- 频道 tab 的数据要单独拉，只给一条细提示，别用整页骨架闪一下 -->
+    <view class="plaza-tip" wx:if="{{plazaLoading}}">加载中…</view>
+
+    <view class="zone-list" wx:else>
+      <view
+        class="zcard {{it.kind === 'wall' ? 'zcard-wall' : (it.kind === 'goods' ? 'zcard-goods' : (it.kind === 'demand' ? 'zcard-demand' : 'zcard-post'))}}"
+        wx:for="{{plaza.items}}"
+        wx:for-item="it"
+        wx:for-index="ii"
+        wx:key="key"
+        bindtap="goPlazaDetail"
+        data-kind="{{it.kind}}"
+        data-id="{{it.id}}"
+        hover-class="zcard-hover"
+        hover-stay-time="60"
+      >
+        <!-- 推广标：只有推广帖才出现，用户能一眼看出为什么它排在最前 -->
+        <block wx:if="{{it.kind === 'post' && it.promoted}}">
+          <view class="zcard-promote">推广</view>
+        </block>
+
+        <!-- ===== 树洞：匿名身份行 ===== -->
+        <block wx:if="{{it.kind === 'wall'}}">
+          <view class="zcard-user">
+            <view class="zcard-avatar {{it.avatarClass}}">{{it.avatarEmoji}}</view>
+            <view class="zcard-user-info">
+              <view class="zcard-name-row">
+                <text class="zcard-name">{{it.anonName}}</text>
+                <text class="zcard-flair" wx:if="{{it.flair}}">{{it.flair}}</text>
+              </view>
+              <text class="zcard-meta">{{it.timeText}} · 匿名保护中</text>
+            </view>
+          </view>
+
+          <view class="zcard-tags" wx:if="{{it.tags.length}}">
+            <text class="zcard-tag" wx:for="{{it.tags}}" wx:for-item="tg" wx:key="*this">{{tg}}</text>
+          </view>
+
+          <view class="zcard-excerpt clamp3">{{it.content}}</view>
+
+          <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
+            <image
+              class="wall-img"
+              wx:for="{{it.imageList}}"
+              wx:for-item="img"
+              wx:key="*this"
+              src="{{img}}"
+              mode="{{it.imgMode}}"
+              lazy-load
+              catchtap="previewPlazaImage"
+              data-idx="{{ii}}"
+              data-url="{{img}}"
+            />
+          </view>
+        </block>
+
+        <!-- ===== 帖子 ===== -->
+        <block wx:elif="{{it.kind === 'post'}}">
+          <view class="zcard-top">
+            <text class="zcard-badge">{{it.badge}}</text>
+            <text class="zcard-time">{{it.timeText}}</text>
+          </view>
+          <view class="zcard-title clamp2">{{it.title}}</view>
+          <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
+          <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
+            <image
+              class="wall-img"
+              wx:for="{{it.imageList}}"
+              wx:for-item="img"
+              wx:key="*this"
+              src="{{img}}"
+              mode="{{it.imgMode}}"
+              lazy-load
+              catchtap="previewPlazaImage"
+              data-idx="{{ii}}"
+              data-url="{{img}}"
+            />
+          </view>
+        </block>
+
+        <!-- ===== 闲置 ===== -->
+        <block wx:elif="{{it.kind === 'goods'}}">
+          <view class="zcard-goods-thumb">
+            <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
+            <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+          </view>
+          <view class="zcard-goods-body">
+            <view class="zcard-goods-title clamp2">{{it.title}}</view>
+            <view class="zcard-goods-desc clamp1" wx:if="{{it.excerpt}}">{{it.excerpt}}</view>
+            <view class="zcard-goods-sell">
+              <text
+                class="zcard-goods-sell-t {{sp.cls}}"
+                wx:for="{{it.sellParts}}"
+                wx:for-item="sp"
+                wx:key="k"
+              >{{sp.v}}</text>
+            </view>
+            <view class="zcard-goods-feature">
+              <text class="zcard-goods-feature-main">{{it.featureMain}}</text>
+              <text class="zcard-goods-feature-sub">{{it.featureSub}}</text>
+            </view>
+            <view class="zcard-goods-price">
+              <text class="zcard-price-symbol">¥</text>
+              <text class="zcard-price-num">{{it.priceText}}</text>
+              <text class="zcard-price-origin" wx:if="{{it.showOrigin}}">原价 ¥{{it.originalPriceText}}</text>
+              <view class="flex1"></view>
+              <view class="zcard-goods-cta">看详情</view>
+            </view>
+          </view>
+        </block>
+
+        <!-- ===== 需求（求物 / 求帮忙）===== -->
+        <block wx:else>
+          <view class="zcard-top">
+            <text class="zcard-badge zcard-badge-demand">{{it.typeIcon}} {{it.typeLabel}}</text>
+            <text class="zcard-time">{{it.timeText}}</text>
+          </view>
+          <view class="zcard-title clamp2">{{it.title}}</view>
+          <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
+          <!-- 预算 / 期望时间 / 地点：全是发布者自己填的真实字段，为空就不占位 -->
+          <view class="zcard-demand-meta">
+            <text class="zd-budget">{{it.budgetText}}</text>
+            <text class="zd-chip" wx:if="{{it.expectTime}}">⏰ {{it.expectTime}}</text>
+            <text class="zd-chip" wx:if="{{it.location}}">📍 {{it.location}}</text>
+          </view>
+          <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
+            <image
+              class="wall-img"
+              wx:for="{{it.imageList}}"
+              wx:for-item="img"
+              wx:key="*this"
+              src="{{img}}"
+              mode="{{it.imgMode}}"
+              lazy-load
+              catchtap="previewPlazaImage"
+              data-idx="{{ii}}"
+              data-url="{{img}}"
+            />
+          </view>
+        </block>
+
+        <!-- 底部操作条：四类共用一套排布（各项等宽均分、内容居中）。
+             闲置卡是横向 flex 布局、底部已有「看详情」CTA，再塞一条操作条会挤成三列，所以排除。 -->
+        <view class="zcard-foot" wx:if="{{it.kind !== 'goods'}}">
+          <!-- 需求没有点赞：这里显示回应数，点进去就是详情页的回应区 -->
+          <block wx:if="{{it.kind === 'demand'}}">
+            <view class="zcard-act" catchtap="goPlazaDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+              <text class="zcard-act-icon">🙋</text>
+              <text>{{it.replyText}}</text>
+            </view>
+            <view class="zcard-act" wx:if="{{it.viewCount}}">
+              <text class="zcard-act-icon">👁</text>
+              <text>{{it.viewText}}</text>
+            </view>
+          </block>
+          <block wx:else>
+            <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="togglePlazaLike" data-idx="{{ii}}">
+              <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
+              <text>{{it.likeText}}</text>
+            </view>
+            <view class="zcard-act" catchtap="goPlazaDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+              <text class="zcard-act-icon">💬</text>
+              <text>{{it.commentText}}</text>
+            </view>
+          </block>
+          <button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
+            <text class="zcard-act-icon">↗</text>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="plaza-tip" wx:if="{{!plazaLoading && plaza.empty}}">这个分类还没有内容，换个看看 ›</view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !zones.length && !plaza.items.length}}">
     <text class="empty-icon">{{loadError ? '📡' : '📭'}}</text>
     <text>{{loadError ? (errorMsg || '加载失败，请检查后端服务') : '暂时还没有内容'}}</text>
     <view class="btn btn-ghost btn-sm retry-btn" wx:if="{{loadError}}" bindtap="retry">重新加载</view>

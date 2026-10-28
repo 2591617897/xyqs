@@ -732,3 +732,95 @@
   margin-top: 28rpx;
   display: inline-block;
 }
+
+/* ===== 校园广场：分类 tab + 混合时间流 ===== */
+.plaza {
+  margin-top: 24rpx;
+}
+
+/* 横向滚动 tab 条。
+   刻意用「文字 + 选中下划线」而不是胶囊：胶囊带内边距和底色，
+   一屏只能放下 3 个分类，而这里固定 4 个 + 后台频道，胶囊必然要滑很久。 */
+.ptabs {
+  width: 100%;
+  white-space: nowrap;
+}
+.ptabs-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  padding: 0 24rpx 6rpx;
+}
+.ptab {
+  flex: none;
+  position: relative;
+  padding: 8rpx 22rpx 16rpx;
+  font-size: 28rpx;
+  color: #6b7280;
+  white-space: nowrap;
+}
+.ptab.is-on {
+  color: #006C49;
+  font-weight: 700;
+}
+/* 选中下划线：用 ::after 而非 border-bottom，才能保证线宽比文字窄、视觉更像 tab */
+.ptab.is-on::after {
+  content: '';
+  position: absolute;
+  left: 22rpx;
+  right: 22rpx;
+  bottom: 2rpx;
+  height: 6rpx;
+  border-radius: 999rpx;
+  background: #006C49;
+}
+
+/* 广场轻提示（频道 tab 加载中 / 分类为空），不用整页骨架 */
+.plaza-tip {
+  padding: 40rpx 24rpx;
+  text-align: center;
+  font-size: 25rpx;
+  color: #9b9ba3;
+}
+
+/* 推广标：帖子上方一条淡黄标签，说明它为什么不参与时间排序 */
+.zcard-promote {
+  display: inline-block;
+  font-size: 20rpx;
+  line-height: 1;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+  margin-bottom: 10rpx;
+}
+
+/* ===== 需求卡（求物 / 求帮忙） ===== */
+.zcard-demand {
+  display: block;
+  padding: 24rpx;
+}
+.zcard-badge-demand {
+  /* 用紫而不是默认橙：帖子徽标（频道名）本来就是橙的，两者同色就看不出这是需求 */
+  color: #6d28d9;
+  background: rgba(109, 40, 217, 0.10);
+}
+.zcard-demand-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+.zd-budget {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #d97706;
+}
+.zd-chip {
+  font-size: 22rpx;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+}
