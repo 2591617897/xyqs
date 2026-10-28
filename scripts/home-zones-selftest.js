@@ -178,7 +178,9 @@ async function main() {
   check('闲置卡带价格', !!goodsCard && goodsCard.priceText !== undefined && goodsCard.priceText !== '')
   const demandCard = d.plaza.items.filter((it) => it.kind === 'demand')[0]
   check('需求卡带预算与回应数', !!demandCard && !!demandCard.budgetText && demandCard.replyText !== undefined)
-  check('需求卡没有点赞（需求不做社交互动）', !!demandCard && demandCard.likeText === '')
+  // 底栏四项（浏览 / 点赞 / 评论 / 分享）在四类卡片上都要有值，缺一项用户会以为没加载出来
+  check('需求卡也有点赞数与评论数', !!demandCard && demandCard.likeText !== '' && demandCard.commentText !== '')
+  check('四类卡片都有浏览量（含 0）', d.plaza.items.every((it) => it.viewText !== undefined && it.viewText !== ''))
   check('热区 1 条帖子', d.zones[0].items.length === 1 && d.zones[0].items[0].kind === 'post')
   check('热区有作者与频道名', !!d.zones[0].items[0].authorName && !!d.zones[0].items[0].badge)
   check('拿到闲置分类', d.categories.length > 0, d.categories.length)

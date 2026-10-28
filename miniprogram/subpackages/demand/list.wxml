@@ -58,21 +58,26 @@
         <text class="dcard-type">{{item.typeIcon}} {{item.typeLabel}}</text>
         <text class="dcard-time">{{item.timeText}}</text>
       </view>
-      <view class="dcard-title clamp2">
-        <text
-          wx:for="{{item.titleParts}}"
-          wx:for-item="seg"
-          class="{{seg.hit ? 'kw-hit' : ''}}"
-        >{{seg.t}}</text>
+      <!-- 标题 / 描述各一行，预算与期望时间贴到行尾（与首页需求卡同一套排布） -->
+      <view class="dcard-row">
+        <view class="dcard-title clamp2 dcard-main">
+          <text
+            wx:for="{{item.titleParts}}"
+            wx:for-item="seg"
+            class="{{seg.hit ? 'kw-hit' : ''}}"
+          >{{seg.t}}</text>
+        </view>
+        <text class="dcard-budget" wx:if="{{item.budgetText}}">{{item.budgetText}}</text>
       </view>
-      <view class="dcard-desc clamp2" wx:if="{{item.descText}}">{{item.descText}}</view>
-      <view class="dcard-meta">
-        <text class="dcard-budget">{{item.budgetText}}</text>
-        <text class="dcard-chip" wx:if="{{item.expectTime}}">{{item.expectTime}}</text>
-        <text class="dcard-chip" wx:if="{{item.location}}">{{item.location}}</text>
+      <view class="dcard-row">
+        <view class="dcard-desc clamp2 dcard-main" wx:if="{{item.descText}}">{{item.descText}}</view>
+        <text class="dcard-chip dcard-inline" wx:if="{{item.expectTime}}">{{item.expectTime}}</text>
       </view>
       <view class="dcard-foot">
         <text class="dcard-reply">{{item.replyText}}</text>
+        <text class="dcard-cat" wx:if="{{item.commentText}}">{{item.commentText}}</text>
+        <text class="dcard-cat" wx:if="{{item.likeText}}">{{item.likeText}}</text>
+        <text class="dcard-cat" wx:if="{{item.location}}">📍{{item.location}}</text>
         <text class="dcard-cat" wx:if="{{item.categoryName}}">#{{item.categoryName}}</text>
       </view>
     </view>

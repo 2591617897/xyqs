@@ -144,12 +144,36 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* 标题 / 描述各自一行，预算与期望时间贴右：比原来的「标题行 / 描述行 / 价格行」少一行，
+   且价格与时间在视觉上和标题平级，扫列表时不用下移视线 */
+.dcard-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: 10rpx;
+}
+.dcard-main {
+  flex: 1;
+  min-width: 0;
+}
+/* 清掉子元素自带的 margin-top，否则会和 .dcard-row 的间距叠加 */
+.dcard-row .dcard-main {
+  margin-top: 0;
+}
+.dcard-row .dcard-budget,
+.dcard-row .dcard-chip {
+  flex: none;
+  margin-top: 0;
+  margin-left: 16rpx;
+  white-space: nowrap;
+}
 .dcard-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16rpx;
-  padding-top: 14rpx;
+  flex-wrap: wrap;
+  margin-top: 12rpx;
+  padding-top: 12rpx;
   border-top: 1rpx solid var(--border);
 }
 .dcard-reply {

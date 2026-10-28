@@ -14,4 +14,7 @@ public interface WallPostMapper extends BaseMapper<WallPost> {
 
     @Update("update t_wall_post set comment_count = greatest(comment_count + #{delta}, 0) where id = #{id}")
     int incrComment(@Param("id") Long id, @Param("delta") int delta);
+
+    @Update("update t_wall_post set view_count = view_count + 1 where id = #{id}")
+    int incrView(@Param("id") Long id);
 }

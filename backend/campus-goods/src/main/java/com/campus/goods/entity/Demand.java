@@ -88,6 +88,10 @@ public class Demand {
 
     private Integer viewCount;
 
+    private Integer likeCount;
+
+    private Integer commentCount;
+
     private Integer replyCount;
 
     @TableField(fill = FieldFill.INSERT)
@@ -109,6 +113,10 @@ public class Demand {
     /** 当前浏览者是否已经回应过（详情页控制按钮文案） */
     @TableField(exist = false)
     private Boolean replied;
+
+    /** 当前浏览者是否点过赞 */
+    @TableField(exist = false)
+    private Boolean liked;
 
     /** 发布者头像（与 authorAvatar 同源，前端统一读它） */
     @TableField(exist = false)

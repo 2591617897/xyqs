@@ -14,4 +14,10 @@ public interface DemandMapper extends BaseMapper<Demand> {
 
     @Update("update t_demand set reply_count = greatest(reply_count + #{delta}, 0) where id = #{id}")
     int incrReply(@Param("id") Long id, @Param("delta") int delta);
+
+    @Update("update t_demand set like_count = greatest(like_count + #{delta}, 0) where id = #{id}")
+    int incrLike(@Param("id") Long id, @Param("delta") int delta);
+
+    @Update("update t_demand set comment_count = greatest(comment_count + #{delta}, 0) where id = #{id}")
+    int incrComment(@Param("id") Long id, @Param("delta") int delta);
 }

@@ -24,6 +24,8 @@
 - 异常根因只进日志：`campus.error.expose-detail` 生产 false
 
 ## 高频踩坑（完整清单见 NOTES-engineering.md）
+- **`java.lang.Error: Unresolved compilation problem`＝IDE 编译桩进了产物**，不是依赖问题：IDE（ECJ）编译失败仍写 `target/classes`，Maven 增量编译见 class 比 java 新就跳过 → 桩被打进 jar。解法只有 `mvn clean install`（**必须 clean**，关增量也不删旧桩）；parent pom 已设 `useIncrementalCompilation=false`。排查入口 `node scripts/check-build-artifacts.js`
+- 本机环境变量 `SERVER__PORT`/`SERVER__HOST` 会抢端口，`java -jar` 前必须 `env -u SERVER__PORT -u SERVER__HOST`
 - `scanBasePackages` 不能写 `com.campus`（会扫到 SecurityGuard 起不来）
 - 网关放行 ≠ 服务内放行：`AdminSecurityConfig#excludePathPatterns` 必须同步加
 - 上传大小三层互相掩盖：admin `multipart`(1MB) → 业务 `max-size`(5MB) → 网关 codec 8MB
@@ -35,4 +37,4 @@
 - 闲置/需求**只做信息展示**：禁止支付/下单/担保/评分；不抄电商话术（无数据＝虚假宣传）
 
 ## 自测脚本
-`check-miniprogram` / `content-security` / `security-baseline` / `db-schema-check` / `visibility-selftest` / `demand-selftest` / `promote-selftest` / `mock` / `home-zones`
+`check-build-artifacts` / `check-miniprogram` / `content-security` / `security-baseline` / `db-schema-check` / `visibility-selftest` / `demand-selftest` / `promote-selftest` / `mock` / `home-zones`

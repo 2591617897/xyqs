@@ -37,6 +37,9 @@ public class Post {
 
     private Integer commentCount;
 
+    /** 浏览量：详情接口每次访问 +1，列表直接取库值 */
+    private Integer viewCount;
+
     private Integer status;
 
     /**

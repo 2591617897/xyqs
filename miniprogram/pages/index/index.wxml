@@ -185,24 +185,40 @@
             </view>
           </view>
 
-          <!-- 操作条：与下方帖子卡 / 树洞卡完全同一套（各项等宽均分、内容居中） -->
-          <view class="zcard-foot">
-            <!-- 后端 Post 没有 view_count 字段，没有浏览数时整块不显示（避免出现「👁 0」） -->
-            <view class="zcard-act" wx:if="{{it.viewCount}}">
-              <text class="zcard-act-icon">👁</text>
-              <text>{{it.viewText}}</text>
+          <!-- 互动栏：一排完成（对齐 QQ 群的帖子底栏）——左「浏览 N」，右侧
+               【点赞 / 评论 / 分享】三个线性图标靠右。点赞不再单独做胶囊：
+               独立成行会让互动区分裂成两排，而它是卡片上唯一的点赞入口，
+               必须和评论、分享同排才好点。 -->
+          <view class="zfoot">
+            <!-- 左槽位必须始终存在：它用 flex:1 吃掉剩余空间，右侧图标才能稳定贴右。
+                 只靠 space-between + auto margin 时，一旦左侧不渲染（帖子没有浏览量），
+                 图标会失准卡在中间 —— 这是实测撞出来的。 -->
+            <view class="zfoot-left">
+              <!-- 浏览数始终显示：四项（浏览 / 点赞 / 评论 / 分享）要齐全，
+                   缺一项用户会以为信息没加载出来 -->
+              <text class="zfoot-views">浏览 {{it.viewText}}</text>
             </view>
-            <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
-              <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
-              <text>{{it.likeText}}</text>
+            <view class="zfoot-acts">
+              <!-- 点赞：♡ / ♥ 文字符号（不用 emoji —— 颜色写死在字形里，没法按状态变色） -->
+              <view class="zfoot-btn {{it.liked ? 'is-liked' : ''}}" catchtap="toggleZoneLike" data-zi="{{zi}}" data-ii="{{ii}}">
+                <text class="zfoot-like">{{it.liked ? '♥' : '♡'}}</text>
+                <text class="zfoot-num" wx:if="{{it.liked || it.likeCount > 0}}">{{it.likeText}}</text>
+              </view>
+              <!-- 评论：方泡内嵌数字（QQ 的那种「▢ 19」）。0 条时留空泡，与 QQ 一致 -->
+              <view class="zfoot-btn" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                <view class="zfoot-bubble">
+                  <text>{{it.commentText}}</text>
+                </view>
+              </view>
+              <!-- 分享：图标放外层、button 只做透明点击层。
+                   原因：button 内置 width:184px 压得过页面 class，只要图标在 button 里，
+                   它就会在这 184px 里居中 → 看起来永远贴不到右边缘。隔离后图标位置
+                   由 wrap 决定，button 再怎么顽固都影响不到。 -->
+              <view class="zfoot-share-wrap" hover-class="share-hover">
+                <view class="zfoot-ico-share"></view>
+                <button class="zfoot-share-hit" open-type="share" catchtap="noop" hover-class="none" data-id="{{it.id}}" data-kind="{{it.kind}}"></button>
+              </view>
             </view>
-            <view class="zcard-act" catchtap="goZoneDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-              <text class="zcard-act-icon">💬</text>
-              <text>{{it.commentText}}</text>
-            </view>
-<button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
-              <text class="zcard-act-icon">↗</text>
-            </button>
           </view>
         </view>
       </block>
@@ -244,7 +260,7 @@
 
     <view class="zone-list" wx:else>
       <view
-        class="zcard {{it.kind === 'wall' ? 'zcard-wall' : (it.kind === 'goods' ? 'zcard-goods' : (it.kind === 'demand' ? 'zcard-demand' : 'zcard-post'))}}"
+        class="zcard {{it.kind === 'wall' ? 'zcard-wall' : (it.kind === 'goods' ? 'zcard-goods-wrap' : (it.kind === 'demand' ? 'zcard-demand' : 'zcard-post'))}}"
         wx:for="{{plaza.items}}"
         wx:for-item="it"
         wx:for-index="ii"
@@ -321,14 +337,18 @@
 
         <!-- ===== 闲置 ===== -->
         <block wx:elif="{{it.kind === 'goods'}}">
-          <view class="zcard-goods-thumb">
-            <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
-            <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
-          </view>
-          <view class="zcard-goods-body">
+          <!-- 结构改成「上横排（图 + 信息） + 下整行互动栏」：
+               卡根原来是 flex row，底栏塞不进去（会被挤到图片右边的窄列里放不下四项），
+               所以把横排收进 .zcard-goods，卡根改成 block 后底栏才能占满整行 -->
+          <view class="zcard-goods">
+            <view class="zcard-goods-thumb">
+              <image wx:if="{{it.imageList.length}}" class="zcard-goods-img" src="{{it.imageList[0]}}" mode="aspectFill" />
+              <view wx:else class="zcard-goods-img zcard-goods-blank">🛍️</view>
+            </view>
+            <view class="zcard-goods-body">
             <view class="zcard-goods-title clamp2">{{it.title}}</view>
             <view class="zcard-goods-desc clamp1" wx:if="{{it.excerpt}}">{{it.excerpt}}</view>
-            <view class="zcard-goods-sell">
+            <view class="zcard-goods-sell" wx:if="{{it.sellParts.length}}">
               <text
                 class="zcard-goods-sell-t {{sp.cls}}"
                 wx:for="{{it.sellParts}}"
@@ -348,6 +368,7 @@
               <view class="zcard-goods-cta">看详情</view>
             </view>
           </view>
+        </view>
         </block>
 
         <!-- ===== 需求（求物 / 求帮忙）===== -->
@@ -356,13 +377,20 @@
             <text class="zcard-badge zcard-badge-demand">{{it.typeIcon}} {{it.typeLabel}}</text>
             <text class="zcard-time">{{it.timeText}}</text>
           </view>
-          <view class="zcard-title clamp2">{{it.title}}</view>
-          <view class="zcard-excerpt clamp2">{{it.excerpt}}</view>
-          <!-- 预算 / 期望时间 / 地点：全是发布者自己填的真实字段，为空就不占位 -->
-          <view class="zcard-demand-meta">
-            <text class="zd-budget">{{it.budgetText}}</text>
-            <text class="zd-chip" wx:if="{{it.expectTime}}">⏰ {{it.expectTime}}</text>
-            <text class="zd-chip" wx:if="{{it.location}}">📍 {{it.location}}</text>
+          <!-- 标题行：标题占满剩余宽度，预算贴右。
+               预算放右侧而不是单起一行 —— 单独一行会让需求卡比帖子卡高出一大截，
+               在混合时间流里显得突兀，也让「多少钱」这个最该被扫到的信息远离标题 -->
+          <view class="zd-row">
+            <view class="zcard-title clamp2 zd-main">{{it.title}}</view>
+            <text class="zd-budget" wx:if="{{it.budgetText}}">{{it.budgetText}}</text>
+          </view>
+          <view class="zd-row">
+            <view class="zcard-excerpt clamp2 zd-main">{{it.excerpt}}</view>
+            <text class="zd-chip zd-inline" wx:if="{{it.expectTime}}">⏰ {{it.expectTime}}</text>
+          </view>
+          <!-- 只剩地点：分类已经显示在顶部徽标旁，不重复占位 -->
+          <view class="zcard-demand-meta" wx:if="{{it.location}}">
+            <text class="zd-chip">📍 {{it.location}}</text>
           </view>
           <view class="wall-imgs {{it.imgGrid}}" wx:if="{{it.imageList.length}}">
             <image
@@ -380,34 +408,38 @@
           </view>
         </block>
 
-        <!-- 底部操作条：四类共用一套排布（各项等宽均分、内容居中）。
-             闲置卡是横向 flex 布局、底部已有「看详情」CTA，再塞一条操作条会挤成三列，所以排除。 -->
-        <view class="zcard-foot" wx:if="{{it.kind !== 'goods'}}">
-          <!-- 需求没有点赞：这里显示回应数，点进去就是详情页的回应区 -->
-          <block wx:if="{{it.kind === 'demand'}}">
-            <view class="zcard-act" catchtap="goPlazaDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-              <text class="zcard-act-icon">🙋</text>
-              <text>{{it.replyText}}</text>
+        <!-- 互动栏：与上方「今日最热」完全同一套（左浏览 / 右三个线性图标）。
+             闲置卡也要有 —— 它内嵌的「35 浏览」已移到这一排，不再重复显示。 -->
+        <block>
+          <view class="zfoot">
+            <!-- 左槽位始终存在（理由见上方今日最热卡同处注释） -->
+            <view class="zfoot-left">
+              <text class="zfoot-views">浏览 {{it.viewText}}</text>
             </view>
-            <view class="zcard-act" wx:if="{{it.viewCount}}">
-              <text class="zcard-act-icon">👁</text>
-              <text>{{it.viewText}}</text>
+            <view class="zfoot-acts">
+              <!-- 需求也能点赞（和帖子/树洞同一套），只有回应数是需求专属 -->
+              <view
+                class="zfoot-btn {{it.liked ? 'is-liked' : ''}}"
+                catchtap="togglePlazaLike"
+                data-idx="{{ii}}"
+              >
+                <text class="zfoot-like">{{it.liked ? '♥' : '♡'}}</text>
+                <text class="zfoot-num" wx:if="{{it.liked || it.likeCount > 0}}">{{it.likeText}}</text>
+              </view>
+              <!-- 评论数：四类卡片统一取 commentText（需求也有评论了） -->
+              <view class="zfoot-btn" catchtap="goPlazaDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
+                <view class="zfoot-bubble">
+                  <text>{{it.commentText}}</text>
+                </view>
+              </view>
+              <!-- 分享：图标在外层、button 只做透明点击层（理由见上方今日最热卡同处注释） -->
+              <view class="zfoot-share-wrap" hover-class="share-hover">
+                <view class="zfoot-ico-share"></view>
+                <button class="zfoot-share-hit" open-type="share" catchtap="noop" hover-class="none" data-id="{{it.id}}" data-kind="{{it.kind}}"></button>
+              </view>
             </view>
-          </block>
-          <block wx:else>
-            <view class="zcard-act {{it.liked ? 'is-liked' : ''}}" catchtap="togglePlazaLike" data-idx="{{ii}}">
-              <text class="zcard-act-icon">{{it.liked ? '💚' : '👍'}}</text>
-              <text>{{it.likeText}}</text>
-            </view>
-            <view class="zcard-act" catchtap="goPlazaDetail" data-kind="{{it.kind}}" data-id="{{it.id}}">
-              <text class="zcard-act-icon">💬</text>
-              <text>{{it.commentText}}</text>
-            </view>
-          </block>
-          <button class="zcard-share" open-type="share" catchtap="noop" hover-class="share-hover" data-id="{{it.id}}" data-kind="{{it.kind}}">
-            <text class="zcard-act-icon">↗</text>
-          </button>
-        </view>
+          </view>
+        </block>
       </view>
     </view>
 

@@ -230,6 +230,9 @@ public class PostService {
             throw BizException.notFound("帖子不存在或已删除");
         }
         assertVisible(post, userId);
+        // 浏览量 +1。落库后同步内存值，否则详情页首屏拿到的还是旧值。
+        postMapper.incrView(id);
+        post.setViewCount((post.getViewCount() == null ? 0 : post.getViewCount()) + 1);
         decorate(post, channelMap(List.of(post)), userId);
         post.setLiked(!likedIds(List.of(id), userId).isEmpty());
         refreshAuthors(List.of(post));

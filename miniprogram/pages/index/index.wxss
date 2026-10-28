@@ -261,61 +261,147 @@
   line-height: 1.5;
   color: #6b6b73;
 }
-/* 底部操作条：今日最热 / 帖子 / 树洞三卡共用同一套（参考今日头条帖子排版）
-   —— 扁平图标 + 计数，各项**等宽均分**（flex:1）且自身内容居中
+/* ===== 卡片互动栏（对齐 QQ 群的帖子底栏）=====
+   单层一排：左「浏览 N」，右侧【点赞 / 评论 / 分享】三个线性图标靠右。
 
-   ⚠️ 关键：容器必须撑满整行（width:100%）。
-   之前在 WXML 里用内联 style="width:217rpx" 锁死了宽度，
-   内联样式优先级高于 wxss，导致 flex:1 只在那 217rpx 里分，
-   三项挤成一小撮贴左边 —— 视觉上就是"均分没生效"。 */
-.zcard-foot {
+   两个刻意的地方：
+   ① 点赞不做成独立胶囊 —— 独立一行会让互动区分裂成两排，而它是卡片上唯一的
+      点赞入口，必须和评论、分享同排才好点。
+   ② 图标不用 emoji（💬 / ↗）—— emoji 是彩色字形，和 QQ 那套单色线性图标
+      完全不是一个视觉体系。评论用 CSS 方泡内嵌数字，分享用 SVG 描边箭头。 */
+
+/* 数字等宽：点赞数从 9 变 10 时图标不会左右抖动 */
+.zfoot-num,
+.zfoot-views,
+.zfoot-bubble {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 底栏：左槽位 + 右侧图标群。
+   ⚠️ 不用 justify-content: space-between —— 它在子元素只剩 1 个时退化成 flex-start，
+   图标就卡在中间（帖子没有 viewCount 时左侧 text 不渲染，正是这个情况）。
+   改成左槽位 flex:1 吃掉剩余空间，右侧图标就永远贴在右边缘。 */
+.zfoot {
   display: flex;
   align-items: center;
   width: 100%;
   margin-top: 18rpx;
 }
-.zcard-act {
+.zfoot-left {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.zfoot-views {
+  font-size: 22rpx;
+  color: #9b9ba3;
+  line-height: 1;
+}
+.zfoot-acts {
+  flex: none;
+  display: flex;
+  align-items: center;
+  /* 双保险：左槽位有 flex:1 时这里没有剩余空间可吸（不生效）；
+     万一哪天结构变动、左槽位被移除，auto 仍能把图标顶到右边缘 */
+  margin-left: auto;
+}
+/* 图标之间的间距一律用 margin-left，不用 flex gap ——
+   gap 在部分 iOS WebView 上不生效，失效后三个图标会全部粘在一起 */
+.zfoot-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8rpx;
   font-size: 23rpx;
   color: #6b6b73;
   line-height: 1;
 }
-.zcard-act-icon {
-  font-size: 26rpx;
-  line-height: 1;
+.zfoot-btn + .zfoot-btn {
+  margin-left: 52rpx;
 }
-/* 点赞态：图标和计数一起变粉。
-   选择器同时覆盖两种挂法 —— .zcard-act.is-liked（容器态，帖子卡/树洞）
-   和 .zcard-act-icon.is-liked（图标态，兼容旧写法） */
-.zcard-act.is-liked,
-.zcard-act-icon.is-liked {
+/* 点赞：文字符号 ♡ / ♥。不用 emoji —— 颜色写死在字形里，
+   未点赞的白色心在浅底上几乎看不见，也没法按状态变色 */
+.zfoot-like {
+  font-size: 40rpx;
+  line-height: 1;
+  color: #8e8e96;
+}
+/* 点过赞：心形和数字一起转粉 */
+.zfoot-btn.is-liked .zfoot-like,
+.zfoot-btn.is-liked .zfoot-num {
   color: var(--like-500, #FF4D7D);
 }
-/* 分享：button 默认样式要去掉，视觉上与赞/评对齐（同样占一份均分）。
-   button 有默认的 width/display，必须显式清掉才能吃到 flex:1 */
-.zcard-share {
-  flex: 1;
-  min-width: 0;
+.zfoot-num {
+  margin-left: 10rpx;
+  font-size: 24rpx;
+  color: #6b6b73;
+}
+/* 评论：方泡内嵌数字（QQ 那种「▢ 19」）。
+   0 条时框里留空 —— 与 QQ 一致，整块仍是可点的入口 */
+.zfoot-bubble {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
-  margin: 0;
-  padding: 0;
-  width: auto;
+  min-width: 52rpx;
+  height: 36rpx;
+  padding: 0 8rpx;
+  border: 2rpx solid #c9c9d1;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+  font-size: 20rpx;
+  line-height: 1;
+  color: #6b6b73;
+}
+/* 分享：button 的内置样式（margin-left/right:auto、min-width、padding 14px）
+   优先级压得过页面类名 —— 直接给 button 设 margin 在真机上不生效，
+   两个图标会粘在一起。所以间距和外层交互全部交给 wrap，button 只保留
+   open-type="share" 这个能力，并把它自己的盒子压到最小。 */
+/* 分享：图标在外、button 只做透明点击层。
+   button 是「不听话」的内置组件 —— 自带 width:184px（≈128pt），且压得过页面 class
+   的 width:auto。只要图标放在 button 里面，就会在这 128pt 里居中，
+   看起来永远贴不到右边缘（实测箭头离右边缘还差 64pt）。
+   隔离方案：wrap 固定 44rpx 方框负责定位，button 绝对定位铺满只负责触发 open-type。 */
+.zfoot-share-wrap {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  /* 图标在框内右对齐：视觉上箭头贴齐内容区右边缘，而点击热区仍保留向左的 44rpx 余量 */
+  justify-content: flex-end;
+  width: 44rpx;
+  height: 44rpx;
+  margin-left: 52rpx;
+}
+/* 分享箭头：SVG 描边图标（不用「↗」文字符号 —— 文字符号的笔画粗细、
+   倾斜角度随字体变化，和左边的心形 / 方泡不是一套视觉）。
+   data-uri 里的 # 必须转义成 %23，否则整条 url 会被当成锚点截断。
+   尺寸 36rpx 与方泡的 36rpx 高对齐，视觉上三个图标横轴一致。 */
+.zfoot-ico-share {
+  width: 36rpx;
+  height: 36rpx;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238e8e96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 9.5C11.5 9.5 7 13.5 5.5 20'/%3E%3Cpath d='M15.5 4.5L20.5 9.5L15.5 14.5'/%3E%3C/svg%3E");
+}
+/* 透明点击层：!important 是为了让 button 的 184px 无从发挥。
+   不写 width 只靠 left/right 拉伸也不行 —— width 一旦被内置样式赋了具体值，
+   定位盒子就按它算，所以必须显式锁 100%。 */
+.zfoot-share-hit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
   background: transparent;
   border: none;
-  line-height: 1;
-  font-size: 23rpx;
-  color: #6b6b73;
   box-sizing: border-box;
+  opacity: 0;
 }
-.zcard-share::after {
+.zfoot-share-hit::after {
   border: none;
 }
 
@@ -329,7 +415,7 @@
   display: block;
   padding: 24rpx;
 }
-/* 树洞底部操作条已统一到 .zcard-foot（与帖子卡完全同一套：赞 / 评 / 分享） */
+/* 树洞互动区已统一到 .zfoot + .zfoot-btn（与帖子卡完全同一套：浏览 / 点赞 / 评论 / 分享） */
 .zcard-user {
   display: flex;
   align-items: center;
@@ -446,11 +532,19 @@
 }
 
 /* 校园闲置卡片：左图右文的整行卡片 */
+/* 闲置卡：外层 block（要承载一条整行互动栏）、内层 flex（左图 + 右信息）。
+   之前 flex 直接开在卡根上，互动栏只能被塞进图片右边那列，四项放不下。 */
+.zcard-goods-wrap {
+  display: block;
+  padding: 16rpx 16rpx 4rpx;
+}
 .zcard-goods {
   display: flex;
   align-items: stretch;
   gap: 20rpx;
-  padding: 16rpx;
+}
+.zcard-goods-wrap .zfoot {
+  margin-top: 14rpx;
 }
 /* 图片容器：定宽、高度由 flex stretch 决定，图片绝对定位铺满 */
 .zcard-goods-thumb {
@@ -721,9 +815,10 @@
   background: #fcfcfd;
 }
 
-/* 底部操作条样式已统一到 .zcard-foot / .zcard-act / .zcard-share
-   （原 .feed-actions 系列是胶囊底 + 右对齐，现改为扁平图标 + 左对齐，
-     三张卡片共用一套；此处的 .share-hover 仍被 zcard-share 引用） */
+/* 互动区样式已统一到 .zfoot（一行：左浏览 / 右点赞·评论·分享）
+   （原 .feed-actions、.zcard-act 均分排布、以及中途尝试过的 .zlike 独立胶囊都已废弃；
+     帖子卡 / 树洞卡 / 今日最热 / 广场四种卡片共用这一套；
+     此处的 .share-hover 仍被 .zfoot-share-wrap 引用） */
 .share-hover {
   opacity: 0.6;
 }
@@ -800,17 +895,47 @@
   display: block;
   padding: 24rpx;
 }
-.zcard-badge-demand {
-  /* 用紫而不是默认橙：帖子徽标（频道名）本来就是橙的，两者同色就看不出这是需求 */
-  color: #6d28d9;
-  background: rgba(109, 40, 217, 0.10);
+
+/* 标题 / 描述各占一行，预算与期望时间贴到行尾：
+   单独给「多少钱」「什么时候要」起一整行会让需求卡比同流的帖子卡高出一截，
+   而且把最该被扫到的价格信息推离标题。 */
+.zd-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+.zd-main {
+  flex: 1;
+  min-width: 0;
+}
+/* 清掉 .zcard-excerpt 自带的 margin-top，否则会和 .zd-row 的间距叠加 */
+.zd-row .zd-main {
+  margin-top: 0;
+}
+.zd-row .zd-budget,
+.zd-row .zd-chip {
+  flex: none;
+  margin-left: 16rpx;
+  margin-top: 0;
+  white-space: nowrap;
+}
+.zd-row .zd-budget {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #d97706;
 }
 .zcard-demand-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10rpx;
-  margin-top: 14rpx;
+  margin-top: 12rpx;
+}
+.zcard-badge-demand {
+  /* 用紫而不是默认橙：帖子徽标（频道名）本来就是橙的，两者同色就看不出这是需求 */
+  color: #6d28d9;
+  background: rgba(109, 40, 217, 0.10);
 }
 .zd-budget {
   font-size: 30rpx;

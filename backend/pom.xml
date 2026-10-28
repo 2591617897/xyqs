@@ -140,6 +140,19 @@
                     <release>17</release>
                     <encoding>UTF-8</encoding>
                     <parameters>true</parameters>
+                    <!--
+                      关闭增量编译，每次全量重编。
+                      踩过的坑：IDE（VS Code / IDEA 的 Eclipse 编译器）在改代码期间
+                      会在 target/classes 里留下「编译失败桩 class」，运行时表现为
+                      java.lang.Error: Unresolved compilation problem。
+                      而 Maven 默认增量编译只看「class 与 java 的时间戳」，IDE 刚写出的
+                      .class 比 .java 新 → 直接跳过编译 → 桩 class 被原样打进 jar，
+                      直到线上才炸。本工程源码量小（约 160 个 java 文件），
+                      全量重编代价可忽略，换来的是「jar 一定能反映源码」。
+                      必须配合 `mvn clean` 使用：桩 class 已在 target 里时，
+                      光关增量不会删除它，clean 才会。
+                    -->
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
                     <compilerArgs>
                         <arg>-parameters</arg>
                         <!--

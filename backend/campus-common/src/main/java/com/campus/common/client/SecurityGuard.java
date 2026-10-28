@@ -75,6 +75,8 @@ public class SecurityGuard {
     public static final String BIZ_DEMAND = "DEMAND";
     /** 需求回应留言：只在两个人之间可见，但会带联系方式，所以同样送审 */
     public static final String BIZ_DEMAND_REPLY = "DEMAND_REPLY";
+    /** 需求评论：公开可见，与帖子评论同级别审核 */
+    public static final String BIZ_DEMAND_COMMENT = "DEMAND_COMMENT";
 
     private final SecurityClient securityClient;
 

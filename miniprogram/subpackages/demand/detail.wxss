@@ -391,3 +391,253 @@
   background: var(--surface-3);
   color: var(--text-4);
 }
+.comment-section {
+  background: #ffffff;
+  margin-top: 20rpx;
+  padding: 28rpx 32rpx 12rpx;
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.section-count {
+  font-size: 23rpx;
+  color: #b6bbc6;
+}
+.ch-sorts {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.ch-sort {
+  font-size: 25rpx;
+  color: #9b9ba3;
+}
+.ch-sort.on {
+  color: var(--brand-500, #006C49);
+  font-weight: 600;
+}
+.comment-item {
+  display: flex;
+  gap: 18rpx;
+  padding: 26rpx 0;
+  border-bottom: 1rpx solid #f6f7fb;
+}
+.comment-item:last-child {
+  border-bottom: none;
+}
+.c-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  flex-shrink: 0;
+  background: #eef0f4;
+}
+.c-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* 头部：左「昵称 + LV 徽章 + 省份」，右「时间」 */
+.c-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+.c-head-left {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+  flex: 1;
+}
+.c-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1f2329;
+  max-width: 300rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.c-time {
+  font-size: 22rpx;
+  color: #b6bbc6;
+  flex-shrink: 0;
+}
+/* LV 等级徽章：分 5 档配色，低调但可辨 */
+.c-lv {
+  flex-shrink: 0;
+  height: 30rpx;
+  line-height: 30rpx;
+  padding: 0 10rpx;
+  border-radius: 8rpx;
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
+  background: #eef0f4;
+  color: #8b8f99;
+}
+.c-lv.lv-1 { background: #F2F3F5; color: #9A9EA6; }
+.c-lv.lv-2 { background: #E8F5EF; color: #1F9E6E; }
+.c-lv.lv-3 { background: #E3F0FF; color: #2E7CD6; }
+.c-lv.lv-4 { background: #F1ECFF; color: #7A5AF8; }
+.c-lv.lv-5 { background: #FFF3E0; color: #E08A00; }
+/* 省份标签 */
+.c-province {
+  flex-shrink: 0;
+  height: 30rpx;
+  line-height: 30rpx;
+  padding: 0 10rpx;
+  border-radius: 8rpx;
+  font-size: 18rpx;
+  background: #F4F6F8;
+  color: #7A8089;
+  max-width: 140rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.c-text {
+  font-size: 28rpx;
+  line-height: 1.65;
+  color: #2b303b;
+  margin-top: 8rpx;
+  word-break: break-all;
+}
+.c-del {
+  font-size: 22rpx;
+  color: #b6bbc6;
+  padding: 4rpx 8rpx;
+}
+.c-imgs {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 12rpx;
+}
+.c-img {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 10rpx;
+  background: #f4f5f9;
+}
+/* 底部操作栏：点赞 / 回复 / 删除 */
+.c-actions {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  margin-top: 14rpx;
+}
+.c-action {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 4rpx 8rpx;
+  margin: -4rpx -8rpx;
+  border-radius: 999rpx;
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
+}
+.c-action-hover {
+  background: var(--surface-2, #F0F3F2);
+}
+.c-like-ico {
+  font-size: 28rpx;
+  color: #9ca3af;
+  transition: color var(--dur-fast, 120ms) var(--ease-out, ease);
+}
+.c-action-num {
+  font-size: 22rpx;
+  color: #9ca3af;
+  line-height: 1;
+}
+/* 已点赞：心形与数字一起变粉 */
+.c-liked {
+  color: var(--like-500, #FF4D7D);
+}
+.comment-empty {
+  padding: 70rpx 0;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 25rpx;
+}
+
+
+/* ===== 评论入口与输入抽屉 ===== */
+
+/* 评论区底部的「说点什么」入口 */
+.cmt-entry {
+  margin: 8rpx 0 24rpx;
+  padding: 18rpx 28rpx;
+  border-radius: 999rpx;
+  background: #f4f4f6;
+}
+.cmt-entry-ph {
+  font-size: 25rpx;
+  color: #9ca3af;
+}
+
+/* 抽屉层级必须高于底部 .dock：DOM 上它在最后，但显式给 z-index 更稳
+   （页面里还有互通推荐等兄弟节点，渲染顺序一变就会盖住） */
+.cmt-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 60;
+}
+.cmt-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface, #FFFFFF);
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 28rpx;
+  padding-bottom: 28rpx;
+  padding-bottom: calc(28rpx + env(safe-area-inset-bottom));
+  transform: translateY(110%);
+  transition: transform 0.22s ease;
+  z-index: 61;
+}
+.cmt-sheet.on {
+  transform: translateY(0);
+}
+.cmt-area {
+  width: 100%;
+  height: 200rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: #f4f4f6;
+  font-size: 27rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.cmt-send {
+  margin-top: 20rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: #e5e7eb;
+  color: #9ca3af;
+  font-size: 28rpx;
+}
+.cmt-send.on {
+  background: var(--brand-500, #006C49);
+  color: #ffffff;
+}

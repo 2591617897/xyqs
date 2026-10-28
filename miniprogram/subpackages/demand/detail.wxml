@@ -61,6 +61,7 @@
 
       <view class="stat">
         <text>{{info.viewCount}} 次浏览</text>
+        <text>{{info.commentCount || 0}} 条评论</text>
         <text>{{info.replyCount}} 条回应</text>
       </view>
     </view>
@@ -82,6 +83,129 @@
         </view>
       </view>
       <view class="match-tip">平台不参与交易，请自行核实后线下对接</view>
+    </view>
+
+    <!-- 评论区：与频道（帖子详情）同一套样式与交互，所有浏览者都能看 -->
+    <view class="comment-section">
+      <view class="section-head">
+        <view class="row gap12">
+          <text class="section-title">全部评论</text>
+          <text class="section-count">{{comments.length}}</text>
+        </view>
+        <view class="ch-sorts">
+          <text class="ch-sort {{commentSort === 'default' ? 'on' : ''}}" bindtap="switchSort" data-sort="default">默认</text>
+          <text class="ch-sort {{commentSort === 'newest' ? 'on' : ''}}" bindtap="switchSort" data-sort="newest">最新</text>
+        </view>
+      </view>
+
+      <view class="comment-item" wx:for="{{comments}}" wx:key="id" wx:for-index="pindex">
+        <view class="c-avatar" catchtap="goCommentUser" data-id="{{item.userId}}">
+          <image wx:if="{{item.userAvatar}}" class="c-avatar-img" src="{{item.userAvatar}}" mode="aspectFill"></image>
+          <view wx:else class="avatar-default">
+            <view class="ad-head"></view>
+            <view class="ad-body"></view>
+          </view>
+        </view>
+        <view class="flex1">
+          <view class="c-head">
+            <view class="c-head-left">
+              <text class="c-name" catchtap="goCommentUser" data-id="{{item.userId}}">{{item.userName || '校园用户'}}</text>
+            </view>
+            <text class="c-time">{{item.timeText}}</text>
+          </view>
+
+          <view class="c-text" wx:if="{{item.content}}">{{item.content}}</view>
+
+          <view class="c-imgs" wx:if="{{item.imageList.length}}">
+            <image
+              wx:for="{{item.imageList}}"
+              wx:for-item="img"
+              wx:key="*this"
+              class="c-img"
+              src="{{img}}"
+              mode="aspectFill"
+              catchtap="previewComment"
+              data-pindex="{{pindex}}"
+              data-url="{{img}}"
+            ></image>
+          </view>
+
+          <view class="c-actions">
+            <view class="c-action" catchtap="toggleCommentLike" data-id="{{item.id}}" data-pindex="{{pindex}}">
+              <view class="ico ico-like-o c-like-ico {{item.liked ? 'ico-like c-liked' : ''}}"></view>
+              <text class="c-action-num {{item.liked ? 'c-liked' : ''}}">{{item.likeCount || 0}}</text>
+            </view>
+            <view class="c-action" catchtap="replyComment" data-id="{{item.id}}" data-name="{{item.userName || '校园用户'}}">
+              <view class="ico ico-comment c-like-ico"></view>
+              <text class="c-action-num">{{item.replyCount || 0}}</text>
+            </view>
+            <text class="c-del" wx:if="{{item.mine}}" catchtap="deleteComment" data-id="{{item.id}}">删除</text>
+          </view>
+
+          <view class="c-replies" wx:if="{{item.replies && item.replies.length}}">
+            <view class="reply-item" wx:for="{{item.repliesShown}}" wx:for-item="rp" wx:for-index="rindex" wx:key="id">
+              <view class="r-avatar" catchtap="goCommentUser" data-id="{{rp.userId}}">
+                <image wx:if="{{rp.userAvatar}}" class="r-avatar-img" src="{{rp.userAvatar}}" mode="aspectFill"></image>
+                <view wx:else class="avatar-default">
+                  <view class="ad-head"></view>
+                  <view class="ad-body"></view>
+                </view>
+              </view>
+              <view class="flex1">
+                <view class="c-head">
+                  <view class="c-head-left">
+                    <text class="c-name" catchtap="goCommentUser" data-id="{{rp.userId}}">{{rp.userName || '校园用户'}}</text>
+                  </view>
+                  <text class="c-time">{{rp.timeText}}</text>
+                </view>
+                <view class="c-text">
+                  <text wx:if="{{rp.replyToName}}" class="reply-to">回复 {{rp.replyToName}}：</text>{{rp.content}}
+                </view>
+                <view class="c-imgs" wx:if="{{rp.imageList.length}}">
+                  <image
+                    wx:for="{{rp.imageList}}"
+                    wx:for-item="img"
+                    wx:key="*this"
+                    class="c-img"
+                    src="{{img}}"
+                    mode="aspectFill"
+                    catchtap="previewComment"
+                    data-pindex="{{pindex}}"
+                    data-rindex="{{rindex}}"
+                    data-url="{{img}}"
+                  ></image>
+                </view>
+                <view class="c-actions">
+                  <view class="c-action" catchtap="toggleCommentLike" data-id="{{rp.id}}" data-pindex="{{pindex}}" data-rindex="{{rindex}}">
+                    <view class="ico ico-like-o c-like-ico {{rp.liked ? 'ico-like c-liked' : ''}}"></view>
+                    <text class="c-action-num {{rp.liked ? 'c-liked' : ''}}">{{rp.likeCount || 0}}</text>
+                  </view>
+                  <view class="c-action" catchtap="replyComment" data-id="{{rp.id}}" data-name="{{rp.userName || '校园用户'}}">
+                    <view class="ico ico-comment c-like-ico"></view>
+                    <text class="c-action-num">回复</text>
+                  </view>
+                  <text class="c-del" wx:if="{{rp.mine}}" catchtap="deleteComment" data-id="{{rp.id}}">删除</text>
+                </view>
+              </view>
+            </view>
+            <view class="reply-more" wx:if="{{item.replyCount > 5 && !item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
+              查看全部 {{item.replyCount}} 条回复 ›
+            </view>
+            <view class="reply-more" wx:if="{{item.expanded}}" catchtap="toggleReplies" data-index="{{pindex}}">
+              收起回复 ‹
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="comment-empty" wx:if="{{!comments.length}}">
+        <text class="empty-icon">💬</text>
+        <text>还没有评论，来问第一个问题</text>
+      </view>
+
+      <view class="cmt-entry" bindtap="openCommentSheet">
+        <text class="cmt-entry-ph">说点什么…</text>
+      </view>
     </view>
 
     <!-- 回应列表：只有发布者看得到 -->
@@ -149,6 +273,23 @@
     <view class="sheet-tip">平台不参与撮合，请自行核实对方身份后再线下对接</view>
     <view class="sheet-btn {{submitting ? 'disabled' : ''}}" bindtap="submitReply">
       {{submitting ? '发送中…' : '发送'}}
+    </view>
+  </view>
+
+  <!-- 评论输入抽屉。z-index 必须高于底部 .dock，否则会被操作栏盖住 -->
+  <view class="cmt-mask" wx:if="{{showCommentSheet}}" bindtap="closeCommentSheet"></view>
+  <view class="cmt-sheet {{showCommentSheet ? 'on' : ''}}">
+    <textarea
+      class="cmt-area"
+      value="{{commentInput}}"
+      placeholder="{{commentPlaceholder}}"
+      placeholder-class="sheet-ph"
+      maxlength="500"
+      focus="{{showCommentSheet}}"
+      bindinput="onCommentInput"
+    ></textarea>
+    <view class="cmt-send {{commentInput ? 'on' : ''}}" bindtap="sendComment">
+      {{commentSubmitting ? '发布中…' : '发布'}}
     </view>
   </view>
 </view>

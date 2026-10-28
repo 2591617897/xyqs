@@ -57,6 +57,9 @@ function decorate(item) {
   item.budgetText = budgetText(item.budget)
   item.timeText = timeAgo(item.createdAt)
   item.replyText = item.replyCount > 0 ? String(item.replyCount) + ' 人回应' : '等你来接'
+  // 评论数：需求广场上要能看出「这条有人在讨论」，与详情页评论区对应
+  item.commentText = (item.commentCount || 0) > 0 ? String(item.commentCount) + ' 条评论' : ''
+  item.likeText = (item.likeCount || 0) > 0 ? String(item.likeCount) + ' 赞' : ''
   item.descText = String(item.description || '').replace(/\s+/g, ' ').trim()
   item.imageList = resolveList(item.imageList)
   return item

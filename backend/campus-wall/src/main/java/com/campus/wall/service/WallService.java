@@ -160,6 +160,9 @@ public class WallService {
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
             throw BizException.notFound("这条表白不见了");
         }
+        // 浏览量 +1。落库后同步内存值，否则详情页首屏拿到的还是旧值。
+        postMapper.incrView(id);
+        post.setViewCount((post.getViewCount() == null ? 0 : post.getViewCount()) + 1);
         decorate(post, userId);
         post.setLiked(!likedIds(List.of(id), userId).isEmpty());
         return post;

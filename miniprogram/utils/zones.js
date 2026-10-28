@@ -268,7 +268,7 @@ function goodsItem(g) {
   if (g.location) sellParts.push({ k: 'loc', v: '📍 ' + g.location, cls: 'sell-loc' })
   if (g.categoryName) sellParts.push({ k: 'cat', v: '🔥 ' + g.categoryName })
   if (cond) sellParts.push({ k: 'cond', v: cond })
-  sellParts.push({ k: 'view', v: '👀 ' + fmtCount(viewCount) + ' 浏览' })
+  // 浏览量不再进卖点行：卡片底部互动栏已经有「浏览 N」，两处都显示是重复噪音
 
   // 特色条（对应参考图的「券 · 已补 X 元」条）：左边说多少人想要，右边说什么时候发布。
   // 想要数为 0 时不硬凑「0 人想要」，退到留言数，再没有就说在校在售。
@@ -419,12 +419,11 @@ function demandItem(d) {
     timeText: it.timeText,
     viewCount: it.viewCount || 0,
     viewText: fmtCount(it.viewCount || 0),
-    // 需求没有点赞，操作条只显示回应数；给默认值避免 wxml 里判 undefined
-    liked: false,
-    likeCount: 0,
-    likeText: '',
-    commentCount: 0,
-    commentText: ''
+    liked: !!it.liked,
+    likeCount: it.likeCount || 0,
+    likeText: fmtCount(it.likeCount || 0),
+    commentCount: it.commentCount || 0,
+    commentText: fmtCount(it.commentCount || 0)
   }
 }
 

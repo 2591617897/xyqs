@@ -5,10 +5,13 @@ import com.campus.common.security.UserContext;
 import com.campus.goods.dto.DemandReplyReq;
 import com.campus.goods.dto.DemandReq;
 import com.campus.goods.entity.Demand;
+import com.campus.goods.entity.DemandComment;
 import com.campus.goods.entity.DemandReply;
 import com.campus.goods.service.DemandMatchService;
 import com.campus.goods.service.DemandService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -135,5 +138,53 @@ public class DemandController {
     @GetMapping("/replies/mine")
     public R<List<DemandReply>> myReplies() {
         return R.ok(demandService.myReplies(UserContext.requireUserId()));
+    }
+
+    /* ================= 点赞与评论 ================= */
+
+    /** 点赞 / 取消点赞一条需求（返回 true 表示最终是点赞态） */
+    @PostMapping("/{id}/like")
+    public R<Boolean> like(@PathVariable("id") Long id) {
+        return R.ok(demandService.toggleLike(id, UserContext.requireUserId()));
+    }
+
+    /** 评论列表（含楼中楼回复） */
+    @GetMapping("/{id}/comments")
+    public R<List<DemandComment>> comments(@PathVariable("id") Long id) {
+        return R.ok(demandService.comments(id, UserContext.userId()));
+    }
+
+    /** 发表评论 / 回复 */
+    @PostMapping("/{id}/comments")
+    public R<Long> comment(@PathVariable("id") Long id, @RequestBody @Valid CommentReq req) {
+        return R.ok(demandService.addComment(id, req.getContent(), req.getImages(), req.getParentId()));
+    }
+
+    /** 删除评论：本人或需求发布者可删 */
+    @DeleteMapping("/{demandId}/comments/{id}")
+    public R<Void> deleteComment(@PathVariable("demandId") Long demandId,
+                                 @PathVariable("id") Long id) {
+        demandService.deleteComment(demandId, id);
+        return R.ok();
+    }
+
+    /** 点赞 / 取消点赞一条评论 */
+    @PostMapping("/comments/{id}/like")
+    public R<Boolean> commentLike(@PathVariable("id") Long id) {
+        return R.ok(demandService.toggleCommentLike(id, UserContext.requireUserId()));
+    }
+
+    @Data
+    public static class CommentReq {
+
+        @Size(max = 500, message = "评论不超过 500 字")
+        private String content;
+
+        /** 评论配图，最多 3 张 */
+        @Size(max = 3, message = "评论最多 3 张图")
+        private List<String> images;
+
+        /** 回复的父评论 id，空 / 0 表示直接评论 */
+        private Long parentId;
     }
 }

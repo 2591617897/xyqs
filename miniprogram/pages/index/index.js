@@ -563,11 +563,12 @@ Page({
     const idx = Number(ds.idx)
     const items = (this.data.plaza || {}).items || []
     const item = items[idx]
-    if (!item || !item.kind || item.kind === 'demand') return
+    if (!item || !item.kind) return
     auth.ensureLogin().then(function () {
       let url = '/posts/' + item.id + '/like'
       if (item.kind === 'wall') url = '/wall/posts/' + item.id + '/like'
       else if (item.kind === 'goods') url = '/goods/' + item.id + '/like'
+      else if (item.kind === 'demand') url = '/demands/' + item.id + '/like'
       return http.post(url)
     }).then(function (liked) {
       const cnt = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
