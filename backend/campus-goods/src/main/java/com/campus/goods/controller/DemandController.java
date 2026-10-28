@@ -96,11 +96,23 @@ public class DemandController {
         return R.ok();
     }
 
-    /** 0 下架 / 1 重新开放 / 2 标记已完成（已找到） */
+    /**
+     * 0 下架 / 1 重新开放 / 2 标记已完成（已找到）。
+     *
+     * <p>⚠️ status 必须走 @RequestBody：前端 `http.post` 发的是 JSON body，
+     * 用 @RequestParam 取不到，Spring 会抛参数缺失异常 —— 全局兜底把它转成 500
+     * 「服务开小差了」，看着像服务端崩了，实际是参数契约不匹配。</p>
+     */
     @PostMapping("/{id}/status")
-    public R<Void> changeStatus(@PathVariable("id") Long id, @RequestParam Integer status) {
-        demandService.changeStatus(id, status);
+    public R<Void> changeStatus(@PathVariable("id") Long id, @RequestBody(required = false) StatusReq req) {
+        demandService.changeStatus(id, req == null ? null : req.getStatus());
         return R.ok();
+    }
+
+    @Data
+    public static class StatusReq {
+
+        private Integer status;
     }
 
     @DeleteMapping("/{id}")

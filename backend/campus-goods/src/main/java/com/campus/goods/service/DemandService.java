@@ -592,6 +592,7 @@ public class DemandService {
             return List.of();
         }
         Set<Long> likedIds = likedCommentIds(all, userId);
+        refreshCommentAuthors(all);
         for (DemandComment c : all) {
             c.setMine(userId != null && userId.equals(c.getUserId()));
             c.setLiked(likedIds.contains(c.getId()));
@@ -655,7 +656,22 @@ public class DemandService {
         comment.setContent(clean);
         comment.setImages(imgs);
         comment.setLikeCount(0);
-        comment.setUserName(nicknameOf(userId));
+        // 昵称 + 头像都存快照：评论列表直接渲染，不逐条回查用户服务。
+        // 只存昵称不存头像的话，评论区会整片显示灰色默认人形（「头像不显示」就是这么来的）。
+        try {
+            R<UserBrief> res = userClient.getBrief(userId);
+            if (res != null && res.getData() != null) {
+                if (StringUtils.hasText(res.getData().getNickname())) {
+                    comment.setUserName(res.getData().getNickname());
+                }
+                if (StringUtils.hasText(res.getData().getAvatar())) {
+                    comment.setUserAvatar(res.getData().getAvatar());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取用户信息失败 userId={}", userId);
+        }
+        comment.setUserName(StringUtils.hasText(comment.getUserName()) ? comment.getUserName() : "校园用户");
         commentMapper.insert(comment);
         securityGuard.checkImages(userId, SecurityGuard.BIZ_DEMAND_COMMENT, comment.getId(), images);
         demandMapper.incrComment(demandId, 1);
@@ -724,6 +740,49 @@ public class DemandService {
         }
         commentMapper.incrLike(commentId, 1);
         return true;
+    }
+
+    /**
+     * 补评论者的头像快照。
+     *
+     * <p>早期版本发评论只存了昵称，没存头像 —— 列表里这些评论会整片渲染成灰色默认人形，
+     * 看着像「头像加载失败」。这里用 t_user 的当前头像补空，一次 IN 查询，无 N+1。
+     * 已有快照的不覆盖：评论展示的是发言时的样子，跟着作者改头像一起变反而不对。</p>
+     */
+    private void refreshCommentAuthors(List<DemandComment> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        List<Long> userIds = list.stream()
+                .filter(c -> !StringUtils.hasText(c.getUserAvatar()))
+                .map(DemandComment::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return;
+        }
+        try {
+            Map<Long, UserBrief> briefs = userSnapshotMapper.selectBriefByIds(userIds).stream()
+                    .collect(Collectors.toMap(UserBrief::getId, u -> u, (a, b) -> a));
+            for (DemandComment c : list) {
+                if (StringUtils.hasText(c.getUserAvatar())) {
+                    continue;
+                }
+                UserBrief brief = briefs.get(c.getUserId());
+                if (brief == null) {
+                    continue;
+                }
+                if (StringUtils.hasText(brief.getAvatar())) {
+                    c.setUserAvatar(brief.getAvatar());
+                }
+                if (!StringUtils.hasText(c.getUserName()) && StringUtils.hasText(brief.getNickname())) {
+                    c.setUserName(brief.getNickname());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("刷新评论者资料失败，沿用快照: {}", e.getMessage());
+        }
     }
 
     private Set<Long> likedCommentIds(List<DemandComment> list, Long userId) {

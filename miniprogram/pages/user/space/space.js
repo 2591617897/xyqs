@@ -30,8 +30,9 @@ Page({
   },
 
   onLoad: function (options) {
-    // 雪花 ID 全程字符串透传，禁止 Number()
-    this.userId = options.id ? String(options.id) : ''
+    // 雪花 ID 全程字符串透传，禁止 Number()。
+    // 兼容 userId 参数名：历史上有个别页面传成 ?userId=，读不到 id 会直接显示「用户不存在」
+    this.userId = options.id ? String(options.id) : (options.userId ? String(options.userId) : '')
     this.postsPage = 1
     this.goodsPage = 1
     this.goodsLoaded = false

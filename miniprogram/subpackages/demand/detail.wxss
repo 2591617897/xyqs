@@ -98,39 +98,60 @@
   line-height: var(--lh-tight);
 }
 
+/* 信息区改成两列浅底格子。
+   原来是「预算 面议 期望 不限 分类 组队拼车」一串横排文字，
+   扫读时分不清哪个值对应哪一项，也看不出预算是这屏最该被看到的数字。
+   ⚠️ 用 padding 撑间距而不是 margin：格子宽 50%，再加 margin-right 就会超 100% 被挤到下一行 */
 .facts {
-  margin-top: 20rpx;
+  margin-top: 22rpx;
   display: flex;
   flex-wrap: wrap;
+  padding: 20rpx 8rpx 4rpx;
+  background: #f7f8fa;
+  border-radius: 16rpx;
 }
 .fact {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 0 12rpx;
+  margin-bottom: 20rpx;
   display: flex;
-  align-items: center;
-  margin-right: 28rpx;
-  margin-bottom: 12rpx;
+  flex-direction: column;
 }
 .fact-k {
   font-size: var(--fs-2);
   color: var(--text-3);
-  margin-right: 8rpx;
 }
 .fact-v {
-  font-size: var(--fs-3);
+  margin-top: 8rpx;
+  font-size: var(--fs-4);
+  font-weight: 600;
   color: var(--text-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .fact-v.budget {
-  font-size: var(--fs-5);
-  font-weight: 600;
+  font-size: var(--fs-6);
+  font-weight: 700;
   color: var(--warning-500);
 }
 
+/* 具体要求：小标题带左侧竖线，正文落进浅底块 —— 和上方信息区同一套圆角与底色 */
 .req-title {
-  margin-top: 8rpx;
-  font-size: var(--fs-3);
-  color: var(--text-3);
+  margin-top: 24rpx;
+  padding-left: 14rpx;
+  border-left: 6rpx solid var(--brand-500, #006C49);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.2;
 }
 .req {
-  margin-top: 10rpx;
+  margin-top: 14rpx;
+  padding: 20rpx 24rpx;
+  background: #f7f8fa;
+  border-radius: 16rpx;
   font-size: var(--fs-4);
   color: var(--text-1);
   line-height: var(--lh-normal);

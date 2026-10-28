@@ -295,7 +295,7 @@ Page({
   goCommentUser: function (e) {
     const id = e.currentTarget.dataset.id
     if (!id) return
-    mp.navigateTo({ url: '/pages/user/space/space?userId=' + id })
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + id })
   },
 
   /* ==================== 回应（非发布者） ==================== */
@@ -364,7 +364,7 @@ Page({
   goProfile: function () {
     const info = this.data.info || {}
     if (!info.userId) return
-    mp.navigateTo({ url: '/pages/user/space/space?userId=' + info.userId })
+    mp.navigateTo({ url: '/pages/user/space/space?id=' + info.userId })
   },
 
   /* ==================== 发布者操作 ==================== */

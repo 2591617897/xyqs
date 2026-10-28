@@ -295,6 +295,13 @@
 }
 .pub-gray .pub-half-sub { color: #6b6b73; opacity: 1; }
 
+/* 发布需求：紫色渐变，与需求卡的分类徽标同色系，一眼能认出是需求广场的入口 */
+.pub-purple {
+  background: linear-gradient(135deg, #A78BFA 0%, #7C5CE8 100%);
+  color: #ffffff;
+}
+.pub-purple .pub-half-sub { color: #ffffff; opacity: 0.92; }
+
 .pub-line {
   display: flex;
   align-items: center;
