@@ -19,15 +19,15 @@
 
 /* 主按钮 */
 .ui-btn--primary {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #fff);
-  box-shadow: 0 6rpx 16rpx rgba(0, 108, 73, 0.26);
+  box-shadow: 0 6rpx 16rpx rgba(30, 95, 168, 0.26);
 }
-.ui-btn--primary.ui-btn--hover { box-shadow: 0 3rpx 8rpx rgba(0, 108, 73, 0.22); }
+.ui-btn--primary.ui-btn--hover { box-shadow: 0 3rpx 8rpx rgba(30, 95, 168, 0.22); }
 /* 次按钮 */
-.ui-btn--secondary { background: var(--brand-50, #E8F5EF); color: var(--brand-500, #006C49); }
+.ui-btn--secondary { background: var(--brand-50, #E8F0FA); color: var(--brand-500, #1E5FA8); }
 /* 文字按钮 */
-.ui-btn--text { background: transparent; color: var(--brand-500, #006C49); padding: 0 16rpx; }
+.ui-btn--text { background: transparent; color: var(--brand-500, #1E5FA8); padding: 0 16rpx; }
 /* 危险 */
 .ui-btn--danger {
   background: var(--danger-500, #DC2626);

@@ -46,7 +46,7 @@
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 18rpx;
   display: flex;
@@ -77,14 +77,14 @@
   font-weight: 600;
   flex-shrink: 0;
 }
-.peer-tag.mint { background: rgba(0, 108, 73, 0.14); color: #005236; }
+.peer-tag.mint { background: rgba(30, 95, 168, 0.14); color: #005236; }
 .peer-tag.orange { background: #ffdbca; color: #783200; }
 .peer-tag.pink { background: rgba(236, 72, 153, 0.12); color: #8c0053; }
 .peer-tag.plain { background: var(--surface-2, #F0F3F2); color: #64748b; }
 .peer-school {
   margin-top: 6rpx;
   font-size: 22rpx;
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 .peer-acts {
   display: flex;
@@ -107,7 +107,7 @@
   padding: 24rpx;
   border-radius: 28rpx;
   background: #ffffff;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .gc-cover {
   width: 100rpx;
@@ -144,8 +144,8 @@
   flex-shrink: 0;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(0, 108, 73, 0.12);
-  color: #006c49;
+  background: rgba(30, 95, 168, 0.12);
+  color: #1E5FA8;
   font-size: 20rpx;
   font-weight: 600;
 }
@@ -268,7 +268,7 @@
   box-shadow: 0 4rpx 16rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .msg.mine .bubble {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   border-radius: 32rpx 8rpx 32rpx 32rpx;
 }
@@ -394,7 +394,7 @@
 }
 .loc-pin {
   font-size: 24rpx;
-  color: #006c49;
+  color: #1E5FA8;
   font-weight: 600;
 }
 .msg-time {
@@ -438,7 +438,7 @@
   line-height: 80rpx;
   padding: 0 34rpx;
   border-radius: 999rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 28rpx;
   font-weight: 700;

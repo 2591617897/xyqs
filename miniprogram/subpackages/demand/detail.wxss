@@ -141,7 +141,7 @@
 .req-title {
   margin-top: 24rpx;
   padding-left: 14rpx;
-  border-left: 6rpx solid var(--brand-500, #006C49);
+  border-left: 6rpx solid var(--brand-500, #1E5FA8);
   font-size: var(--fs-4);
   font-weight: 600;
   color: var(--text-1);
@@ -442,7 +442,7 @@
   color: #9b9ba3;
 }
 .ch-sort.on {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   font-weight: 600;
 }
 .comment-item {
@@ -513,7 +513,7 @@
   color: #8b8f99;
 }
 .c-lv.lv-1 { background: #F2F3F5; color: #9A9EA6; }
-.c-lv.lv-2 { background: #E8F5EF; color: #1F9E6E; }
+.c-lv.lv-2 { background: #E8F0FA; color: #1F9E6E; }
 .c-lv.lv-3 { background: #E3F0FF; color: #2E7CD6; }
 .c-lv.lv-4 { background: #F1ECFF; color: #7A5AF8; }
 .c-lv.lv-5 { background: #FFF3E0; color: #E08A00; }
@@ -659,6 +659,6 @@
   font-size: 28rpx;
 }
 .cmt-send.on {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
 }

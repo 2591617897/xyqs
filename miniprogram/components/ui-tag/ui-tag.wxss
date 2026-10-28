@@ -9,12 +9,12 @@
   border: 2rpx solid transparent;
 }
 .ui-tag--default { background: var(--surface-2, #F0F3F2); color: var(--text-2, #4B5A54); }
-.ui-tag--primary { background: var(--brand-500, #006C49); color: var(--text-inverse, #fff); }
+.ui-tag--primary { background: var(--brand-500, #1E5FA8); color: var(--text-inverse, #fff); }
 .ui-tag--success { background: var(--success-500, #059669); color: var(--text-inverse, #fff); }
 .ui-tag--warning { background: var(--warning-500, #D97706); color: var(--text-inverse, #fff); }
 .ui-tag--danger { background: var(--danger-500, #DC2626); color: var(--text-inverse, #fff); }
 .ui-tag--plain { background: transparent; border-color: currentColor; }
-.ui-tag--plain.ui-tag--primary { color: var(--brand-500, #006C49); }
+.ui-tag--plain.ui-tag--primary { color: var(--brand-500, #1E5FA8); }
 .ui-tag--plain.ui-tag--danger { color: var(--danger-500, #DC2626); }
 .ui-tag--plain.ui-tag--warning { color: var(--warning-500, #D97706); }
 .ui-tag--plain.ui-tag--success { color: var(--success-500, #059669); }

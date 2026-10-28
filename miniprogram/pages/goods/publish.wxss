@@ -70,7 +70,7 @@
   color: #5b6170;
 }
 .cat-pill.active {
-  background: rgba(0, 108, 73, 0.12);
+  background: rgba(30, 95, 168, 0.12);
   color: #E8925E;
   font-weight: 600;
 }
@@ -218,8 +218,8 @@
   text-align: center;
 }
 .promise-box.on {
-  background: #0E9A60;
-  border-color: #0E9A60;
+  background: #1E5FA8;
+  border-color: #1E5FA8;
 }
 .promise-text {
   flex: 1;
@@ -242,8 +242,8 @@
   background: #FBFBFD;
 }
 .vis-opt.active {
-  border-color: #006C49;
-  background: rgba(0, 108, 73, 0.06);
+  border-color: #1E5FA8;
+  background: rgba(30, 95, 168, 0.06);
 }
 /* 用透明度做按压反馈，避免 hover 背景把选中态的浅绿底盖掉 */
 .vis-opt-hover {
@@ -266,7 +266,7 @@
 .vis-opt-check {
   font-size: 26rpx;
   font-weight: 700;
-  color: #006C49;
+  color: #1E5FA8;
 }
 .vis-opt-sub {
   margin-top: 8rpx;

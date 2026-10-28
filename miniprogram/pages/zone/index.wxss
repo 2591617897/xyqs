@@ -65,7 +65,7 @@
 }
 
 /* 图标底色（与首页原先的金刚区一致，token 全部带 fallback） */
-.tone-brand { background: var(--brand-50, #E8F5EF); }
+.tone-brand { background: var(--brand-50, #E8F0FA); }
 .tone-like { background: var(--like-50, #FFF0F4); }
 .tone-info { background: var(--info-50, #EFF6FF); }
 .tone-warn { background: var(--warning-50, #FFFBEB); }
@@ -88,7 +88,7 @@
   margin-top: 8rpx;
   padding: 16rpx 48rpx;
   border-radius: 999rpx;
-  background: #006C49;
+  background: #1E5FA8;
   color: #FFFFFF;
   font-size: 26rpx;
   font-weight: 600;

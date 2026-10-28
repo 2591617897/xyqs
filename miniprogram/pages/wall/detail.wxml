@@ -125,6 +125,13 @@
       <text class="empty-icon">💬</text>
       <text>还没有评论，做第一个温柔的人</text>
     </view>
+
+    <!-- 有评论时收尾，避免评论区下方突然一片空白 -->
+    <view class="comment-end" wx:if="{{comments.length}}">
+      <text class="ce-line"></text>
+      <text class="ce-text">— 到底了 —</text>
+      <text class="ce-line"></text>
+    </view>
   </view>
 
   <view class="bottom-space"></view>

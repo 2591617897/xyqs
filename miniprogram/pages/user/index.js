@@ -2,20 +2,12 @@ const http = require('../../utils/request')
 const { mp, toast, timeAgo } = require('../../utils/util')
 const auth = require('../../utils/auth')
 const scopeMod = require('../../utils/scope')
-const privacy = require('../../utils/privacy')
 const mock = require('../../utils/mock')
 
 Page({
   data: {
     user: null,
     logged: false,
-    // 浏览范围（本校 / 本市），与首页共用同一份存储
-    scopeLabel: '选择学校',
-    scopeMode: 'school',
-    scopeCity: '',
-    schoolCity: '',
-    scopeShow: false,
-    geoCity: null,
     /** 未绑定学校时的选择弹层（复用 components/school-onboard） */
     onboardShow: false,
     onboardSaving: false,
@@ -72,62 +64,12 @@ Page({
       // 没有 token 时不要拿缓存渲染，否则会显示上一轮账号的昵称/学校（清库后尤其明显）
       user: hasToken ? cached : null
     })
-    this.applyScope()
     if (http.getToken()) {
       this.loadMe()
       this.loadOrders()
     } else {
       this.setData({ loading: false })
     }
-  },
-
-  /** 胶囊文案：本校显示学校名，本市显示「城市 · 全市」 */
-  applyScope: function () {
-    const user = this.data.user || getApp().globalData.user
-    // 没有学校时忽略「本市」残留，直接显示「选择学校」
-    const s = (user && user.schoolId) ? scopeMod.read() : { scope: 'school', city: '' }
-    this.setData({
-      schoolCity: (user && user.schoolCity) || '',
-      scopeMode: s.scope,
-      scopeCity: s.scope === 'city' ? s.city : '',
-      scopeLabel: scopeMod.label(user && user.schoolName, user && user.schoolCity)
-    })
-  },
-
-  /** 打开「浏览范围」弹层：本校 / 本市（+ 位置 API 解析出的定位城市） */
-  openScope: function () {
-    const self = this
-    this.toggleTabBar(true)
-    this.setData({
-      scopeShow: true,
-      schoolCity: (this.data.user && this.data.user.schoolCity) || ''
-    })
-    scopeMod.resolveGeoCity().then(function (geo) {
-      self.setData({ geoCity: geo })
-    })
-  },
-
-  closeScope: function () {
-    this.setData({ scopeShow: false })
-    this.toggleTabBar(false)
-  },
-
-  onScopeSelect: function (e) {
-    const d = e.detail || {}
-    const next = scopeMod.write({ scope: d.scope, city: d.city })
-    this.setData({ scopeShow: false })
-    this.toggleTabBar(false)
-    this.applyScope()
-    if (next.scope === 'city') {
-      toast('已切换到' + (next.city || '本市') + ' · 全市')
-    }
-  },
-
-  /** 弹层里的「学籍认证 / 切换学校」 */
-  onScopeVerify: function () {
-    this.setData({ scopeShow: false })
-    this.toggleTabBar(false)
-    if (typeof this.goVerify === 'function') this.goVerify()
   },
 
   /**
@@ -162,7 +104,6 @@ Page({
         schoolCity: me.schoolCity || '',
         verifyStatus: me.verifyStatus
       })
-      self.applyScope()
     }).catch(function (err) {
       // 令牌指向的用户已不存在（清库/换环境）：重建会话后重拉，别停在幽灵数据上
       if (err && err.code === 404 && !self._reloginTried) {
@@ -229,7 +170,6 @@ Page({
       schoolCity: me.schoolCity || '',
       verifyStatus: me.verifyStatus
     })
-    this.applyScope()
   },
 
   logout: function () {
@@ -308,7 +248,6 @@ Page({
       // 绑定学校后范围回到「本校」，避免胶囊继续显示上一条「某市 · 全市」
       scopeMod.write({ scope: 'school' })
       self.loadMe()
-      self.applyScope()
       toast('已绑定 ' + (me.schoolName || school.name || '学校'))
     }).catch(function () {
       self.setData({ onboardSaving: false })
@@ -416,86 +355,17 @@ Page({
     })
   },
 
-  /**
-   * 「消息通知与隐私权限」入口。
-   *
-   * 消息页顶栏原本有个「设置」按钮，已按产品要求下沉到这里 ——
-   * 消息页只留会话列表与筛选，设置类入口统一在「我的」里找。
-   *
-   * ⚠️ 只服务这一个入口：社交互动区那三个（校园回声 / 表白 / 树洞）走 goSocial。
-   *    2026-10-27 第二十一轮把 switchTab 改 navigateTo 时，三者共用一个函数被一起带跑，
-   *    点「树洞秘语」却进消息设置页，就是这么来的。
-   */
-  goMessages: function () {
-    mp.navigateTo({ url: '/subpackages/msg/settings/index' })
-  },
-
   /** 未实现的演示入口统一占位 */
   demoEntry: function (e) {
     toast('「' + (e.currentTarget.dataset.name || '该功能') + '」即将上线，敬请期待')
   },
 
-  goAgreement: function () {
-    mp.navigateTo({ url: '/pages/legal/agreement' })
-  },
-
-  goPrivacy: function () {
-    mp.navigateTo({ url: '/pages/legal/privacy' })
-  },
-
-  goFeedback: function () {
-    const self = this
-    auth.ensureLogin().then(function () {
-      mp.navigateTo({ url: '/pages/report/report?type=feedback' })
-    }).catch(function () {})
-  },
-
   /**
-   * 隐私设置：查隐私授权状态并跳微信托管的隐私协议页。
-   * 真正的授权动作由微信官方弹窗完成（app.json 已开 __usePrivacyCheck__，
-   * 且有意不注册 onNeedPrivacyAuthorization），这里只做状态展示与协议查看。
+   * 账号与服务：整组入口（认证 / 范围 / 隐私 / 帮助）已下沉到独立子页面，
+   * 这里只负责跳转，主页面不再堆 10 条菜单。
    */
-  goPrivacySetting: function () {
-    privacy.setting().then(function (s) {
-      if (!s.supported) {
-        toast('当前微信版本较低，请升级微信后再试')
-        return
-      }
-      if (s.needAuthorization) {
-        mp.showModal({
-          title: '隐私授权',
-          content: '你还没有同意' + s.contractName + '。使用头像、相册等功能时，微信会弹窗征得你的同意。',
-          confirmText: '查看协议',
-          cancelText: '知道了',
-          confirmColor: '#006C49',
-          success: function (res) {
-            if (res.confirm) privacy.openContract()
-          }
-        })
-        return
-      }
-      privacy.openContract().then(function (ok) {
-        if (!ok) toast('当前微信版本不支持查看隐私协议')
-      })
-    })
-  },
-
-  goDisclaimer: function () {
-    mp.navigateTo({ url: '/pages/legal/disclaimer' })
-  },
-
-  /** 社区规范：UGC 平台必须让用户能随时看到发布规则 */
-  goRule: function () {
-    mp.navigateTo({ url: '/pages/legal/rule' })
-  },
-
-  about: function () {
-    mp.showModal({
-      title: '校聚一城',
-      content: '各校相聚，同城相连。\n\n这里可以逛本校圈子、在树洞匿名闲谈、看社团招新、交换闲置好物。\n\n注意：本站只做信息展示，不提供线上交易、支付与担保。闲置一律校内当面看货当面结清，请勿向任何人提前转账。',
-      showCancel: false,
-      confirmText: '知道啦'
-    })
+  goAccount: function () {
+    mp.navigateTo({ url: '/subpackages/me/account/index' })
   },
 
   /** 长按底部版本号：重置模拟数据（仅模拟模式可用） */

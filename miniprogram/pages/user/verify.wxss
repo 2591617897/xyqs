@@ -344,7 +344,7 @@
   margin-top: 24rpx;
   text-align: center;
   font-size: 25rpx;
-  color: #0E9A60;
+  color: #1E5FA8;
 }
 
 /* 注销入口：弱化成文字链，不与「提交认证 / 开始逛逛」抢视线，也降低误触 */

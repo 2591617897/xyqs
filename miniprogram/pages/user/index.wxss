@@ -93,6 +93,44 @@ page {
 .delay-4 { animation-delay: 240ms; }
 .delay-5 { animation-delay: 300ms; }
 .delay-6 { animation-delay: 360ms; }
+.delay-7 { animation-delay: 420ms; }
+
+/* ---------- 账户与服务入口卡（整组已下沉到子页面） ---------- */
+.account-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ae-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.ae-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-300) 100%);
+  box-shadow: 0 4rpx 12rpx rgba(30, 95, 168, 0.2);
+}
+.ae-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ae-sub {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+.ae-arrow {
+  font-size: 36rpx;
+  color: var(--text-hint);
+}
 
 /* ---------- 用户卡片 ---------- */
 .user-card {
@@ -137,7 +175,7 @@ page {
   background: var(--mac-pink-soft);
   overflow: hidden;
   border: 6rpx solid var(--bg-card);
-  box-shadow: 0 4rpx 16rpx rgba(0, 108, 73, 0.16);
+  box-shadow: 0 4rpx 16rpx rgba(30, 95, 168, 0.16);
   box-sizing: border-box;
 }
 .avatar-img {
@@ -197,7 +235,7 @@ page {
   padding: 0 16rpx;
   border-radius: 999rpx;
   background: var(--mac-purple-soft);
-  color: var(--brand-700, #00452F);
+  color: var(--brand-700, #123F70);
   font-size: 20rpx;
   font-weight: 600;
 }
@@ -243,7 +281,7 @@ page {
 /* 登录按钮 */
 .login-btn {
   margin-top: 28rpx;
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: var(--text-inverse, #ffffff);
   border-radius: 999rpx;
   font-size: 28rpx;
@@ -676,7 +714,7 @@ page {
   transition: all 200ms;
 }
 .seg-item.active {
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: var(--text-inverse);
   font-weight: 600;
   box-shadow: var(--shadow-2);

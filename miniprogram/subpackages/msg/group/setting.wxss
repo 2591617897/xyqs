@@ -143,8 +143,8 @@
   box-sizing: border-box;
 }
 .radio-on {
-  border-color: #006c49;
-  background: radial-gradient(circle, #006c49 0 45%, transparent 46%);
+  border-color: #1E5FA8;
+  background: radial-gradient(circle, #1E5FA8 0 45%, transparent 46%);
 }
 
 /* 规则 */

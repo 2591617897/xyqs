@@ -113,7 +113,16 @@
         <view class="grid-sub">{{user.intentCount || 0}} 单</view>
       </view>
     </view>
-    <!-- 需求广场：与闲置并列的另一条流（我想要的，而不是我要出的） -->
+  </view>
+
+  <!-- ===== 需求广场：从「闲置」拆出独立分组 ===== -->
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-5">
+    <view class="section-head">
+      <view class="section-bar green"></view>
+      <text class="section-title">需求广场</text>
+      <view class="flex1"></view>
+      <text class="section-more" hover-class="scale-down" bindtap="goDemandSquare">逛逛 ›</text>
+    </view>
     <view class="grid2">
       <view class="g2-item" hover-class="tap-scale" bindtap="goMyDemands">
         <view class="g2-icon gi-teal">🙋</view>
@@ -133,7 +142,7 @@
   </view>
 
   <!-- ===== 社交互动 ===== -->
-  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-5">
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-6">
     <view class="section-head">
       <view class="section-bar pink"></view>
       <text class="section-title">社交互动</text>
@@ -173,75 +182,17 @@
   </view>
 
 
-  <!-- ===== 账户与服务 ===== -->
-  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-6">
-    <view class="section-head">
-      <view class="section-bar dark"></view>
-      <text class="section-title">账户与服务</text>
-    </view>
-    <view class="menu-list">
-      <view class="menu-item" hover-class="tap-scale" bindtap="goVerify">
-        <text class="mi-icon">🎓</text>
-        <text class="mi-text">实名学籍认证中心</text>
-        <text class="mi-tip" wx:if="{{user && user.verifyStatus === 2}}">已认证</text>
-        <text class="mi-tip warn" wx:elif="{{user && user.verifyStatus === 3}}">已驳回，待重新提交</text>
-        <text class="mi-tip warn" wx:elif="{{user && user.verifyStatus === 1}}">审核中</text>
-        <text class="mi-tip warn" wx:else>未认证</text>
-        <text class="mi-arrow">›</text>
+  <!-- ===== 账户与服务：整组下沉到子页面，主页面只留一个入口 ===== -->
+  <view class="section fade-bounce-in {{pageReady ? 'animate-in' : ''}} delay-7" hover-class="tap-scale" bindtap="goAccount">
+    <view class="account-entry">
+      <view class="ae-left">
+        <view class="ae-icon">⚙️</view>
+        <view class="ae-main">
+          <view class="ae-title">账号与服务</view>
+          <view class="ae-sub">认证 · 范围 · 隐私 · 帮助</view>
+        </view>
       </view>
-      <!-- 浏览范围：首页顶部的范围行已改成按需出现，这里是它常驻的入口 -->
-      <view class="menu-item" hover-class="tap-scale" bindtap="openScope">
-        <text class="mi-icon">📍</text>
-        <text class="mi-text">浏览范围</text>
-        <text class="mi-tip">{{scopeLabel}}</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <!-- 消息设置入口：消息页顶栏的「设置」按钮已下沉到这里 -->
-      <view class="menu-item" hover-class="tap-scale" bindtap="goMessages">
-        <text class="mi-icon">🔔</text>
-        <text class="mi-text">消息通知与隐私权限</text>
-        <text class="mi-tip">提醒与免打扰</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goFeedback">
-        <text class="mi-icon">💬</text>
-        <text class="mi-text">帮助与反馈</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goAgreement">
-        <text class="mi-icon">📄</text>
-        <text class="mi-text">用户服务协议</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goPrivacy">
-        <text class="mi-icon">🛡️</text>
-        <text class="mi-text">隐私政策</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goPrivacySetting">
-        <text class="mi-icon">🔐</text>
-        <text class="mi-text">隐私设置</text>
-        <text class="mi-tip">授权管理</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goRule">
-        <text class="mi-icon">📋</text>
-        <text class="mi-text">社区规范</text>
-        <text class="mi-tip">发布必读</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="goDisclaimer">
-        <text class="mi-icon">⚠️</text>
-        <text class="mi-text">免责声明与反诈提示</text>
-        <text class="mi-tip">交易风险必读</text>
-        <text class="mi-arrow">›</text>
-      </view>
-      <view class="menu-item" hover-class="tap-scale" bindtap="about">
-        <text class="mi-icon">ℹ️</text>
-        <text class="mi-text">关于校聚一城</text>
-        <text class="mi-tip">v2.4.1</text>
-        <text class="mi-arrow">›</text>
-      </view>
+      <text class="ae-arrow">›</text>
     </view>
   </view>
 
@@ -294,19 +245,6 @@
       </scroll-view>
     </view>
   </view>
-
-  <!-- 浏览范围切换：本校 / 本市（+ 定位城市），与首页共用 -->
-  <scope-sheet
-    show="{{scopeShow}}"
-    school-name="{{(user && user.schoolName) || ''}}"
-    school-city="{{schoolCity || ''}}"
-    geo-city="{{geoCity}}"
-    current="{{scopeMode}}"
-    current-city="{{scopeCity || ''}}"
-    bind:close="closeScope"
-    bind:select="onScopeSelect"
-    bind:verify="onScopeVerify"
-  />
 
   <!-- 未绑定学校时的选择弹层 -->
   <school-onboard

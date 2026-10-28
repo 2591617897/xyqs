@@ -1,0 +1,131 @@
+/* ===== 账号与服务（我的 → 子页面） ===== */
+/* 复用全局设计令牌（styles/tokens.wxss，由 app.wxss 引入），每个 var() 都带 fallback */
+
+page {
+  --mac-pink-soft: var(--like-50, #FFF0F4);
+  --mac-blue-soft: var(--info-50, #E8F0FA);
+  --mac-mint-soft: var(--success-50, #E6F6EF);
+  --mac-yellow-soft: #FFF5E4;
+  --mac-coral-soft: var(--warning-50, #FEF3E2);
+  --mac-purple-soft: var(--brand-50, #E8F0FA);
+
+  background: var(--bg-page, #F5F7F6);
+  color: var(--text-1, #0F1A16);
+  font-size: 28rpx;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+/* ---------- 顶部说明卡 ---------- */
+.me-head {
+  position: relative;
+  background: var(--surface, #FFFFFF);
+  border-radius: 36rpx;
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  padding: 32rpx;
+  overflow: hidden;
+}
+.me-head::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 32rpx;
+  bottom: 32rpx;
+  width: 6rpx;
+  border-radius: 0 6rpx 6rpx 0;
+  background: var(--brand-500, #1E5FA8);
+}
+.me-head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+.me-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-1, #0F1A16);
+  letter-spacing: -0.5rpx;
+}
+.me-sub {
+  font-size: 24rpx;
+  color: var(--text-3, #6B7A74);
+}
+.me-hint {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.65;
+  color: var(--text-4, #9AA8A3);
+}
+
+/* ---------- 分组标题 ---------- */
+.sec-title {
+  margin: 32rpx 8rpx 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-2, #4B5A54);
+  letter-spacing: 1rpx;
+}
+
+/* ---------- 分组卡片 ---------- */
+.card {
+  background: var(--surface, #FFFFFF);
+  border-radius: 32rpx;
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  padding: 8rpx 24rpx;
+}
+
+/* ---------- 菜单列表 ---------- */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx 0;
+  border-bottom: 2rpx solid var(--divider, #EEF1F0);
+  border-radius: 16rpx;
+  transition: background 200ms, transform 200ms;
+}
+.menu-item:last-child {
+  border-bottom: none;
+}
+.menu-item.tap {
+  background: var(--mac-pink-soft);
+  transform: scale(0.985);
+}
+.mi-icon {
+  font-size: 36rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: var(--mac-blue-soft);
+  flex-shrink: 0;
+}
+.mi-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-1, #0F1A16);
+  font-weight: 500;
+}
+.mi-tip {
+  font-size: 22rpx;
+  color: var(--text-3, #6B7A74);
+}
+.mi-tip.warn {
+  color: var(--warning-500, #D97706);
+}
+.mi-arrow {
+  font-size: 32rpx;
+  color: var(--text-hint, #B7C0BC);
+}

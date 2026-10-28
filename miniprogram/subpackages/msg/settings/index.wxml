@@ -15,7 +15,7 @@
       <switch
         class="sw"
         checked="{{item.on}}"
-        color="#006C49"
+        color="#1E5FA8"
         data-key="{{item.key}}"
         bindchange="onToggle"
       />
@@ -31,7 +31,7 @@
         <view class="row-title">免打扰时段</view>
         <view class="row-sub">该时段内不推送提醒，消息照常送达</view>
       </view>
-      <switch class="sw" checked="{{dndEnabled}}" color="#006C49" bindchange="onDndToggle" />
+      <switch class="sw" checked="{{dndEnabled}}" color="#1E5FA8" bindchange="onDndToggle" />
     </view>
 
     <view class="dnd" wx:if="{{dndEnabled}}">

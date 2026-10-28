@@ -59,7 +59,7 @@
 }
 .np-badge.level2 {
   background: #e6f4ec;
-  color: #006c49;
+  color: #1E5FA8;
 }
 
 .np-type {
@@ -109,7 +109,7 @@
   line-height: 88rpx;
   text-align: center;
   border-radius: 999rpx;
-  background: #006c49;
+  background: #1E5FA8;
   color: #ffffff;
   font-size: 31rpx;
   font-weight: 600;

@@ -3,33 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>校聚一城 · 背景渐变与动画预览</title>
+<title>校聚一城 · 背景渐变与动画预览（修复版）</title>
 <style>
   :root{
-    /* 当前采用的：项目真实主题色（森林绿） */
-    --grad-from:#8FD9BD; --grad-mid:#006C49; --grad-to:#FFFFFF;
-    /* 截图里的蓝系备选（一键切换） */
-    --grad-from-blue:#A8D4F5; --grad-mid-blue:#2B6CB8; --grad-to-blue:#FFFFFF;
-    --brand:#006C49; --brand-50:#E8F5EF; --text-1:#0F1A16; --text-2:#4B5A54;
+    /* 当前主题＝蓝系（与真机一致）：浅蓝半透明叠白底；导航栏用等效实色（不支持 alpha） */
+    --grad-from:rgba(30,95,168,.28); --grad-mid:rgba(30,95,168,.10); --grad-to:rgba(30,95,168,0);
+    /* 绿系备选（一键对比；换回需同步 tokens.wxss 三行 + app.json 导航栏色） */
+    --grad-from-green:rgba(0,108,73,.28); --grad-mid-green:rgba(0,108,73,.10); --grad-to-green:rgba(0,108,73,0);
+    --nav-bg:#C0D2E7; --nav-bg-green:#B8D6CC;
+    --brand:#1E5FA8; --brand-50:#E8F0FA; --text-1:#0F1A16; --text-2:#4B5A54;
     --ease:cubic-bezier(.22,.61,.36,1);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
     background:#20242b;display:flex;flex-direction:column;align-items:center;padding:24px;color:#e6e8ec;}
   h2{font-size:16px;margin:0 0 4px}
-  .tip{font-size:12px;color:#9aa3ad;margin-bottom:16px;text-align:center;max-width:380px;line-height:1.6}
+  .tip{font-size:12px;color:#9aa3ad;margin-bottom:16px;text-align:center;max-width:420px;line-height:1.7}
+  .tip b{color:#7ee2b8}
   .phone{width:375px;height:760px;border-radius:38px;overflow:hidden;position:relative;
     box-shadow:0 24px 60px rgba(0,0,0,.5);border:10px solid #111418;}
-  /* ===== 页面背景渐变（与 app.wxss 同款） ===== */
-  .screen{position:absolute;inset:0;
-    background-color:var(--grad-to);
-    background-image:linear-gradient(180deg,var(--grad-from) 0%,var(--grad-mid) 24%,var(--grad-to) 56%);
-    background-repeat:no-repeat;background-size:100% 100vh;color:var(--text-1);}
-  /* 模拟白色自定义导航栏（盖住最顶部，和真机一致） */
-  .navbar{height:88px;background:#fff;display:flex;align-items:center;justify-content:center;
-    font-weight:600;font-size:17px;border-bottom:1px solid #eee;position:relative;z-index:2;}
-  .navbar .back{position:absolute;left:14px;color:var(--brand);font-size:22px;}
-  .content{padding:16px;position:relative;z-index:1;}
+
+  /* ===== 屏幕：渐变背景层固定在视口，内容区单独滚动 ===== */
+  .screen{position:absolute;inset:0;color:var(--text-1);overflow:hidden;background:#fff;}
+  /* 对应小程序里的 page::after —— position:fixed 固定在视口，不随内容滚动 */
+  .bg{position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:linear-gradient(180deg,var(--grad-from) 0%,var(--grad-mid) 30%,var(--grad-to) 72%);}
+
+  /* ===== 系统导航栏：绿底白字（app.json navigationBarBackgroundColor/#006C49 + textStyle/white） ===== */
+  .navbar{position:relative;z-index:3;background:var(--nav-bg);color:#0F1A16;}
+  .status{height:44px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;font-size:12px;opacity:.95;}
+  .nb-title{height:44px;display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:17px;position:relative;}
+  .navbar .back{position:absolute;left:14px;color:#0F1A16;font-size:22px;}
+
+  /* ===== 可滚动内容区（背景不随它滚动） ===== */
+  .scroll{position:absolute;left:0;right:0;top:88px;bottom:0;overflow-y:auto;z-index:1;}
+  .content{padding:16px 16px 40px;}
+  .hint{text-align:center;font-size:12px;color:#fff;opacity:.9;margin:2px 0 14px;
+    background:rgba(0,0,0,.18);border-radius:999px;padding:6px 10px;}
+
   .scope-bar{background:#fff;border-radius:18px;padding:12px 16px;display:flex;align-items:center;
     gap:10px;box-shadow:0 2px 8px rgba(15,26,22,.05);margin-bottom:14px;}
   .scope-ico{width:34px;height:34px;border-radius:10px;background:var(--brand-50);
@@ -46,8 +59,8 @@
     border-radius:999px;font-size:15px;font-weight:600;border:none;cursor:pointer;
     transition:transform .18s var(--ease),opacity .18s,box-shadow .18s;}
   .btn:active{transform:scale(.96);opacity:.92}
-  .btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(0,108,73,.26);}
-  .btn-primary:active{box-shadow:0 3px 8px rgba(0,108,73,.22);}
+  .btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(30,95,168,.26);}
+  .btn-primary:active{box-shadow:0 3px 8px rgba(30,95,168,.22);}
   .btn-sec{background:var(--brand-50);color:var(--brand);}
   .btn-danger{background:#DC2626;color:#fff;box-shadow:0 6px 16px rgba(220,38,38,.24);}
   .spin{width:16px;height:16px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;
@@ -95,7 +108,7 @@
   @keyframes rot{to{transform:rotate(360deg)}}
   @keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
 
-  .controls{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .controls{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px}
   .controls button{background:#2b313b;color:#e6e8ec;border:1px solid #3a414c;border-radius:10px;
     padding:8px 14px;font-size:13px;cursor:pointer}
   .controls button.on{background:#006C49;border-color:#006C49}
@@ -103,26 +116,57 @@
 </style>
 </head>
 <body>
-  <h2>校聚一城 · 背景渐变 + 动画预览</h2>
-  <div class="tip">顶部状态栏→中部为品牌绿渐变、底部转白（与 app.wxss 写入的一致）。下方按钮可一键对比截图里的蓝系。</div>
+  <h2>校聚一城 · 背景渐变 + 动画预览（修复版）</h2>
+  <div class="tip">
+    三点：<b>① 头部变绿</b> —— 系统导航栏与页面渐变顶端同色，无缝衔接；
+    <b>② 滚动不再变色</b> —— 渐变改为视口固定层（对应 <code>page::after{position:fixed}</code>）；
+    <b>③ 浅蓝半透明</b> —— 渐变用 <code>rgba(30,95,168,.28 → 0)</code> 叠在白底上，整体清爽不压眼；
+    导航栏不支持 alpha，故用等效实色 <code>#C0D2E7</code>，文字相应改为<b>黑色</b>（浅底上白字不可读）。<br />
+    全站主题已切换为<b>蓝系</b>：主色 <code>#1E5FA8</code>（白字对比度 6.45:1，满足 WCAG AA），
+    按钮/图标/底栏选中态/色阶全部随之换蓝。
+    👉 在手机模型里<b>上下滚动</b>验证：背景恒定，顶部始终绿、底部始终白。
+  </div>
 
   <div class="phone">
     <div class="screen" id="screen">
-      <div class="navbar"><span class="back">‹</span>校园广场</div>
-      <div class="content">
-        <div class="scope-bar"><div class="scope-ico">🎓</div><div class="scope-main">只看本校内容</div></div>
-        <div class="card"><div class="row"><div class="avatar"></div>
-          <div style="flex:1"><div class="sk" style="width:120px"></div>
-          <div class="sk" style="width:80px;margin-top:8px"></div></div></div></div>
-        <div class="card"><div class="row" style="gap:12px">
-          <button class="btn btn-primary" onclick="this.classList.add('x')"><span class="spin"></span>发布中</button>
-          <button class="btn btn-sec">次按钮</button>
-          <button class="btn btn-danger">删除</button>
-        </div></div>
-        <div class="card" style="display:flex;align-items:center;gap:14px">
-          <div class="loader"></div><div style="color:var(--text-2);font-size:14px">加载中…</div>
+      <!-- 视口固定的渐变背景层（不随内容滚动） -->
+      <div class="bg" id="bg"></div>
+
+      <!-- 系统导航栏：绿底白字 -->
+      <div class="navbar">
+        <div class="status"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+        <div class="nb-title"><span class="back">‹</span>校聚一城</div>
+      </div>
+
+      <!-- 可滚动内容 -->
+      <div class="scroll">
+        <div class="content">
+          <div class="hint">↓ 上下滚动，背景颜色保持恒定</div>
+
+          <div class="scope-bar"><div class="scope-ico">🎓</div><div class="scope-main">只看本校内容</div></div>
+
+          <div class="card"><div class="row"><div class="avatar"></div>
+            <div style="flex:1"><div class="sk" style="width:120px"></div>
+            <div class="sk" style="width:80px;margin-top:8px"></div></div></div></div>
+
+          <div class="card"><div class="row" style="gap:12px">
+            <button class="btn btn-primary"><span class="spin"></span>发布中</button>
+            <button class="btn btn-sec">次按钮</button>
+            <button class="btn btn-danger">删除</button>
+          </div></div>
+
+          <div class="card" style="display:flex;align-items:center;gap:14px">
+            <div class="loader"></div><div style="color:var(--text-2);font-size:14px">加载中…</div>
+          </div>
+
+          <div class="card"><div class="sk" style="width:60%"></div><div class="sk" style="width:90%;margin-top:10px"></div>
+            <div class="sk" style="width:75%;margin-top:10px"></div></div>
+          <div class="card"><div class="sk" style="width:45%"></div><div class="sk" style="width:80%;margin-top:10px"></div></div>
+          <div class="card"><div class="sk" style="width:70%"></div><div class="sk" style="width:55%;margin-top:10px"></div></div>
+          <div class="card"><div class="sk" style="width:50%"></div><div class="sk" style="width:85%;margin-top:10px"></div></div>
+
+          <div class="empty"><div class="ico">📭</div><div class="t">暂无内容</div></div>
         </div>
-        <div class="empty"><div class="ico">📭</div><div class="t">暂无内容</div></div>
       </div>
 
       <!-- Toast -->
@@ -146,8 +190,8 @@
   </div>
 
   <div class="controls">
-    <button id="bGreen" class="on" onclick="setTheme('green')">采用绿色（项目主题色）</button>
-    <button id="bBlue" onclick="setTheme('blue')">切换蓝系（截图同款）</button>
+    <button id="bBlue" class="on" onclick="setTheme('blue')">蓝系（当前主题色）</button>
+    <button id="bGreen" onclick="setTheme('green')">切回绿系（对比）</button>
     <button onclick="showToast()">弹 Toast</button>
     <button onclick="document.getElementById('modalMask').classList.remove('hidden')">弹 Modal</button>
     <button onclick="document.getElementById('sheet').classList.remove('hidden')">弹 Sheet</button>
@@ -156,10 +200,21 @@
 <script>
   function setTheme(t){
     const r=document.documentElement.style;
-    if(t==='blue'){r.setProperty('--grad-from','var(--grad-from-blue)');r.setProperty('--grad-mid','var(--grad-mid-blue)');r.setProperty('--grad-to','var(--grad-to-blue)');
-      document.getElementById('bBlue').classList.add('on');document.getElementById('bGreen').classList.remove('on');}
-    else{r.setProperty('--grad-from','#8FD9BD');r.setProperty('--grad-mid','#006C49');r.setProperty('--grad-to','#FFFFFF');
-      document.getElementById('bGreen').classList.add('on');document.getElementById('bBlue').classList.remove('on');}
+    if(t==='green'){
+      r.setProperty('--grad-from','var(--grad-from-green)');
+      r.setProperty('--grad-mid','var(--grad-mid-green)');
+      r.setProperty('--grad-to','var(--grad-to-green)');
+      r.setProperty('--nav-bg','var(--nav-bg-green)');
+      document.getElementById('bGreen').classList.add('on');
+      document.getElementById('bBlue').classList.remove('on');
+    }else{
+      r.setProperty('--grad-from','rgba(30,95,168,.28)');
+      r.setProperty('--grad-mid','rgba(30,95,168,.10)');
+      r.setProperty('--grad-to','rgba(30,95,168,0)');
+      r.setProperty('--nav-bg','#C0D2E7');
+      document.getElementById('bBlue').classList.add('on');
+      document.getElementById('bGreen').classList.remove('on');
+    }
   }
   function showToast(){
     const w=document.getElementById('toastWrap'),t=document.getElementById('toast');

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "scope-sheet": "/components/scope-sheet/index"
+  },
+  "navigationBarTitleText": "账号与服务"
+}

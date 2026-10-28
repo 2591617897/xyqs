@@ -35,7 +35,7 @@
   margin-top: 32rpx;
   padding: 20rpx 64rpx;
   border-radius: 999rpx;
-  background: #006C49;
+  background: #1E5FA8;
   color: #ffffff;
   font-size: 30rpx;
   font-weight: 700;
@@ -130,7 +130,7 @@
   padding: 16rpx 8rpx;
   border-radius: 24rpx;
   background: #ffffff;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .quick-icon {
   position: relative;
@@ -163,7 +163,7 @@
   box-sizing: border-box;
 }
 .q-badge.pink { background: #ec4899; }
-.q-badge.green { background: var(--brand-500, #006C49); }
+.q-badge.green { background: var(--brand-500, #1E5FA8); }
 .q-badge.orange { background: #fd761a; }
 .q-badge.solid {
   background: #fd761a;
@@ -184,13 +184,13 @@
   margin: 8rpx 24rpx 16rpx;
   padding: 24rpx;
   border-radius: 24rpx;
-  background: rgba(0, 108, 73, 0.1);
+  background: rgba(30, 95, 168, 0.1);
 }
 .tip-icon {
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: rgba(0, 108, 73, 0.2);
+  background: rgba(30, 95, 168, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,7 +200,7 @@
 .tip-title {
   font-size: 24rpx;
   font-weight: 700;
-  color: #006c49;
+  color: #1E5FA8;
 }
 .tip-text {
   margin-top: 6rpx;
@@ -237,7 +237,7 @@
   font-weight: 600;
 }
 .filter-pill.active {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
 }
 .fp-count {
@@ -259,7 +259,7 @@
 .convo-swipe {
   display: block;
   border-radius: 28rpx;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 
 /* 左滑操作区按钮 */
@@ -310,7 +310,7 @@
   background: #ffd9e4;
 }
 .c-avatar.official {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
 }
 .c-official-check {
@@ -320,7 +320,7 @@
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 18rpx;
   display: flex;
@@ -335,7 +335,7 @@
   width: 24rpx;
   height: 24rpx;
   border-radius: 50%;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   border: 4rpx solid #ffffff;
   box-sizing: content-box;
 }
@@ -393,11 +393,11 @@
   font-weight: 600;
   flex-shrink: 0;
 }
-.c-tag.mint { background: rgba(0, 108, 73, 0.14); color: #005236; }
+.c-tag.mint { background: rgba(30, 95, 168, 0.14); color: #005236; }
 .c-tag.pink { background: rgba(236, 72, 153, 0.12); color: #8c0053; }
 .c-tag.orange { background: #ffdbca; color: #783200; }
 .c-tag.plain { background: var(--surface-2, #F0F3F2); color: #64748b; }
-.c-tag.green { background: rgba(0, 108, 73, 0.18); color: #006c49; }
+.c-tag.green { background: rgba(30, 95, 168, 0.18); color: #1E5FA8; }
 .c-time {
   flex-shrink: 0;
   font-size: 22rpx;
@@ -538,7 +538,7 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #006c49;
+  background: #1E5FA8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,7 +590,7 @@
 }
 .gc-join {
   font-size: 21rpx;
-  color: #006c49;
+  color: #1E5FA8;
   background: #e8f3ee;
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
@@ -689,7 +689,7 @@
 }
 .ge-act {
   font-size: 24rpx;
-  color: #006c49;
+  color: #1E5FA8;
   font-weight: 600;
   flex-shrink: 0;
 }

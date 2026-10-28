@@ -58,7 +58,7 @@
 
 .rp-chip--on {
   color: #fff;
-  background: #006C49;
+  background: #1E5FA8;
 }
 
 .rp-textarea {
@@ -74,7 +74,7 @@
 
 .rp-submit {
   margin-top: 12rpx;
-  background: #006C49;
+  background: #1E5FA8;
   color: #fff;
   font-size: 30rpx;
   border-radius: 999rpx;

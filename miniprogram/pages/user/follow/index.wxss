@@ -39,7 +39,7 @@
   width: 56rpx;
   height: 6rpx;
   border-radius: 3rpx;
-  background: linear-gradient(135deg, var(--brand-500, #006C49), var(--like-600, #E11D48));
+  background: linear-gradient(135deg, var(--brand-500, #1E5FA8), var(--like-600, #E11D48));
 }
 .tab-count {
   margin-left: 6rpx;
@@ -47,7 +47,7 @@
   color: #cbd5e1;
 }
 .tab.active .tab-count {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 
 /* ---------- 列表 ---------- */
@@ -88,7 +88,7 @@
   bottom: -4rpx;
   width: 32rpx;
   height: 32rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   border-radius: 50%;
   border: 3rpx solid #ffffff;
   display: flex;
@@ -152,9 +152,9 @@
   padding: 0 22rpx;
 }
 .follow-btn.inactive {
-  background: linear-gradient(135deg, var(--brand-500, #006C49), var(--like-600, #E11D48));
+  background: linear-gradient(135deg, var(--brand-500, #1E5FA8), var(--like-600, #E11D48));
   color: #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(0, 108, 73, 0.25);
+  box-shadow: 0 4rpx 12rpx rgba(30, 95, 168, 0.25);
 }
 
 /* ---------- 空状态 ---------- */

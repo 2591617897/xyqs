@@ -1,6 +1,6 @@
 /* ============================================================
    统一图标系统 —— SVG data-URI + mask + currentColor
-   用法：<view class="ico ico-back" style="font-size:40rpx;color:#006C49"></view>
+   用法：<view class="ico ico-back" style="font-size:40rpx;color:#1E5FA8"></view>
    - 尺寸走 font-size（1em = 当前字号），颜色走 color（background-color:currentColor 可随文字变色）
    - 多机型无字体差异（不依赖 iconfont），包体增量极小（约 16KB）
    ============================================================ */

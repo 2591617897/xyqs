@@ -1,12 +1,16 @@
+/* ⚠️ 本页所有「容器级」背景一律改透明，让全局渐变（app.wxss 的 page::after）透出来。
+   之前 .topbar / .nav-scroll / .feed / .feed-item / .list-end 都是不透明的白/灰，
+   层层叠加把整页刷成纯白，页面渐变完全看不见（用户反馈「组件背景还是白色的」）。
+   只保留真正需要承载的局部底色（如 hover 高亮用半透明白）。 */
+
 .page {
   padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
 }
 
-/* 顶部栏 */
+/* 顶部栏（透明：标题直接压在渐变上；原来白底 + 下边框是切分白块用的，去掉） */
 .topbar {
-  background: #ffffff;
+  background: transparent;
   padding: 24rpx 28rpx 18rpx;
-  border-bottom: 1rpx solid #f0f1f3;
 }
 .topbar-title {
   font-size: 38rpx;
@@ -19,11 +23,10 @@
   margin-top: 6rpx;
 }
 
-/* 频道导航（酷安式下划线指示） */
+/* 频道导航（酷安式下划线指示）—— 透明底，透出渐变 */
 .nav-scroll {
-  background: #ffffff;
+  background: transparent;
   white-space: nowrap;
-  border-bottom: 1rpx solid #f0f1f3;
 }
 .nav-row {
   display: inline-flex;
@@ -53,22 +56,23 @@
   height: 6rpx;
   margin-left: -20rpx;
   border-radius: 3rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
 }
 
-/* 信息流 */
+/* 信息流：容器与条目都透明，靠 1rpx 分隔线维持节奏，渐变贯穿整页 */
 .feed {
-  background: #ffffff;
+  background: transparent;
 }
 .feed-item {
   padding: 24rpx 28rpx 20rpx;
-  background: #ffffff;
+  background: transparent;
 }
 .feed-item + .feed-item {
   border-top: 1rpx solid #f0f1f3;
 }
+/* 按压高亮：半透明白，避免在渐变上糊出不透明白块 */
 .feed-hover {
-  background: #fafbfc;
+  background: rgba(255, 255, 255, 0.55);
 }
 .feed-avatar-img {
   width: 100%;
@@ -88,12 +92,13 @@
 .ml40 {
   margin-left: 48rpx;
 }
+/* 「已经到底了」：去掉灰底，否则会在渐变上留一条灰带 */
 .list-end {
   text-align: center;
   font-size: 23rpx;
   color: #b6bbc6;
   padding: 32rpx 0;
-  background: var(--bg-page, #F5F7F6);
+  background: transparent;
 }
 .retry-btn {
   margin-top: 28rpx;

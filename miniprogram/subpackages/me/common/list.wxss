@@ -41,7 +41,7 @@
   bottom: 28rpx;
   width: 6rpx;
   border-radius: 0 6rpx 6rpx 0;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
 }
 
 .me-head-row {
@@ -117,7 +117,7 @@
 }
 
 .seg-item.active {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #FFFFFF);
   font-weight: var(--fw-bold, 600);
 }
@@ -184,7 +184,7 @@
   color: #FFFFFF;
   background: rgba(15, 26, 22, 0.62);
 }
-.gcard-badge.on { background: var(--brand-500, #006C49); }
+.gcard-badge.on { background: var(--brand-500, #1E5FA8); }
 .gcard-badge.sold { background: var(--text-3, #6B7A74); }
 .gcard-badge.off { background: var(--warning-500, #D97706); }
 
@@ -272,8 +272,8 @@
   line-height: 1.7;
 }
 .dbadge.post {
-  background: var(--brand-50, #E8F5EF);
-  color: var(--brand-500, #006C49);
+  background: var(--brand-50, #E8F0FA);
+  color: var(--brand-500, #1E5FA8);
 }
 .dbadge.wall {
   background: var(--like-50, #FFF0F4);
@@ -390,7 +390,7 @@
   margin-top: 28rpx;
   padding: 16rpx 44rpx;
   border-radius: var(--radius-pill, 999rpx);
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #FFFFFF);
   font-size: var(--fs-4, 26rpx);
 }
@@ -419,12 +419,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-pill, 999rpx);
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #FFFFFF);
   font-size: var(--fs-5, 28rpx);
   font-weight: var(--fw-bold, 600);
   box-shadow: var(--shadow-2, 0 8rpx 24rpx rgba(15, 26, 22, 0.06));
 }
 .cta-btn:active {
-  background: var(--brand-600, #005A3D);
+  background: var(--brand-600, #17508F);
 }

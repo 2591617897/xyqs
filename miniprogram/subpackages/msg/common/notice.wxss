@@ -107,7 +107,7 @@
   justify-content: space-between;
 }
 .n-time { font-size: 22rpx; color: #94a3b8; }
-.n-go { font-size: 22rpx; color: var(--brand-500, #006C49); }
+.n-go { font-size: 22rpx; color: var(--brand-500, #1E5FA8); }
 
 /* ===== 空态 / 登录态 / 加载更多 ===== */
 .state {
@@ -125,7 +125,7 @@
   margin-top: 24rpx;
   padding: 18rpx 64rpx;
   border-radius: 40rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 28rpx;
 }

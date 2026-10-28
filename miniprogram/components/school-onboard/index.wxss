@@ -97,11 +97,11 @@
 }
 
 .ob-group.near {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 
 .ob-item.on {
-  background: rgba(0, 108, 73, 0.06);
+  background: rgba(30, 95, 168, 0.06);
   border-radius: 16rpx;
 }
 
@@ -126,7 +126,7 @@
   margin-left: 16rpx;
   font-size: 24rpx;
   font-weight: 700;
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   flex-shrink: 0;
 }
 

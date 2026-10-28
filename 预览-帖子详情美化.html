@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>帖子详情美化 · 改造前 / 后对照</title>
+<style>
+  /* 与项目一致的设计令牌（换算：1rpx = 0.5px） */
+  :root{
+    --grad-from: rgba(30,95,168,.28);
+    --grad-mid:  rgba(30,95,168,.10);
+    --grad-to:   rgba(30,95,168,0);
+    --nav-bg: #C0D2E7;
+    --brand-500:#1E5FA8; --brand-50:#E8F0FA; --brand-100:#C7DDF3;
+    --surface:#fff; --surface-2:#F0F3F2; --border:#E3E8E6;
+    --text-1:#1a1a1a; --text-2:#2b2b30; --text-3:#6B7A74; --muted:#9b9ba3;
+    --like:#FF4D7D; --like-50:#FFF0F4;
+    --radius-lg:12px;   /* 24rpx */
+    --radius-md:8px;    /* 16rpx */
+    --shadow-1:0 1px 4px rgba(15,26,22,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;padding:28px 20px 60px;background:#F4F6F8;color:var(--text-1);
+       font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;}
+  h1{font-size:20px;margin:0 0 6px;}
+  .lead{font-size:13px;color:#7A8089;margin:0 0 22px;line-height:1.7;max-width:760px;}
+  .lead code{background:#E8ECF0;padding:1px 5px;border-radius:4px;font-size:12px;}
+
+  .stage{display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start;}
+  .col{width:340px;}
+  /* 表白墙专用：匿名 emoji 方形头像 */
+  .w-avatar{width:36px;height:36px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;
+            justify-content:center;font-size:17px;background:linear-gradient(135deg,#C7DDF3,#5B97D1);
+            box-shadow:0 2px 6px rgba(15,26,22,.08);}
+  .w-chip{font-size:10px;font-weight:600;padding:4px 10px;border-radius:999px;
+          background:var(--brand-50);color:var(--brand-500);}
+  .w-head{display:flex;align-items:center;justify-content:space-between;}
+  .w-head-l{display:flex;align-items:center;gap:8px;}
+  .w-name{font-size:14px;font-weight:600;color:#3f4653;}
+  .w-time{font-size:11px;color:var(--muted);margin-top:2px;}
+  .w-acts{display:flex;align-items:center;gap:8px;}
+  .w-promote{background:var(--brand-500);color:#fff;font-size:12px;font-weight:600;
+             padding:7px 13px;border-radius:999px;}
+  .w-more{width:32px;height:32px;border-radius:999px;background:var(--surface-2);color:var(--text-3);
+          display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .w-content{font-size:15.5px;line-height:1.85;color:#2b303b;margin-top:14px;}
+  .w-imgs{margin-top:12px;}
+  .w-img{height:150px;border-radius:var(--radius-lg);background:linear-gradient(135deg,#C7DDF3,#93C0E8);}
+  .w-meta{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:11.5px;color:var(--muted);}
+  .w-c-head{display:flex;align-items:center;justify-content:space-between;}
+  .w-c-l{display:flex;align-items:center;gap:7px;}
+  .w-c-name{font-size:13px;font-weight:600;color:#6B7480;}
+  .w-c-r{display:flex;align-items:center;gap:6px;}
+  .w-c-act{font-size:11px;color:var(--text-3);padding:5px 7px;}
+  .w-c-act.del{color:#c0c4cc;}
+  .w-replies{margin-top:9px;background:#F7F9FC;border-radius:10px;padding:8px 10px;}
+  .w-reply{padding:7px 0;font-size:13px;line-height:1.7;}
+  .w-reply .rt{color:var(--brand-500);font-weight:600;}
+  .col-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .col-head b{font-size:14px;}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+  .tag.bad{background:#FEF2F2;color:#DC2626;}
+  .tag.good{background:#E8F0FA;color:var(--brand-500);}
+
+  /* 手机外框 */
+  .phone{width:340px;height:660px;border-radius:28px;background:#fff;overflow:hidden;
+         position:relative;box-shadow:0 12px 40px rgba(15,26,22,.14);border:1px solid #E5E9ED;}
+  /* 页面渐变：对应 app.wxss 的 page::after 视口固定层 */
+  .phone::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,var(--grad-from) 0%,var(--grad-mid) 30%,var(--grad-to) 72%);}
+  .screen{position:absolute;inset:0;z-index:1;overflow-y:auto;overflow-x:hidden;}
+  .screen::-webkit-scrollbar{width:0;}
+  .navbar{position:sticky;top:0;z-index:5;height:44px;background:var(--nav-bg);color:#000;
+          display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;position:relative;}
+  .navbar .back{position:absolute;left:12px;font-size:18px;}
+  .status{height:20px;background:var(--nav-bg);}
+
+  /* ============ 改造后（卡片化） ============ */
+  .page-after{padding:10px;}
+  .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-1);overflow:hidden;}
+  .author-bar{display:flex;align-items:center;gap:8px;padding:13px 12px 9px;}
+  .avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;
+          background:linear-gradient(135deg,#93C0E8,#1E5FA8);box-shadow:0 2px 6px rgba(15,26,22,.10);}
+  .ab-info{flex:1;min-width:0;}
+  .ab-name{font-size:15px;font-weight:600;letter-spacing:-.1px;}
+  .ab-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+  .badge-school{background:var(--brand-50);color:var(--brand-500);font-size:11px;font-weight:600;
+                padding:5px 10px;border-radius:999px;}
+  .article{padding:2px 12px 16px;}
+  .article-title{font-size:18px;font-weight:700;line-height:1.42;letter-spacing:-.2px;margin-bottom:8px;}
+  .article-content{font-size:15px;line-height:1.8;color:var(--text-2);}
+  .imgs{display:flex;gap:5px;margin-top:12px;}
+  .imgs .im{flex:1;height:70px;border-radius:var(--radius-md);
+            background:linear-gradient(135deg,#C7DDF3,#93C0E8);}
+  .imgs.one .im{height:150px;border-radius:var(--radius-lg);}
+
+  .comment-section{margin-top:12px;padding:14px 12px 4px;background:#fff;
+                   border-radius:var(--radius-lg);box-shadow:var(--shadow-1);}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .st-wrap{display:flex;align-items:center;gap:6px;}
+  .section-title{font-size:15px;font-weight:700;}
+  .section-count{font-size:10px;font-weight:600;line-height:1.5;color:var(--brand-500);
+                 background:var(--brand-50);padding:1px 7px;border-radius:999px;}
+  .sorts{display:flex;gap:2px;padding:2px;background:var(--surface-2);border-radius:999px;}
+  .sort{font-size:12px;color:var(--text-3);padding:4px 10px;border-radius:999px;}
+  .sort.on{color:var(--brand-500);font-weight:600;background:#fff;box-shadow:var(--shadow-1);}
+  .comment-item{display:flex;gap:9px;padding:14px 0;border-bottom:1px solid #f2f4f7;}
+  .c-avatar{width:32px;height:32px;border-radius:50%;flex:0 0 auto;
+            background:linear-gradient(135deg,#93C0E8,#5B97D1);}
+  .flex1{flex:1;min-width:0;}
+  .c-head{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .c-head-l{display:flex;align-items:center;gap:5px;min-width:0;}
+  .c-name{font-size:13px;font-weight:600;}
+  .chip{height:16px;line-height:16px;padding:0 6px;border-radius:999px;font-size:9.5px;}
+  .chip.lv3{background:#D6E6F8;color:#17508F;font-weight:700;}
+  .chip.prov{background:#F1F5F9;color:#7A8089;}
+  .c-time{font-size:11px;color:#b6bbc6;flex:0 0 auto;}
+  .c-text{font-size:14px;line-height:1.7;color:#2b303b;margin-top:5px;}
+  .c-actions{display:flex;align-items:center;gap:6px;margin-top:6px;margin-left:-8px;}
+  .c-action{display:flex;align-items:center;gap:4px;height:30px;padding:0 8px;border-radius:999px;}
+  .ico{font-size:15px;color:#9ca3af;}
+  .num{font-size:11px;color:#9ca3af;}
+  .comment-end{display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 0 14px;}
+  .ce-line{width:28px;height:1px;background:var(--border);}
+  .ce-text{font-size:11px;color:#b6bbc6;}
+
+  /* ============ 改造前 ============ */
+  .page-before{padding:0;}
+  .b-block{background:#fff;padding:10px 14px;}
+  .b-sep{height:10px;background:#f2f4f7;}
+  .b-badge{border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:5px 10px;border-radius:999px;}
+  .b-count{font-size:11.5px;color:#b6bbc6;}
+  .b-sorts{display:flex;gap:12px;}
+  .b-sort{font-size:12.5px;color:#9b9ba3;}
+  .b-sort.on{color:var(--brand-500);font-weight:600;}
+  .b-lv{height:15px;line-height:15px;padding:0 5px;border-radius:4px;font-size:9px;font-weight:700;
+        background:#E3F0FF;color:#2E7CD6;}
+  .b-prov{height:15px;line-height:15px;padding:0 5px;border-radius:4px;font-size:9px;
+          background:#F4F6F8;color:#7A8089;}
+  .b-action{display:flex;align-items:center;gap:3px;padding:2px 4px;}
+  .b-imgs{display:flex;gap:4px;margin-top:10px;border-radius:8px;overflow:hidden;}
+  .b-imgs .im{flex:1;height:70px;background:linear-gradient(135deg,#C7DDF3,#93C0E8);border-radius:0;}
+
+  /* 底部操作栏 */
+  .bottom-bar{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:10px;
+              padding:7px 12px 10px;background:#fff;border-top:1px solid rgba(15,26,22,.06);
+              box-shadow:0 -4px 16px rgba(15,26,22,.06);}
+  .bar-input{flex:1;height:40px;border-radius:999px;display:flex;align-items:center;gap:6px;padding:0 13px;
+             background:var(--brand-50);font-size:13px;color:var(--text-3);}
+  .bar-input.old{background:var(--surface-2);}
+  .bar-acts{display:flex;align-items:center;width:150px;}
+  .bar-act{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;height:38px;
+           border-radius:999px;font-size:12px;color:var(--text-3);}
+  .bar-ico{font-size:19px;}
+  .bar-act.on{background:var(--like-50);color:var(--like);}
+  .bar-act.on .bar-ico{transform:scale(1.14);}
+
+  @keyframes card-in{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .anim .card{animation:card-in .32s cubic-bezier(.22,.61,.36,1) both;}
+  .anim .comment-section{animation:card-in .32s cubic-bezier(.22,.61,.36,1) .06s both;}
+
+  .note{max-width:820px;margin-top:34px;background:#fff;border-radius:14px;padding:20px 22px;
+        box-shadow:0 4px 16px rgba(15,26,22,.06);font-size:13px;line-height:1.8;color:#3B4650;}
+  .note h2{font-size:15px;margin:0 0 10px;}
+  .note ul{margin:0;padding-left:20px;}
+  .note li{margin-bottom:5px;}
+  .note b{color:#1a1a1a;}
+</style>
+</head>
+<body>
+
+<h1>帖子详情页 · 改造前 / 后对照</h1>
+<p class="lead">
+  两侧都跑在<b>同一套页面渐变</b>上（<code>page::after</code> 视口固定层，浅蓝 → 白）。
+  差别只在内容层：左边是原来的<b>三块白底直接拼接</b>，右边是<b>圆角卡片浮在渐变上</b>。
+  可以在手机里上下滚一下 —— 背景恒定不变色。
+</p>
+
+<div class="stage">
+
+  <!-- ============ 改造前 ============ -->
+  <div class="col">
+    <div class="col-head"><b>改造前</b><span class="tag bad">渐变被白块盖住</span></div>
+    <div class="phone">
+      <div class="status"></div>
+      <div class="navbar"><span class="back">‹</span>校园公告</div>
+      <div class="screen">
+        <div class="page-before" style="padding-bottom:120px;">
+          <div class="b-block">
+            <div class="author-bar" style="padding:0;">
+              <div class="avatar" style="box-shadow:none;background:linear-gradient(135deg,#c9ced6,#9aa3ad);"></div>
+              <div class="ab-info">
+                <div class="ab-name" style="font-size:14px;">校园用户1768</div>
+                <div class="ab-meta">23小时前 · 📢 校园公告</div>
+              </div>
+              <span class="b-badge">同校</span>
+            </div>
+          </div>
+          <div class="b-block" style="padding-top:4px;">
+            <div class="article-title" style="font-size:17px;">找马原本课本</div>
+            <div class="article-content" style="line-height:1.75;">2025版本的</div>
+          </div>
+          <div class="b-sep"></div>
+          <div class="b-block">
+            <div class="section-head">
+              <div class="st-wrap">
+                <span class="section-title">全部评论</span>
+                <span class="b-count">1</span>
+              </div>
+              <div class="b-sorts">
+                <span class="b-sort on">默认</span><span class="b-sort">最新</span>
+              </div>
+            </div>
+            <div class="comment-item">
+              <div class="c-avatar" style="width:32px;height:32px;"></div>
+              <div class="flex1">
+                <div class="c-head">
+                  <div class="c-head-l">
+                    <span class="c-name">xiaoH</span>
+                    <span class="b-lv">LV3</span>
+                    <span class="b-prov">贵州</span>
+                  </div>
+                  <span class="c-time">23小时前</span>
+                </div>
+                <div class="c-text" style="line-height:1.65;">我有</div>
+                <div class="c-actions" style="margin-left:0;gap:14px;">
+                  <span class="b-action"><span class="ico">♡</span><span class="num">0</span></span>
+                  <span class="b-action"><span class="ico">💬</span><span class="num">0</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-input old"><span>✎</span>写评论…</div>
+        <div class="bar-acts">
+          <span class="bar-act on"><span class="bar-ico">♥</span><span class="num">2</span></span>
+          <span class="bar-act"><span class="bar-ico">💬</span><span class="num">1</span></span>
+          <span class="bar-act"><span class="bar-ico">➤</span></span>
+          <span class="bar-act"><span class="bar-ico">⚑</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 改造后 ============ -->
+  <div class="col">
+    <div class="col-head"><b>改造后</b><span class="tag good">圆角卡片 + 渐变透出</span></div>
+    <div class="phone">
+      <div class="status"></div>
+      <div class="navbar"><span class="back">‹</span>校园公告</div>
+      <div class="screen">
+        <div class="page-after anim" style="padding-bottom:120px;">
+          <div class="card">
+            <div class="author-bar">
+              <div class="avatar"></div>
+              <div class="ab-info">
+                <div class="ab-name">校园用户1768</div>
+                <div class="ab-meta">23小时前 · 📢 校园公告</div>
+              </div>
+              <span class="badge-school">同校</span>
+            </div>
+            <div class="article">
+              <div class="article-title">找马原本课本</div>
+              <div class="article-content">2025版本的，最好是没怎么写过的，有的话私信我，价格好商量 🙏</div>
+              <div class="imgs">
+                <div class="im"></div><div class="im"></div><div class="im"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-section">
+            <div class="section-head">
+              <div class="st-wrap">
+                <span class="section-title">全部评论</span>
+                <span class="section-count">1</span>
+              </div>
+              <div class="sorts">
+                <span class="sort on">默认</span><span class="sort">最新</span>
+              </div>
+            </div>
+            <div class="comment-item">
+              <div class="c-avatar"></div>
+              <div class="flex1">
+                <div class="c-head">
+                  <div class="c-head-l">
+                    <span class="c-name">xiaoH</span>
+                    <span class="chip lv3">LV3</span>
+                    <span class="chip prov">贵州</span>
+                  </div>
+                  <span class="c-time">23小时前</span>
+                </div>
+                <div class="c-text">我有</div>
+                <div class="c-actions">
+                  <span class="c-action"><span class="ico">♡</span><span class="num">0</span></span>
+                  <span class="c-action"><span class="ico">💬</span><span class="num">0</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="comment-end">
+              <span class="ce-line"></span><span class="ce-text">— 到底了 —</span><span class="ce-line"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-input"><span>✎</span>写评论…</div>
+        <div class="bar-acts">
+          <span class="bar-act on"><span class="bar-ico">♥</span><span class="num">2</span></span>
+          <span class="bar-act"><span class="bar-ico">💬</span><span class="num">1</span></span>
+          <span class="bar-act"><span class="bar-ico">➤</span></span>
+          <span class="bar-act"><span class="bar-ico">⚑</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 表白墙详情（改造后） ============ -->
+  <div class="col">
+    <div class="col-head"><b>表白墙 · 改造后</b><span class="tag good">同一套标准</span></div>
+    <div class="phone">
+      <div class="status"></div>
+      <div class="navbar"><span class="back">‹</span>匿名心事</div>
+      <div class="screen">
+        <div class="page-after anim" style="padding-bottom:120px;">
+          <div class="card">
+            <div style="padding:16px 12px 12px;">
+              <div class="w-head">
+                <div class="w-head-l">
+                  <div class="w-avatar">🍃</div>
+                  <div>
+                    <div class="w-name">匿名的橘子</div>
+                    <div class="w-time">2小时前</div>
+                  </div>
+                </div>
+                <div class="w-acts">
+                  <span class="w-promote">推广</span>
+                  <span class="w-more">···</span>
+                </div>
+              </div>
+              <div class="w-content">在三教自习室遇到的你，总是坐靠窗那个位置。<br />如果看到这条，可以回我一下吗？</div>
+              <div class="w-imgs"><div class="w-img"></div></div>
+              <div class="w-meta">
+                <span class="w-chip">我发布的</span>
+                <span>仅同校可见 · 匿名展示</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-section">
+            <div class="section-head">
+              <div class="st-wrap">
+                <span class="section-title">全部评论</span>
+                <span class="section-count">2</span>
+              </div>
+            </div>
+            <div class="comment-item">
+              <div class="w-avatar" style="font-size:14px;">💬</div>
+              <div class="flex1">
+                <div class="w-c-head">
+                  <span class="w-c-name">匿名的风</span>
+                  <div class="w-c-r">
+                    <span class="w-time">1小时前</span>
+                    <span class="w-c-act">回复</span>
+                    <span class="w-c-act del">删除</span>
+                  </div>
+                </div>
+                <div class="c-text">帮顶！</div>
+                <div class="w-replies">
+                  <div class="w-reply"><span class="rt">回复 匿名的风：</span>谢谢～</div>
+                </div>
+              </div>
+            </div>
+            <div class="comment-end">
+              <span class="ce-line"></span><span class="ce-text">— 到底了 —</span><span class="ce-line"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-input"><span>✎</span>写评论…</div>
+        <div class="bar-acts">
+          <span class="bar-act on"><span class="bar-ico">♥</span><span class="num">12</span></span>
+          <span class="bar-act"><span class="bar-ico">💬</span><span class="num">2</span></span>
+          <span class="bar-act"><span class="bar-ico">➤</span></span>
+          <span class="bar-act"><span class="bar-ico">⚑</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <h2>改了什么</h2>
+  <ul>
+    <li><b>卡片化</b>：作者栏 + 正文 + 配图合成一张圆角卡（<code>.post-card</code>），评论区独立成第二张卡 —— 原来三块白底无缝拼接，把整片渐变盖成纯白。</li>
+    <li><b>配图</b>：从「整块直角裁切」改成每张图独立圆角 + 缝隙留白，和卡片圆角语言统一。</li>
+    <li><b>「同校」标签</b>：只有极浅描边时几乎看不见 → 改淡蓝实底胶囊。</li>
+    <li><b>LV 徽章 / 省份标签</b>：统一成同高同圆角的胶囊片；LV2 原是绿色，收进品牌蓝同色系。</li>
+    <li><b>排序切换</b>：两个裸文字 → 胶囊分段控件，选中态有白底 + 投影。</li>
+    <li><b>评论数</b>：浅灰数字 → 蓝色小胶囊。</li>
+    <li><b>点击热区</b>：评论点赞/回复原来只有约 36rpx 高（远低于 88rpx 最小热区），改成 60rpx 胶囊，用负边距保持左对齐。</li>
+    <li><b>回复强调色</b>：「回复 xx」「查看全部回复」原误用点赞粉，改品牌蓝（它们是跳转语义，不是点赞）。</li>
+    <li><b>收尾</b>：评论区加「— 到底了 —」，避免下方突然一片空白。</li>
+    <li><b>入场动效</b>：卡片上浮淡入、配图轻微放大淡入；点赞用 transition 缩放而非 keyframes，避免进页时已点赞项一起抖。</li>
+  </ul>
+  <h2 style="margin-top:16px;">表白墙详情页（第三台）同步了同一套标准</h2>
+  <ul>
+    <li><code>.article</code> 本身是单块（头部 + 正文 + 图 + 元信息），直接卡片化，无需额外包裹层。</li>
+    <li>「我发布的」标签：全局 <code>.tag</code> 是中性灰胶囊（不能改全局），改为在<b>本页作用域内</b>覆盖成品牌蓝胶囊。</li>
+    <li>「回复 / 删除」热区从约 30rpx 放大；<code>.reply-to</code> / <code>.reply-more</code> 从点赞粉改品牌蓝。</li>
+    <li>配图保持表白墙特有的<b>整宽堆叠</b>排版（不改成九宫格）—— 内容形态不同，这是有意的差异。</li>
+  </ul>
+  <h2 style="margin-top:16px;">顺手修掉的遗留问题</h2>
+  <ul>
+    <li>上一轮换色脚本<b>只替换了十六进制色</b>，漏掉 <code>rgba(0,108,73,α)</code> 形式的品牌绿 —— 全站 18 个文件、51 处仍是绿色（阴影、浅底、描边）。已把脚本扩展为「换 RGB、保留 alpha」并重跑，现在全站绿色残留为 0。</li>
+  </ul>
+</div>
+
+</body>
+</html>

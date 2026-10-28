@@ -11,13 +11,13 @@
 .pub-big,
 .pub-half,
 .pub-line {
-  --brand-50: #E8F5EF;
-  --brand-100: #C6E8D8;
-  --brand-200: #93D3B9;
-  --brand-300: #5FB894;
-  --brand-500: #006C49;
-  --brand-600: #005A3D;
-  --brand-700: #00452F;
+  --brand-50: #E8F0FA;
+  --brand-100: #C7DDF3;
+  --brand-200: #93C0E8;
+  --brand-300: #5B97D1;
+  --brand-500: #1E5FA8;
+  --brand-600: #17508F;
+  --brand-700: #123F70;
   --like-500: #FF4D7D;
   --like-600: #E11D48;
   --danger-500: #DC2626;
@@ -120,7 +120,7 @@
 }
 
 .tab-item.active .tab-label {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   font-weight: 700;
 }
 
@@ -135,7 +135,7 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 52rpx;
   font-weight: 300;
@@ -143,7 +143,7 @@
   text-align: center;
   box-sizing: content-box;
   margin-top: -52rpx;
-  box-shadow: 0 16rpx 48rpx -8rpx rgba(0, 108, 73, 0.42), 0 8rpx 20rpx -4rpx rgba(0, 108, 73, 0.25);
+  box-shadow: 0 16rpx 48rpx -8rpx rgba(30, 95, 168, 0.42), 0 8rpx 20rpx -4rpx rgba(30, 95, 168, 0.25);
   transition: transform 0.12s ease;
 }
 .plus-hover .plus-btn {
@@ -213,7 +213,7 @@
   color: #ffffff;
   overflow: hidden;
   margin-bottom: 20rpx;
-  box-shadow: 0 14rpx 34rpx -12rpx rgba(0, 108, 73, 0.6);
+  box-shadow: 0 14rpx 34rpx -12rpx rgba(30, 95, 168, 0.6);
 }
 .pub-big-head {
   display: flex;

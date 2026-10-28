@@ -138,7 +138,7 @@
     <view class="field row">
       <text class="field-label">面交试机</text>
       <text class="muted flex1">支持当面验货，满意再付</text>
-      <switch checked="{{supportTrial === 1}}" bindchange="toggleTrial" color="#0e9a60" />
+      <switch checked="{{supportTrial === 1}}" bindchange="toggleTrial" color="#1E5FA8" />
     </view>
   </view>
 

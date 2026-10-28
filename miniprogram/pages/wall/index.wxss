@@ -73,9 +73,9 @@
   font-weight: 600;
 }
 .cat-pill.active {
-  background: rgba(0, 108, 73, 0.14);
-  color: #006c49;
-  border: 2rpx solid rgba(0, 108, 73, 0.5);
+  background: rgba(30, 95, 168, 0.14);
+  color: #1E5FA8;
+  border: 2rpx solid rgba(30, 95, 168, 0.5);
   box-sizing: border-box;
 }
 
@@ -163,7 +163,7 @@
   padding: 22rpx 28rpx;
   border-radius: 999rpx;
   background: #ffffff;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .compose-ph {
   font-size: 26rpx;
@@ -189,7 +189,7 @@
   padding: 28rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 .feed-hover {
   transform: scale(0.995);
@@ -265,7 +265,7 @@
 .feed-tag {
   font-size: 22rpx;
   font-weight: 600;
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 
 /* 正文 */
@@ -373,7 +373,7 @@
   font-size: 22rpx;
   font-weight: 700;
   line-height: 1;
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 .feed-share-text {
   letter-spacing: 0.5rpx;
@@ -503,9 +503,9 @@
   border: 2rpx solid transparent;
 }
 .cat-chip.on {
-  background: rgba(0, 108, 73, 0.12);
+  background: rgba(30, 95, 168, 0.12);
   color: var(--like-600, #E11D48);
-  border-color: rgba(0, 108, 73, 0.5);
+  border-color: rgba(30, 95, 168, 0.5);
   font-weight: 600;
 }
 

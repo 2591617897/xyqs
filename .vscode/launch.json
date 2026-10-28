@@ -76,6 +76,26 @@
             "projectName": "campus-message",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MailApplication<campus-mail>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.campus.mail.MailApplication",
+            "projectName": "campus-mail",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PromoteApplication<campus-promote>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.campus.promote.PromoteApplication",
+            "projectName": "campus-promote",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

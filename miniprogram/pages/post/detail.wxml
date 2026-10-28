@@ -1,42 +1,46 @@
 <view class="page" wx:if="{{post}}">
-  <!-- 作者栏：头像 + 昵称点击进个人主页（catchtap 阻止冒泡；右上「同校」保持静态标签） -->
-  <view class="author-bar">
-    <view class="ab-avatar" catchtap="goUserSpace">
-      <image wx:if="{{post.authorAvatar}}" class="ab-avatar-img" src="{{post.authorAvatar}}" mode="aspectFill" />
-      <view wx:else class="avatar-default">
-        <view class="ad-head"></view>
-        <view class="ad-body"></view>
+  <!-- 帖子主卡：作者栏 + 正文 + 配图合成一张圆角卡片，浮在页面渐变上
+       （原来是两块白底直接拼接，渐变全被盖住，层次感弱） -->
+  <view class="post-card">
+    <!-- 作者栏：头像 + 昵称点击进个人主页（catchtap 阻止冒泡；右上「同校」保持静态标签） -->
+    <view class="author-bar">
+      <view class="ab-avatar" catchtap="goUserSpace">
+        <image wx:if="{{post.authorAvatar}}" class="ab-avatar-img" src="{{post.authorAvatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-default">
+          <view class="ad-head"></view>
+          <view class="ad-body"></view>
+        </view>
       </view>
+      <view class="ab-info" catchtap="goUserSpace">
+        <view class="ab-name">{{post.authorName}}</view>
+        <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
+      </view>
+      <view class="ab-btn solid" wx:if="{{post.mine}}" hover-class="ab-btn-solid-hover" hover-stay-time="80" catchtap="openPromote">推广</view>
+      <view class="ab-btn" wx:if="{{post.mine}}" hover-class="ab-btn-hover" hover-stay-time="80" catchtap="openMore">管理</view>
+      <!-- 同校 / 同市 由 schoolId 对比得出（全市范围下作者可能是外校同学） -->
+      <view class="ab-btn ghost" wx:elif="{{post.schoolBadge}}">{{post.schoolBadge}}</view>
     </view>
-    <view class="ab-info" catchtap="goUserSpace">
-      <view class="ab-name">{{post.authorName}}</view>
-      <view class="ab-meta">{{post.timeText}} · {{post.channelIcon}} {{post.channelName}}</view>
-    </view>
-    <view class="ab-btn solid" wx:if="{{post.mine}}" hover-class="ab-btn-solid-hover" hover-stay-time="80" catchtap="openPromote">推广</view>
-    <view class="ab-btn" wx:if="{{post.mine}}" hover-class="ab-btn-hover" hover-stay-time="80" catchtap="openMore">管理</view>
-    <!-- 同校 / 同市 由 schoolId 对比得出（全市范围下作者可能是外校同学） -->
-    <view class="ab-btn ghost" wx:elif="{{post.schoolBadge}}">{{post.schoolBadge}}</view>
-  </view>
 
-  <!-- 正文 -->
-  <view class="article">
-    <view class="article-title" wx:if="{{post.title}}">{{post.title}}</view>
-    <view class="article-content">{{post.content}}</view>
+    <!-- 正文 -->
+    <view class="article">
+      <view class="article-title" wx:if="{{post.title}}">{{post.title}}</view>
+      <view class="article-content">{{post.content}}</view>
 
-    <!-- 图片网格（参考今日头条详情页）：
-         1 张 → 单列大图；2 / 4 张 → 两列；3 张及以上 → 三列九宫格 -->
-    <view class="article-imgs {{post.imgGrid}}" wx:if="{{post.imageList.length}}">
-      <image
-        wx:for="{{post.imageList}}"
-        wx:key="*this"
-        class="article-img"
-        src="{{item}}"
-        mode="{{post.imgMode}}"
-        lazy-load
-        binderror="onImageError"
-        bindtap="previewImage"
-        data-url="{{item}}"
-      />
+      <!-- 图片网格（参考今日头条详情页）：
+           1 张 → 单列大图；2 / 4 张 → 两列；3 张及以上 → 三列九宫格 -->
+      <view class="article-imgs {{post.imgGrid}}" wx:if="{{post.imageList.length}}">
+        <image
+          wx:for="{{post.imageList}}"
+          wx:key="*this"
+          class="article-img"
+          src="{{item}}"
+          mode="{{post.imgMode}}"
+          lazy-load
+          binderror="onImageError"
+          bindtap="previewImage"
+          data-url="{{item}}"
+        />
+      </view>
     </view>
   </view>
 
@@ -167,6 +171,13 @@
     <view class="comment-empty" wx:if="{{!comments.length}}">
       <text class="empty-icon">💬</text>
       <text>还没有评论，做第一个温柔的人</text>
+    </view>
+
+    <!-- 有评论时收尾，避免评论区下方突然一片空白 -->
+    <view class="comment-end" wx:if="{{comments.length}}">
+      <text class="ce-line"></text>
+      <text class="ce-text">— 到底了 —</text>
+      <text class="ce-line"></text>
     </view>
   </view>
 

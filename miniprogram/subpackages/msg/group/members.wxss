@@ -138,7 +138,7 @@
   border-radius: 8rpx;
 }
 .tag-admin {
-  color: #006c49;
+  color: #1E5FA8;
   background: #e8f3ee;
 }
 .tag-verify {

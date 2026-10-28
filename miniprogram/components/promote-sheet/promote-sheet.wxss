@@ -34,7 +34,7 @@
 .pm-tip-err { color: var(--danger-500, #DC2626); }
 
 .pm-score-card {
-  background: var(--brand-50, #E8F5EF);
+  background: var(--brand-50, #E8F0FA);
   border-radius: 20rpx;
   padding: 24rpx;
 }
@@ -42,7 +42,7 @@
 .pm-score-num {
   font-size: 56rpx;
   font-weight: 700;
-  color: var(--brand-700, #00452F);
+  color: var(--brand-700, #123F70);
   line-height: 1;
 }
 .pm-score-unit { font-size: 24rpx; color: var(--text-2, #4B5A54); margin-left: 8rpx; }
@@ -52,13 +52,13 @@
   margin-top: 18rpx;
   height: 10rpx;
   border-radius: 10rpx;
-  background: var(--brand-100, #C6E8D8);
+  background: var(--brand-100, #C7DDF3);
   overflow: hidden;
 }
 .pm-bar-fill {
   height: 100%;
   border-radius: 10rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   transition: width 0.3s ease;
 }
 .pm-score-sub {
@@ -89,14 +89,14 @@
   height: 92rpx;
   line-height: 92rpx;
   border-radius: 46rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #FFFFFF);
   font-size: 30rpx;
   font-weight: 600;
   border: none;
 }
 .pm-cta::after { border: none; }
-.pm-cta-hover { background: var(--brand-600, #005A3D); }
+.pm-cta-hover { background: var(--brand-600, #17508F); }
 .pm-cta.is-off { background: var(--surface-3, #E8ECEA); color: var(--text-4, #9AA8A3); }
 
 .pm-warn {

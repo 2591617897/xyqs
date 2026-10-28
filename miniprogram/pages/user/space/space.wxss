@@ -95,8 +95,8 @@
 }
 
 .verify-pill.ok {
-  background: rgba(0, 108, 73, 0.12);
-  color: #006c49;
+  background: rgba(30, 95, 168, 0.12);
+  color: #1E5FA8;
 }
 
 .user-school {
@@ -121,7 +121,7 @@
   min-width: 148rpx;
   padding: 14rpx 28rpx;
   border-radius: 999rpx;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 26rpx;
   font-weight: 600;
@@ -143,8 +143,8 @@
 
 .follow-btn.ghost {
   background: #ffffff;
-  color: var(--brand-500, #006C49);
-  border: 1rpx solid rgba(0, 108, 73, 0.4);
+  color: var(--brand-500, #1E5FA8);
+  border: 1rpx solid rgba(30, 95, 168, 0.4);
 }
 
 /* 统计条：关注 / 粉丝 */
@@ -154,7 +154,7 @@
   background: #ffffff;
   border-radius: 32rpx;
   padding: 28rpx 0;
-  box-shadow: 0 8rpx 32rpx -4rpx rgba(0, 108, 73, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8rpx 32rpx -4rpx rgba(30, 95, 168, 0.05), 0 4rpx 12rpx -2rpx rgba(15, 23, 42, 0.04);
 }
 
 .stat {
@@ -196,7 +196,7 @@
 }
 
 .tab.active {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
 }
 
@@ -384,7 +384,7 @@
 }
 
 .gi-status.sale {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
 }
 
 .gi-status.sold {

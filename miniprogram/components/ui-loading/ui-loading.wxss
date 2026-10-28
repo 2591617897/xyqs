@@ -1,7 +1,7 @@
 .ui-spin {
   display: inline-block;
-  border: 4rpx solid var(--brand-50, #E8F5EF);
-  border-top-color: var(--brand-500, #006C49);
+  border: 4rpx solid var(--brand-50, #E8F0FA);
+  border-top-color: var(--brand-500, #1E5FA8);
   border-radius: 50%;
   animation: ui-spin-rotate 0.8s linear infinite;
   will-change: transform;

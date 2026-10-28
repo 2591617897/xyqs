@@ -86,11 +86,11 @@
 }
 .pick {
   padding: 14rpx 30rpx;
-  background: var(--brand-50, #E8F5EF);
+  background: var(--brand-50, #E8F0FA);
   border-radius: 16rpx;
   font-size: 30rpx;
   font-weight: 600;
-  color: var(--brand-700, #00452F);
+  color: var(--brand-700, #123F70);
   font-variant-numeric: tabular-nums;
 }
 .dnd-sep {
@@ -110,11 +110,11 @@
   border-radius: 999rpx;
   font-size: 25rpx;
   color: #ffffff;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
 }
 .act-on {
-  color: var(--brand-700, #00452F);
-  background: var(--brand-50, #E8F5EF);
+  color: var(--brand-700, #123F70);
+  background: var(--brand-50, #E8F0FA);
 }
 .act-off {
   color: #a8b0bd;

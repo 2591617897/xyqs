@@ -58,7 +58,7 @@ function handleCancelled(user) {
         + '校园认证需要重新完成。要继续使用吗？',
       confirmText: '恢复账号',
       cancelText: '保持注销',
-      confirmColor: '#006C49',
+      confirmColor: '#1E5FA8',
       success: function (res) {
         resolve(!!res.confirm)
       },
@@ -134,7 +134,7 @@ function confirmLogin() {
         + '不会读取手机号或通讯录。登录即表示同意《用户协议》和《隐私政策》。',
       confirmText: '微信登录',
       cancelText: '先逛逛',
-      confirmColor: '#006C49',
+      confirmColor: '#1E5FA8',
       success: function (res) {
         resolve(!!res.confirm)
       },

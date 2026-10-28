@@ -13,14 +13,11 @@ page {
   --brand-secondary: #FFB5C5;        /* 旧次主色 / 渐变亮端 */
 
   /* ========== 全局基础样式（变量由 styles/tokens.wxss 提供） ========== */
-  /* 页面背景：状态栏→中部品牌绿渐变，底部转白（视口锚定，长页面滚动后自然留白） */
-  background-color: var(--grad-to, #FFFFFF);
-  background-image: linear-gradient(180deg,
-    var(--grad-from, #8FD9BD) 0%,
-    var(--grad-mid, #006C49) 24%,
-    var(--grad-to, #FFFFFF) 56%);
-  background-repeat: no-repeat;
-  background-size: 100% 100vh;
+  /* 渐变背景改由下方 page::after 视口固定层承载。
+     ⚠️ 不要把渐变换回这里：background-size:100% 100vh 会让它随内容滚动、
+        滚过一屏就只剩白色底 —— 这正是「上下滑动背景变色」的根因。 */
+  /* 白色底：半透明渐变叠在它上面才呈现「浅绿→白」；不要用 var(--grad-to)（它是全透明） */
+  background-color: #FFFFFF;
   color: var(--text-1, #0F1A16);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
@@ -31,6 +28,30 @@ page {
    页面内部的卡片/列表仍用自己的底色，不会被误伤）。 */
 page > .page {
   background: transparent;
+}
+
+/* ===== 视口固定的页面渐变背景层 =====
+   状态栏浅绿（半透明）→ 底部转白。
+   · position:fixed 固定在视口，不随页面滚动，滚动时颜色恒定。
+   · z-index:-1 让它画在 page 自身背景之上、页面内容之下；
+     内容区的透明间隙（卡片间距、hero 区）自然透出渐变，白色卡片照常盖在上面。
+   · pointer-events:none 避免拦截点击。
+   · 半透明色叠在 page 的白色底上；顶端等效实色 #C0D2E7 ＝ app.json 的导航栏背景色，无缝衔接。 */
+page::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  /* 停靠点拉长到 72%，让浅绿贯穿「顶部→中部」再收到白色底部。
+     之前只到 42%，加上各页不透明白容器，下半屏看着就是纯白（用户反馈的症结）。 */
+  background: linear-gradient(180deg,
+    var(--grad-from, rgba(30, 95, 168, 0.28)) 0%,
+    var(--grad-mid, rgba(30, 95, 168, 0.10)) 30%,
+    var(--grad-to, rgba(30, 95, 168, 0)) 72%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 view, text, button, input, textarea {
@@ -114,7 +135,7 @@ view, text, button, input, textarea {
 }
 .btn::after { border: none; }
 .btn-primary {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #fff);
   box-shadow: var(--shadow-2);
 }
@@ -124,7 +145,7 @@ view, text, button, input, textarea {
 }
 .btn-ghost {
   background: var(--surface);
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   border: 2rpx solid var(--border-strong);
 }
 .btn-plain {
@@ -152,7 +173,7 @@ view, text, button, input, textarea {
 }
 .tag-brand {
   background: var(--brand-50);
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
 }
 .tag-mint {
   background: var(--success-50);
@@ -398,7 +419,7 @@ view, text, button, input, textarea {
   word-break: break-all;
 }
 .feed-more {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   font-size: 27rpx;
 }
 /* 图片九宫格 */
@@ -441,7 +462,7 @@ view, text, button, input, textarea {
   line-height: 1.5;
 }
 .hot-comment .hc-name {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   flex-shrink: 0;
 }
 /* 操作栏 */

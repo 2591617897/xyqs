@@ -47,4 +47,4 @@
   font-weight: 600;
 }
 .ui-modal-cancel { background: #F1F5F9; color: #475569; }
-.ui-modal-ok { background: #006C49; color: #fff; }
+.ui-modal-ok { background: #1E5FA8; color: #fff; }

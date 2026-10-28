@@ -1,5 +1,17 @@
+/* 页面左右留边：内容以「圆角卡片」形式浮在全局浅蓝渐变上，卡片之间的缝隙自然透出渐变。
+   ⚠️ 原来作者栏 / 正文 / 评论区是三块白底直接拼接（无圆角无间距），把整片渐变盖住，
+      看起来就是一整块白 —— 与频道页那次「组件背景还是白色的」是同一个成因。 */
 .page {
-  padding-bottom: 40rpx;
+  padding: 20rpx 20rpx calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* ===== 帖子主卡：作者栏 + 正文 + 配图合成一张卡片 ===== */
+.post-card {
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  overflow: hidden;
+  animation: post-card-in var(--dur-slow, 320ms) var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1)) both;
 }
 
 /* ===== 作者栏 ===== */
@@ -7,16 +19,16 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 20rpx 28rpx;
-  background: #ffffff;
+  padding: 26rpx 24rpx 18rpx;
 }
 .ab-avatar {
-  width: 68rpx;
-  height: 68rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: #eef0f4;
+  background: var(--surface-3, #E8ECEA);
+  box-shadow: 0 4rpx 12rpx rgba(15, 26, 22, 0.10);
 }
 .ab-avatar-img {
   width: 100%;
@@ -28,14 +40,15 @@
   min-width: 0;
 }
 .ab-name {
-  font-size: 28rpx;
+  font-size: 29rpx;
   font-weight: 600;
   color: #1a1a1a;
+  letter-spacing: -0.2rpx;
 }
 .ab-meta {
   font-size: 22rpx;
   color: #9b9ba3;
-  margin-top: 4rpx;
+  margin-top: 6rpx;
 }
 .ab-btn {
   flex-shrink: 0;
@@ -44,95 +57,104 @@
   align-items: center;
   padding: 0 26rpx;
   border-radius: var(--radius-pill, 999rpx);
-  border: 2rpx solid var(--brand-200, #93D3B9);
-  color: var(--brand-500, #006C49);
+  border: 2rpx solid var(--brand-200, #93C0E8);
+  color: var(--brand-500, #1E5FA8);
   font-size: var(--fs-3, 24rpx);
   font-weight: var(--fw-bold, 600);
   transition: background var(--dur-fast, 120ms) var(--ease-out, ease),
               transform var(--dur-fast, 120ms) var(--ease-out, ease);
 }
 .ab-btn-hover {
-  background: var(--brand-50, #E8F5EF);
+  background: var(--brand-50, #E8F0FA);
   transform: scale(0.96);
 }
+/* 「同校 / 同市」标签：原来只用极浅描边，压在白卡上几乎看不见 → 改淡蓝实底胶囊 */
 .ab-btn.ghost {
-  border-color: var(--border, #E3E8E6);
-  color: var(--text-3, #6B7A74);
-  font-weight: var(--fw-regular, 400);
+  border-color: transparent;
+  background: var(--brand-50, #E8F0FA);
+  color: var(--brand-500, #1E5FA8);
+  font-weight: var(--fw-bold, 600);
+  height: 48rpx;
+  padding: 0 20rpx;
+  font-size: var(--fs-2, 22rpx);
 }
 .ab-btn.ghost.ab-btn-hover {
-  background: var(--surface-2, #F0F3F2);
+  background: var(--brand-100, #C7DDF3);
 }
 /* 推广入口：实心填充，和普通「管理」按钮区分开 */
 .ab-btn.solid {
-  background: var(--brand-500, #006C49);
-  border-color: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
+  border-color: var(--brand-500, #1E5FA8);
   color: var(--text-inverse, #FFFFFF);
   box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
 }
 .ab-btn-solid-hover {
-  background: var(--brand-600, #005A3D);
-  border-color: var(--brand-600, #005A3D);
+  background: var(--brand-600, #17508F);
+  border-color: var(--brand-600, #17508F);
   transform: scale(0.96);
 }
 
 /* ===== 正文 ===== */
 .article {
-  background: #ffffff;
-  padding: 8rpx 28rpx 28rpx;
+  padding: 4rpx 24rpx 32rpx;
 }
 .article-title {
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.42;
+  letter-spacing: -0.3rpx;
   color: #1a1a1a;
-  margin-bottom: 14rpx;
+  margin-bottom: 16rpx;
 }
 .article-content {
   font-size: 30rpx;
-  line-height: 1.75;
+  line-height: 1.8;
   color: #2b2b30;
   white-space: pre-wrap;
   word-break: break-all;
 }
-/* 图片网格（参考今日头条详情页）：1 张大图 / 2、4 张两列 / 3 张起三列九宫格
-   圆角只落在整块外缘，内部图片不单独圆角，靠容器 overflow:hidden 统一裁切 */
+/* 图片网格（参考今日头条详情页）：1 张大图 / 2、4 张两列 / 3 张起三列九宫格。
+   改为「每张图独立圆角 + 缝隙留白」的照片墙观感 —— 原来靠容器 overflow 统一裁切，
+   整块是直角硬边，和卡片的圆角语言不一致。 */
 .article-imgs {
-  margin-top: 20rpx;
+  margin-top: 24rpx;
   display: flex;
   flex-wrap: wrap;
-  gap: 8rpx;
-  border-radius: 16rpx;
-  overflow: hidden;
+  gap: 10rpx;
 }
 .article-img {
-  width: calc((100% - 16rpx) / 3);
+  width: calc((100% - 20rpx) / 3);
   height: 210rpx;
-  border-radius: 0;
-  background: #f2f3f5;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--surface-3, #E8ECEA);
   display: block;
+  animation: img-in var(--dur-slow, 320ms) var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1)) both;
 }
 /* 1 张：宽度水平铺满整行 + 高度限定（详情页给得比首页高一点，方便看清图）。
    mode 已是 aspectFill，必须设固定 height；超长竖图上下裁切，点图看原图。 */
 .article-imgs.cols-1 .article-img {
   width: 100%;
-  height: 480rpx;
+  height: 460rpx;
+  border-radius: var(--radius-lg, 24rpx);
 }
 /* 2 / 4 张：两列（4 张即 2×2） */
 .article-imgs.cols-2 .article-img {
-  width: calc((100% - 8rpx) / 2);
+  width: calc((100% - 10rpx) / 2);
   height: 260rpx;
 }
 
-/* ===== 评论区（按参考图 1:1 还原） ===== */
+/* ===== 评论区（独立一张卡片，与帖子主卡同圆角/同阴影） ===== */
 .comment-section {
-  background: #ffffff;
-  margin-top: 20rpx;
-  padding: 28rpx 32rpx 12rpx;
+  background: var(--surface, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
+  margin-top: 24rpx;
+  padding: 28rpx 24rpx 8rpx;
+  animation: post-card-in var(--dur-slow, 320ms) var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1)) 60ms both;
 }
 .section-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12rpx;
 }
@@ -141,28 +163,44 @@
   font-weight: 700;
   color: #1a1a1a;
 }
+/* 评论数：小胶囊计数，比原来裸的浅灰数字更有层次 */
 .section-count {
-  font-size: 23rpx;
-  color: #b6bbc6;
+  font-size: 20rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--brand-500, #1E5FA8);
+  background: var(--brand-50, #E8F0FA);
+  padding: 2rpx 14rpx;
+  border-radius: var(--radius-pill, 999rpx);
 }
+/* 排序切换：胶囊分段控件（原来是两个裸文字，选中态只有颜色变化，太弱） */
 .ch-sorts {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 4rpx;
+  padding: 4rpx;
+  background: var(--surface-2, #F0F3F2);
+  border-radius: var(--radius-pill, 999rpx);
 }
 .ch-sort {
-  font-size: 25rpx;
-  color: #9b9ba3;
+  font-size: 23rpx;
+  color: var(--text-3, #6B7A74);
+  padding: 8rpx 20rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  transition: background var(--dur-fast, 120ms) var(--ease-out, ease),
+              color var(--dur-fast, 120ms) var(--ease-out, ease);
 }
 .ch-sort.on {
-  color: var(--brand-500, #006C49);
+  color: var(--brand-500, #1E5FA8);
   font-weight: 600;
+  background: var(--surface, #FFFFFF);
+  box-shadow: var(--shadow-1, 0 2rpx 8rpx rgba(15, 26, 22, 0.04));
 }
 .comment-item {
   display: flex;
   gap: 18rpx;
-  padding: 26rpx 0;
-  border-bottom: 1rpx solid #f6f7fb;
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid #f2f4f7;
 }
 .comment-item:last-child {
   border-bottom: none;
@@ -212,33 +250,32 @@
   color: #b6bbc6;
   flex-shrink: 0;
 }
-/* LV 等级徽章：分 5 档配色，低调但可辨 */
-.c-lv {
+/* LV 等级徽章 & 省份标签：统一为「同高、同圆角、同字号的胶囊片」，
+   原来 LV 是小圆角绿块、省份是灰底小方块，形态和配色都对不上。
+   LV 1~3 收进品牌蓝同色系（原 lv-2 是绿色 #1F9E6E，与蓝系主题冲突）。 */
+.c-lv,
+.c-province {
   flex-shrink: 0;
-  height: 30rpx;
-  line-height: 30rpx;
-  padding: 0 10rpx;
-  border-radius: 8rpx;
-  font-size: 18rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 12rpx;
+  border-radius: var(--radius-pill, 999rpx);
+  font-size: 19rpx;
+}
+.c-lv {
   font-weight: 700;
   letter-spacing: 0.5rpx;
-  background: #eef0f4;
+  background: #F1F5F9;
   color: #8b8f99;
 }
-.c-lv.lv-1 { background: #F2F3F5; color: #9A9EA6; }
-.c-lv.lv-2 { background: #E8F5EF; color: #1F9E6E; }
-.c-lv.lv-3 { background: #E3F0FF; color: #2E7CD6; }
+.c-lv.lv-1 { background: #F1F5F9; color: #94A3B8; }
+.c-lv.lv-2 { background: #E8F0FA; color: #1E5FA8; }
+.c-lv.lv-3 { background: #D6E6F8; color: #17508F; }
 .c-lv.lv-4 { background: #F1ECFF; color: #7A5AF8; }
 .c-lv.lv-5 { background: #FFF3E0; color: #E08A00; }
 /* 省份标签 */
 .c-province {
-  flex-shrink: 0;
-  height: 30rpx;
-  line-height: 30rpx;
-  padding: 0 10rpx;
-  border-radius: 8rpx;
-  font-size: 18rpx;
-  background: #F4F6F8;
+  background: #F1F5F9;
   color: #7A8089;
   max-width: 140rpx;
   overflow: hidden;
@@ -247,15 +284,15 @@
 }
 .c-text {
   font-size: 28rpx;
-  line-height: 1.65;
+  line-height: 1.7;
   color: #2b303b;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
   word-break: break-all;
 }
 .c-del {
   font-size: 22rpx;
-  color: #b6bbc6;
-  padding: 4rpx 8rpx;
+  color: #c0c4cc;
+  padding: 10rpx 12rpx;
 }
 .c-imgs {
   display: flex;
@@ -268,29 +305,39 @@
   border-radius: 10rpx;
   background: #f4f5f9;
 }
-/* 底部操作栏：点赞 / 回复 / 删除 */
+/* 底部操作栏：点赞 / 回复 / 删除。
+   ⚠️ 原来 .c-action 只有 4rpx 内边距，热区高约 36rpx，远低于 --tap-min(88rpx)，很难点中。
+      改为 60rpx 高的胶囊热区；用 .c-actions 的 -16rpx 负边距抵掉首个内边距，
+      让图标左缘仍与正文对齐。 */
 .c-actions {
   display: flex;
   align-items: center;
-  gap: 28rpx;
-  margin-top: 14rpx;
+  gap: 12rpx;
+  margin-top: 12rpx;
+  margin-left: -16rpx;
 }
 .c-action {
   display: flex;
   align-items: center;
-  gap: 6rpx;
-  padding: 4rpx 8rpx;
-  margin: -4rpx -8rpx;
-  border-radius: 999rpx;
+  gap: 8rpx;
+  height: 60rpx;
+  padding: 0 16rpx;
+  border-radius: var(--radius-pill, 999rpx);
   transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
 }
 .c-action-hover {
   background: var(--surface-2, #F0F3F2);
 }
+/* 点赞：用 transition 做「弹一下」，而不是 @keyframes ——
+   transition 不会在首帧触发，避免进页时所有已点赞项一起抖。 */
 .c-like-ico {
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #9ca3af;
-  transition: color var(--dur-fast, 120ms) var(--ease-out, ease);
+  transition: color var(--dur-fast, 120ms) var(--ease-out, ease),
+              transform var(--dur-base, 200ms) var(--ease-out, ease);
+}
+.c-like-ico.ico-like {
+  transform: scale(1.14);
 }
 .c-action-num {
   font-size: 22rpx;
@@ -327,6 +374,7 @@
   z-index: 30;
 }
 /* 写评论：胶囊输入框 */
+/* 写评论：胶囊输入框。底色调成品牌极浅蓝，和中性的灰底比更贴主题、也更「可输入」 */
 .bar-input {
   flex: 1;
   min-width: 0;
@@ -335,12 +383,12 @@
   gap: 12rpx;
   height: 80rpx;
   padding: 0 26rpx;
-  background: var(--surface-2, #F0F3F2);
+  background: var(--brand-50, #E8F0FA);
   border-radius: var(--radius-pill, 999rpx);
   transition: background var(--dur-fast, 120ms) var(--ease-out, ease);
 }
 .bar-input-hover {
-  background: var(--surface-3, #E8ECEA);
+  background: var(--brand-100, #C7DDF3);
 }
 .bar-input-icon {
   font-size: 30rpx;
@@ -385,9 +433,12 @@
   background: var(--surface-2, #F0F3F2);
   transform: scale(0.94);
 }
+/* 点赞：同样用 transition 做「弹一下」，不用 keyframes（避免进页时已点赞态自动抖动） */
 .bar-ico {
-  font-size: 36rpx;
+  font-size: 38rpx;
   flex-shrink: 0;
+  transition: transform var(--dur-base, 200ms) var(--ease-out, ease),
+              color var(--dur-fast, 120ms) var(--ease-out, ease);
 }
 .bar-num {
   font-size: var(--fs-2, 22rpx);
@@ -395,10 +446,13 @@
   color: var(--text-3, #6B7A74);
   line-height: 1;
 }
-/* 点赞激活：马卡龙浅粉底 + 樱花粉 */
+/* 点赞激活：马卡龙浅粉底 + 樱花粉（点赞语义色全站保留，不并入蓝系） */
 .bar-act.on {
   background: var(--like-50, #FFF0F4);
   color: var(--like-500, #FF4D7D);
+}
+.bar-act.on .bar-ico {
+  transform: scale(1.14);
 }
 .bar-act.on .bar-num {
   color: var(--like-500, #FF4D7D);
@@ -557,10 +611,10 @@
 
 /* ---------- 楼中楼回复 ---------- */
 .c-replies {
-  margin-top: 16rpx;
-  background: #f6f8fb;
-  border-radius: 16rpx;
-  padding: 14rpx 18rpx;
+  margin-top: 18rpx;
+  background: #F7F9FC;
+  border-radius: 20rpx;
+  padding: 16rpx 20rpx;
 }
 .reply-item {
   display: flex;
@@ -588,14 +642,17 @@
   height: 100%;
   display: block;
 }
+/* 「回复 xx：」和「查看全部 N 条回复」是跳转/展开语义，不是点赞，
+   原来误用了点赞粉 --like-500，在蓝系主题里很跳 → 改品牌蓝 */
 .reply-to {
-  color: var(--like-500, #FF4D7D);
+  color: var(--brand-500, #1E5FA8);
   font-weight: 600;
 }
 .reply-more {
-  padding: 12rpx 0 4rpx;
+  padding: 14rpx 0 4rpx;
   font-size: 24rpx;
-  color: var(--like-500, #FF4D7D);
+  font-weight: var(--fw-medium, 500);
+  color: var(--brand-500, #1E5FA8);
 }
 /* 楼中楼里的昵称比主评论略小、字重略轻，视觉上分出层级 */
 .c-replies .c-name {
@@ -751,8 +808,8 @@
   background: var(--surface-3, #E8ECEA);
 }
 .sheet-tool.on {
-  background: var(--brand-50, #E8F5EF);
-  color: var(--brand-500, #006C49);
+  background: var(--brand-50, #E8F0FA);
+  color: var(--brand-500, #1E5FA8);
 }
 .sheet-send {
   padding: 0 40rpx;
@@ -766,7 +823,37 @@
   transition: background 0.15s, color 0.15s;
 }
 .sheet-send.on {
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(0, 108, 73, 0.18);
+  box-shadow: 0 4rpx 16rpx rgba(30, 95, 168, 0.18);
+}
+
+/* ---------- 评论区收尾（有评论时给出结束标记，避免下方突然一片空白） ---------- */
+.comment-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 36rpx 0 28rpx;
+}
+.ce-line {
+  width: 56rpx;
+  height: 1rpx;
+  background: var(--border, #E3E8E6);
+}
+.ce-text {
+  font-size: var(--fs-2, 22rpx);
+  color: #b6bbc6;
+}
+
+/* ---------- 入场动效 ----------
+   只在 wx:if 从 false→true 建立节点时播放一次（帖子数据加载完成时）。
+   后续 setData（点赞、评论刷新）不会重播，因为动画属性本身没变。 */
+@keyframes post-card-in {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes img-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }

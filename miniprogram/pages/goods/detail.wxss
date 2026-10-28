@@ -1,5 +1,5 @@
 /* ===== 商品详情 · 统一视觉规范 =====
-   主色 var(--brand-500, #006C49) / var(--like-600, #E11D48) · 墨色 #0f172a · 次级 #64748b · 三级 #94a3b8
+   主色 var(--brand-500, #1E5FA8) / var(--like-600, #E11D48) · 墨色 #0f172a · 次级 #64748b · 三级 #94a3b8
    圆角：卡片 28rpx / 内块 18rpx / 胶囊 999rpx
    阴影：1rpx 描边 + 大范围低透明度投影，避免灰块感
 */
@@ -67,7 +67,7 @@
   letter-spacing: 0.5rpx;
 }
 .gallery-tag.mint {
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
   box-shadow: 0 6rpx 16rpx -6rpx rgba(255, 122, 149, 0.6);
 }
@@ -207,7 +207,7 @@
   overflow: hidden;
   background: #eef1f4;
   border: 3rpx solid #ffffff;
-  box-shadow: 0 0 0 2rpx rgba(0, 108, 73, 0.2), 0 8rpx 20rpx -10rpx rgba(15, 23, 42, 0.3);
+  box-shadow: 0 0 0 2rpx rgba(30, 95, 168, 0.2), 0 8rpx 20rpx -10rpx rgba(15, 23, 42, 0.3);
 }
 .seller-check {
   position: absolute;
@@ -216,7 +216,7 @@
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
   font-size: 20rpx;
   display: flex;
@@ -263,7 +263,7 @@
   height: 60rpx;
   padding: 0 28rpx;
   border-radius: 999rpx;
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
   font-size: 25rpx;
   font-weight: 600;
@@ -382,7 +382,7 @@
   padding: 22rpx 24rpx;
   border-radius: 18rpx;
   background: #f4faf7;
-  border-left: 4rpx solid rgba(0, 108, 73, 0.5);
+  border-left: 4rpx solid rgba(30, 95, 168, 0.5);
   font-size: 23rpx;
   line-height: 1.75;
   color: #3f6b5b;
@@ -395,7 +395,7 @@
   padding: 26rpx;
   border-radius: 28rpx;
   background: linear-gradient(135deg, #effaf3 0%, #f8fdfb 100%);
-  border: 1rpx solid rgba(0, 108, 73, 0.14);
+  border: 1rpx solid rgba(30, 95, 168, 0.14);
   margin-bottom: 20rpx;
 }
 .safety-icon {
@@ -462,7 +462,7 @@
   color: #c2410c;
 }
 .qa-badge.a {
-  background: var(--brand-500, #006C49);
+  background: var(--brand-500, #1E5FA8);
   color: #ffffff;
 }
 .qa-text {
@@ -582,7 +582,7 @@
   margin-right: 12rpx;
   border-radius: 999rpx;
   background: #eaf7f1;
-  border: 2rpx solid rgba(0, 108, 73, 0.22);
+  border: 2rpx solid rgba(30, 95, 168, 0.22);
   color: var(--like-600, #E11D48);
   font-size: 27rpx;
   font-weight: 600;
@@ -609,7 +609,7 @@
   min-width: 0;
   height: 92rpx;
   border-radius: 999rpx;
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
   font-size: 30rpx;
   font-weight: 700;
@@ -645,7 +645,7 @@
   font-size: 22rpx;
   font-weight: 600;
   flex-shrink: 0;
-  background: rgba(14, 154, 96, 0.1);
+  background: rgba(30, 95, 168, 0.1);
   color: #E8925E;
 }
 .owner-status.sold {
@@ -692,8 +692,8 @@
   opacity: 0.8;
 }
 .act-btn.act-edit {
-  background: rgba(0, 108, 73, 0.12);
-  color: #006c49;
+  background: rgba(30, 95, 168, 0.12);
+  color: #1E5FA8;
 }
 .act-btn.act-danger {
   background: rgba(255, 77, 79, 0.08);
@@ -708,7 +708,7 @@
   padding: 0 10rpx;
 }
 .act-btn.act-promote {
-  background: rgba(0, 108, 73, 0.92);
+  background: rgba(30, 95, 168, 0.92);
   color: #fff;
 }
 
@@ -861,9 +861,9 @@
   transition: background 0.15s, color 0.15s, transform 0.15s;
 }
 .sheet-send.on {
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(0, 108, 73, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(30, 95, 168, 0.3);
 }
 
 .sheet {
@@ -1031,7 +1031,7 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 .cc-send.on {
-  background: var(--brand-gradient, linear-gradient(135deg, #006C49 0%, #5FB894 100%));
+  background: var(--brand-gradient, linear-gradient(135deg, #1E5FA8 0%, #5B97D1 100%));
   color: #ffffff;
   font-weight: 600;
   box-shadow: 0 8rpx 18rpx -10rpx rgba(255, 122, 149, 0.8);
@@ -1357,8 +1357,8 @@
 .wanted-type {
   align-self: flex-start;
   font-size: 22rpx;
-  color: #006C49;
-  background: rgba(0, 108, 73, 0.08);
+  color: #1E5FA8;
+  background: rgba(30, 95, 168, 0.08);
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
 }
@@ -1379,5 +1379,5 @@
 .wanted-cta {
   margin-top: 16rpx;
   font-size: 24rpx;
-  color: #006C49;
+  color: #1E5FA8;
 }
