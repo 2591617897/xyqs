@@ -1,13 +1,17 @@
 .ui-spin {
   display: inline-block;
-  border: 4rpx solid #E2E8F0;
-  border-top-color: #006C49;
+  border: 4rpx solid var(--brand-50, #E8F5EF);
+  border-top-color: var(--brand-500, #006C49);
   border-radius: 50%;
-  animation: ui-spin-rotate 0.7s linear infinite;
+  animation: ui-spin-rotate 0.8s linear infinite;
+  will-change: transform;
 }
 @keyframes ui-spin-rotate { to { transform: rotate(360deg); } }
 
-.ui-skeleton { padding: 8rpx 0; }
+.ui-skeleton {
+  padding: 8rpx 0;
+  animation: ui-fade-in 0.3s ease both;
+}
 .ui-skeleton-row {
   height: 28rpx;
   margin: 16rpx 0;
@@ -17,3 +21,4 @@
   animation: ui-skeleton-shine 1.3s ease infinite;
 }
 @keyframes ui-skeleton-shine { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }

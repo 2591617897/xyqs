@@ -226,6 +226,8 @@ Page({
 
   /** 真正执行标记全部已读（已获用户确认） */
   doMarkAllRead: function () {
+    // 未登录时会话列表是空的，但入口仍可能被调用 —— 先拦，避免 401 且无提示
+    if (!auth.guard()) return
     const unread = this.data.convos.filter(function (c) { return c.unread > 0 })
     const patch = {}
     this.data.allConvos.forEach(function (c, i) {
@@ -282,6 +284,7 @@ Page({
 
   doDelete: function (id) {
     const self = this
+    if (!auth.guard()) return
     http.del('/messages/' + id, null, { silent: true }).then(function () {
       const all = self.data.allConvos.filter(function (c) { return c.id !== id })
       self.setData({ allConvos: all, openSwipeId: '' })
@@ -368,6 +371,7 @@ Page({
   /** 退群后重新加入 */
   rejoinGroup: function (id) {
     const self = this
+    if (!auth.guard()) return
     mp.showModal({
       title: '重新加入',
       content: '你之前退出了本群，确定重新加入吗？',

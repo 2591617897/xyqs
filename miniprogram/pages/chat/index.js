@@ -1,6 +1,7 @@
 const http = require('../../utils/request')
 const upload = require('../../utils/upload')
 const { mp, timeAgo } = require('../../utils/util')
+const auth = require('../../utils/auth')
 const { resolve } = require('../../utils/img')
 
 Page({
@@ -27,6 +28,11 @@ Page({
   },
 
   onLoad: function (options) {
+    // 私信只有登录用户能用：游客进到这里，发送/删除全是 401 且没有任何提示。
+    // 与其在每个写方法里各拦一次，不如在门口拦 —— 未登录直接退回上一页。
+    auth.ensureLogin().catch(function () {
+      setTimeout(function () { mp.navigateBack() }, 600)
+    })
     mp.setNavigationBarTitle({ title: '私信' })
     const cached = mp.getStorageSync('user') || {}
     this.setData({

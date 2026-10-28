@@ -1,5 +1,6 @@
 const http = require('../../../utils/request')
 const { mp, toast } = require('../../../utils/util')
+const auth = require('../../../utils/auth')
 
 Page({
   data: {
@@ -17,6 +18,10 @@ Page({
   },
 
   onLoad: function (opt) {
+    // 群设置里的开关/退群都是写操作，游客进来点了只会 401
+    auth.ensureLogin().catch(function () {
+      setTimeout(function () { mp.navigateBack() }, 600)
+    })
     const info = typeof mp.getWindowInfo === 'function' ? mp.getWindowInfo() : mp.getSystemInfoSync()
     this.setData({
       statusBarHeight: info.statusBarHeight || 20,

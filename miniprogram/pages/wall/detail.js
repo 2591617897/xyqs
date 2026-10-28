@@ -350,6 +350,7 @@ Page({
 
   deleteComment: function (e) {
     const self = this
+    if (!auth.guard()) return
     const commentId = e.currentTarget.dataset.id
     mp.showModal({
       title: '删除这条评论？',
@@ -445,6 +446,7 @@ Page({
 
   saveEdit: function () {
     const self = this
+    if (!auth.guard()) return
     const content = this.data.editContent.trim()
     if (!content) {
       toast('内容不能为空')
@@ -472,6 +474,7 @@ Page({
 
   removePost: function () {
     const self = this
+    if (!auth.guard()) return
     mp.showModal({
       title: '删除这条心事？',
       content: '删除后不可恢复，也不会再出现在树洞',

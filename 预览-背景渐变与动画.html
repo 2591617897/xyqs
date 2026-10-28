@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>校聚一城 · 背景渐变与动画预览</title>
+<style>
+  :root{
+    /* 当前采用的：项目真实主题色（森林绿） */
+    --grad-from:#8FD9BD; --grad-mid:#006C49; --grad-to:#FFFFFF;
+    /* 截图里的蓝系备选（一键切换） */
+    --grad-from-blue:#A8D4F5; --grad-mid-blue:#2B6CB8; --grad-to-blue:#FFFFFF;
+    --brand:#006C49; --brand-50:#E8F5EF; --text-1:#0F1A16; --text-2:#4B5A54;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+    background:#20242b;display:flex;flex-direction:column;align-items:center;padding:24px;color:#e6e8ec;}
+  h2{font-size:16px;margin:0 0 4px}
+  .tip{font-size:12px;color:#9aa3ad;margin-bottom:16px;text-align:center;max-width:380px;line-height:1.6}
+  .phone{width:375px;height:760px;border-radius:38px;overflow:hidden;position:relative;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);border:10px solid #111418;}
+  /* ===== 页面背景渐变（与 app.wxss 同款） ===== */
+  .screen{position:absolute;inset:0;
+    background-color:var(--grad-to);
+    background-image:linear-gradient(180deg,var(--grad-from) 0%,var(--grad-mid) 24%,var(--grad-to) 56%);
+    background-repeat:no-repeat;background-size:100% 100vh;color:var(--text-1);}
+  /* 模拟白色自定义导航栏（盖住最顶部，和真机一致） */
+  .navbar{height:88px;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:17px;border-bottom:1px solid #eee;position:relative;z-index:2;}
+  .navbar .back{position:absolute;left:14px;color:var(--brand);font-size:22px;}
+  .content{padding:16px;position:relative;z-index:1;}
+  .scope-bar{background:#fff;border-radius:18px;padding:12px 16px;display:flex;align-items:center;
+    gap:10px;box-shadow:0 2px 8px rgba(15,26,22,.05);margin-bottom:14px;}
+  .scope-ico{width:34px;height:34px;border-radius:10px;background:var(--brand-50);
+    display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .scope-main{font-weight:600;font-size:14px}
+  .card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(15,26,22,.05);margin-bottom:14px;}
+  .card .row{display:flex;align-items:center;gap:10px}
+  .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--brand-50),var(--brand-50));}
+  .sk{height:12px;border-radius:6px;background:linear-gradient(90deg,#EEF2F6 25%,#E2E8F0 37%,#EEF2F6 63%);
+    background-size:400% 100%;animation:shine 1.3s ease infinite;}
+
+  /* ===== 按钮（按压回弹 + 浮起） ===== */
+  .btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 22px;
+    border-radius:999px;font-size:15px;font-weight:600;border:none;cursor:pointer;
+    transition:transform .18s var(--ease),opacity .18s,box-shadow .18s;}
+  .btn:active{transform:scale(.96);opacity:.92}
+  .btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(0,108,73,.26);}
+  .btn-primary:active{box-shadow:0 3px 8px rgba(0,108,73,.22);}
+  .btn-sec{background:var(--brand-50);color:var(--brand);}
+  .btn-danger{background:#DC2626;color:#fff;box-shadow:0 6px 16px rgba(220,38,38,.24);}
+  .spin{width:16px;height:16px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;
+    border-radius:50%;animation:rot .7s linear infinite;margin-right:8px;}
+
+  /* ===== 加载旋转 ===== */
+  .loader{width:36px;height:36px;border:4px solid var(--brand-50);border-top-color:var(--brand);
+    border-radius:50%;animation:rot .8s linear infinite;will-change:transform;}
+
+  /* ===== Toast（进/出场） ===== */
+  .toast-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;z-index:30;}
+  .toast{background:rgba(15,23,42,.88);color:#fff;border-radius:14px;padding:16px 22px;
+    display:flex;flex-direction:column;align-items:center;font-size:14px;max-width:70%;}
+  .toast.show{animation:tin .3s var(--ease) both}
+  .toast.hide{animation:tout .2s ease-in both}
+  .toast .ic{font-size:30px;margin-bottom:6px}
+  @keyframes tin{0%{opacity:0;transform:translateY(18px) scale(.92)}100%{opacity:1;transform:none}}
+  @keyframes tout{0%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-10px) scale(.96)}}
+
+  /* ===== Modal 弹簧入场 ===== */
+  .mask{position:absolute;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;
+    justify-content:center;z-index:40;animation:fin .2s ease both;}
+  .modal{width:280px;background:#fff;border-radius:18px;padding:24px 20px 18px;animation:min .28s var(--ease) both;}
+  .modal h3{margin:0 0 12px;text-align:center;font-size:17px}
+  .modal p{margin:0 0 18px;text-align:center;color:var(--text-2);font-size:14px;line-height:1.6}
+  .modal .foot{display:flex;gap:12px}
+  .modal .mbtn{flex:1;height:42px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:600;font-size:15px}
+  .m-cancel{background:#F1F5F9;color:#475569}
+  .m-ok{background:var(--brand);color:#fff}
+  @keyframes fin{from{opacity:0}to{opacity:1}}
+  @keyframes min{0%{opacity:0;transform:scale(.88) translateY(20px)}100%{opacity:1;transform:none}}
+
+  /* ===== Sheet 回弹上滑 ===== */
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;
+    padding:20px 20px 28px;z-index:41;animation:sup .32s cubic-bezier(.34,1.4,.64,1) both;}
+  @keyframes sup{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+
+  /* ===== 空态漂浮 ===== */
+  .empty{display:flex;flex-direction:column;align-items:center;padding:48px 0;animation:fin .4s ease both}
+  .empty .ico{font-size:64px;color:#CBD5E1;animation:float 3s ease-in-out infinite}
+  .empty .t{margin-top:14px;color:#64748B;font-size:14px}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+  @keyframes rot{to{transform:rotate(360deg)}}
+  @keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
+
+  .controls{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .controls button{background:#2b313b;color:#e6e8ec;border:1px solid #3a414c;border-radius:10px;
+    padding:8px 14px;font-size:13px;cursor:pointer}
+  .controls button.on{background:#006C49;border-color:#006C49}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <h2>校聚一城 · 背景渐变 + 动画预览</h2>
+  <div class="tip">顶部状态栏→中部为品牌绿渐变、底部转白（与 app.wxss 写入的一致）。下方按钮可一键对比截图里的蓝系。</div>
+
+  <div class="phone">
+    <div class="screen" id="screen">
+      <div class="navbar"><span class="back">‹</span>校园广场</div>
+      <div class="content">
+        <div class="scope-bar"><div class="scope-ico">🎓</div><div class="scope-main">只看本校内容</div></div>
+        <div class="card"><div class="row"><div class="avatar"></div>
+          <div style="flex:1"><div class="sk" style="width:120px"></div>
+          <div class="sk" style="width:80px;margin-top:8px"></div></div></div></div>
+        <div class="card"><div class="row" style="gap:12px">
+          <button class="btn btn-primary" onclick="this.classList.add('x')"><span class="spin"></span>发布中</button>
+          <button class="btn btn-sec">次按钮</button>
+          <button class="btn btn-danger">删除</button>
+        </div></div>
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div class="loader"></div><div style="color:var(--text-2);font-size:14px">加载中…</div>
+        </div>
+        <div class="empty"><div class="ico">📭</div><div class="t">暂无内容</div></div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast-wrap hidden" id="toastWrap"><div class="toast" id="toast"><div class="ic">✅</div><div>已发布成功</div></div></div>
+
+      <!-- Modal -->
+      <div class="mask hidden" id="modalMask"><div class="modal">
+        <h3>确认删除？</h3><p>删除后无法恢复，确定要删除这条内容吗？</p>
+        <div class="foot"><div class="mbtn m-cancel" onclick="closeModal()">取消</div><div class="mbtn m-ok" onclick="closeModal()">确定</div></div>
+      </div></div>
+
+      <!-- Sheet -->
+      <div class="sheet hidden" id="sheet"><h3 style="margin:0 0 14px;font-size:16px">分享到</h3>
+        <div style="display:flex;gap:24px;justify-content:space-around;font-size:13px;color:var(--text-2)">
+          <div style="text-align:center">💬<div style="margin-top:6px">微信</div></div>
+          <div style="text-align:center">👥<div style="margin-top:6px">朋友圈</div></div>
+          <div style="text-align:center">🔗<div style="margin-top:6px">复制链接</div></div></div>
+        <div style="text-align:center;margin-top:18px;color:#94A3B8;font-size:14px;cursor:pointer" onclick="document.getElementById('sheet').classList.add('hidden')">取消</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="bGreen" class="on" onclick="setTheme('green')">采用绿色（项目主题色）</button>
+    <button id="bBlue" onclick="setTheme('blue')">切换蓝系（截图同款）</button>
+    <button onclick="showToast()">弹 Toast</button>
+    <button onclick="document.getElementById('modalMask').classList.remove('hidden')">弹 Modal</button>
+    <button onclick="document.getElementById('sheet').classList.remove('hidden')">弹 Sheet</button>
+  </div>
+
+<script>
+  function setTheme(t){
+    const r=document.documentElement.style;
+    if(t==='blue'){r.setProperty('--grad-from','var(--grad-from-blue)');r.setProperty('--grad-mid','var(--grad-mid-blue)');r.setProperty('--grad-to','var(--grad-to-blue)');
+      document.getElementById('bBlue').classList.add('on');document.getElementById('bGreen').classList.remove('on');}
+    else{r.setProperty('--grad-from','#8FD9BD');r.setProperty('--grad-mid','#006C49');r.setProperty('--grad-to','#FFFFFF');
+      document.getElementById('bGreen').classList.add('on');document.getElementById('bBlue').classList.remove('on');}
+  }
+  function showToast(){
+    const w=document.getElementById('toastWrap'),t=document.getElementById('toast');
+    w.classList.remove('hidden');t.className='toast show';
+    clearTimeout(window._tt);window._tt=setTimeout(()=>{t.className='toast hide';
+      setTimeout(()=>w.classList.add('hidden'),220);},1400);
+  }
+  function closeModal(){document.getElementById('modalMask').classList.add('hidden');}
+</script>
+</body>
+</html>

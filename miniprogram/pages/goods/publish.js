@@ -205,6 +205,7 @@ Page({
 
   submit: function () {
     const self = this
+    if (!auth.guard()) return
     const d = this.data
     if (!d.title.trim()) {
       toast('给闲置起个标题吧')

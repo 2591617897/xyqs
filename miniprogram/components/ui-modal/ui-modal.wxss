@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: ui-fade-in 0.2s ease both;
 }
 .ui-modal {
   width: 560rpx;
@@ -13,6 +14,12 @@
   border-radius: 24rpx;
   padding: 40rpx 32rpx 28rpx;
   box-sizing: border-box;
+  animation: ui-modal-in 0.28s var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1)) both;
+}
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-modal-in {
+  0% { opacity: 0; transform: scale(0.88) translateY(20rpx); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 .ui-modal-title {
   font-size: 32rpx;

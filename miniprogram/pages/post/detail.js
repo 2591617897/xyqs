@@ -422,6 +422,7 @@ Page({
 
   deleteComment: function (e) {
     const self = this
+    if (!auth.guard()) return
     const id = e.currentTarget.dataset.id
     mp.showModal({
       title: '删除这条评论？',
@@ -513,6 +514,7 @@ Page({
 
   deletePost: function () {
     const self = this
+    if (!auth.guard()) return
     mp.showModal({
       title: '删除这篇帖子？',
       content: '删除后不可恢复',

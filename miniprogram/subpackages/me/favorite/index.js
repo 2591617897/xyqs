@@ -59,6 +59,7 @@ Page({
   /** 取消收藏：二次确认 → 调切换接口 → 本地移除（不整页重拉，省一次请求） */
   unfavorite: function (e) {
     const self = this
+    if (!auth.guard()) return
     const id = e.currentTarget.dataset.id
     if (!id || this.data.removing) return
     mp.showModal({

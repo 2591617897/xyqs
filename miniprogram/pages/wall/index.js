@@ -303,6 +303,7 @@ Page({
 
   submitPost: function () {
     const self = this
+    if (!auth.guard()) return
     if (!this.data.content.trim()) {
       toast('说点什么再发吧')
       return
@@ -333,6 +334,7 @@ Page({
   /* ---------- 删除（不冒泡） ---------- */
   deletePost: function (e) {
     const self = this
+    if (!auth.guard()) return
     const post = this.data.posts[e.currentTarget.dataset.index]
     if (!post) return
     mp.showModal({

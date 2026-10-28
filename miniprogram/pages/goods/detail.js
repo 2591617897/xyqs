@@ -187,6 +187,7 @@ Page({
 
   toggleStatus: function () {
     const self = this
+    if (!auth.guard()) return
     const goods = this.data.goods
     const next = goods.status === 1 ? 0 : 1
     http.post('/goods/' + this.goodsId + '/status?status=' + next, null, { loading: true })
@@ -199,6 +200,7 @@ Page({
 
   removeGoods: function () {
     const self = this
+    if (!auth.guard()) return
     mp.showModal({
       title: '删除这件闲置？',
       content: '删除后不可恢复',
@@ -334,6 +336,7 @@ Page({
 
   submitOrder: function () {
     const self = this
+    if (!auth.guard()) return
     if (!this.data.contact.trim()) {
       toast('请留下联系方式')
       return
@@ -576,6 +579,7 @@ Page({
 
   deleteComment: function (e) {
     const self = this
+    if (!auth.guard()) return
     const id = e.currentTarget.dataset.id
     mp.showModal({
       title: '删除这条评论？',

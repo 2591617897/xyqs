@@ -20,3 +20,19 @@
 }
 .ui-toast-ico { font-size: 56rpx; color: #fff; margin-bottom: 12rpx; }
 .ui-toast-text { text-align: center; line-height: 1.5; }
+
+/* 入场：上浮 + 轻微回弹放大；退场：上浮淡出 */
+.ui-toast-box {
+  animation: ui-toast-in 0.3s var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1)) both;
+}
+.ui-toast--out .ui-toast-box {
+  animation: ui-toast-out 0.2s ease-in both;
+}
+@keyframes ui-toast-in {
+  0% { opacity: 0; transform: translateY(18rpx) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ui-toast-out {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10rpx) scale(0.96); }
+}

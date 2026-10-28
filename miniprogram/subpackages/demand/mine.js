@@ -82,6 +82,7 @@ Page({
   /** 列表页快捷「已找到」：不用进详情就能收掉一条 */
   quickDone: function (e) {
     const self = this
+    if (!auth.guard()) return
     const id = e.currentTarget.dataset.id
     ui.confirm({ title: '标记为已找到？', content: '标记后这条需求不会再出现在广场上' })
       .then(function (ok) {

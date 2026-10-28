@@ -1,4 +1,4 @@
-<view wx:if="{{visible}}" class="ui-toast">
+<view wx:if="{{visible}}" class="ui-toast {{leaving ? 'ui-toast--out' : ''}}">
   <view class="ui-toast-box">
     <view wx:if="{{icon}}" class="ico ico-{{icon}} ui-toast-ico"></view>
     <text class="ui-toast-text">{{text}}</text>

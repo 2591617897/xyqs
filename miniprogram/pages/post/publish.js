@@ -138,6 +138,7 @@ Page({
 
   submit: function () {
     const self = this
+    if (!auth.guard()) return
     const d = this.data
     if (!d.channelId) {
       toast('请选择频道')

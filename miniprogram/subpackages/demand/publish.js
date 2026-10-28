@@ -157,6 +157,7 @@ Page({
 
   submit: function () {
     const self = this
+    if (!auth.guard()) return
     const d = this.data
     if (!String(d.title).trim()) {
       toast('说说你想要什么')

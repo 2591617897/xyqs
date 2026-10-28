@@ -198,10 +198,15 @@ Page({
       return
     }
     if (this.data.commentSubmitting) return
-    this.setData({ commentSubmitting: true })
-    http.post('/demands/' + this.data.id + '/comments', {
-      content: text,
-      parentId: this.data.commentParentId || 0
+    // 发评论要登录 + 学籍认证（后端 requireVerifiedUserId）。
+    // 走 ensureVerified 的 Promise 链：登录/认证成功后自动把这条评论发出去，
+    // 不用用户再点一次「发布」（输入框里的内容还在，丢了会让人骂街）。
+    auth.ensureVerified().then(function () {
+      self.setData({ commentSubmitting: true })
+      return http.post('/demands/' + self.data.id + '/comments', {
+        content: text,
+        parentId: self.data.commentParentId || 0
+      })
     }).then(function () {
       self.setData({
         showCommentSheet: false,
@@ -254,6 +259,8 @@ Page({
   deleteComment: function (e) {
     const self = this
     const id = e.currentTarget.dataset.id
+    // 游客点了「删除」会直接 401，且不知道为什么没反应 —— 先拦一次
+    if (!auth.guard()) return
     ui.confirm({ title: '删除这条评论？', content: '删除后不可恢复' }).then(function (ok) {
       if (!ok) return
       http.del('/demands/' + self.data.id + '/comments/' + id).then(function () {
@@ -326,6 +333,9 @@ Page({
   submitReply: function () {
     const self = this
     const msg = String(this.data.replyMessage || '').trim()
+    // 入口 onTapReply 已经 ensureVerified 过，这里再兜一次：
+    // 底部按钮也可能被别处直接触发，未登录就发会拿到 401 且无提示
+    if (!auth.guard()) return
     if (!msg) {
       toast('说点什么，让对方知道你能提供什么')
       return
@@ -391,6 +401,7 @@ Page({
 
   changeStatus: function (status, okMsg) {
     const self = this
+    if (!auth.guard()) return
     http.post('/demands/' + this.data.id + '/status', { status: status }).then(function () {
       toast(okMsg)
       mp.setStorageSync('needRefreshDemand', 1)
@@ -404,6 +415,7 @@ Page({
 
   remove: function () {
     const self = this
+    if (!auth.guard()) return
     ui.confirm({ title: '删除这条需求？', content: '删除后不可恢复，收到的回应也会一并删除' }).then(function (ok) {
       if (!ok) return
       http.del('/demands/' + self.data.id).then(function () {

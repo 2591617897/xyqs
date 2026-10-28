@@ -346,9 +346,35 @@ function suspendPrompt() {
   loginDeclined = true
 }
 
+/**
+ * 写操作入口的**同步**守卫。
+ *
+ * <p>已登录 → 返回 true，调用方继续；未登录 → 触发登录引导（弹窗 + 登录），
+ * 并提示「请先登录」，返回 false，调用方应当 `return`。</p>
+ *
+ * <p>为什么需要它：`ensureLogin()` 是 Promise，要把整个方法体包进 `.then()` 才行。
+ * 但像「删除」「改状态」这类操作已经在 `ui.confirm` 的回调里，再套一层 Promise
+ * 会把代码拧成麻花。这种场景用同步守卫一行搞定。</p>
+ *
+ * <p>⚠️ 与 ensureLogin 的行为差异：这里登录后**不会自动重放**刚才那次操作，
+ * 用户需要再点一次。对「点赞 / 发评论」这种高频动作仍应走 ensureLogin 的 Promise 链，
+ * 登录成功自动继续；这里只用于低频、且点第二次成本很低的操作。</p>
+ *
+ * @returns {boolean} 是否已登录（false 时调用方必须中止）
+ */
+function guard() {
+  if (http.getToken()) {
+    return true
+  }
+  ensureLogin().catch(function () {})
+  toast('请先登录')
+  return false
+}
+
 module.exports = {
   ensureLogin,
   ensureVerified,
+  guard,
   updateUser,
   doLogin,
   relogin,

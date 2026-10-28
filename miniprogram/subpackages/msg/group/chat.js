@@ -2,6 +2,7 @@ const http = require('../../../utils/request')
 const ws = require('../utils/ws')
 const upload = require('../../../utils/upload')
 const { mp, toast } = require('../../../utils/util')
+const auth = require('../../../utils/auth')
 
 /** 轮询兜底间隔：WebSocket 降级后每 8 秒拉一次增量 */
 const POLL_MS = 8000
@@ -116,6 +117,10 @@ Page({
   // ============ 生命周期 ============
 
   onLoad: function (opt) {
+    // 群聊只有登录用户能用（发消息/撤回/已读全是 401，游客进来点了没反应）
+    auth.ensureLogin().catch(function () {
+      setTimeout(function () { mp.navigateBack() }, 600)
+    })
     const self = this
     const info = typeof mp.getWindowInfo === 'function' ? mp.getWindowInfo() : mp.getSystemInfoSync()
     // 屏幕换算：px↔rpx，以及消息区可视高度（用于「回到底部」按钮显隐判定）

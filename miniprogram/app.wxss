@@ -13,11 +13,24 @@ page {
   --brand-secondary: #FFB5C5;        /* 旧次主色 / 渐变亮端 */
 
   /* ========== 全局基础样式（变量由 styles/tokens.wxss 提供） ========== */
-  background: var(--bg-page, #F5F7F6);
+  /* 页面背景：状态栏→中部品牌绿渐变，底部转白（视口锚定，长页面滚动后自然留白） */
+  background-color: var(--grad-to, #FFFFFF);
+  background-image: linear-gradient(180deg,
+    var(--grad-from, #8FD9BD) 0%,
+    var(--grad-mid, #006C49) 24%,
+    var(--grad-to, #FFFFFF) 56%);
+  background-repeat: no-repeat;
+  background-size: 100% 100vh;
   color: var(--text-1, #0F1A16);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 让所有页面的根容器透出 page 渐变画布（仅去掉根容器自身的不透明底，
+   页面内部的卡片/列表仍用自己的底色，不会被误伤）。 */
+page > .page {
+  background: transparent;
 }
 
 view, text, button, input, textarea {
