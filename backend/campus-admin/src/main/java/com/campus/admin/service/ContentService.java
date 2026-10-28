@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.admin.client.AdminWriteGateway;
+import com.campus.admin.client.DemandAdminClient;
 import com.campus.admin.config.AdminContext;
 import com.campus.admin.config.DataScope;
 import com.campus.admin.config.DataScopeResolver;
 import com.campus.admin.dto.CommentRow;
+import com.campus.admin.dto.DemandRow;
 import com.campus.admin.dto.GoodsRow;
+import com.campus.admin.mapper.DemandQueryMapper;
 import com.campus.admin.dto.PostRow;
 import com.campus.admin.dto.WallRow;
 import com.campus.admin.entity.ContentAudit;
@@ -25,10 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 内容管理：帖子 / 表白墙 / 二手商品 / 评论 的查询与处置。
+ * 内容管理：帖子 / 表白墙 / 二手商品 / 需求广场 / 评论 的查询与处置。
  *
  * <p>两条铁律：
  * 1) 后台只读地 join 出展示行，不持有这些业务表的实体；
@@ -44,10 +49,15 @@ public class ContentService {
     private final PostQueryMapper postQueryMapper;
     private final WallQueryMapper wallQueryMapper;
     private final GoodsQueryMapper goodsQueryMapper;
+    private final DemandQueryMapper demandQueryMapper;
     private final CommentQueryMapper commentQueryMapper;
     private final ContentAuditMapper contentAuditMapper;
     private final AdminWriteGateway gateway;
+    private final DemandAdminClient demandClient;
     private final DataScopeResolver dataScopeResolver;
+
+    /** 需求分类名缓存（type + '-' + id → 中文名）；分类是常量，拉一次就够 */
+    private volatile Map<String, String> demandCategoryNames = new HashMap<>();
 
     // ---------------- 帖子 ----------------
 
@@ -151,6 +161,95 @@ public class ContentService {
         recordAudit("GOODS", id, row.getTitle(), row.getDescription(), row.getImages(),
                 row.getSellerId(), row.getSellerName(), row.getSchoolId(),
                 status == 1 ? "SHOW" : "HIDE", reasonType, reason);
+    }
+
+    // ---------------- 需求广场（求物 / 求帮忙） ----------------
+
+    public R.Page<DemandRow> pageDemands(String keyword, Integer type, Integer status, Long userId,
+                                         long page, long size) {
+        DataScope ds = dataScopeResolver.resolve();
+        List<Long> schoolIds = schoolIdsOrNull(ds);
+        if (schoolIds != null && schoolIds.isEmpty()) {
+            return R.Page.of(List.of(), 0, page, size);
+        }
+        IPage<DemandRow> p = demandQueryMapper.selectDemands(new Page<>(page, size),
+                SearchKit.words(keyword), type, status, userId, schoolIds);
+        p.getRecords().forEach(this::fillDemandNames);
+        return R.Page.of(p.getRecords(), p.getTotal(), page, size);
+    }
+
+    public DemandRow demandDetail(Long id) {
+        DemandRow row = demandQueryMapper.selectDemandOne(id);
+        if (row == null) {
+            throw BizException.notFound("需求不存在");
+        }
+        assertInScope(row.getSchoolId());
+        fillDemandNames(row);
+        return row;
+    }
+
+    /** 需求分类字典：转发 campus-goods 的白名单，后台不自己维护一份 */
+    public List<Map<String, Object>> demandCategories() {
+        try {
+            R<List<Map<String, Object>>> r = demandClient.categories();
+            if (r != null && r.getData() != null) {
+                return r.getData();
+            }
+        } catch (Exception e) {
+            log.warn("[admin] 拉取需求分类失败：{}", e.getMessage());
+        }
+        return List.of();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void setDemandStatus(Long id, Integer status, String reasonType, String reason) {
+        if (status == null || (status != 0 && status != 1)) {
+            throw BizException.of("status 只能是 0下架 / 1恢复进行中");
+        }
+        DemandRow row = demandDetail(id);
+        if (Integer.valueOf(2).equals(row.getStatus())) {
+            throw BizException.of("需求已完成，不可改回进行中");
+        }
+        gateway.setDemandStatus(id, status, reason);
+        recordAudit("DEMAND", id, row.getTitle(), row.getDescription(), row.getImages(),
+                row.getUserId(), row.getAuthorName(), row.getSchoolId(),
+                status == 1 ? "SHOW" : "HIDE", reasonType, reason);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteDemand(Long id, String reasonType, String reason) {
+        DemandRow row = demandDetail(id);
+        gateway.deleteDemand(id, reason);
+        recordAudit("DEMAND", id, row.getTitle(), row.getDescription(), row.getImages(),
+                row.getUserId(), row.getAuthorName(), row.getSchoolId(),
+                "DELETE", reasonType, reason);
+    }
+
+    private void fillDemandNames(DemandRow row) {
+        if (row == null) {
+            return;
+        }
+        row.setTypeName(row.getType() != null && row.getType() == 2 ? "求帮忙" : "求物");
+        row.setCategoryName(demandCategoryNames().get(row.getType() + "-" + row.getCategoryId()));
+    }
+
+    /**
+     * 分类名缓存。第一次用的时候才去 campus-goods 拉，之后一直复用；
+     * 拉不到返回空 Map（页面退化成显示分类 id，不影响列表可用性）。
+     */
+    private Map<String, String> demandCategoryNames() {
+        if (demandCategoryNames.isEmpty()) {
+            synchronized (this) {
+                if (demandCategoryNames.isEmpty()) {
+                    Map<String, String> map = new HashMap<>();
+                    for (Map<String, Object> c : demandCategories()) {
+                        map.put(c.get("type") + "-" + c.get("id"), String.valueOf(c.get("name")));
+                    }
+                    demandCategoryNames = map;
+                }
+            }
+        }
+        return demandCategoryNames;
     }
 
     // ---------------- 评论 ----------------

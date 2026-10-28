@@ -25,9 +25,13 @@ public interface FallbackWriteMapper {
     @Update("UPDATE t_wall_post SET status = #{status} WHERE id = #{id}")
     int updateWallStatus(@Param("id") Long id, @Param("status") Integer status);
 
-    /** 后台只下架/恢复在售，绝不碰 status=2（已售出） */
+    /** 后台只下架/恢复进行中，绝不碰 status=2（已完成） */
     @Update("UPDATE t_goods SET status = #{status} WHERE id = #{id} AND status <> 2")
     int updateGoodsStatus(@Param("id") Long id, @Param("status") Integer status);
+
+    /** 同上：需求广场降级直写，不碰已完成的需求 */
+    @Update("UPDATE t_demand SET status = #{status} WHERE id = #{id} AND status <> 2")
+    int updateDemandStatus(@Param("id") Long id, @Param("status") Integer status);
 
     @Update("UPDATE t_user SET status = #{status} WHERE id = #{id}")
     int updateUserStatus(@Param("id") Long id, @Param("status") Integer status);

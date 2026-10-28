@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS t_user (
   fans_count    INT          NOT NULL DEFAULT 0 COMMENT '粉丝数（关注关系计数器，与 t_follow 对账见 R19）',
   follow_count  INT          NOT NULL DEFAULT 0 COMMENT '关注数（关注关系计数器）',
   status        TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0封禁',
+  -- 令牌版本：封禁 / 解封 / 注销 / 恢复时 +1，写进 JWT claim tv。
+  -- 网关比对库里的值（60 秒缓存）判定旧令牌是否失效 —— JWT 无状态，
+  -- 只改 status 收不回已经发出去的令牌，见 migration-20261028-user-token-revoke.sql。
+  token_version INT          NOT NULL DEFAULT 0 COMMENT '令牌版本：封禁/解封/注销/恢复时 +1，旧令牌立即失效',
   -- 禁言到期时间：只是投影列，事实源是后台的 t_user_mute，由 campus-admin 跨服务写入。
   -- NULL = 未禁言；C 端判断只读这一列，后台改事实源后同事务同步到这里。
   mute_until    DATETIME     DEFAULT NULL COMMENT '禁言到期时间，NULL 表示未禁言',

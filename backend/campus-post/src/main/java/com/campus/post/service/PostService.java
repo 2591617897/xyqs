@@ -13,6 +13,7 @@ import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
+import com.campus.common.security.WriteRatePolicy;
 import com.campus.common.social.Like;
 import com.campus.common.social.mapper.LikeMapper;
 import com.campus.post.entity.Channel;
@@ -58,6 +59,8 @@ public class PostService {
     private static final String COMMENT_TARGET = "COMMENT";
 
     private final PostMapper postMapper;
+    /** UGC 写入频控：内容安全只拦违规词，拦不住「合法但高频」的刷屏 */
+    private final WriteRatePolicy writeRate;
     private final ChannelMapper channelMapper;
     private final PostCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
@@ -236,6 +239,7 @@ public class PostService {
     @Transactional(rollbackFor = Exception.class)
     public Long publish(PostReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.PUBLISH_POST, userId);
         Channel channel = channelMapper.selectById(req.getChannelId());
         if (channel == null) {
             throw new BizException("频道不存在");
@@ -544,6 +548,7 @@ public class PostService {
     @Transactional(rollbackFor = Exception.class)
     public Long addComment(Long postId, String content, List<String> images, Long parentId, List<Long> mentionUserIds) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.COMMENT, userId);
         Post post = postMapper.selectById(postId);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
             throw BizException.notFound("帖子不存在");

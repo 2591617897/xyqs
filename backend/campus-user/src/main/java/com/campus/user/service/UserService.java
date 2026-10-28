@@ -229,7 +229,10 @@ public class UserService {
                 .set(User::getVerifyRemark, null)
                 .set(User::getVerifySubmitAt, null)
                 .set(User::getWxStudentVerified, 0)
-                .set(User::getWxStudentStatus, null));
+                .set(User::getWxStudentStatus, null)
+                // 令牌版本 +1：注销必须立刻让旧令牌作废。
+                // 否则「注销 → 继续用旧令牌发内容」这条路是通的（内容服务只看令牌不看 status）。
+                .setSql("token_version = token_version + 1"));
         if (rows == 0) {
             // 并发重复提交：另一笔已经注销成功，按同一结果处理，不报错
             throw new BizException("账号已在注销流程中，重新登录可恢复");
@@ -252,7 +255,7 @@ public class UserService {
         // 幂等：没注销过就把当前状态原样还回去，前端按正常登录继续，不报错
         if (user.getCancelledAt() == null) {
             return new RestoreResp(
-                    jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus()), toBrief(user));
+                    jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus(), user.getTokenVersion()), toBrief(user));
         }
         if (accountPurgeService.isDue(user)) {
             /*
@@ -268,7 +271,10 @@ public class UserService {
                 .set(User::getCancelledAt, null)
                 .set(User::getCancelNicknameBak, null)
                 .set(User::getCancelAvatarBak, null)
-                .set(User::getCancelBioBak, null);
+                .set(User::getCancelBioBak, null)
+                // 令牌版本再 +1：恢复动作同样作废旧令牌。
+                // 恢复后签的新令牌用的是 +1 之后的值，所以本次登录不受影响。
+                .setSql("token_version = token_version + 1");
         if (StringUtils.hasText(user.getCancelNicknameBak())) {
             update.set(User::getNickname, user.getCancelNicknameBak());
         } else {
@@ -285,7 +291,7 @@ public class UserService {
         User fresh = userMapper.selectById(userId);
         log.info("[account] 用户 {} 已恢复注销账号", userId);
         return new RestoreResp(
-                jwtService.create(fresh.getId(), fresh.getSchoolId(), fresh.getVerifyStatus()), toBrief(fresh));
+                jwtService.create(fresh.getId(), fresh.getSchoolId(), fresh.getVerifyStatus(), fresh.getTokenVersion()), toBrief(fresh));
     }
 
     /**
@@ -418,7 +424,7 @@ public class UserService {
         // 绑定学校的三个入口之二：学生证认证
         afterSchoolBound(user.getId(), user.getSchoolId());
 
-        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
+        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus(), user.getTokenVersion());
         String msg = user.getVerifyStatus() == 2
                 ? "认证成功，欢迎来到校聚一城"
                 : (reapply ? "重认证申请已提交，等待人工复核" : "已提交认证，预计 1 个工作日内完成审核");
@@ -503,7 +509,7 @@ public class UserService {
         afterSchoolBound(user.getId(), user.getSchoolId());
 
         // JWT 里的 schoolId / vs 是登录快照，认证后必须重签，否则前端仍是「未认证」
-        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
+        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus(), user.getTokenVersion());
         if (reapply) {
             return new VerifyResp(1, token, "重认证申请已提交，等待人工复核");
         }
@@ -675,6 +681,26 @@ public class UserService {
         return v == null ? 0 : v;
     }
 
+    /**
+     * 网关用的账号准入查询：只回 {@code status} 与 {@code tokenVersion}。
+     *
+     * <p>为什么单独一个方法而不是复用 {@link #brief}：网关每个「缓存未命中」的请求都会回源，
+     * 这条路径要尽量轻——不查学校名、不聚合跨服务计数、不做任何加解密。
+     *
+     * @return 用户不存在时返回 {@code null}（网关按「令牌失效」处理）
+     */
+    public UserBrief authState(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return null;
+        }
+        UserBrief brief = new UserBrief();
+        brief.setId(user.getId());
+        brief.setStatus(user.getStatus());
+        brief.setTokenVersion(user.getTokenVersion() == null ? 0 : user.getTokenVersion());
+        return brief;
+    }
+
     private UserBrief toBrief(User user) {
         UserBrief brief = new UserBrief();
         brief.setId(user.getId());
@@ -682,6 +708,10 @@ public class UserService {
         brief.setAvatar(user.getAvatar());
         brief.setSchoolId(user.getSchoolId());
         brief.setVerifyStatus(user.getVerifyStatus());
+        // 封禁状态必须下发：认证服务靠它拒绝登录（否则封禁号重开小程序就能换新令牌）
+        brief.setStatus(user.getStatus());
+        // 令牌版本：签发令牌时写进 claim tv，网关据此判定旧令牌是否已失效
+        brief.setTokenVersion(user.getTokenVersion() == null ? 0 : user.getTokenVersion());
         // 登录时要靠它判断「这个号已注销，先问用户要不要恢复」
         brief.setCancelledAt(user.getCancelledAt());
         return brief;

@@ -73,6 +73,14 @@
     "pages/zone/index": {
       "network": "all",
       "packages": ["subpackages/demand"]
+    },
+    "pages/goods/detail": {
+      "network": "all",
+      "packages": ["subpackages/demand"]
+    },
+    "pages/goods/list": {
+      "network": "all",
+      "packages": ["subpackages/demand"]
     }
   },
   "window": {

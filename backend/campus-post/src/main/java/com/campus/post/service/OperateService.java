@@ -40,6 +40,7 @@ public class OperateService {
     private static final int DEFAULT_MAX_COUNT = 3;
 
     private final OperateQueryMapper operateMapper;
+    private final AdMetricsService adMetrics;
 
     /**
      * 拉取某个广告位当前该展示的素材。
@@ -64,34 +65,24 @@ public class OperateService {
             m.setDisplayHeight(AdSizeCatalog.heightOf(m.getSizeCode()));
         }
         if (!list.isEmpty()) {
-            countView(list);
+            // 曝光不在这里写库：交给 AdMetricsService 去重（同 IP 同素材 10 分钟一次）
+            // 并聚合到每 60 秒刷写一次。以前这里对每条素材直接 UPDATE +1，
+            // 一个公开 GET 就打出 N 次行更新（第三轮审计 P1-1）。
+            list.forEach(m -> adMetrics.recordView(m.getId()));
         }
         return list;
     }
 
-    /** 一次曝光（GET）把本次返回的素材各记一次 view_count */
-    private void countView(List<AdMaterialVO> list) {
-        try {
-            for (AdMaterialVO m : list) {
-                operateMapper.incrView(m.getId());
-            }
-        } catch (Exception e) {
-            log.warn("[ad] 曝光计数失败，已忽略：{}", e.getMessage());
-        }
-    }
-
-    /** 点击上报 */
+    /**
+     * 点击上报。
+     *
+     * <p>这是**公开写接口**（游客点广告也要计入效果），所以必须自带防刷：
+     * 同 IP 同素材 24 小时内只算一次，计数进内存聚合、60 秒刷一次库。
+     * 以前这里是「先 SELECT 存在性、再 UPDATE +1」，一条 curl 循环就能把点击量刷到十万，
+     * 同时每点一次都是一次写库（第三轮审计 P1-1）。
+     */
     public void click(Long materialId) {
-        if (materialId == null) {
-            return;
-        }
-        try {
-            if (operateMapper.countMaterial(materialId) > 0) {
-                operateMapper.incrClick(materialId);
-            }
-        } catch (Exception e) {
-            log.warn("[ad] 点击计数失败，已忽略：{}", e.getMessage());
-        }
+        adMetrics.recordClick(materialId);
     }
 
     /** 小程序可见的公告列表（紧急在前，最新在前） */

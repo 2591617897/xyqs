@@ -35,6 +35,24 @@ public class InternalUserController {
         return R.ok(userService.brief(id));
     }
 
+    /**
+     * 账号准入状态（封禁 + 令牌版本），网关鉴权链路专用。
+     *
+     * <p>网关在每次校验完 JWT 后会调它，并做 60 秒内存缓存：
+     * <ul>
+     *   <li>{@code status=0} → 封禁，网关返回 403；</li>
+     *   <li>{@code tokenVersion} 与令牌里的 {@code tv} 不一致 → 注销 / 解封后的旧令牌，返回 401；</li>
+     *   <li>用户不存在 → 返回 {@code data:null}，网关同样判失效。</li>
+     * </ul>
+     *
+     * <p><b>不要把这条路径挪到 /api 下</b>：它能让调用方知道任意 userId 是否被封禁，
+     * 只能走服务间内网调用，网关不路由 /internal/**。
+     */
+    @GetMapping("/{id}/auth-state")
+    public R<UserBrief> authState(@PathVariable("id") Long id) {
+        return R.ok(userService.authState(id));
+    }
+
     /** 批量摘要：GET /internal/users/briefs?ids=1,2,3 */
     @GetMapping("/briefs")
     public R<List<UserBrief>> briefs(@RequestParam(name = "ids") List<Long> ids) {

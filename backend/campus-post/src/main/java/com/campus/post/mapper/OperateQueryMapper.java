@@ -65,11 +65,18 @@ public interface OperateQueryMapper {
             + "  AND (end_at IS NULL OR end_at >= NOW()) LIMIT 1")
     Integer selectSlotMaxCount(@Param("code") String code);
 
-    @Update("UPDATE t_ad_material SET view_count = view_count + 1 WHERE id = #{id}")
-    int incrView(@Param("id") Long id);
+    /**
+     * 曝光计数按增量累加（delta 为一次刷写里聚合到的次数）。
+     *
+     * <p>不再提供 {@code +1} 版本：单次 +1 只能由「每个请求都写库」的调用方式使用，
+     * 而那正是 P1-1 的问题所在。现在只允许 {@code AdMetricsService} 每 60 秒聚合刷写。
+     */
+    @Update("UPDATE t_ad_material SET view_count = view_count + #{delta} WHERE id = #{id}")
+    int incrViewBy(@Param("id") Long id, @Param("delta") int delta);
 
-    @Update("UPDATE t_ad_material SET click_count = click_count + 1 WHERE id = #{id}")
-    int incrClick(@Param("id") Long id);
+    /** 点击计数按增量累加，同上 */
+    @Update("UPDATE t_ad_material SET click_count = click_count + #{delta} WHERE id = #{id}")
+    int incrClickBy(@Param("id") Long id, @Param("delta") int delta);
 
     /** 素材存在性校验（挡住用不存在的 id 刷计数） */
     @Select("SELECT COUNT(*) FROM t_ad_material WHERE id = #{id}")

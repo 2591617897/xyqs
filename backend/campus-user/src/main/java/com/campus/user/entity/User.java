@@ -113,6 +113,16 @@ public class User {
     private Integer status;
 
     /**
+     * 令牌版本（t_user.token_version）：封禁 / 解封 / 注销 / 恢复时 +1，
+     * 网关按它比对令牌里的 claim {@code tv}，旧令牌 60 秒内全部失效。
+     *
+     * <p>解决的是「JWT 无状态，封禁改库对已签发令牌毫无影响」——
+     * 以前封禁一个号，他手里的令牌还能再发 72 小时内容。
+     * 与 t_admin_user 的做法完全一致，见 {@code migration-20261028-user-token-revoke.sql}。
+     */
+    private Integer tokenVersion;
+
+    /**
      * 禁言到期时间（t_user.mute_until）。由后台 campus-admin 通过
      * /internal/admin/users/{id}/mute 写入，本服务只持有这一列、不负责维护事实
      * —— 真正的禁言记录是 t_user_mute。NULL 表示未禁言。

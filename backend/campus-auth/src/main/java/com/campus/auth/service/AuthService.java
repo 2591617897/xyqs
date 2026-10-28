@@ -11,6 +11,7 @@ import com.campus.auth.entity.School;
 import com.campus.auth.mapper.SchoolMapper;
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.common.security.ClientIp;
 import com.campus.common.security.JwtService;
 import com.campus.auth.security.LoginRateLimiter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,7 +114,22 @@ public class AuthService {
             throw new BizException("登录失败，请稍后重试");
         }
         UserBrief user = result.getData();
-        String token = jwtService.create(user.getId(), user.getSchoolId(), user.getVerifyStatus());
+        /*
+         * 封禁必须在这里拦死（第三轮审计 P0-1）。
+         *
+         * 以前这里只签令牌不看状态，而「登录即建档」的 loginOrCreate 也不判 status，
+         * 于是被封禁的人重开小程序 → wx.login → 就换到一张全新的 72 小时令牌，
+         * 后台的封禁按钮等于只改了库里一个没人读的字段。
+         *
+         * 403 而不是 401：401 会被小程序当成「登录态过期」自动清 token 再重试，
+         * 用户看到的是「登录失败请重试」而不是「你被封禁了」，永远不知道发生了什么。
+         */
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            log.warn("[security] 封禁账号尝试登录 userId={}", user.getId());
+            throw BizException.forbidden("账号已被封禁，如有疑问请联系管理员");
+        }
+        String token = jwtService.create(user.getId(), user.getSchoolId(),
+                user.getVerifyStatus(), user.getTokenVersion());
         return new LoginResp(token, user);
     }
 
@@ -450,22 +466,17 @@ public class AuthService {
     }
 
     /**
-     * 客户端真实 IP。生产在 Nginx 后面，{@code remoteAddr} 永远是 127.0.0.1，
-     * 必须优先取 {@code X-Forwarded-For} 的第一段（Nginx 用 {@code $proxy_add_x_forwarded_for} 追加）。
+     * 客户端真实 IP。取值顺序与「为什么不能取 XFF 第一段」见 {@link ClientIp}。
+     *
+     * <p>历史上这里取 {@code X-Forwarded-For} 第一段，而 Nginx 用的是
+     * {@code $proxy_add_x_forwarded_for}（追加语义）——客户端自带的伪造值排在最前，
+     * 攻击者每次换一个值就能把 {@code LoginRateLimiter} 的 ip 桶刷成无限个，
+     * 「单 IP 每分钟 30 次登录」等于没做。
      */
     private String clientIp() {
         try {
             if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
-                HttpServletRequest request = attrs.getRequest();
-                String xff = request.getHeader("X-Forwarded-For");
-                if (StringUtils.hasText(xff)) {
-                    return xff.split(",")[0].trim();
-                }
-                String real = request.getHeader("X-Real-IP");
-                if (StringUtils.hasText(real)) {
-                    return real.trim();
-                }
-                return request.getRemoteAddr();
+                return ClientIp.resolve(attrs.getRequest());
             }
         } catch (Exception e) {
             // 拿不到 IP 不影响登录，只是少一层限流维度

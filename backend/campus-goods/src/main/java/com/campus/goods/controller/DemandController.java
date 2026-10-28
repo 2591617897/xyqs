@@ -6,6 +6,7 @@ import com.campus.goods.dto.DemandReplyReq;
 import com.campus.goods.dto.DemandReq;
 import com.campus.goods.entity.Demand;
 import com.campus.goods.entity.DemandReply;
+import com.campus.goods.service.DemandMatchService;
 import com.campus.goods.service.DemandService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import java.util.List;
 public class DemandController {
 
     private final DemandService demandService;
+    private final DemandMatchService demandMatchService;
 
     /**
      * 需求列表（未登录也可浏览）。
@@ -105,6 +107,12 @@ public class DemandController {
     }
 
     /* ================= 回应 ================= */
+
+    /** 需求详情 → 可能符合的在售闲置（互通推荐，最多 3 条） */
+    @GetMapping("/{id}/matches")
+    public R<List<DemandMatchService.MatchGoodsVO>> matches(@PathVariable("id") Long id) {
+        return R.ok(demandMatchService.matchGoods(id, UserContext.schoolId()));
+    }
 
     /** 我有货 / 我能帮：提交一条回应 */
     @PostMapping("/{id}/replies")

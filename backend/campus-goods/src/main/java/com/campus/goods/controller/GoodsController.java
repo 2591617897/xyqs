@@ -7,6 +7,7 @@ import com.campus.goods.dto.GoodsReq;
 import com.campus.goods.entity.Goods;
 import com.campus.goods.entity.GoodsComment;
 import com.campus.goods.entity.GoodsOrder;
+import com.campus.goods.service.DemandMatchService;
 import com.campus.goods.service.GoodsService;
 import com.campus.goods.service.HotWordsService;
 import jakarta.validation.Valid;
@@ -33,7 +34,7 @@ public class GoodsController {
     private final GoodsService goodsService;
 
     private final HotWordsService hotWordsService;
-
+    private final DemandMatchService demandMatchService;
     /**
      * 商品列表（未登录也可浏览）。
      * userId：个人主页按作者过滤，返回该作者全部状态商品（0下架/1在售/2已售出），
@@ -62,6 +63,16 @@ public class GoodsController {
             return R.ok(goodsService.page(keyword, categoryId, sort, page, size, schoolScope, targetCity, null));
         }
         return R.ok(goodsService.page(keyword, categoryId, sort, page, size, schoolScope, null, null));
+    }
+
+    /**
+     * 闲置详情 → 有人在找这类东西（互通推荐，最多 3 条）。
+     *
+     * <p>卖家看到「有人求自行车」可以主动去回应，不用等对方来搜。
+     */
+    @GetMapping("/{id}/demands")
+    public R<List<DemandMatchService.MatchDemandVO>> matchingDemands(@PathVariable("id") Long id) {
+        return R.ok(demandMatchService.matchDemands(id, UserContext.schoolId()));
     }
 
     @GetMapping("/categories")

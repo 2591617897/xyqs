@@ -1,10 +1,14 @@
 /**
  * 本地开发用 JWT 生成（跳过微信登录，方便脚本/调试直连接口）
- * 用法：node scripts/make-dev-token.js <userId> [schoolId] [verifyStatus]
+ * 用法：node scripts/make-dev-token.js <userId> [schoolId] [verifyStatus] [tokenVersion]
  * 示例：node scripts/make-dev-token.js 2114018677295706113 1001 2
  *
  * 密钥来源优先级：环境变量 JWT_SECRET → ~/.campus-secrets/jwt.key（与各服务同一份）。
  * 只用于本地联调，**不要**把它生成的令牌带到生产环境。
+ *
+ * 第 4 个参数 tokenVersion 对应 claim `tv`（2026-10-28 起 C 端令牌带这个 claim，
+ * 网关比对 t_user.token_version 判定旧令牌是否失效）。不传则不写 tv，
+ * 与「升级前的存量令牌」完全一致——用来验证兼容性正合适。
  */
 const fs = require('fs')
 const os = require('os')
@@ -31,11 +35,12 @@ function secret() {
 
 const userId = process.argv[2]
 if (!userId) {
-  console.error('用法：node scripts/make-dev-token.js <userId> [schoolId] [verifyStatus]')
+  console.error('用法：node scripts/make-dev-token.js <userId> [schoolId] [verifyStatus] [tokenVersion]')
   process.exit(1)
 }
 const schoolId = process.argv[3] ? Number(process.argv[3]) : null
 const verifyStatus = process.argv[4] ? Number(process.argv[4]) : 2
+const tokenVersion = process.argv[5] !== undefined ? Number(process.argv[5]) : null
 
 const now = Math.floor(Date.now() / 1000)
 const payload = {
@@ -47,6 +52,8 @@ const payload = {
 }
 if (schoolId) payload.schoolId = schoolId
 if (verifyStatus !== null) payload.vs = verifyStatus
+// 显式指定才写 tv：不传时保持「存量令牌」形态（网关按 0 处理）
+if (tokenVersion !== null && !Number.isNaN(tokenVersion)) payload.tv = tokenVersion
 
 const input =
   b64url(Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))) +

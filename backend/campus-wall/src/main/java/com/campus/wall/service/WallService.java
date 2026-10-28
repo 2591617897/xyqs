@@ -10,6 +10,7 @@ import com.campus.common.client.SecurityGuard;
 import com.campus.common.client.dto.NotifyReq;
 import com.campus.common.exception.BizException;
 import com.campus.common.security.UserContext;
+import com.campus.common.security.WriteRatePolicy;
 import com.campus.common.social.Like;
 import com.campus.common.social.mapper.LikeMapper;
 import com.campus.wall.dto.CommentReq;
@@ -51,6 +52,8 @@ public class WallService {
     private static final Set<String> CATEGORIES = Set.of("love", "tree", "find", "findp");
 
     private final WallPostMapper postMapper;
+    /** UGC 写入频控：树洞匿名场景刷屏动机最强 */
+    private final WriteRatePolicy writeRate;
     private final WallCommentMapper commentMapper;
     private final SchoolRegionMapper schoolRegionMapper;
     private final LikeMapper likeMapper;
@@ -168,6 +171,7 @@ public class WallService {
     @Transactional(rollbackFor = Exception.class)
     public Long publish(WallPostReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.PUBLISH_WALL, userId);
         WallPost post = new WallPost();
         post.setUserId(userId);
         post.setSchoolId(UserContext.schoolId());
@@ -269,6 +273,7 @@ public class WallService {
     @Transactional(rollbackFor = Exception.class)
     public Long addComment(Long postId, CommentReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.COMMENT, userId);
         WallPost post = postMapper.selectById(postId);
         if (post == null || (post.getStatus() != null && post.getStatus() == 0)) {
             throw BizException.notFound("这条表白不见了");

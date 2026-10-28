@@ -9,8 +9,8 @@
  * 不登录、非本人一律拿不到。
  */
 const http = require('../../utils/request')
-const { mp, timeAgo, toast } = require('../../utils/util')
-const { resolveList, imgMode, imgGridClass } = require('../../utils/img')
+const { mp, timeAgo, toast, priceText } = require('../../utils/util')
+const { resolveList, resolve, imgMode, imgGridClass } = require('../../utils/img')
 const demandUtil = require('../../utils/demand')
 const auth = require('../../utils/auth')
 const ui = require('../../utils/ui')
@@ -29,7 +29,9 @@ Page({
     replyContact: '',
     submitting: false,
     /** 底部按钮文案随类型/状态变，在 js 里算好，不在 wxml 写三目链 */
-    ctaText: '我有货'
+    ctaText: '我有货',
+    /** 互通推荐：广场上可能符合这条需求的在售闲置 */
+    matches: []
   },
 
   onLoad: function (options) {
@@ -67,9 +69,30 @@ Page({
       mp.setNavigationBarTitle({ title: decorated.type === 2 ? '求帮忙详情' : '求物详情' })
       // 回应只有本人能看，非本人直接跳过（后端也会拒绝，这里省一次必然失败的请求）
       if (decorated.mine) self.loadReplies()
+      // 互通推荐：推荐失败不影响主流程（卡片区不渲染而已），所以单独 catch
+      self.loadMatches()
     }).catch(function () {
       self.setData({ loading: false, loadError: true })
     })
+  },
+
+  /**
+   * 「有人在找自行车」→ 推他可能想买的在售闲置。
+   * 只对本人和同校/同市可见内容做匹配（后端按 viewerSchoolId + visibility 过滤过）。
+   */
+  loadMatches: function () {
+    const self = this
+    http.get('/demands/' + this.data.id + '/matches', null, { silent: true })
+      .then(function (list) {
+        self.setData({
+          matches: (list || []).map(function (g) {
+            g.priceText = priceText(g.price)
+            g.cover = resolve((g.imageList || [])[0] || '')
+            return g
+          })
+        })
+      })
+      .catch(function () {})
   },
 
   loadReplies: function () {
@@ -205,6 +228,10 @@ Page({
         setTimeout(function () { mp.navigateBack() }, 600)
       }).catch(function () {})
     })
+  },
+
+  goGoodsDetail: function (e) {
+    mp.navigateTo({ url: '/pages/goods/detail?id=' + e.currentTarget.dataset.id })
   },
 
   previewImage: function (e) {

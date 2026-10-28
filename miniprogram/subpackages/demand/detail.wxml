@@ -65,6 +65,25 @@
       </view>
     </view>
 
+    <!-- 互通推荐：广场上可能符合这条需求的在售闲置 -->
+    <view class="card" wx:if="{{matches.length}}">
+      <view class="card-h">广场上可能符合的在售</view>
+      <view class="match">
+        <view
+          wx:for="{{matches}}"
+          wx:key="id"
+          class="match-item"
+          data-id="{{item.id}}"
+          bindtap="goGoodsDetail"
+        >
+          <image class="match-cover" src="{{item.cover}}" mode="aspectFill"></image>
+          <view class="match-title clamp2">{{item.title}}</view>
+          <view class="match-price">{{item.priceText}}</view>
+        </view>
+      </view>
+      <view class="match-tip">平台不参与交易，请自行核实后线下对接</view>
+    </view>
+
     <!-- 回应列表：只有发布者看得到 -->
     <view class="card" wx:if="{{info.mine}}">
       <view class="card-h">收到的回应（{{replies.length}}）</view>

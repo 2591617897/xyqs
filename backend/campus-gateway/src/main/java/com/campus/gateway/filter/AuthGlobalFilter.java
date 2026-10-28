@@ -3,6 +3,7 @@ package com.campus.gateway.filter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import com.campus.gateway.security.AccountStateChecker;
 import com.campus.gateway.security.SecretResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,9 +139,12 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     private final SecretKey key;
     /** 后台管理员令牌专用密钥，与 C 端 campus.jwt.secret 完全隔离。 */
     private final SecretKey adminKey;
+    /** 账号封禁 / 令牌版本校验（60 秒缓存 + 回源失败放行）。 */
+    private final AccountStateChecker accountState;
 
     public AuthGlobalFilter(@Value("${campus.jwt.secret:}") String secret,
-                            @Value("${campus.admin.jwt.secret:}") String adminSecret) {
+                            @Value("${campus.admin.jwt.secret:}") String adminSecret,
+                            AccountStateChecker accountState) {
         // 密钥不再允许「配置里没写就用一个写死的字符串」：
         // 空值时统一到 SecretResolver（环境变量 → ~/.campus-secrets/ → 随机生成落盘），
         // 与各业务服务、campus-admin 读的是同一份，才能互验签名。
@@ -153,6 +157,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
                 : SecretResolver.resolve("ADMIN_JWT_SECRET", "admin-jwt.key", 32, "后台管理令牌");
         this.key = Keys.hmacShaKeyFor(userKey.getBytes(StandardCharsets.UTF_8));
         this.adminKey = Keys.hmacShaKeyFor(adminKeyValue.getBytes(StandardCharsets.UTF_8));
+        this.accountState = accountState;
     }
 
     @Override
@@ -238,18 +243,67 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             h.remove("X-School-Id");
             h.remove("X-Verify-Status");
         });
-        if (claims != null) {
-            builder.header("X-User-Id", claims.getSubject());
-            Object schoolId = claims.get("schoolId");
-            if (schoolId != null) {
-                builder.header("X-School-Id", String.valueOf(schoolId));
-            }
-            Object vs = claims.get("vs");
-            if (vs != null) {
-                builder.header("X-Verify-Status", String.valueOf(vs));
-            }
+        if (claims == null) {
+            // 游客访问公开读：没有身份可注入，直接放行
+            return chain.filter(exchange.mutate().request(builder.build()).build());
         }
-        return chain.filter(exchange.mutate().request(builder.build()).build());
+
+        Long userId = toLong(claims.getSubject());
+        if (userId == null) {
+            // 令牌能验签但 subject 不是数字：只可能是人为构造，直接拒绝
+            return unauthorized(exchange, "凭证不完整，请重新登录");
+        }
+        builder.header("X-User-Id", String.valueOf(userId));
+        Object schoolId = claims.get("schoolId");
+        if (schoolId != null) {
+            builder.header("X-School-Id", String.valueOf(schoolId));
+        }
+        Object vs = claims.get("vs");
+        if (vs != null) {
+            builder.header("X-Verify-Status", String.valueOf(vs));
+        }
+        ServerWebExchange withIdentity = exchange.mutate().request(builder.build()).build();
+
+        /*
+         * 账号状态校验（第三轮审计 P0-1）。
+         *
+         * 到这里令牌本身是合法的，但「合法」不等于「还有效」：
+         *   · 后台封禁 → t_user.status = 0，旧令牌必须立刻停用；
+         *   · 注销 / 解封 → token_version + 1，旧令牌必须失效。
+         * 没有这一步，封禁一个人只能等他 72 小时的令牌自然过期。
+         *
+         * 结论走 403 / 401 两种，不能混用一个：401 会被小程序当成「掉线」，
+         * 自动清登录态并重新登录 —— 被封禁的人会陷入「登录 → 401 → 再登录」的循环，
+         * 永远看不到「你被封禁了」这句话。
+         */
+        return accountState.check(userId, toInt(claims.get("tv")))
+                .flatMap(verdict -> switch (verdict) {
+                    case OK -> chain.filter(withIdentity);
+                    case BANNED -> forbidden(exchange, "账号已被封禁，如有疑问请联系管理员");
+                    case STALE -> unauthorized(exchange, "登录状态已失效，请重新登录");
+                });
+    }
+
+    private Long toLong(String v) {
+        if (!StringUtils.hasText(v)) {
+            return null;
+        }
+        try {
+            return Long.valueOf(v.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer toInt(Object v) {
+        if (v == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(v).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
@@ -340,10 +394,25 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange, String msg) {
+        return fail(exchange, HttpStatus.UNAUTHORIZED, msg);
+    }
+
+    /**
+     * 403：用于「身份是合法的，但这个账号被禁止使用」。
+     *
+     * <p>必须与 401 区分开：小程序把 401 当「掉线」，会自动清登录态并重新登录，
+     * 封禁用户会因此陷入重登循环而看不到真正的原因。
+     */
+    private Mono<Void> forbidden(ServerWebExchange exchange, String msg) {
+        return fail(exchange, HttpStatus.FORBIDDEN, msg);
+    }
+
+    private Mono<Void> fail(ServerWebExchange exchange, HttpStatus status, String msg) {
         ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        response.setStatusCode(status);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        String body = "{\"code\":401,\"msg\":\"" + msg + "\",\"data\":null}";
+        // msg 全是本类里的常量，不含用户输入，直接拼 JSON 是安全的
+        String body = "{\"code\":" + status.value() + ",\"msg\":\"" + msg + "\",\"data\":null}";
         DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
         return response.writeWith(Mono.just(buffer));
     }

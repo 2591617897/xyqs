@@ -11,6 +11,7 @@ import com.campus.common.content.Visibility;
 import com.campus.common.exception.BizException;
 import com.campus.common.search.SearchKit;
 import com.campus.common.security.UserContext;
+import com.campus.common.security.WriteRatePolicy;
 import com.campus.goods.dto.DemandReplyReq;
 import com.campus.goods.dto.DemandReq;
 import com.campus.goods.entity.Demand;
@@ -46,6 +47,8 @@ import java.util.stream.Collectors;
 public class DemandService {
 
     private final DemandMapper demandMapper;
+    /** UGC 写入频控：求物/求帮忙与回应都算写入 */
+    private final WriteRatePolicy writeRate;
     private final DemandReplyMapper replyMapper;
     private final SchoolRegionMapper schoolRegionMapper;
     private final UserSnapshotMapper userSnapshotMapper;
@@ -201,6 +204,7 @@ public class DemandService {
     @Transactional(rollbackFor = Exception.class)
     public Long publish(DemandReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.PUBLISH_DEMAND, userId);
         Long schoolId = UserContext.schoolId();
         if (schoolId == null) {
             throw new BizException("请先完成校园身份认证");
@@ -275,6 +279,7 @@ public class DemandService {
     @Transactional(rollbackFor = Exception.class)
     public Long reply(Long demandId, DemandReplyReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.REPLY, userId);
         Demand demand = demandMapper.selectById(demandId);
         if (demand == null) {
             throw BizException.notFound("需求不存在或已被删除");

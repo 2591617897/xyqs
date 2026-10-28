@@ -3,6 +3,8 @@ package com.campus.admin.controller;
 import com.campus.admin.config.annotation.AuditLog;
 import com.campus.admin.config.annotation.RequirePermission;
 import com.campus.admin.dto.CommentRow;
+import com.campus.admin.dto.ContentDeleteReq;
+import com.campus.admin.dto.DemandRow;
 import com.campus.admin.dto.DisposeReq;
 import com.campus.admin.dto.GoodsRow;
 import com.campus.admin.dto.PostRow;
@@ -12,6 +14,7 @@ import com.campus.admin.service.ContentService;
 import com.campus.common.api.R;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>权限点一个方法一个，不做类级兜底——内容管理里「能看」和「能处置」
  * 必须能分开授权（审核员通常只有查看权，处置权单独给）。
  */
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/content")
 @RequiredArgsConstructor
@@ -109,6 +115,48 @@ public class ContentController {
     @PostMapping("/goods/{id}/status")
     public R<Void> setGoodsStatus(@PathVariable("id") Long id, @RequestBody @Valid DisposeReq req) {
         contentService.setGoodsStatus(id, req.getStatus(), req.getReasonType(), req.getReason());
+        return R.ok();
+    }
+
+    // ---------------- 需求广场（求物 / 求帮忙） ----------------
+
+    /** 分类字典先于列表加载，前端用它把 categoryId 渲染成中文 */
+    @RequirePermission({"admin:content:demand:list"})
+    @GetMapping("/demand-categories")
+    public R<List<Map<String, Object>>> demandCategories() {
+        return R.ok(contentService.demandCategories());
+    }
+
+    @RequirePermission({"admin:content:demand:list"})
+    @GetMapping("/demands")
+    public R<R.Page<DemandRow>> pageDemands(@RequestParam(required = false, name = "keyword") String keyword,
+                                            @RequestParam(required = false, name = "type") Integer type,
+                                            @RequestParam(required = false, name = "status") Integer status,
+                                            @RequestParam(required = false, name = "userId") Long userId,
+                                            @RequestParam(defaultValue = "1", name = "page") long page,
+                                            @RequestParam(defaultValue = "10", name = "size") long size) {
+        return R.ok(contentService.pageDemands(keyword, type, status, userId, page, size));
+    }
+
+    @RequirePermission({"admin:content:demand:detail"})
+    @GetMapping("/demands/{id}")
+    public R<DemandRow> demandDetail(@PathVariable("id") Long id) {
+        return R.ok(contentService.demandDetail(id));
+    }
+
+    @AuditLog(value = "需求强制下架", module = "CONTENT")
+    @RequirePermission({"admin:content:demand:off-shelf"})
+    @PostMapping("/demands/{id}/status")
+    public R<Void> setDemandStatus(@PathVariable("id") Long id, @RequestBody @Valid DisposeReq req) {
+        contentService.setDemandStatus(id, req.getStatus(), req.getReasonType(), req.getReason());
+        return R.ok();
+    }
+
+    @AuditLog(value = "删除需求", module = "CONTENT")
+    @RequirePermission({"admin:content:demand:delete"})
+    @DeleteMapping("/demands/{id}")
+    public R<Void> deleteDemand(@PathVariable("id") Long id, @RequestBody @Valid ContentDeleteReq req) {
+        contentService.deleteDemand(id, req.getReasonType(), req.getReason());
         return R.ok();
     }
 

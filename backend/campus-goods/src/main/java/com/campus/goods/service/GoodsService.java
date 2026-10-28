@@ -14,6 +14,7 @@ import com.campus.common.client.dto.UserBrief;
 import com.campus.common.exception.BizException;
 import com.campus.common.search.SearchKit;
 import com.campus.common.security.UserContext;
+import com.campus.common.security.WriteRatePolicy;
 import com.campus.common.social.Like;
 import com.campus.common.social.mapper.LikeMapper;
 import com.campus.goods.dto.GoodsOrderReq;
@@ -72,6 +73,8 @@ public class GoodsService {
             new CategoryVO(6, "其他", "✨"));
 
     private final GoodsMapper goodsMapper;
+    /** UGC 写入频控：发布/评论/下单各自的间隔与日上限见 WriteRatePolicy.Action */
+    private final WriteRatePolicy writeRate;
 
     /** 搜索热词统计：分页查询顺手记一笔，失败不影响搜索结果 */
     private final HotWordsService hotWordsService;
@@ -255,6 +258,7 @@ public class GoodsService {
     @Transactional(rollbackFor = Exception.class)
     public Long publish(GoodsReq req) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.PUBLISH_GOODS, userId);
         Long schoolId = UserContext.schoolId();
         if (schoolId == null) {
             throw new BizException("请先完成校园身份认证");
@@ -413,6 +417,7 @@ public class GoodsService {
     @Transactional(rollbackFor = Exception.class)
     public Long addComment(Long goodsId, String content, List<String> images, Long parentId, List<Long> mentionUserIds) {
         Long userId = UserContext.requireVerifiedUserId();
+        writeRate.check(WriteRatePolicy.Action.COMMENT, userId);
         Goods goods = goodsMapper.selectById(goodsId);
         if (goods == null) {
             throw BizException.notFound("商品不存在");
@@ -586,6 +591,8 @@ public class GoodsService {
     @Transactional(rollbackFor = Exception.class)
     public Long createOrder(Long goodsId, GoodsOrderReq req) {
         Long buyerId = UserContext.requireVerifiedUserId();
+        // 下单也限频：不经限制的话脚本可以反复「想要」，把卖家的消息列表刷爆
+        writeRate.check(WriteRatePolicy.Action.CREATE_ORDER, buyerId);
         Goods goods = goodsMapper.selectById(goodsId);
         if (goods == null) {
             throw BizException.notFound("商品不存在");

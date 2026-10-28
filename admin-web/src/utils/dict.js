@@ -36,6 +36,19 @@ export const GOODS_STATUS = {
   2: { label: '已售出', type: 'warning' }
 }
 
+/** 需求大类 1求物 2求帮忙 */
+export const DEMAND_TYPE = {
+  1: { label: '求物', type: 'primary' },
+  2: { label: '求帮忙', type: 'success' }
+}
+
+/** 需求状态 0已下架 1进行中 2已完成 */
+export const DEMAND_STATUS = {
+  0: { label: '已下架', type: 'info' },
+  1: { label: '进行中', type: 'success' },
+  2: { label: '已完成', type: 'warning' }
+}
+
 /** 实名认证 0未认证 1审核中 2已认证 3驳回 */
 export const VERIFY_STATUS = {
   0: { label: '未认证', type: 'info' },

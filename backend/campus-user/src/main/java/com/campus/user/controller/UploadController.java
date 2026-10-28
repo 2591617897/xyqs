@@ -2,8 +2,11 @@ package com.campus.user.controller;
 
 import com.campus.common.api.R;
 import com.campus.common.exception.BizException;
+import com.campus.common.security.UserContext;
 import com.campus.common.upload.FileMagic;
 import com.campus.user.config.UploadPaths;
+import com.campus.user.service.UploadQuotaService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,11 +31,15 @@ import java.util.UUID;
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 public class UploadController {
 
     private static final Set<String> ALLOWED = Set.of("jpg", "jpeg", "png", "gif", "webp");
     /** 聊天视频消息支持的视频格式 */
     private static final Set<String> ALLOWED_VIDEO = Set.of("mp4", "mov", "m4v");
+
+    /** 按用户按天的上传配额（数量 + 总容量），防止单账号把磁盘写满 */
+    private final UploadQuotaService quota;
 
     @Value("${campus.upload.dir:./uploads}")
     private String uploadDir;
@@ -82,6 +89,11 @@ public class UploadController {
 
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         String fileName = UUID.randomUUID().toString().replace("-", "") + "." + ext;
+        // 配额校验放在落盘之前：一个人一天能传多少由 UploadQuotaService 决定。
+        // 没有这一道，一个登录账号可以无限次传 50MB 视频把磁盘写满
+        // （服务器上还跑着别的项目，磁盘写满是跨项目故障）。
+        Long userId = UserContext.requireUserId();
+        quota.assertAllowed(userId, file.getSize());
         // 与 WebConfig 用同一套解析规则，保证「写到哪」和「从哪读」永远是同一个目录
         Path baseDir = UploadPaths.resolve(uploadDir);
         File dir = baseDir.resolve(datePath).toFile();
@@ -105,6 +117,8 @@ public class UploadController {
         String base = baseUrl != null && baseUrl.endsWith("/")
                 ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         String url = base + "/uploads/" + datePath + "/" + fileName;
+        // 只有真正落盘成功的文件才计入当日额度
+        quota.record(userId, file.getSize());
         log.info("文件上传成功 type={} size={} url={}", isVideo ? "video" : "image", file.getSize(), url);
         return R.ok(Map.of("url", url));
     }

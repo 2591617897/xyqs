@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +21,23 @@ public class GatewayApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
+    }
+
+    /**
+     * 走注册中心的服务间调用客户端（网关 → campus-user 的账号状态校验用）。
+     *
+     * <p>加 {@code @LoadBalanced} 才能写 {@code http://campus-user/...} 这种服务名地址，
+     * 由 LoadBalancer 从 Nacos 取实例。超时在调用处单独控制（{@code AccountStateChecker}），
+     * 这里不设全局超时，避免影响其它潜在调用方。
+     *
+     * <p>注意：这里用的是 WebClient（响应式），<b>不能用 RestTemplate/Feign</b>——
+     * 网关跑在 Reactor Netty 事件循环上，任何阻塞式 HTTP 调用都会卡住整个事件循环，
+     * 表现为「一个慢请求拖住所有连接」。
+     */
+    @Bean
+    @LoadBalanced
+    public WebClient.Builder loadBalancedWebClientBuilder() {
+        return WebClient.builder();
     }
 
     /**

@@ -155,5 +155,74 @@ wxmlls.forEach(function (f) {
   check(path.basename(f) + ' 表达式括号配平', bad === 0, bad)
 })
 
+console.log('\n[7] 后台管理（campus-admin + admin-web）')
+const goodsAdmin = read(path.join(BE, 'campus-goods/src/main/java/com/campus/goods/controller/InternalAdminDemandController.java'))
+check('goods 侧有后台处置通道', /RequestMapping\("\/internal\/admin\/demands"\)/.test(goodsAdmin))
+check('后台只能下架/恢复，不碰已完成',
+  /status != 0 && status != 1/.test(goodsAdmin) && /需求已完成，不可改回进行中/.test(goodsAdmin))
+check('后台删除级联删回应', /replyMapper\.delete\(/.test(goodsAdmin))
+check('后台分类字典由 goods 下发（唯一数据源）', /GetMapping\("\/categories"\)/.test(goodsAdmin))
+
+const adminDir = path.join(BE, 'campus-admin/src/main/java/com/campus/admin')
+check('admin 有 DemandRow', fs.existsSync(path.join(adminDir, 'dto/DemandRow.java')))
+check('admin 有 DemandQueryMapper', /FROM t_demand d/.test(read(path.join(adminDir, 'mapper/DemandQueryMapper.java'))))
+check('admin 有 DemandAdminClient（Feign）', /path = "\/internal\/admin\/demands"/.test(read(path.join(adminDir, 'client/DemandAdminClient.java'))))
+const gateway = read(path.join(adminDir, 'client/AdminWriteGateway.java'))
+check('写网关有 setDemandStatus', /public void setDemandStatus\(/.test(gateway))
+check('写网关有 deleteDemand', /public void deleteDemand\(/.test(gateway))
+check('删除不做降级直写（不可逆操作不能悄悄执行）', /删除是不可逆操作/.test(gateway))
+check('降级 Mapper 有 updateDemandStatus 且不碰已完成',
+  /UPDATE t_demand SET status = #{status} WHERE id = #{id} AND status <> 2/
+    .test(read(path.join(adminDir, 'mapper/FallbackWriteMapper.java'))))
+const contentCtrl = read(path.join(adminDir, 'controller/ContentController.java'))
+check('后台有 /content/demands 列表', /@GetMapping\("\/demands"\)/.test(contentCtrl))
+check('后台有需求详情', /@GetMapping\("\/demands\/\{id\}"\)/.test(contentCtrl))
+check('后台有下架接口', /@PostMapping\("\/demands\/\{id\}\/status"\)/.test(contentCtrl))
+check('后台有删除接口', /@DeleteMapping\("\/demands\/\{id\}"\)/.test(contentCtrl))
+check('后台接口都带权限点', /admin:content:demand:list/.test(contentCtrl) && /admin:content:demand:delete/.test(contentCtrl))
+check('处置落审计流水', /recordAudit\("DEMAND"/.test(read(path.join(adminDir, 'service/ContentService.java'))))
+
+const WEB = path.join(ROOT, 'admin-web/src')
+check('后台页面 DemandList.vue 存在', fs.existsSync(path.join(WEB, 'views/content/DemandList.vue')))
+check('后台 api 有 demands 四个方法', /demands: /.test(read(path.join(WEB, 'api/content.js'))) &&
+  /deleteDemand: /.test(read(path.join(WEB, 'api/content.js'))) &&
+  /demandCategories: /.test(read(path.join(WEB, 'api/content.js'))))
+check('DELETE 带 body 走 { data }', /request\.delete\(BASE \+ '\/demands\/' \+ id, \{ data \}\)/.test(read(path.join(WEB, 'api/content.js'))))
+check('字典有 DEMAND_TYPE / DEMAND_STATUS',
+  /DEMAND_TYPE/.test(read(path.join(WEB, 'utils/dict.js'))) && /DEMAND_STATUS/.test(read(path.join(WEB, 'utils/dict.js'))))
+const menuSql = read(path.join(BE, 'sql/migration-20261028-demand-admin.sql'))
+check('菜单 SQL 用 9330 段（避开 9310/9320）', /\(9330,/.test(menuSql))
+check('菜单组件路径与文件对应', /content\/DemandList/.test(menuSql))
+check('菜单给角色授权', /t_admin_role_menu/.test(menuSql))
+check('弹窗用 append-to-body（顶栏 backdrop-filter 会裁掉）',
+  /append-to-body/.test(read(path.join(WEB, 'views/content/DemandList.vue'))))
+
+console.log('\n[8] 互通推荐（需求 ↔ 闲置）')
+const matchSvc = read(path.join(BE, 'campus-goods/src/main/java/com/campus/goods/service/DemandMatchService.java'))
+check('DemandMatchService 存在', !!matchSvc)
+check('需求 → 闲置', /public List<MatchGoodsVO> matchGoods\(/.test(matchSvc))
+check('闲置 → 需求', /public List<MatchDemandVO> matchDemands\(/.test(matchSvc))
+check('候选池有上限（不全表扫描）', /POOL = 300/.test(matchSvc))
+check('推荐也过滤可见范围（不把外校仅本校内容推给人）',
+  /"city"\.equals\(g\.getVisibility\(\)\)/.test(matchSvc) && /"city"\.equals\(d\.getVisibility\(\)\)/.test(matchSvc))
+check('只匹配在售 / 进行中的内容',
+  /eq\(Goods::getStatus, 1\)/.test(matchSvc) && /eq\(Demand::getStatus, Demand\.STATUS_OPEN\)/.test(matchSvc))
+check('标题命中权重高于描述', /s \+= 2/.test(matchSvc) && /s \+= 1/.test(matchSvc))
+const demandCtrlJava = read(path.join(BE, 'campus-goods/src/main/java/com/campus/goods/controller/DemandController.java'))
+check('接口 GET /demands/{id}/matches', /@GetMapping\("\/\{id\}\/matches"\)/.test(demandCtrlJava))
+check('接口 GET /goods/{id}/demands',
+  /@GetMapping\("\/\{id\}\/demands"\)/.test(read(path.join(BE, 'campus-goods/src/main/java/com/campus/goods/controller/GoodsController.java'))))
+const dDetailJs = read(path.join(MP, 'subpackages/demand/detail.js'))
+check('需求详情页拉推荐', /loadMatches: function/.test(dDetailJs))
+check('推荐失败不影响主流程（单独 catch）', /loadMatches\(\)/.test(dDetailJs))
+check('需求详情页可跳闲置', /goGoodsDetail: function/.test(dDetailJs))
+const gDetailJs = read(path.join(MP, 'pages/goods/detail.js'))
+check('闲置详情页拉推荐', /loadWanted: function/.test(gDetailJs))
+check('闲置详情页可跳需求', /goDemandDetail: function/.test(gDetailJs))
+check('跳分包路径正确', /\/subpackages\/demand\/detail\?id=/.test(gDetailJs))
+const gdPreload = (appJson.preloadRule || {})['pages/goods/detail']
+check('闲置详情页预下载 demand 分包（否则跳转白屏）',
+  !!gdPreload && gdPreload.packages.indexOf('subpackages/demand') >= 0)
+
 console.log('\n========== 结果：' + pass + ' 通过 / ' + fail + ' 失败 ==========\n')
 process.exit(fail === 0 ? 0 : 1)

@@ -11,6 +11,7 @@ import com.campus.admin.entity.AdminUser;
 import com.campus.admin.mapper.AdminPwdResetMapper;
 import com.campus.admin.mapper.AdminUserMapper;
 import com.campus.common.exception.BizException;
+import com.campus.common.security.ClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -239,14 +240,16 @@ public class AdminPasswordResetService {
         return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
 
+    /**
+     * 客户端 IP，用作「单 IP 每小时 20 次发码」的限流维度。
+     *
+     * <p>必须走 {@code ClientIp}（优先 X-Real-IP）：以前取 XFF 第一段，
+     * 而 Nginx 是追加式写入，攻击者自带一个伪造值就能每次换桶，
+     * 发码接口会变成任人使用的邮件轰炸机。
+     */
     private String clientIp() {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
-            HttpServletRequest request = attrs.getRequest();
-            String xff = request.getHeader("X-Forwarded-For");
-            if (xff != null && !xff.isBlank()) {
-                return xff.split(",")[0].trim();
-            }
-            return request.getRemoteAddr();
+            return ClientIp.resolve(attrs.getRequest());
         }
         return "unknown";
     }

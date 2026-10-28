@@ -43,7 +43,9 @@ Page({
     mentionPickerList: [],
     showMentionPicker: false,
     /** 推广弹层 */
-    showPromote: false
+    showPromote: false,
+    /** 互通推荐：有人在找这类东西（需求广场） */
+    wanted: []
   },
 
   onLoad: function (options) {
@@ -125,11 +127,37 @@ Page({
           self.setData({ following: !!res })
         }).catch(function () {})
       }
+      // 互通推荐：匹配失败不影响主流程（区块不渲染而已），所以单独 catch
+      self.loadWanted()
     }).catch(function (err) {
       const notFound = err && err.code === 404
       self.setData({ loading: false, loadError: !notFound })
       if (!notFound) toast('加载失败，请稍后重试')
     })
+  },
+
+  /**
+   * 「我在卖自行车」→ 推正在找这类东西的需求。
+   * 卖家可以主动去回应，不用等对方搜到自己。
+   */
+  loadWanted: function () {
+    const self = this
+    http.get('/goods/' + this.goodsId + '/demands', null, { silent: true })
+      .then(function (list) {
+        self.setData({
+          wanted: (list || []).map(function (d) {
+            d.typeLabel = d.type === 2 ? '求帮忙' : '求物'
+            d.typeIcon = d.type === 2 ? '🙋' : '🎁'
+            d.budgetText = d.budget === null || d.budget === undefined ? '面议' : '¥' + d.budget
+            return d
+          })
+        })
+      })
+      .catch(function () {})
+  },
+
+  goDemandDetail: function (e) {
+    mp.navigateTo({ url: '/subpackages/demand/detail?id=' + e.currentTarget.dataset.id })
   },
 
   retry: function () {

@@ -32,6 +32,7 @@ public class AdminWriteGateway {
     private final PostAdminClient postClient;
     private final WallAdminClient wallClient;
     private final GoodsAdminClient goodsClient;
+    private final DemandAdminClient demandClient;
     private final UserAdminClient userClient;
     private final MessageAdminClient messageClient;
     private final FallbackWriteMapper fallback;
@@ -90,6 +91,47 @@ public class AdminWriteGateway {
             if (fallback.updateGoodsStatus(id, status) == 0) {
                 throw BizException.notFound("商品不存在或已售出");
             }
+        }
+    }
+
+    /** 需求广场强制下架/恢复进行中 */
+    public void setDemandStatus(Long id, Integer status, String reason) {
+        AdminActionReq req = req(status, reason);
+        try {
+            R<Void> r = demandClient.updateStatus(id, req);
+            if (r != null && Integer.valueOf(0).equals(r.getCode())) {
+                return;
+            }
+            throw BizException.of(r == null ? "商品服务无响应" : r.getMsg());
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("[admin] 商品服务不可用，降级直写 t_demand：id={}, {}", id, e.getMessage());
+            if (fallback.updateDemandStatus(id, status) == 0) {
+                throw BizException.notFound("需求不存在或已完成");
+            }
+        }
+    }
+
+    /**
+     * 删除需求。
+     *
+     * <p>刻意不做降级直写：{@link FallbackWriteMapper} 只提供幂等的改状态 SQL，
+     * 删除是不可逆操作，服务不可用时就该明确失败，而不是悄悄在后台库里删掉
+     * （那样需求没了、回应还在，数据比不删更糟）。
+     */
+    public void deleteDemand(Long id, String reason) {
+        AdminActionReq req = req(null, reason);
+        try {
+            R<Void> r = demandClient.delete(id);
+            if (r != null && Integer.valueOf(0).equals(r.getCode())) {
+                return;
+            }
+            throw BizException.of(r == null ? "商品服务无响应" : r.getMsg());
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            throw BizException.of("商品服务不可用，删除未执行：" + e.getMessage());
         }
     }
 

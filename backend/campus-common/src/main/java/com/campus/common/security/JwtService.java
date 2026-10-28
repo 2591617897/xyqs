@@ -46,7 +46,21 @@ public class JwtService {
         return expireMillis / 3600_000L;
     }
 
-    public String create(Long userId, Long schoolId, Integer verifyStatus) {
+    /**
+     * 签发 C 端令牌。
+     *
+     * <p><b>{@code tokenVersion} 为什么是必填</b>：JWT 无状态，封禁 / 注销只是改库，
+     * 对已签发的令牌毫无影响——这是第三轮审计的 P0-1。把 {@code t_user.token_version}
+     * 写进 claim {@code tv}，网关比对库里的值就能让旧令牌立刻失效；
+     * 封禁、解封、注销、恢复各 +1。
+     *
+     * <p>故意<b>不提供 3 参数重载</b>：那种便利写法一旦被新代码调用，
+     * 就会签出一张 {@code tv=0} 的令牌，对 {@code token_version} 已经 +1 的用户
+     * 表现为「刚登录就被踢」。少一个重载，编译器会替我们守住这个坑。
+     *
+     * @param tokenVersion 账号当前的令牌版本，null 视为 0（与库默认值一致）
+     */
+    public String create(Long userId, Long schoolId, Integer verifyStatus, Integer tokenVersion) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
@@ -55,6 +69,7 @@ public class JwtService {
                 .claim("typ", TYPE_USER)
                 .claim("schoolId", schoolId)
                 .claim("vs", verifyStatus)
+                .claim("tv", tokenVersion == null ? 0 : tokenVersion)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expireMillis))
                 .signWith(key)

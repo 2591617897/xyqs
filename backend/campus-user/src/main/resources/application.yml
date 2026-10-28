@@ -64,3 +64,9 @@ campus:
     # 单文件上限（字节）。前端 utils/upload.js 已把超过 4MB 的图压到 4MB 内，
     # 这里放太大没有意义；且必须 ≤ Nginx 的 client_max_body_size，否则会先在 Nginx 被 413
     max-size: ${UPLOAD_MAX_SIZE:5242880}
+    # 每人每天的上传配额（数量 / 总字节）。这是磁盘的最后一道闸：
+    # 没有它，一个已登录账号可以无限次传 50MB 视频把磁盘写满，
+    # 而这台机器上还跑着别的项目 —— 磁盘写满是跨项目故障。
+    # 正常同学一天发几条闲置（每条 3~6 张图）远到不了；200MB 够 4 条 50MB 视频或 200 张图。
+    daily-max-count: ${UPLOAD_DAILY_MAX_COUNT:60}
+    daily-max-bytes: ${UPLOAD_DAILY_MAX_BYTES:209715200}

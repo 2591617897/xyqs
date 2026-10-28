@@ -221,16 +221,12 @@ public class AuthAdminService {
         }
     }
 
+    /** 客户端 IP；取值顺序见 {@code com.campus.common.security.ClientIp}（不能用 XFF 第一段，客户端可伪造）。 */
     private String clientIp() {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
-            HttpServletRequest request = attrs.getRequest();
-            String xff = request.getHeader("X-Forwarded-For");
-            if (xff != null && !xff.isBlank()) {
-                return xff.split(",")[0].trim();
-            }
-            return request.getRemoteAddr();
+            return com.campus.common.security.ClientIp.resolve(attrs.getRequest());
         }
-        return null;
+        return "unknown";
     }
 
     private String clientUa() {

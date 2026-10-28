@@ -42,13 +42,25 @@ public class InternalAdminUserController {
         if (status == null || (status != 0 && status != 1)) {
             throw BizException.of("status 非法，只允许 0封禁 / 1正常");
         }
-        User patch = new User();
-        patch.setId(id);
-        patch.setStatus(status);
-        if (userMapper.updateById(patch) == 0) {
+        /*
+         * 封禁 / 解封都必须让 token_version + 1。
+         *
+         * 只改 status 是不够的：JWT 无状态，对方手里那张 72 小时的令牌不会因为改库而失效，
+         * 而内容服务只校验令牌、不查 status —— 这就是第三轮审计里
+         * 「封禁后还能发三天内容」的直接原因（P0-1）。
+         * 版本号 +1 后，网关在 60 秒内（缓存过期）就会把旧令牌判失效。
+         *
+         * 解封同样要 +1：否则封禁期间被网关拒掉的旧令牌会在解封瞬间「复活」，
+         * 而这些令牌可能是封禁前就流出去的。让用户重新登录一次更干净。
+         */
+        int rows = userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .set(User::getStatus, status)
+                .setSql("token_version = token_version + 1")
+                .eq(User::getId, id));
+        if (rows == 0) {
             throw BizException.notFound("用户不存在");
         }
-        log.info("[admin] 用户 {} -> status={}，原因：{}", id, status, body.get("reason"));
+        log.info("[admin] 用户 {} -> status={}（令牌版本 +1），原因：{}", id, status, body.get("reason"));
         return R.ok();
     }
 

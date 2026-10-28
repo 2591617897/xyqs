@@ -6,6 +6,7 @@ import com.campus.auth.dto.LoginResp;
 import com.campus.auth.entity.School;
 import com.campus.auth.service.AuthService;
 import com.campus.common.api.R;
+import com.campus.common.security.ClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,22 +58,13 @@ public class AuthController {
     }
 
     /**
-     * 取真实客户端 IP。
-     * 线上走 Nginx，已透传 X-Real-IP / X-Forwarded-For（见 deploy 下的 nginx 模板）；
-     * X-Forwarded-For 可能是「客户端, 代理1, 代理2」，取第一段才是真实来源。
+     * 取真实客户端 IP（按学校所在城市做默认定位用）。
+     *
+     * <p>取值顺序见 {@code com.campus.common.security.ClientIp}：优先 {@code X-Real-IP}
+     * （Nginx 覆盖式写入，客户端伪造无效），再 XFF 第一段，最后 remoteAddr。
+     * 不能取 XFF 第一段当唯一来源——那是客户端可以自己填的位置。
      */
     private String clientIp(HttpServletRequest request) {
-        String[] headers = {"X-Forwarded-For", "X-Real-IP", "Proxy-Client-IP", "WL-Proxy-Client-IP"};
-        for (String h : headers) {
-            String v = request.getHeader(h);
-            if (v == null || v.isEmpty() || "unknown".equalsIgnoreCase(v)) {
-                continue;
-            }
-            String first = v.split(",")[0].trim();
-            if (!first.isEmpty()) {
-                return first;
-            }
-        }
-        return request.getRemoteAddr();
+        return ClientIp.resolve(request);
     }
 }

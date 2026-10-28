@@ -117,6 +117,27 @@
       <view class="ts-line ts-tip">如已转账被骗：立即拨打 96110 或 110 报警，并通过本页「举报」提交线索。</view>
     </view>
 
+    <!-- 互通推荐：有人在找这类东西（需求广场） -->
+    <view class="card" wx:if="{{wanted.length}}">
+      <view class="card-h">有人在找这类东西</view>
+      <scroll-view class="wanted" scroll-x enable-flex>
+        <view class="wanted-inner">
+          <view
+            wx:for="{{wanted}}"
+            wx:key="id"
+            class="wanted-item"
+            data-id="{{item.id}}"
+            bindtap="goDemandDetail"
+          >
+            <text class="wanted-type">{{item.typeIcon}} {{item.typeLabel}}</text>
+            <view class="wanted-title clamp2">{{item.title}}</view>
+            <view class="wanted-budget">{{item.budgetText}}</view>
+            <view class="wanted-cta">去看看 ›</view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 评论区（含楼中楼回复） -->
     <view class="card comment-card">
       <view class="card-head">
